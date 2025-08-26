@@ -7,6 +7,7 @@ set -e
 DOCKER_COMPOSE_FILE="Back-End/docker-compose.yml"
 DOCKER_COMPOSE_DEV_FILE="Back-End/docker-compose.dev.yml"
 DOCKER_COMPOSE_ATLAS_FILE="Back-End/docker-compose.atlas.yml"
+DOCKER_COMPOSE_FULL_FILE="docker-compose.yml"
 MONGODB_ATLAS_URL=""
 
 function setup() {
@@ -304,6 +305,8 @@ function status() {
     # Verificar contenedores Docker
     if docker-compose -f "$DOCKER_COMPOSE_FILE" ps | grep -q "Up"; then
       echo "✅ Docker Compose: Contenedores activos"
+    elif docker-compose -f "$DOCKER_COMPOSE_FULL_FILE" ps | grep -q "Up"; then
+      echo "✅ Docker Compose: Stack completo activo"
     else
       echo "❌ Docker Compose: Sin contenedores activos"
     fi
@@ -339,7 +342,7 @@ function status() {
   
   # Verificar Frontend
   frontend_port=""
-  for port in 5173 5174 5175 5176; do
+  for port in 3000 5173 5174 5175 5176; do
     if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
       frontend_port=$port
       break
@@ -451,6 +454,33 @@ function full_docker_atlas() {
   echo "💡 Usa './Run.sh stop' para detener todos los servicios"
 }
 
+function full_stack() {
+  echo "🚀 Iniciando sistema completo con Docker (Frontend + Backend + MongoDB)..."
+  
+  # Verificar que Docker esté corriendo
+  if ! docker info >/dev/null 2>&1; then
+    echo "❌ Docker no está corriendo. Por favor, inicia Docker Desktop."
+    exit 1
+  fi
+  
+  echo "  • Iniciando stack completo con Docker Compose..."
+  docker-compose -f "$DOCKER_COMPOSE_FULL_FILE" up -d
+  
+  echo "  • Esperando que los servicios estén listos..."
+  sleep 10
+  
+  echo ""
+  echo "✅ Sistema completo iniciado con Docker."
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "🌐 Frontend:  http://localhost:3000"
+  echo "🔧 API:       http://localhost:8000"
+  echo "📖 Docs API:  http://localhost:8000/docs"
+  echo "🗄️  MongoDB:   mongodb://localhost:27017"
+  echo "📊 Mongo Express: http://localhost:8081"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "💡 Usa './Run.sh stop' para detener todos los servicios"
+}
+
 function stop() {
   echo "🛑 Deteniendo procesos WEB-LIS PathSys..."
   
@@ -459,6 +489,7 @@ function stop() {
   docker-compose -f "$DOCKER_COMPOSE_FILE" down 2>/dev/null || true
   docker-compose -f "$DOCKER_COMPOSE_DEV_FILE" down 2>/dev/null || true
   docker-compose -f "$DOCKER_COMPOSE_ATLAS_FILE" down 2>/dev/null || true
+  docker-compose -f "$DOCKER_COMPOSE_FULL_FILE" down 2>/dev/null || true
   
   # Detener procesos específicos por puerto
   echo "  • Deteniendo Backend (puerto 8000)..."
@@ -466,9 +497,10 @@ function stop() {
   pkill -f "python3.*uvicorn" || true
   lsof -ti:8000 | xargs kill -9 2>/dev/null || true
   
-  echo "  • Deteniendo Frontend (puerto 5174)..."
+  echo "  • Deteniendo Frontend (puertos 3000, 5174)..."
   pkill -f "npm run dev" || true
   pkill -f "vite" || true
+  lsof -ti:3000 | xargs kill -9 2>/dev/null || true
   lsof -ti:5174 | xargs kill -9 2>/dev/null || true
   
   echo "  • Deteniendo MongoDB..."
@@ -544,6 +576,7 @@ function help() {
   echo "  full-docker  - Inicia sistema completo (Docker)"
   echo "  full-atlas   - Inicia sistema completo (MongoDB Atlas)"
   echo "  full-docker-atlas - Inicia sistema completo (Docker + MongoDB Atlas)"
+  echo "  full-stack       - Inicia sistema completo (Frontend + Backend + MongoDB en Docker)"
   echo ""
   echo "🔧 Servicios individuales:"
   echo "  backend      - Solo inicia el Backend (Local)"
@@ -570,7 +603,7 @@ function help() {
   echo "  help         - Muestra esta ayuda"
   echo ""
   echo "🌐 URLs del sistema:"
-  echo "  Frontend:     http://localhost:5174"
+  echo "  Frontend:     http://localhost:3000 (Docker) / http://localhost:5174 (Local)"
   echo "  API:          http://localhost:8000"
   echo "  API Docs:     http://localhost:8000/docs"
   echo "  MongoDB:      mongodb://localhost:27017"
@@ -583,8 +616,9 @@ function help() {
   echo "  ./Run.sh full-docker  # Iniciar sistema completo (Docker)"
   echo "  ./Run.sh full-atlas   # Iniciar sistema completo (MongoDB Atlas)"
   echo "  ./Run.sh full-docker-atlas # Iniciar sistema completo (Docker + MongoDB Atlas)"
-  echo "  ./Run.sh status       # Ver estado actual"
-  echo "  ./Run.sh stop         # Detener todo"
+  echo "  ./Run.sh full-stack        # Iniciar sistema completo (Frontend + Backend + MongoDB en Docker)"
+  echo "  ./Run.sh status            # Ver estado actual"
+  echo "  ./Run.sh stop              # Detener todo"
 }
 
 case "$1" in
@@ -605,6 +639,9 @@ case "$1" in
     ;;
   full-docker-atlas)
     full_docker_atlas
+    ;;
+  full-stack)
+    full_stack
     ;;
   backend)
     start_backend
