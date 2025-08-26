@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./Front-End
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Front-End:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=production
+    networks:
+      - pathsys-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./Back-End
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - Back-End/config.atlas.env
+    volumes:
+      - ./Back-End:/app
+      - ./Back-End/uploads:/app/uploads
+    networks:
+      - pathsys-network
+    restart: unless-stopped
+
+networks:
+  pathsys-network:
+    driver: bridge

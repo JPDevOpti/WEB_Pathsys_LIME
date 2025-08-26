@@ -61,16 +61,10 @@ function setup() {
 function setup_atlas() {
   echo "🌐 Configurando MongoDB Atlas..."
   
-  if [ -z "$MONGODB_ATLAS_URL" ]; then
-    echo "📝 Por favor, ingresa tu URL de conexión de MongoDB Atlas:"
-    echo "   Formato: mongodb+srv://usuario:password@cluster.mongodb.net/database?retryWrites=true&w=majority"
-    read -r MONGODB_ATLAS_URL
-    
-    if [ -z "$MONGODB_ATLAS_URL" ]; then
-      echo "❌ URL de MongoDB Atlas requerida"
-      return 1
-    fi
-  fi
+  # URL fija de MongoDB Atlas
+  MONGODB_ATLAS_URL="mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/"
+  
+  echo "  • URL configurada: $MONGODB_ATLAS_URL"
   
   # Crear archivo de configuración para Atlas
   cat > Back-End/config.atlas.env << EOF
@@ -564,11 +558,9 @@ function full_Docker() {
     exit 1
   fi
   
-  # Verificar configuración de Atlas
-  if [ ! -f "Back-End/config.atlas.env" ]; then
-    echo "⚠️  MongoDB Atlas no está configurado. Configurando..."
-    setup_atlas
-  fi
+  # Configurar MongoDB Atlas automáticamente
+  echo "  • Configurando MongoDB Atlas..."
+  setup_atlas
   
   echo "  • Iniciando stack completo con Docker + MongoDB Atlas..."
   
