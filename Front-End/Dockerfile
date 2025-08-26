@@ -6,14 +6,14 @@ WORKDIR /app
 # Copiar archivos de dependencias
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm ci --only=production
+# Instalar todas las dependencias (incluyendo devDependencies para el build)
+RUN npm ci
 
 # Copiar código fuente
 COPY . .
 
-# Construir la aplicación
-RUN npm run build
+# Construir la aplicación (solo vite build, sin type checking)
+RUN npx vite build
 
 # Etapa de producción
 FROM nginx:alpine

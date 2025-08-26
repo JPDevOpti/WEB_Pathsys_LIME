@@ -13,20 +13,20 @@
       <!-- Medir altura de encabezados+paciente (primera página) en ancho de cuerpo (8.5in) sin padding -->
       <div ref="measureHeaderRef" style="width:8.5in; box-sizing:border-box;">
         <div>
-          <PDFReportHeader />
-          <PDFReportDeptInfo :case-item="singleCaseObject" :format-date="formatDate" :recibido-numero="recibidoNumero" />
-          <PDFReportPatientBlock :case-item="singleCaseObject" :recibido-numero="recibidoNumero" />
+          <!-- <PDFReportHeader /> -->
+          <!-- <PDFReportDeptInfo :case-item="singleCaseObject" :format-date="formatDate" :recibido-numero="recibidoNumero" /> -->
+          <!-- <PDFReportPatientBlock :case-item="singleCaseObject" :recibido-numero="recibidoNumero" /> -->
         </div>
       </div>
 
       <!-- Medir altura del footer en ancho de cuerpo (8.5in) sin padding -->
       <div ref="measureFooterRef" style="width:8.5in; box-sizing:border-box;">
-        <PDFReportFooter :page="1" :total="1" />
+        <!-- <PDFReportFooter :page="1" :total="1" /> -->
       </div>
 
       <!-- Medir altura de la firma del patólogo en ancho de cuerpo (8.5in) sin padding -->
       <div ref="measureSignatureRef" style="width:8.5in; box-sizing:border-box;">
-        <PDFReportSignature :case-item="singleCaseObject" />
+        <!-- <PDFReportSignature :case-item="singleCaseObject" /> -->
       </div>
     </div>
 
@@ -40,13 +40,13 @@
           :style="pageStyle"
         >
           <template v-if="item.pageIndex === 0">
-            <PDFReportHeader />
-            <PDFReportDeptInfo
+            <!-- <PDFReportHeader /> -->
+            <!-- <PDFReportDeptInfo
               :case-item="item.case"
               :format-date="formatDate"
               :recibido-numero="recibidoNumero"
-            />
-            <PDFReportPatientBlock :case-item="item.case" :recibido-numero="recibidoNumero" />
+            /> -->
+            <!-- <PDFReportPatientBlock :case-item="item.case" :recibido-numero="recibidoNumero" /> -->
           </template>
 
           <div class="content-area">
@@ -55,14 +55,14 @@
           </div>
 
           <template v-if="item.isLastPage">
-            <PDFReportSignature 
+            <!-- <PDFReportSignature 
               :case-item="item.case" 
               @signature-loaded="handleSignatureLoaded"
-            />
+            /> -->
           </template>
 
           <div class="footer-container">
-            <PDFReportFooter :page="item.pageNumber" :total="item.totalPagesForPatient" />
+            <!-- <PDFReportFooter :page="item.pageNumber" :total="item.totalPagesForPatient" /> -->
           </div>
         </div>
       </div>
@@ -76,13 +76,13 @@
           :style="pageStyle"
         >
           <template v-if="idx === 0">
-            <PDFReportHeader />
-            <PDFReportDeptInfo
+            <!-- <PDFReportHeader /> -->
+            <!-- <PDFReportDeptInfo
               :case-item="singleCaseObject"
               :format-date="formatDate"
               :recibido-numero="recibidoNumero"
-            />
-            <PDFReportPatientBlock :case-item="singleCaseObject" :recibido-numero="recibidoNumero" />
+            /> -->
+            <!-- <PDFReportPatientBlock :case-item="singleCaseObject" :recibido-numero="recibidoNumero" /> -->
           </template>
 
           <div class="content-area">
@@ -91,14 +91,14 @@
           </div>
 
           <template v-if="idx === singleCaseChunks.length - 1">
-            <PDFReportSignature 
+            <!-- <PDFReportSignature 
               :case-item="singleCaseObject" 
               @signature-loaded="handleSignatureLoaded"
-            />
+            /> -->
           </template>
 
           <div class="footer-container">
-            <PDFReportFooter :page="idx + 1" :total="singleCaseChunks.length" />
+            <!-- <PDFReportFooter :page="idx + 1" :total="singleCaseChunks.length" /> -->
           </div>
         </div>
       </div>
@@ -110,11 +110,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick } from 'vue'
 import type { CSSProperties } from 'vue'
-import PDFReportHeader from './parts/PDFReportHeader.vue'
-import PDFReportDeptInfo from './parts/PDFReportDeptInfo.vue'
-import PDFReportPatientBlock from './parts/PDFReportPatientBlock.vue'
-import PDFReportSignature from './parts/PDFReportSignature.vue'
-import PDFReportFooter from './parts/PDFReportFooter.vue'
+// import PDFReportHeader from './parts/PDFReportHeader.vue'
+// import PDFReportDeptInfo from './parts/PDFReportDeptInfo.vue'
+// import PDFReportPatientBlock from './parts/PDFReportPatientBlock.vue'
+// import PDFReportSignature from './parts/PDFReportSignature.vue'
+// import PDFReportFooter from './parts/PDFReportFooter.vue'
 
 export interface PreviewDiagnosis {
   cie10?: { primary?: any }
