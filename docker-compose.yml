@@ -13,6 +13,7 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - VITE_API_BASE_URL=http://backend:8000
     networks:
       - pathsys-network
     restart: unless-stopped

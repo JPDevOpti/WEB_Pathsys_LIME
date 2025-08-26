@@ -12,6 +12,9 @@ RUN npm ci
 # Copiar código fuente
 COPY . .
 
+# Configurar variable de entorno para Docker
+ENV VITE_API_BASE_URL=http://backend:8000
+
 # Construir la aplicación (solo vite build, sin type checking)
 RUN npx vite build
 
