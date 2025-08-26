@@ -475,12 +475,6 @@ function full_local() {
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "💡 Usa './Run.sh stop' para detener todos los servicios"
 }
-  echo "🔧 API:       http://localhost:8000"
-  echo "📖 Docs API:  http://localhost:8000/docs"
-  echo "🌐 Frontend:  http://localhost:5174 (o puerto disponible)"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "💡 Usa './Run.sh stop' para detener todos los servicios"
-}
 
 function full_docker() {
   echo "🚀 Iniciando sistema completo WEB-LIS PathSys (Docker)..."
