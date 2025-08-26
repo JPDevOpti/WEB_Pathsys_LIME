@@ -1,13 +1,10 @@
 services:
-  # Backend FastAPI
+  # Backend FastAPI con Docker
   - type: web
     name: pathsys-backend
-    env: python
-    runtime: python3.11
-    buildCommand: |
-      pip install --upgrade pip
-      pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    env: docker
+    dockerfilePath: Back-End/Dockerfile
+    dockerContext: Back-End
     envVars:
       - key: MONGODB_URL
         value: mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/
