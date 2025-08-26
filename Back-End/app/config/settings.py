@@ -42,7 +42,10 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5178",
         "http://127.0.0.1:5179",
         "http://127.0.0.1:5180",
-        "http://127.0.0.1:8080"
+        "http://127.0.0.1:8080",
+        # Agregar orígenes para Docker
+        "http://frontend:3000",
+        "http://localhost:3000"
     ]
     
     # Environment

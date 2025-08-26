@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Configurar variable de entorno para Docker
-ENV VITE_API_BASE_URL=http://backend:8000
+ENV VITE_API_BASE_URL=http://localhost:8000
 
 # Construir la aplicación (solo vite build, sin type checking)
 RUN npx vite build
@@ -28,7 +28,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Exponer puerto
-EXPOSE 3000
+EXPOSE 5174
 
 # Iniciar nginx
 CMD ["nginx", "-g", "daemon off;"]
