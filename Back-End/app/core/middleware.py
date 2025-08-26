@@ -100,6 +100,7 @@ def setup_middleware(app):
     from fastapi import FastAPI
     
     # Agregar middlewares en orden de ejecución
+    # NOTA: Los middlewares personalizados NO deben interferir con las solicitudes OPTIONS de CORS
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(ExceptionHandlerMiddleware)
     app.add_middleware(LoggingMiddleware)
