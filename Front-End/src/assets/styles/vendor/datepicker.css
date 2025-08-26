@@ -1,0 +1,22 @@
+/* Estilos para vue3-datepicker - SOLO MODO CLARO */
+
+/* Estilo forzado para el input de vue3-datepicker para que se vea igual que los otros filtros */
+.v3dp__input {
+  height: 2.75rem !important;         /* h-11 */
+  min-width: 12rem !important;        /* w-48 */
+  border-radius: 0.5rem !important;   /* rounded-lg */
+  border: 1px solid #d1d5db !important; /* border-gray-300 */
+  background: #fff !important;
+  padding: 0.625rem 1rem !important;  /* px-4 py-2.5 */
+  font-size: 0.95rem !important;      /* text-sm */
+  color: #1f2937 !important;          /* text-gray-800 */
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important; /* shadow-theme-xs */
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  outline: none !important;
+  font-family: inherit !important;
+}
+
+.v3dp__input:focus {
+  border-color: #93c5fd !important;   /* border-brand-300 */
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1) !important; /* ring-brand-500/10 */
+}

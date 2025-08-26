@@ -1,0 +1,6 @@
+/* Estilos para botones y elementos interactivos */
+
+/* Botones para radio buttons */
+.form-check-input:checked ~ span {
+  @apply border-[6px] border-brand-500;
+}

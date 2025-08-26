@@ -1,0 +1,102 @@
+/* Estilos de navegación y sidebar - SOLO MODO CLARO */
+
+@layer components {
+  /* Menu items utilities */
+  .menu-item {
+    @apply relative flex items-center w-full gap-3 px-3 py-2 font-medium rounded-lg text-theme-sm;
+  }
+
+  .menu-item-active {
+    @apply bg-brand-50 text-brand-700;
+  }
+
+  .menu-item-inactive {
+    @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700;
+  }
+
+  .menu-item-icon {
+    @apply text-gray-500 group-hover:text-gray-700;
+  }
+
+  .menu-item-icon-active {
+    @apply text-brand-700;
+  }
+
+  .menu-item-icon-inactive {
+    @apply text-gray-500 group-hover:text-gray-700;
+  }
+
+  .menu-item-arrow {
+    @apply relative;
+  }
+
+  .menu-item-arrow-active {
+    @apply rotate-180 text-brand-700;
+  }
+
+  .menu-item-arrow-inactive {
+    @apply text-gray-500 group-hover:text-gray-700;
+  }
+
+  /* Menu dropdown utilities */
+  .menu-dropdown-item {
+    @apply relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-theme-sm font-medium;
+  }
+
+  .menu-dropdown-item-active {
+    @apply bg-brand-50 text-brand-700;
+  }
+
+  .menu-dropdown-item-inactive {
+    @apply text-gray-700 hover:bg-gray-100;
+  }
+
+  .menu-dropdown-badge {
+    @apply block rounded-full px-2.5 py-0.5 text-xs font-medium uppercase text-brand-500;
+  }
+
+  .menu-dropdown-badge-active {
+    @apply bg-brand-100;
+  }
+
+  .menu-dropdown-badge-inactive {
+    @apply bg-brand-50 group-hover:bg-brand-100;
+  }
+}
+
+/* Sidebar hover effects */
+.sidebar:hover {
+  width: 290px;
+}
+
+.sidebar:hover .logo {
+  display: block;
+}
+
+.sidebar:hover .logo-icon {
+  display: none;
+}
+
+.sidebar:hover .sidebar-header {
+  justify-content: space-between;
+}
+
+.sidebar:hover .menu-group-title {
+  display: block;
+}
+
+.sidebar:hover .menu-group-icon {
+  display: none;
+}
+
+.sidebar:hover .menu-item-text {
+  display: inline;
+}
+
+.sidebar:hover .menu-item-arrow {
+  display: block;
+}
+
+.sidebar:hover .menu-dropdown {
+  display: flex;
+}

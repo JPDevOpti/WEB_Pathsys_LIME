@@ -1,0 +1,29 @@
+/* Importaciones base de Tailwind CSS */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Importación de fuentes desde Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+/* Variables CSS del sistema LIME */
+@import './base/variables.css';
+
+/* Estilos base y resets */
+@import './base/reset.css';
+@import './base/globals.css';
+
+/* Componentes personalizados */
+@import './components/utilities.css';
+@import './components/navigation.css';
+@import './components/buttons.css';
+@import './components/forms.css';
+@import './components/tables.css';
+@import './components/auth.css';
+
+/* Bibliotecas externas */
+@import './vendor/apexcharts.css';
+@import './vendor/flatpickr.css';
+@import './vendor/fullcalendar.css';
+@import './vendor/swiper.css';
+@import './vendor/datepicker.css';

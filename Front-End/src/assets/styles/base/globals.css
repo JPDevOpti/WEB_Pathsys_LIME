@@ -1,0 +1,7 @@
+/* Estilos globales del sistema LIME */
+
+@layer base {
+  body {
+    @apply relative font-normal font-outfit z-10 bg-gray-50;
+  }
+}

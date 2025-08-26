@@ -1,0 +1,9 @@
+/* Estilos para tablas y checkboxes */
+
+.tableCheckbox:checked ~ span span {
+  @apply opacity-100;
+}
+
+.tableCheckbox:checked ~ span {
+  @apply border-brand-500 bg-brand-500;
+}

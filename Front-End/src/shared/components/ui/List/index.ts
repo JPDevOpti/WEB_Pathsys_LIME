@@ -1,0 +1,5 @@
+export { default as PathologistList } from './PathologistList.vue'
+export { default as EntityList } from './EntityList.vue'
+export { default as TestList } from './TestList.vue'
+export { default as BodyRegionList } from './BodyRegionList.vue'
+export { default as DiseaseList } from './DiseaseList.vue'

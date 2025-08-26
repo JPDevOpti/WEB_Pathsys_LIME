@@ -1,0 +1,304 @@
+<template>
+  <transition 
+    enter-active-class="transition ease-out duration-300" 
+    enter-from-class="opacity-0 transform scale-95" 
+    enter-to-class="opacity-100 transform scale-100" 
+    leave-active-class="transition ease-in duration-200" 
+    leave-from-class="opacity-100 transform scale-100" 
+    leave-to-class="opacity-0 transform scale-95"
+  >
+    <div 
+      v-if="test" 
+      class="fixed inset-0 z-50 flex items-center justify-center p-4" 
+      @click.self="$emit('close')"
+    >
+      <div class="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden mt-4 sm:mt-10 md:mt-16 mx-4 sm:mx-0">
+        <!-- Header -->
+        <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-t-2xl flex items-center justify-between">
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900">Detalles de la Prueba</h3>
+            <p class="text-sm text-gray-500 mt-1">
+              Período: {{ formatPeriod() }}
+            </p>
+          </div>
+          <button @click="$emit('close')" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-4 sm:p-6 space-y-4 sm:space-y-6" ref="testDetailsContent">
+          <!-- Información General -->
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+            <div class="flex items-center space-x-4">
+              <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <div>
+                <h4 class="text-2xl font-bold text-gray-900">{{ test.nombre }}</h4>
+                <p class="text-blue-600 font-medium">{{ test.codigo }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado de carga -->
+          <div v-if="isLoading" class="text-center py-12">
+            <div class="relative">
+              <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-500 mx-auto"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-4">Cargando estadísticas detalladas...</p>
+            <div class="mt-2 h-1 w-32 bg-gray-200 rounded-full mx-auto overflow-hidden">
+              <div class="h-full bg-blue-500 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div v-else-if="error" class="text-center py-12">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+              <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Error al cargar datos</h3>
+            <p class="mt-1 text-sm text-red-500">{{ error }}</p>
+            <div class="mt-4">
+              <button @click="loadTestDetails" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Reintentar
+              </button>
+            </div>
+          </div>
+
+          <!-- Contenido detallado -->
+          <template v-else-if="testDetails">
+            <!-- Estadísticas Principales -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-blue-600 font-medium">Total Pruebas realizadas</p>
+                    <p class="text-2xl font-bold text-blue-700">{{ testDetails.estadisticas_principales.total_solicitadas }}</p>
+                  </div>
+                  <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-green-600 font-medium">Completadas</p>
+                    <p class="text-2xl font-bold text-green-700">{{ testDetails.estadisticas_principales.total_completadas }}</p>
+                    <p class="text-xs text-green-600">{{ testDetails.estadisticas_principales.porcentaje_completado }}% completado</p>
+                  </div>
+                  <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-yellow-600 font-medium">Tiempo Promedio</p>
+                    <p class="text-2xl font-bold text-yellow-700">{{ test.tiempoPromedio.toFixed(1) }} días</p>
+                  </div>
+                  <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tiempos de procesamiento -->
+            <div class="bg-white rounded-xl border p-6">
+              <h5 class="text-lg font-medium mb-4 flex items-center text-gray-800">
+                <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Tiempos de Procesamiento
+              </h5>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                  <div class="text-center w-full">
+                    <span class="text-sm font-medium text-gray-700">Promedio</span>
+                    <p class="text-lg font-bold text-yellow-600">{{ testDetails.tiempos_procesamiento.promedio_dias.toFixed(1) }} días</p>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                  <div class="text-center w-full">
+                    <span class="text-sm font-medium text-gray-700">Dentro de oportunidad</span>
+                    <p class="text-lg font-bold text-green-600">{{ testDetails.tiempos_procesamiento.dentro_oportunidad }}</p>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                  <div class="text-center w-full">
+                    <span class="text-sm font-medium text-gray-700">Fuera de oportunidad</span>
+                    <p class="text-lg font-bold text-red-600">{{ testDetails.tiempos_procesamiento.fuera_oportunidad }}</p>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div class="text-center w-full">
+                    <span class="text-sm font-medium text-gray-700">Total</span>
+                    <p class="text-lg font-bold text-gray-700">{{ testDetails.tiempos_procesamiento.total_casos }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Patólogos -->
+            <div class="bg-gray-50 rounded-xl p-6 space-y-4">
+              <h5 class="text-lg font-semibold text-gray-900">Patólogos</h5>
+              
+              <div v-if="testDetails.patologos.length === 0" class="text-center py-8 text-gray-500">
+                <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <p>No se encontraron patólogos</p>
+              </div>
+              
+              <div v-else class="space-y-3">
+                <div v-for="patologo in testDetails.patologos" :key="patologo.codigo" class="bg-white rounded-lg p-4 border border-gray-200">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                      <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h6 class="text-sm font-medium text-gray-900">{{ patologo.nombre }}</h6>
+                        <p class="text-xs text-gray-500">{{ patologo.codigo }}</p>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-lg font-bold text-green-600">{{ patologo.total_procesadas }}</div>
+                      <div class="text-xs text-gray-500">procesadas</div>
+                      <div class="text-sm text-yellow-600">{{ patologo.tiempo_promedio.toFixed(1) }} días</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Footer -->
+        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl flex justify-end">
+          <button 
+            @click="$emit('close')"
+            class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, watch, nextTick } from 'vue'
+import type { TestStats, TestDetails, PeriodSelection } from '../../types/tests.types'
+import { testsApiService } from '../../services/tests.service'
+
+const props = defineProps<{
+  test: TestStats | null
+  period: PeriodSelection
+  entity?: string
+}>()
+
+const emit = defineEmits<{
+  close: []
+}>()
+
+// Ref para el contenido de detalles
+const testDetailsContent = ref<HTMLElement | null>(null)
+
+// Estado del modal
+const isLoading = ref(false)
+const error = ref<string | null>(null)
+const testDetails = ref<TestDetails | null>(null)
+
+// Watch para cargar datos cuando se abre el modal
+watch(() => props.test, async (newTest) => {
+  if (newTest) {
+    await nextTick()
+    loadTestDetails()
+  } else {
+    testDetails.value = null
+    error.value = null
+  }
+}, { immediate: true })
+
+// Función para cargar detalles de la prueba
+async function loadTestDetails() {
+  if (!props.test) return
+  
+  isLoading.value = true
+  error.value = null
+  
+  try {
+    testDetails.value = await testsApiService.getTestDetails(
+      props.entity || 'general',
+      props.test.codigo,
+      props.period.month,
+      props.period.year
+    )
+  } catch (err: any) {
+    console.error('Error al cargar detalles:', err)
+    error.value = err.message || 'Error al cargar los detalles de la prueba'
+    testDetails.value = null
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Función para formatear el período
+function formatPeriod() {
+  const months = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ]
+  return `${months[props.period.month - 1]} ${props.period.year}`
+}
+</script>
+
+<style scoped>
+/* Estilos para el scroll del modal */
+.scrollable-pruebas {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.scrollable-pruebas::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollable-pruebas::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 3px;
+}
+
+.scrollable-pruebas::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.scrollable-pruebas::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+</style>

@@ -1,0 +1,40 @@
+/* Clases utilitarias personalizadas del sistema */
+
+/* Animaciones para tareas (drag & drop) */
+.task {
+  transition: all 0.2s ease;
+}
+
+.task.is-dragging {
+  border-radius: 0.75rem;
+  box-shadow:
+    0px 1px 3px 0px rgba(16, 24, 40, 0.1),
+    0px 1px 2px 0px rgba(16, 24, 40, 0.06);
+  opacity: 0.8;
+  cursor: grabbing;
+}
+
+/* Botones sociales y de edición */
+@layer components {
+  .social-button {
+    @apply flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800;
+  }
+
+  .edit-button {
+    @apply flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 lg:inline-flex lg:w-auto;
+  }
+}
+
+/* Estilo personalizado para calendario */
+.custom-calendar .fc-h-event {
+  background-color: transparent;
+  border: none;
+  color: black;
+}
+
+/* Para iconos de fecha */
+.input-date-icon::-webkit-inner-spin-button,
+.input-date-icon::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  -webkit-appearance: none;
+}

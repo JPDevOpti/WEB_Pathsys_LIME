@@ -1,0 +1,14 @@
+/* Estilos para formularios e inputs */
+
+/* Checkboxes para tareas */
+.taskCheckbox:checked ~ .box span {
+  @apply opacity-100;
+}
+
+.taskCheckbox:checked ~ p {
+  @apply text-gray-400 line-through;
+}
+
+.taskCheckbox:checked ~ .box {
+  @apply border-brand-500 bg-brand-500;
+}

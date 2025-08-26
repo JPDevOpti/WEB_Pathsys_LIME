@@ -1,0 +1,1 @@
+"""Tests unitarios para el módulo de casos"""
