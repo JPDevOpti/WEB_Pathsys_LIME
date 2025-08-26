@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     
     # CORS Configuration
     BACKEND_CORS_ORIGINS: List[str] = [
+        # Desarrollo local
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:5174",
@@ -43,9 +44,12 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5179",
         "http://127.0.0.1:5180",
         "http://127.0.0.1:8080",
-        # Agregar orígenes para Docker
+        # Docker
         "http://frontend:3000",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        # Render.com - URLs de producción
+        "https://pathsys-frontend.onrender.com",
+        "https://*.onrender.com"
     ]
     
     # Environment

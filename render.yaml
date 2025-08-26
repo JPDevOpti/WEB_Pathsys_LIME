@@ -1,0 +1,41 @@
+services:
+  # Backend FastAPI
+  - type: web
+    name: pathsys-backend
+    env: python
+    runtime: python3.11
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGODB_URL
+        value: mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/
+      - key: DATABASE_NAME
+        value: lime_pathsys
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: PORT
+        value: 8000
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # Frontend Vue.js (Sitio estático)
+  - type: web
+    name: pathsys-frontend
+    env: static
+    buildCommand: |
+      cd Front-End
+      npm install
+      npm run build
+    staticPublishPath: ./Front-End/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://pathsys-backend.onrender.com
+    autoDeploy: true

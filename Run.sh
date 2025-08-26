@@ -4,8 +4,8 @@
 set -e
 
 # Variables de configuración
-DOCKER_COMPOSE_FILE="docker-compose.yml"
-DOCKER_COMPOSE_ATLAS_FILE="Back-End/docker-compose.atlas.yml"
+DOCKER_COMPOSE_FILE="Back-End/docker-compose.dev.yml"
+DOCKER_COMPOSE_ATLAS_FILE="docker-compose.atlas.yml"
 
 function setup() {
   echo "🔧 Verificando dependencias del sistema..."
