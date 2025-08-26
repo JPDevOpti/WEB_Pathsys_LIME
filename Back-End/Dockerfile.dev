@@ -9,10 +9,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar archivos de dependencias
-COPY requirements.txt requirements-dev.txt ./
+COPY requirements.txt ./
 
 # Instalar dependencias de Python
-RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código fuente
 COPY . .

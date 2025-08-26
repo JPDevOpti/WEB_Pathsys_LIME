@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # Aplicación FastAPI con MongoDB Atlas
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=False
+      - SECRET_KEY=your-production-secret-key-change-this
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+    env_file:
+      - config.atlas.env
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+    networks:
+      - pathsys-atlas
+    restart: unless-stopped
+
+networks:
+  pathsys-atlas:
+    driver: bridge
