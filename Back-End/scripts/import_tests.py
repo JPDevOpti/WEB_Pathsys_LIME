@@ -24,25 +24,25 @@ def normalize_text(text: str) -> str:
 
 # Embedded list from user (codes as strings)
 RAW_TEST_ROWS: List[Dict[str, str]] = [
-    {"code": "898101", "name": "ESTUDIO DE COLORACIÓN BÁSICA EN BIOPSIA", "desc": "BIOPSIA SIMPLE UN (1) FRASCO CON UNO O VARIOS FRAGMENTOS DE TEJIDO HASTA 3 CM/CC. EJEMPLOS: ENDOMETRIO, CUÑA DE CÉRVIX, CUÑA DE PIEL, CUREAJE, TRU-CUT., BIOPSIA RENAL, BIOPSIA HEPÁTICA, BIOPSIAS DE COLÓN O ESTOMAGO."},
-    {"code": "898201", "name": "ESTUDIO DE COLORACIÓN BÁSICA EN ESPÉCIMEN DE RECONOCIMIENTO", "desc": "ESPÉCIMEN QUIRÚRGICO NO TUMORAL\nEJEMPLO: APÉNDICE CECAL, VESÍCULA BILIAR, ÚTERO SIN ANEXOS, OVARIO NO TUMORAL, MAMA SIN TUMOR, E.T.C."},
-    {"code": "898241", "name": "ESTUDIO DE COLORACIÓN BÁSICA EN ESPÉCIMEN CON RESECCIÓN DE MÁRGENES", "desc": "ESPÉCIMEN QUIRÚRGICO POR CONDICIÓN TUMORAL:\nEJEMPLO: MAMA, AMPUTACIÓN, ESTÓMAGO, COLON, ÚTERO POR NIC/CARCINOMA O CON ANEXOS Y CÉRVIX CONIZACIÓN*."},
-    {"code": "898101", "name": "ESTUDIO BIOPSIA EN MÉDULA ÓSEA:", "desc": "SIN COLORACIONES ESPECIALES NI INMUNOHISTOQUÍMICA*"},
-    {"code": "898807-1", "name": "ESTUDIO ANATOMOPATOLÓGICO DE MARCACIÓN INMUNOHISTOQUÍMICA", "desc": "INMUNOHISTOQUÍMICA BÁSICA (ESPECÍFICO) SIN LECTURA: CADA MARCADOR EN BLOQUE DE PARAFINA O PLACA CARGADA. EJEMPLO: CD3, CKIT, ACTINA DE MÚSCULO LISO, S100, HMB45, ETC. (VER LISTADO ADJUNTO DE ANTICUERPOS DISPONIBLES)*"},
-    {"code": "898807", "name": "ESTUDIO ANATOMOPATOLÓGICO DE MARCACIÓN INMUNOHISTOQUÍMICA", "desc": "INMUNOHISTOQUÍMICA BÁSICA (ESPECÍFICO): CADA MARCADOR EN BLOQUE DE PARAFINA O PLACA CARGADA.\nEJEMPLO: CD3, CKIT, ACTINA DE MÚSCULO LISO, S100, HMB45, ETC. (VER LISTADO ADJUNTO DE ANTICUERPOS DISPONIBLES)*"},
-    {"code": "898812", "name": "ESTUDIO ANATOMOPATOLÓGICO DE MARCACIÓN INMUNOHISTOQUÍMICA ESPECIAL", "desc": "INMUNOHISTOQUÍMICA DE ALTA COMPLEJIDAD: CADA MARCADOR TUMORAL EN PLACA CARGADA\nEJEMPLO: SOX-11, PAX5, C4D, SV40, C-ERB2, RECEPTORES DE ESTRÓGENOS Y PROGESTERONA, ETC. (VER LISTADO ADJUNTO DE ANTICUERPOS DISPONIBLES)*."},
-    {"code": "898812", "name": "ESTUDIO ANATOMOPATOLÓGICO DE MARCACIÓN INMUNOHISTOQUÍMICA ESPECIAL", "desc": "INMUNOHISTOQUÍMICA ESPECIALES: CADA MARCADOR TUMORAL EN PLACA CARGADA\nEJEMPLO: ATRX, IDH1, MUC1, PD1, PD-L1, PERFORINA, PIT-1, TPIT), ETC. (VER LISTADO ADJUNTO DE ANTICUERPOS DISPONIBLES)*."},
-    {"code": "898018", "name": "ESTUDIO ANATOMOPATOLÓGICO POR INMUNOHISTOQUÍMICA", "desc": "ESTUDIO ANATOMOPATOLÓGICO POR INMUNOHISTOQUÍMICA (MARCADOR ESPECÍFICO) EN BIOPSIA DE MÉDULA ÓSEA"},
-    {"code": "898808", "name": "ESTUDIO ANATOMOPATOLÓGICO EN BIOPSIA POR TINCIÓN HISTOQUÍMICA", "desc": "COLORACIONES ESPECIALES: TRICRÓMICO, RETÍCULO, HIERRO, PLATA METENAMINA, HPTA CEREBRO, ROJO CONGO, CRISTAL VIOLETA, WARTIN STARRY, ETC. 38 COLORACIONES DISPONIBLES (VER LISTADO ADJUNTO)"},
-    {"code": "898808", "name": "ESTUDIO ANATOMOPATOLÓGICO EN BIOPSIA POR TINCIÓN HISTOQUÍMICA", "desc": "COLORACIONES ESPECIALES: TRICRÓMICO, RETÍCULO, HIERRO, PLATA METENAMINA,  HPTA CEREBRO, ROJO CONGO, CRISTAL VIOLETA, WARTIN STARRY, ETC. 38 COLORACIONES DISPONIBLES (VER LISTADO ADJUNTO)*"},
-    {"code": "898017", "name": "ESTUDIO ANATOMOPATOLÓGICO EN CITOLOGÍA", "desc": "ESTUDIO ANATOMOPATOLÓGICO EN CITOLOGÍA POR TINCIÓN DE HISTOQUIMICA (ESPECÍFICO)"},
-    {"code": "898003", "name": "ESTUDIO DE COLORACIÓN BÁSICA EN CITOLOGÍA POR ASPIRACIÓN DE CUALQUIER TEJIDO U ORGANO -ASPIRADO (BACAF)", "desc": "EJEMPLO: TIROIDES, GANGLIO LINFÁTICO, MAMA, E.T.C."},
-    {"code": "898002", "name": "ESTUDIO DE COLORACIÓN BÁSICA EN CITOLOGÍA DE LÍQUIDO CORPORAL O - SECRECION -LÍQUIDO CORPORAL", "desc": "EJEMPLO: PLEURAL, PERITONEAL, ASCÍTICO, LCR, ORINA, LAVADO, ESPUTO E.T.C."},
-    {"code": "898801", "name": "ESTUDIO POR CONGELACIÓN O CONSULTA INTRA-OPERATORIA.", "desc": "INCLUYE CORTES RÁPIDOS POR CONGELACIÓN, IMPRONTAS Y CONTROL DE CONGELACIÓN POSTERIOR EN HEMATOXILINA- EOSINA. INFORME PRELIMINAR Y FINAL."},
-    {"code": "898805", "name": "VERIFICACIÓN INTEGRAL SIN PREPARACIÓN DE MATERIAL DE RUTINA.", "desc": "REVISIÓN DE PLACAS POR ESPECIALISTA EN PATOLOGÍA"},
-    {"code": "8988809", "name": "ESTUDIO ANATOMOPATOLÓGICO EN BIOPSIA POR INMUNOFLUORESCENCIA", "desc": "ESTUDIO ANATOMOPATOLÓGICO EN BIOPSIA POR INMUNOFLUORESCENCIA (ESPECÍFICO)."},
-    {"code": "898304", "name": "ESTUDIO POS-MORTEM DE FETO Y PLACENTA: (HASTA 38 SEMANAS DE GESTACIÓN).", "desc": "INCLUYE DISECCIÓN DEL CADÁVER, ESTUDIO MACROSCÓPICO, MICROSCÓPICO, CORRELACIÓN CLÍNICO-PATOLÓGICO Y DIAGNÓSTICO FINAL. SE INCLUYE ADEMÁS TODAS LAS COLORACIONES ESPECIALES E INMUNOHISTOQUÍMICAS NECESARIAS."},
-    {"code": "898301", "name": "AUTOPSIA COMPLETA -NECROPSIA: (NEONATOS EN ADELANTE):", "desc": "INCLUYE DISECCIÓN DEL CADÁVER, ESTUDIO MACROSCÓPICO, MICROSCÓPICO, CORRELACIÓN CLÍNICO-PATOLÓGICO Y DIAGNÓSTICO FINAL.  SE INCLUYE ADEMÁS, TODAS LAS COLORACIONES ESPECIALES E INMUNOHISTOQUÍMICAS REQUERIDAS."},
+    {"code": "898101", "name": "Estudio de Coloración Básica en Biopsia", "desc": "Biopsia simple un (1) frasco con uno o varios fragmentos de tejido hasta 3 cm/cc. Ejemplos: endometrio, cuña de cérvix, cuña de piel, cureaje, tru-cut, biopsia renal, biopsia hepática, biopsias de colón o estómago."},
+    {"code": "898201", "name": "Estudio de Coloración Básica en Espécimen de Reconocimiento", "desc": "Espécimen quirúrgico no tumoral\nEjemplo: apéndice cecal, vesícula biliar, útero sin anexos, ovario no tumoral, mama sin tumor, etc."},
+    {"code": "898241", "name": "Estudio de Coloración Básica en Espécimen con Resección de Márgenes", "desc": "Espécimen quirúrgico por condición tumoral:\nEjemplo: mama, amputación, estómago, colon, útero por NIC/carcinoma o con anexos y cérvix conización."},
+    {"code": "898102", "name": "Estudio Biopsia en Médula Ósea", "desc": "Sin coloraciones especiales ni inmunohistoquímica"},
+    {"code": "898807-1", "name": "Estudio Anatomopatológico de Marcación Inmunohistoquímica", "desc": "Inmunohistoquímica básica (específico) sin lectura: cada marcador en bloque de parafina o placa cargada. Ejemplo: CD3, CKIT, actina de músculo liso, S100, HMB45, etc. (ver listado adjunto de anticuerpos disponibles)"},
+    {"code": "898807", "name": "Estudio Anatomopatológico de Marcación Inmunohistoquímica", "desc": "Inmunohistoquímica básica (específico): cada marcador en bloque de parafina o placa cargada.\nEjemplo: CD3, CKIT, actina de músculo liso, S100, HMB45, etc. (ver listado adjunto de anticuerpos disponibles)"},
+    {"code": "898812", "name": "Estudio Anatomopatológico de Marcación Inmunohistoquímica Especial", "desc": "Inmunohistoquímica de alta complejidad: cada marcador tumoral en placa cargada\nEjemplo: SOX-11, PAX5, C4D, SV40, C-ERB2, receptores de estrógenos y progesterona, etc. (ver listado adjunto de anticuerpos disponibles)."},
+    {"code": "898813", "name": "Estudio Anatomopatológico de Marcación Inmunohistoquímica Especial", "desc": "Inmunohistoquímica especiales: cada marcador tumoral en placa cargada\nEjemplo: ATRX, IDH1, MUC1, PD1, PD-L1, perforina, PIT-1, TPIT, etc. (ver listado adjunto de anticuerpos disponibles)."},
+    {"code": "898018", "name": "Estudio Anatomopatológico por Inmunohistoquímica", "desc": "Estudio anatomopatológico por inmunohistoquímica (marcador específico) en biopsia de médula ósea"},
+    {"code": "898808", "name": "Estudio Anatomopatológico en Biopsia por Tinción Histoquímica", "desc": "Coloraciones especiales: tricrómico, retículo, hierro, plata metenamina, HPTA cerebro, rojo congo, cristal violeta, Wartin Starry, etc. 38 coloraciones disponibles (ver listado adjunto)"},
+    {"code": "898809", "name": "Estudio Anatomopatológico en Biopsia por Tinción Histoquímica", "desc": "Coloraciones especiales: tricrómico, retículo, hierro, plata metenamina, HPTA cerebro, rojo congo, cristal violeta, Wartin Starry, etc. 38 coloraciones disponibles (ver listado adjunto)"},
+    {"code": "898017", "name": "Estudio Anatomopatológico en Citología", "desc": "Estudio anatomopatológico en citología por tinción de histoquímica (específico)"},
+    {"code": "898003", "name": "Estudio de Coloración Básica en Citología por Aspiración de Cualquier Tejido u Órgano - Aspirado (BACAF)", "desc": "Ejemplo: tiroides, ganglio linfático, mama, etc."},
+    {"code": "898002", "name": "Estudio de Coloración Básica en Citología de Líquido Corporal o Secreción - Líquido Corporal", "desc": "Ejemplo: pleural, peritoneal, ascítico, LCR, orina, lavado, esputo, etc."},
+    {"code": "898801", "name": "Estudio por Congelación o Consulta Intra-operatoria", "desc": "Incluye cortes rápidos por congelación, improntas y control de congelación posterior en hematoxilina-eosina. Informe preliminar y final."},
+    {"code": "898805", "name": "Verificación Integral sin Preparación de Material de Rutina", "desc": "Revisión de placas por especialista en patología"},
+    {"code": "898809", "name": "Estudio Anatomopatológico en Biopsia por Inmunofluorescencia", "desc": "Estudio anatomopatológico en biopsia por inmunofluorescencia (específico)."},
+    {"code": "898304", "name": "Estudio Pos-mortem de Feto y Placenta (Hasta 38 Semanas de Gestación)", "desc": "Incluye disección del cadáver, estudio macroscópico, microscópico, correlación clínico-patológico y diagnóstico final. Se incluye además todas las coloraciones especiales e inmunohistoquímicas necesarias."},
+    {"code": "898301", "name": "Autopsia Completa - Necropsia (Neonatos en Adelante)", "desc": "Incluye disección del cadáver, estudio macroscópico, microscópico, correlación clínico-patológico y diagnóstico final. Se incluye además, todas las coloraciones especiales e inmunohistoquímicas requeridas."},
 ]
 
 
@@ -106,7 +106,7 @@ async def import_tests(dry_run: bool) -> Tuple[int, int]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Import tests (pruebas) from embedded list with tiempo=5 days")
+    parser = argparse.ArgumentParser(description="Import tests (pruebas) from embedded list with tiempo=6 hours")
     parser.add_argument("--dry-run", action="store_true", help="Do not write to DB, just preview")
     args = parser.parse_args()
 

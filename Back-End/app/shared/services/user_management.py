@@ -3,7 +3,7 @@
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.config.security import get_password_hash
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 
 
@@ -77,6 +77,27 @@ class UserManagementService:
         """
         return await self._create_user_with_role(name, email, password, "residente", is_active)
     
+    async def create_user_for_administrator(
+        self,
+        name: str,
+        email: str,
+        password: str,
+        is_active: bool = True
+    ) -> Optional[dict]:
+        """
+        Crear un usuario en la colección usuarios para un administrador
+        
+        Args:
+            name: Nombre completo del administrador
+            email: Email del administrador
+            password: Contraseña en texto plano
+            is_active: Estado activo del usuario
+            
+        Returns:
+            dict: Documento del usuario creado o None si falla
+        """
+        return await self._create_user_with_role(name, email, password, "administrador", is_active)
+    
     async def _create_user_with_role(
         self,
         name: str,
@@ -114,8 +135,8 @@ class UserManagementService:
                 "rol": role,
                 "password_hash": password_hash,
                 "is_active": is_active,
-                "fecha_creacion": datetime.utcnow(),
-                "fecha_actualizacion": datetime.utcnow()
+                "fecha_creacion": datetime.now(timezone.utc),
+                "fecha_actualizacion": datetime.now(timezone.utc)
             }
             
             # Insertar en la base de datos

@@ -13,44 +13,54 @@ class Settings(BaseSettings):
     DESCRIPTION: str = "Sistema de Información de Laboratorio - Patología"
     
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if not v:
+            raise ValueError("SECRET_KEY debe estar configurada en producción")
+        if len(v) < 32:
+            raise ValueError("SECRET_KEY debe tener al menos 32 caracteres")
+        return v
     
     # MongoDB Configuration
     MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
     DATABASE_NAME: str = os.getenv("DATABASE_NAME", "lime_pathsys")
     
+    @field_validator("MONGODB_URL")
+    @classmethod
+    def validate_mongodb_url(cls, v: str) -> str:
+        if not v.startswith(("mongodb://", "mongodb+srv://")):
+            raise ValueError("MONGODB_URL debe ser una URL válida de MongoDB")
+        return v
+    
     # CORS Configuration
     BACKEND_CORS_ORIGINS: List[str] = [
+        # Desarrollo local
         "http://localhost:3000",
         "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-        "http://localhost:5177",
-        "http://localhost:5178",
-        "http://localhost:5179",
-        "http://localhost:5180",
         "http://localhost:8080",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:5175",
-        "http://127.0.0.1:5176",
-        "http://127.0.0.1:5177",
-        "http://127.0.0.1:5178",
-        "http://127.0.0.1:5179",
-        "http://127.0.0.1:5180",
         "http://127.0.0.1:8080",
-        # Agregar orígenes para Docker
+        # Docker
         "http://frontend:3000",
-        "http://localhost:3000"
+        # Agregar más puertos si es necesario
     ]
     
     # Environment
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
+    
+    # Database Indexes
+    CREATE_INDEXES_ON_STARTUP: bool = os.getenv("CREATE_INDEXES_ON_STARTUP", "True").lower() == "true"
+    
+    # Logging
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    LOG_FORMAT: str = os.getenv("LOG_FORMAT", "json")
     
     # File Storage
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")

@@ -1,5 +1,5 @@
 """Modelos de autenticación"""
 
-from .auth import AuthUser, TokenData
+from .auth import AuthUser
 
-__all__ = ["AuthUser", "TokenData"]
+__all__ = ["AuthUser"]

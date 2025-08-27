@@ -6,8 +6,11 @@ from app.modules.auth.models.auth import AuthUser
 from app.core.exceptions import NotFoundError
 from app.config.security import verify_password as verify_pwd
 from bson import ObjectId
+from datetime import datetime, timezone
+import logging
 
-
+# Configurar logger
+logger = logging.getLogger(__name__)
 class AuthRepository:
     """Repositorio para operaciones de autenticación"""
     
@@ -17,14 +20,10 @@ class AuthRepository:
     
     async def get_user_by_email(self, email: str) -> Optional[AuthUser]:
         """Obtener usuario por email"""
-        # Buscar usuario activo (puede tener campo 'activo' o 'is_active')
+        # Buscar usuario activo usando el campo real de la BD
         user_doc = await self.collection.find_one({
             "email": email,
-            "$or": [
-                {"activo": True},
-                {"is_active": True},
-                {"activo": {"$exists": False}, "is_active": {"$exists": False}}  # Si no tiene campo de activo, considerar activo
-            ]
+            "is_active": True
         })
         if not user_doc:
             return None
@@ -33,33 +32,14 @@ class AuthRepository:
         user_doc["id"] = str(user_doc["_id"])
         del user_doc["_id"]
         
-        # Normalizar campos para compatibilidad
-        if "is_active" in user_doc and "activo" not in user_doc:
-            user_doc["activo"] = user_doc["is_active"]
-        
-        # Asegurar que tenga username
-        if "username" not in user_doc or not user_doc["username"]:
-            user_doc["username"] = user_doc.get("nombre", user_doc["email"])
-        
-        # Manejar nombres y apellidos desde el campo 'nombre'
-        if "nombre" in user_doc and not user_doc.get("nombres"):
-            nombre_completo = user_doc["nombre"].split()
-            if len(nombre_completo) >= 2:
-                user_doc["nombres"] = " ".join(nombre_completo[:-1])
-                user_doc["apellidos"] = nombre_completo[-1]
-            else:
-                user_doc["nombres"] = user_doc["nombre"]
-                user_doc["apellidos"] = ""
-        
-        # Asegurar que tenga rol como lista para compatibilidad
-        if "rol" in user_doc and "roles" not in user_doc:
-            user_doc["roles"] = [user_doc["rol"]]
-        
         return AuthUser(**user_doc)
     
     async def get_user_by_username(self, username: str) -> Optional[AuthUser]:
-        """Obtener usuario por nombre de usuario"""
-        user_doc = await self.collection.find_one({"username": username, "activo": True})
+        """Obtener usuario por nombre de usuario (usando nombre completo)"""
+        user_doc = await self.collection.find_one({
+            "nombre": username,
+            "is_active": True
+        })
         if not user_doc:
             return None
         
@@ -72,7 +52,15 @@ class AuthRepository:
     async def get_user_by_id(self, user_id: str) -> Optional[AuthUser]:
         """Obtener usuario por ID"""
         try:
-            user_doc = await self.collection.find_one({"_id": ObjectId(user_id), "activo": True})
+            # Validar formato de ObjectId
+            if not ObjectId.is_valid(user_id):
+                logger.warning(f"ID de usuario inválido: {user_id}")
+                return None
+            
+            user_doc = await self.collection.find_one({
+                "_id": ObjectId(user_id),
+                "is_active": True
+            })
             if not user_doc:
                 return None
             
@@ -81,49 +69,48 @@ class AuthRepository:
             del user_doc["_id"]
             
             return AuthUser(**user_doc)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error obteniendo usuario por ID {user_id}: {str(e)}")
             return None
     
     async def verify_password(self, email: str, password: str) -> bool:
         """Verificar contraseña del usuario"""
-        # Buscar usuario activo (puede tener campo 'activo' o 'is_active')
+        # Buscar usuario activo usando el campo real de la BD
         user_doc = await self.collection.find_one({
             "email": email,
-            "$or": [
-                {"activo": True},
-                {"is_active": True},
-                {"activo": {"$exists": False}, "is_active": {"$exists": False}}  # Si no tiene campo de activo, considerar activo
-            ]
+            "is_active": True
         })
         if not user_doc:
             return False
         
-        # Verificar si tiene password_hash (hasheado) o password (simple)
-        stored_password = user_doc.get("password_hash") or user_doc.get("password")
+        # Verificar si tiene password_hash (hasheado)
+        stored_password_hash = user_doc.get("password_hash")
         
-        if not stored_password:
+        if not stored_password_hash:
+            # Si no tiene password_hash, no permitir autenticación
+            logger.warning(f"Usuario {email} no tiene contraseña hasheada")
             return False
-        
-        # Si tiene password_hash, verificar con bcrypt
-        if user_doc.get("password_hash"):
-            try:
-                return verify_pwd(password, stored_password)
-            except Exception as e:
-                print(f"Error verificando password: {e}")
-                return False
-        else:
-            # Comparación simple para passwords no hasheados
-            return stored_password == password
+        # Verificar con bcrypt
+        try:
+            return verify_pwd(password, stored_password_hash)
+        except Exception as e:
+            # Log del error pero no exponer detalles
+            logger.error(f"Error verificando password hash para {email}: {str(e)}")
+            return False
     
     async def update_last_login(self, user_id: str) -> bool:
         """Actualizar último acceso del usuario"""
-        from datetime import datetime
-        
         try:
+            # Validar formato de ObjectId
+            if not ObjectId.is_valid(user_id):
+                logger.warning(f"ID de usuario inválido para actualizar último acceso: {user_id}")
+                return False
+            
             result = await self.collection.update_one(
                 {"_id": ObjectId(user_id)},
-                {"$set": {"ultimo_acceso": datetime.utcnow()}}
+                {"$set": {"ultimo_acceso": datetime.now(timezone.utc)}}
             )
             return result.modified_count > 0
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error actualizando último acceso para usuario {user_id}: {str(e)}")
             return False

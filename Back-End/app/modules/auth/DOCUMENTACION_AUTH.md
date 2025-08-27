@@ -3,23 +3,50 @@
 ## 🔐 IMPORTANTE: MÓDULO DE SEGURIDAD
 **Este módulo maneja la autenticación y autorización del sistema.** Todos los endpoints relacionados con login, tokens y gestión de usuarios están centralizados aquí. Es fundamental para la seguridad del sistema.
 
+### Características de Seguridad
+- **Rate Limiting**: Protección contra ataques de fuerza bruta (5 intentos por 5 minutos)
+- **Validación de Roles**: Verificación automática contra RolEnum
+- **Contraseñas Hasheadas**: Solo se permiten contraseñas con hash bcrypt
+- **Logging Estructurado**: Auditoría completa de intentos de acceso
+- **Validación de Tokens**: Verificación de tipo y expiración
+- **Manejo de Excepciones**: Respuestas de error seguras sin información sensible
+
 ## Estructura del Modelo
 
-### Campos del Modelo AuthUser
+### Campos del Modelo AuthUser (Coincide con la BD)
 ```json
 {
     "id": "string (ID único del usuario)",
     "email": "string (email único del usuario)",
-    "rol": "string (rol único: admin, patologo, recepcionista)",
-    "activo": "boolean (estado activo/inactivo)",
+    "nombre": "string (nombre completo del usuario)",
+    "rol": "string (rol del usuario: administrador, patologo, auxiliar, residente, paciente)",
+    "is_active": "boolean (estado activo del usuario)",
+    "fecha_creacion": "datetime (fecha de creación)",
+    "fecha_actualizacion": "datetime (fecha de actualización)",
     "ultimo_acceso": "datetime (fecha del último acceso, opcional)"
 }
 ```
 
-### Roles Disponibles
-- `admin` - Administrador del sistema con acceso completo
+### Estructura Real en la Base de Datos
+```json
+{
+    "_id": "ObjectId",
+    "nombre": "Leiby Alejandra Medina Zuluaica",
+    "email": "32108690.lam@udea.edu.co",
+    "rol": "patologo",
+    "password_hash": "$2b$12$h3S8PCm75/bPWsCIhdd1bOaHVlrT6509jQFB0nEBaUM0kw6d0P8Oq",
+    "is_active": true,
+    "fecha_creacion": "2025-08-27T18:51:40.717Z",
+    "fecha_actualizacion": "2025-08-27T18:51:40.717Z"
+}
+```
+
+### Roles Disponibles (Validados contra RolEnum)
+- `administrador` - Administrador del sistema con acceso completo
 - `patologo` - Patólogo que realiza diagnósticos
-- `recepcionista` - Personal de recepción
+- `auxiliar` - Personal auxiliar del laboratorio
+- `residente` - Médico residente en patología
+- `paciente` - Paciente del sistema (acceso limitado)
 
 ### Estados Disponibles
 - `true` - Usuario activo y puede acceder al sistema
@@ -27,12 +54,18 @@
 
 ### Campos Requeridos para Login
 - `email`: Email único válido del usuario
-- `password`: Contraseña del usuario (mínimo 6 caracteres)
+- `password`: Contraseña del usuario (mínimo 6, máximo 128 caracteres)
 
 ## Endpoints Disponibles
 
 ### 1. POST http://localhost:8000/api/v1/auth/login
 **Iniciar sesión en el sistema**
+
+**Protección de Seguridad:**
+- Rate limiting: 5 intentos por 5 minutos por email
+- Validación de contraseñas hasheadas
+- Verificación de usuario activo
+- Validación de roles contra RolEnum
 
 Body:
 ```json
@@ -46,39 +79,56 @@ Response 200:
 ```json
 {
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
     "token_type": "bearer",
-    "expires_in": 3600,
+    "expires_in": 86400,
     "user": {
         "id": "507f1f77bcf86cd799439011",
         "email": "usuario@ejemplo.com",
+        "nombre": "Juan Pérez",
         "rol": "patologo",
-        "activo": true,
-        "ultimo_acceso": "2024-01-15T10:30:00Z"
+        "roles": ["patologo"]
     }
+}
+```
+
+Response 429 (Rate Limit):
+```json
+{
+    "detail": "Demasiados intentos de login. Intente nuevamente en 5 minutos."
 }
 ```
 
 ### 2. POST http://localhost:8000/api/v1/auth/refresh
 **Renovar token de acceso**
 
-Headers:
-```
-Authorization: Bearer {access_token}
-```
+**Protección de Seguridad:**
+- Validación de tipo de token (debe ser "refresh")
+- Verificación de usuario activo
+- Validación de roles actualizados
 
-Body: (sin body)
+Body:
+```json
+{
+    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+}
+```
 
 Response 200:
 ```json
 {
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
     "token_type": "bearer",
-    "expires_in": 3600
+    "expires_in": 86400
 }
 ```
 
 ### 3. POST http://localhost:8000/api/v1/auth/logout
 **Cerrar sesión**
+
+**Protección de Seguridad:**
+- Validación de token de acceso
+- Logging de sesiones cerradas
 
 Headers:
 ```
@@ -97,6 +147,11 @@ Response 200:
 ### 4. GET http://localhost:8000/api/v1/auth/me
 **Obtener información del usuario actual**
 
+**Protección de Seguridad:**
+- Validación de token de acceso
+- Verificación de usuario activo
+- Respuesta consistente con login
+
 Headers:
 ```
 Authorization: Bearer {access_token}
@@ -109,14 +164,21 @@ Response 200:
 {
     "id": "507f1f77bcf86cd799439011",
     "email": "usuario@ejemplo.com",
-    "rol": "patologo",
+    "username": "usuario",
+    "nombres": "Juan",
+    "apellidos": "Pérez",
+    "roles": ["patologo"],
     "activo": true,
     "ultimo_acceso": "2024-01-15T10:30:00Z"
 }
 ```
 
-### 5. POST http://localhost:8000/api/v1/auth/verify-token
+### 5. GET http://localhost:8000/api/v1/auth/verify
 **Verificar validez del token**
+
+**Protección de Seguridad:**
+- Validación de token de acceso
+- Cálculo de tiempo restante
 
 Headers:
 ```
@@ -131,8 +193,9 @@ Response 200:
     "valid": true,
     "user_id": "507f1f77bcf86cd799439011",
     "email": "usuario@ejemplo.com",
-    "rol": "patologo",
-    "expires_at": "2024-01-15T11:30:00Z"
+    "username": "usuario",
+    "roles": ["patologo"],
+    "expires_in": 7200
 }
 ```
 
@@ -179,178 +242,5 @@ Response 200:
 }
 ```
 
-### 500 Internal Server Error
-```json
-{
-    "detail": "Error interno del servidor"
-}
+### 429 Too Many Requests
 ```
-
-## Validaciones
-
-### Campos Únicos
-- `email`: Debe ser único en todo el sistema
-
-### Reglas de Validación
-
-1. **email**: Formato de email válido, único en el sistema
-2. **password**: Mínimo 6 caracteres para login
-3. **rol**: Debe ser uno de los valores permitidos (admin, patologo, recepcionista)
-4. **activo**: Valor booleano (true/false)
-
-### Seguridad del Token
-
-1. **Expiración**: Los tokens tienen una duración de 1 hora (3600 segundos)
-2. **Algoritmo**: JWT con algoritmo HS256
-3. **Payload**: Contiene user_id, email, rol, fecha de emisión y expiración
-4. **Renovación**: Los tokens pueden renovarse antes de su expiración
-
-## Casos de Uso
-
-1. **Autenticación de Usuarios**
-   - Login con email y contraseña
-   - Verificación de credenciales
-   - Generación de tokens de acceso
-
-2. **Gestión de Sesiones**
-   - Mantenimiento de sesiones activas
-   - Renovación automática de tokens
-   - Cierre de sesión seguro
-
-3. **Control de Acceso**
-   - Verificación de permisos por rol
-   - Validación de tokens en cada request
-   - Control de usuarios activos/inactivos
-
-4. **Seguridad**
-   - Protección contra accesos no autorizados
-   - Gestión segura de contraseñas
-   - Auditoría de accesos
-
-## Notas Importantes
-
-1. **Tokens JWT**: Se utilizan tokens JWT para mantener la sesión
-2. **Expiración**: Los tokens expiran en 1 hora y deben renovarse
-3. **Roles**: Cada usuario tiene un único rol que determina sus permisos
-4. **Estado Activo**: Solo usuarios activos pueden iniciar sesión
-5. **Email Único**: Cada usuario debe tener un email único
-6. **Último Acceso**: Se registra automáticamente en cada login exitoso
-
-## Ejemplos de Integración
-
-### 1. Login de usuario
-```bash
-curl -X POST "http://localhost:8000/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "patologo@hospital.com",
-    "password": "contraseña123"
-  }'
-```
-
-### 2. Obtener información del usuario actual
-```bash
-curl "http://localhost:8000/api/v1/auth/me" \
-  -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
-```
-
-### 3. Renovar token
-```bash
-curl -X POST "http://localhost:8000/api/v1/auth/refresh" \
-  -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
-```
-
-### 4. Verificar token
-```bash
-curl -X POST "http://localhost:8000/api/v1/auth/verify-token" \
-  -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
-```
-
-### 5. Cerrar sesión
-```bash
-curl -X POST "http://localhost:8000/api/v1/auth/logout" \
-  -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
-```
-
-### 6. Ejemplo de flujo completo de autenticación
-```bash
-# 1. Login y obtener token
-TOKEN=$(curl -s -X POST "http://localhost:8000/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@hospital.com",
-    "password": "admin123"
-  }' | jq -r '.access_token')
-
-# 2. Usar token para obtener información del usuario
-curl "http://localhost:8000/api/v1/auth/me" \
-  -H "Authorization: Bearer $TOKEN"
-
-# 3. Verificar que el token es válido
-curl -X POST "http://localhost:8000/api/v1/auth/verify-token" \
-  -H "Authorization: Bearer $TOKEN"
-
-# 4. Renovar token antes de que expire
-NEW_TOKEN=$(curl -s -X POST "http://localhost:8000/api/v1/auth/refresh" \
-  -H "Authorization: Bearer $TOKEN" | jq -r '.access_token')
-
-# 5. Cerrar sesión
-curl -X POST "http://localhost:8000/api/v1/auth/logout" \
-  -H "Authorization: Bearer $NEW_TOKEN"
-```
-
-## Estructura de Datos del Token
-
-### Payload del JWT
-```json
-{
-    "user_id": "507f1f77bcf86cd799439011",
-    "email": "usuario@ejemplo.com",
-    "rol": "patologo",
-    "exp": 1642680000,
-    "iat": 1642676400
-}
-```
-
-### Headers del JWT
-```json
-{
-    "typ": "JWT",
-    "alg": "HS256"
-}
-```
-
-## Middleware de Autenticación
-
-Para proteger endpoints, se debe incluir el header de autorización:
-
-```
-Authorization: Bearer {access_token}
-```
-
-El sistema validará automáticamente:
-1. Formato correcto del token
-2. Firma válida del token
-3. Token no expirado
-4. Usuario activo en el sistema
-5. Permisos adecuados según el rol
-
-## Roles y Permisos
-
-### Admin
-- Acceso completo al sistema
-- Gestión de usuarios
-- Configuración del sistema
-- Todos los módulos disponibles
-
-### Patologo
-- Gestión de casos y diagnósticos
-- Firma de resultados
-- Consulta de información de pacientes
-- Acceso a módulos de patología
-
-### Recepcionista
-- Registro de pacientes
-- Gestión de citas
-- Consulta básica de información
-- Módulos de recepción y administración básica

@@ -4,38 +4,36 @@ from typing import Optional, List, Union
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 from app.shared.schemas.common import RolEnum
-
-
 class AuthUser(BaseModel):
-    """Modelo de usuario para autenticación"""
+    """Modelo de usuario para autenticación - Coincide con la estructura de la BD"""
     id: str = Field(..., description="ID del usuario")
     email: EmailStr = Field(..., description="Email del usuario")
     nombre: Optional[str] = Field(None, description="Nombre completo del usuario")
-    # Compatibilidad con diferentes campos de nombre
-    nombres: Optional[str] = Field(None, description="Nombres del usuario")
-    apellidos: Optional[str] = Field(None, description="Apellidos del usuario")
-    username: Optional[str] = Field(None, description="Nombre de usuario")
-    # Manejar tanto 'rol' como 'roles' para compatibilidad
-    rol: Optional[Union[RolEnum, str]] = Field(None, description="Rol principal del usuario")
-    roles: Optional[List[Union[RolEnum, str]]] = Field(None, description="Roles del usuario")
-    # Manejar tanto 'activo' como 'is_active'
-    activo: Optional[bool] = Field(None, description="Estado del usuario")
+    rol: Optional[Union[RolEnum, str]] = Field(None, description="Rol del usuario")
     is_active: Optional[bool] = Field(None, description="Estado activo del usuario")
     fecha_creacion: Optional[datetime] = Field(None, description="Fecha de creación")
     fecha_actualizacion: Optional[datetime] = Field(None, description="Fecha de actualización")
     ultimo_acceso: Optional[datetime] = Field(None, description="Último acceso")
-    
     class Config:
         from_attributes = True
-
-
-class TokenData(BaseModel):
-    """Datos del token de autenticación"""
-    user_id: str = Field(..., description="ID del usuario")
-    email: str = Field(..., description="Email del usuario")
-    rol: str = Field(..., description="Rol del usuario")
-    exp: datetime = Field(..., description="Fecha de expiración")
-    iat: datetime = Field(..., description="Fecha de emisión")
     
-    class Config:
-        from_attributes = True
+    def get_primary_role(self) -> str:
+        """Obtener el rol principal del usuario"""
+        if self.rol:
+            return self.rol.value if hasattr(self.rol, 'value') else str(self.rol)
+        return "user"
+    
+    def get_all_roles(self) -> List[str]:
+        """Obtener todos los roles como strings (compatibilidad con sistema de múltiples roles)"""
+        if self.rol:
+            role_str = self.rol.value if hasattr(self.rol, 'value') else str(self.rol)
+            return [role_str]
+        return ["user"]
+    
+    def is_user_active(self) -> bool:
+        """Verificar si el usuario está activo"""
+        return self.is_active if self.is_active is not None else True
+    
+    def get_display_name(self) -> str:
+        """Obtener nombre para mostrar (nombre completo o email)"""
+        return self.nombre or self.email

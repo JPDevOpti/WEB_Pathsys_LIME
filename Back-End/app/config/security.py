@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Union, Optional
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -12,9 +12,9 @@ def create_access_token(
 ) -> str:
     """Crear token de acceso JWT"""
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     
@@ -47,4 +47,28 @@ def verify_token(token: str) -> Optional[str]:
     payload = decode_token(token)
     if payload is None:
         return None
+    
+    # Verificar expiración
+    exp = payload.get("exp")
+    if exp is None:
+        return None
+    
+    # Convertir timestamp a datetime para comparación
+    exp_datetime = datetime.fromtimestamp(exp, tz=timezone.utc)
+    if datetime.now(timezone.utc) > exp_datetime:
+        return None
+    
     return payload.get("sub")
+
+def is_token_expired(token: str) -> bool:
+    """Verificar si un token ha expirado"""
+    payload = decode_token(token)
+    if payload is None:
+        return True
+    
+    exp = payload.get("exp")
+    if exp is None:
+        return True
+    
+    exp_datetime = datetime.fromtimestamp(exp, tz=timezone.utc)
+    return datetime.now(timezone.utc) > exp_datetime

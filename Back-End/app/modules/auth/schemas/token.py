@@ -16,7 +16,7 @@ class Token(BaseModel):
             "example": {
                 "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
                 "token_type": "bearer",
-                "expires_in": 3600
+                "expires_in": 86400
             }
         }
 
@@ -29,6 +29,7 @@ class TokenPayload(BaseModel):
     roles: List[str] = Field(..., description="Roles del usuario")
     exp: datetime = Field(..., description="Fecha de expiración")
     iat: datetime = Field(..., description="Fecha de emisión")
+    type: str = Field(..., description="Tipo de token (access/refresh)")
     
     class Config:
         json_schema_extra = {
@@ -38,7 +39,8 @@ class TokenPayload(BaseModel):
                 "username": "usuario",
                 "roles": ["patologo"],
                 "exp": "2024-01-01T12:00:00Z",
-                "iat": "2024-01-01T11:00:00Z"
+                "iat": "2024-01-01T11:00:00Z",
+                "type": "access"
             }
         }
 

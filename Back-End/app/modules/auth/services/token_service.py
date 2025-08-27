@@ -1,7 +1,7 @@
 """Servicio de tokens"""
 
 from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from app.modules.auth.schemas.token import TokenPayload
 from app.config.settings import settings
@@ -27,7 +27,7 @@ class TokenService:
         roles: List[str]
     ) -> Dict[str, Any]:
         """Crear token de acceso"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expire = now + timedelta(minutes=self.access_token_expire_minutes)
         
         payload = {
@@ -56,7 +56,7 @@ class TokenService:
         roles: List[str]
     ) -> str:
         """Crear token de actualización"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expire = now + timedelta(days=self.refresh_token_expire_days)
         
         payload = {
@@ -71,14 +71,14 @@ class TokenService:
         
         return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
     
-    async def verify_token(self, token: str) -> Optional[TokenPayload]:
+    async def verify_token(self, token: str, expected_type: Optional[str] = None) -> Optional[TokenPayload]:
         """Verificar y decodificar token"""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             
             # Verificar expiración
             exp = payload.get("exp")
-            if exp and datetime.fromtimestamp(exp) < datetime.utcnow():
+            if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
                 return None
             
             # Validar campos requeridos
@@ -87,8 +87,13 @@ class TokenService:
             username = payload.get("username")
             exp_timestamp = payload.get("exp")
             iat_timestamp = payload.get("iat")
+            token_type = payload.get("type")
             
-            if not all([sub, email, username, exp_timestamp, iat_timestamp]):
+            if not all([sub, email, username, exp_timestamp, iat_timestamp, token_type]):
+                return None
+            
+            # Validar tipo de token si se especifica
+            if expected_type and token_type != expected_type:
                 return None
             
             return TokenPayload(
@@ -96,8 +101,9 @@ class TokenService:
                 email=str(email),
                 username=str(username),
                 roles=payload.get("roles", []),
-                exp=datetime.fromtimestamp(float(exp_timestamp)),
-                iat=datetime.fromtimestamp(float(iat_timestamp))
+                exp=datetime.fromtimestamp(float(exp_timestamp), tz=timezone.utc),
+                iat=datetime.fromtimestamp(float(iat_timestamp), tz=timezone.utc),
+                type=token_type
             )
         except JWTError:
             return None
@@ -125,7 +131,7 @@ class TokenService:
             )
             exp = payload.get("exp")
             if exp:
-                return datetime.fromtimestamp(exp) < datetime.utcnow()
+                return datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc)
             return True
         except JWTError:
             return True
@@ -141,7 +147,7 @@ class TokenService:
             )
             exp = payload.get("exp")
             if exp:
-                remaining = datetime.fromtimestamp(exp) - datetime.utcnow()
+                remaining = datetime.fromtimestamp(exp, tz=timezone.utc) - datetime.now(timezone.utc)
                 return max(0, int(remaining.total_seconds()))
             return 0
         except JWTError:
