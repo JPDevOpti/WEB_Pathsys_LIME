@@ -1,6 +1,7 @@
 import type { LoginRequest, LoginResponse, User } from '../types/auth.types'
+import { API_CONFIG } from '@/core/config/api.config'
 
-const API_BASE_URL = 'http://localhost:8000/api/v1'
+const API_BASE_URL = `${API_CONFIG.BASE_URL}${API_CONFIG.VERSION}`
 
 export class AuthApiService {
   private static instance: AuthApiService
