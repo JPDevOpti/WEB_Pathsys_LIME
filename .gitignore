@@ -1,0 +1,62 @@
+# ---- General ----
+.DS_Store
+Thumbs.db
+*.log
+logs/
+.tmp/
+.temp/
+.cache/
+.vscode/
+.idea/
+
+# ---- Environment / Secrets ----
+.env
+.env.*
+*.env
+
+# ---- Python (Back-End) ----
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+coverage.xml
+htmlcov/
+.eggs/
+*.egg-info/
+.build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Poetry / pip-tools (if used)
+poetry.lock
+pip-wheel-metadata/
+
+# ---- Node/Vue (Front-End) ----
+node_modules/
+Front-End/node_modules/
+Front-End/dist/
+dist/
+.next/
+.nuxt/
+.vite/
+Front-End/.vite/
+.cache-loader/
+
+# Build artifacts
+build/
+
+# ---- Docker ----
+**/.dockerignore
+
+# ---- Project runtime dirs ----
+Back-End/uploads/
+uploads/
+
+# ---- OS junk ----
+Icon?
