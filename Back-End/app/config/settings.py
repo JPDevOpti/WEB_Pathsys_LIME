@@ -50,6 +50,9 @@ class Settings(BaseSettings):
         # Render.com - URLs de producción
         "https://pathsys-frontend.onrender.com",
         "https://*.onrender.com"
+        ,
+        # Vercel - dominio del frontend
+        "https://web-pathsys-lime.vercel.app"
     ]
     
     # Environment
