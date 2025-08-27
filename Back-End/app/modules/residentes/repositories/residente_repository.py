@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
@@ -15,14 +15,14 @@ class ResidenteRepository(BaseRepository[Residente, ResidenteCreate, ResidenteUp
     
     async def get_by_email(self, email: str) -> Optional[Residente]:
         """Obtener residente por email"""
-        document = await self.collection.find_one({"ResidenteEmail": email})
+        document = await self.collection.find_one({"residente_email": email})
         if document:
             return self.model_class(**document)
         return None
     
     async def get_by_codigo(self, codigo: str) -> Optional[Residente]:
         """Obtener residente por código"""
-        document = await self.collection.find_one({"residenteCode": codigo})
+        document = await self.collection.find_one({"residente_code": codigo})
         if document:
             return self.model_class(**document)
         return None
@@ -38,44 +38,44 @@ class ResidenteRepository(BaseRepository[Residente, ResidenteCreate, ResidenteUp
         """Buscar residentes con filtros avanzados"""
         query = {}
         
-        # Construir query OR para búsqueda por múltiples campos si solo se proporciona residenteName
-        if search_params.residenteName and not any([
-            search_params.InicialesResidente, 
-            search_params.residenteCode, 
-            search_params.ResidenteEmail, 
+        # Construir query OR para búsqueda por múltiples campos si solo se proporciona residente_name
+        if search_params.residente_name and not any([
+            search_params.iniciales_residente, 
+            search_params.residente_code, 
+            search_params.residente_email, 
             search_params.registro_medico
         ]):
             # Si solo se proporciona nombre, buscar en múltiples campos
-            search_term = search_params.residenteName
+            search_term = search_params.residente_name
             query["$or"] = [
-                {"residenteName": {"$regex": search_term, "$options": "i"}},
-                {"residenteCode": {"$regex": search_term, "$options": "i"}},
-                {"ResidenteEmail": {"$regex": search_term, "$options": "i"}},
+                {"residente_name": {"$regex": search_term, "$options": "i"}},
+                {"residente_code": {"$regex": search_term, "$options": "i"}},
+                {"residente_email": {"$regex": search_term, "$options": "i"}},
                 {"registro_medico": {"$regex": search_term, "$options": "i"}}
             ]
         else:
             # Búsqueda específica por campos individuales
-            if search_params.residenteName:
-                query["residenteName"] = {"$regex": search_params.residenteName, "$options": "i"}
+            if search_params.residente_name:
+                query["residente_name"] = {"$regex": search_params.residente_name, "$options": "i"}
             
-            if search_params.InicialesResidente:
-                query["InicialesResidente"] = {"$regex": search_params.InicialesResidente, "$options": "i"}
+            if search_params.iniciales_residente:
+                query["iniciales_residente"] = {"$regex": search_params.iniciales_residente, "$options": "i"}
             
-            if search_params.residenteCode:
-                query["residenteCode"] = {"$regex": search_params.residenteCode, "$options": "i"}
+            if search_params.residente_code:
+                query["residente_code"] = {"$regex": search_params.residente_code, "$options": "i"}
             
-            if search_params.ResidenteEmail:
-                query["ResidenteEmail"] = {"$regex": search_params.ResidenteEmail, "$options": "i"}
+            if search_params.residente_email:
+                query["residente_email"] = {"$regex": search_params.residente_email, "$options": "i"}
             
             if search_params.registro_medico:
                 query["registro_medico"] = {"$regex": search_params.registro_medico, "$options": "i"}
         
         # Aplicar filtro de estado activo
-        if search_params.isActive is not None:
-            query["isActive"] = search_params.isActive
+        if search_params.is_active is not None:
+            query["is_active"] = search_params.is_active
         else:
             # Por defecto, solo mostrar activos en búsquedas generales
-            query["isActive"] = True
+            query["is_active"] = True
         
         cursor = self.collection.find(query).skip(skip).limit(limit)
         documents = await cursor.to_list(length=limit)
@@ -137,10 +137,10 @@ class ResidenteRepository(BaseRepository[Residente, ResidenteCreate, ResidenteUp
             return None
         
         # Cambiar el estado
-        nuevo_estado = not residente.isActive
+        nuevo_estado = not residente.is_active
         
         # Crear objeto de actualización
-        update_data = {"isActive": nuevo_estado, "fecha_actualizacion": datetime.utcnow()}
+        update_data = {"is_active": nuevo_estado, "fecha_actualizacion": datetime.now(timezone.utc)}
         
         # Actualizar en la base de datos
         result = await self.collection.update_one(
@@ -160,11 +160,11 @@ class ResidenteRepository(BaseRepository[Residente, ResidenteCreate, ResidenteUp
         else:
             obj_data = obj_in.dict(by_alias=False, exclude={'password'})
         
-        obj_data["fecha_creacion"] = datetime.utcnow()
-        obj_data["fecha_actualizacion"] = datetime.utcnow()
-        # Asegurar que isActive esté presente si no se especifica
-        if "isActive" not in obj_data:
-            obj_data["isActive"] = True
+        obj_data["fecha_creacion"] = datetime.now(timezone.utc)
+        obj_data["fecha_actualizacion"] = datetime.now(timezone.utc)
+        # Asegurar que is_active esté presente si no se especifica
+        if "is_active" not in obj_data:
+            obj_data["is_active"] = True
         
         try:
             result = await self.collection.insert_one(obj_data)

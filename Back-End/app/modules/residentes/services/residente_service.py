@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.modules.residentes.repositories.residente_repository import ResidenteRepository
 from app.modules.residentes.models.residente import Residente
@@ -26,17 +26,17 @@ class ResidenteService:
     async def create_residente(self, residente_data: ResidenteCreate) -> ResidenteResponse:
         """Crear un nuevo residente y su usuario correspondiente"""
         # Verificar que el email no esté en uso en residentes
-        existing_email = await self.residente_repository.get_by_email(residente_data.ResidenteEmail)
+        existing_email = await self.residente_repository.get_by_email(residente_data.residente_email)
         if existing_email:
             raise ConflictError("El email ya está registrado en residentes")
         
         # Verificar que el email no esté en uso en usuarios
-        email_exists_in_users = await self.user_management_service.check_email_exists_in_users(residente_data.ResidenteEmail)
+        email_exists_in_users = await self.user_management_service.check_email_exists_in_users(residente_data.residente_email)
         if email_exists_in_users:
             raise ConflictError("El email ya está registrado en usuarios")
         
         # Verificar que el código no esté en uso
-        existing_codigo = await self.residente_repository.get_by_codigo(residente_data.residenteCode)
+        existing_codigo = await self.residente_repository.get_by_codigo(residente_data.residente_code)
         if existing_codigo:
             raise ConflictError("El código ya está registrado")
         
@@ -58,10 +58,10 @@ class ResidenteService:
             
             # Crear el usuario en la colección usuarios con rol "residente"
             user = await self.user_management_service.create_user_for_resident(
-                name=residente_data.residenteName,
-                email=residente_data.ResidenteEmail,
+                name=residente_data.residente_name,
+                email=residente_data.residente_email,
                 password=password,
-                is_active=residente_data.isActive
+                is_active=residente_data.is_active
             )
             
             return self._to_response(residente)
@@ -111,14 +111,14 @@ class ResidenteService:
             raise NotFoundError("Residente no encontrado")
         
         # Verificar unicidad del email si se está actualizando
-        if residente_data.ResidenteEmail:
-            existing_email = await self.residente_repository.get_by_email(residente_data.ResidenteEmail)
+        if residente_data.residente_email:
+            existing_email = await self.residente_repository.get_by_email(residente_data.residente_email)
             if existing_email and str(existing_email.id) != str(existing_residente.id):
                 raise ConflictError("El email ya está registrado por otro residente")
         
         # Verificar unicidad del código si se está actualizando
-        if residente_data.residenteCode:
-            existing_codigo = await self.residente_repository.get_by_codigo(residente_data.residenteCode)
+        if residente_data.residente_code:
+            existing_codigo = await self.residente_repository.get_by_codigo(residente_data.residente_code)
             if existing_codigo and str(existing_codigo.id) != str(existing_residente.id):
                 raise ConflictError("El código ya está registrado por otro residente")
         
@@ -137,13 +137,13 @@ class ResidenteService:
             # Sincronizar cambios con colección usuarios
             try:
                 # Tomar valores definitivos del objeto actualizado (si lo tenemos) para evitar inconsistencias
-                final_name = updated_residente.residenteName if hasattr(updated_residente, 'residenteName') else (residente_data.residenteName or existing_residente.residenteName)
-                final_email = updated_residente.ResidenteEmail if hasattr(updated_residente, 'ResidenteEmail') else (residente_data.ResidenteEmail or existing_residente.ResidenteEmail)
-                final_is_active = updated_residente.isActive if hasattr(updated_residente, 'isActive') else (
-                    residente_data.isActive if residente_data.isActive is not None else existing_residente.isActive
+                final_name = updated_residente.residente_name if hasattr(updated_residente, 'residente_name') else (residente_data.residente_name or existing_residente.residente_name)
+                final_email = updated_residente.residente_email if hasattr(updated_residente, 'residente_email') else (residente_data.residente_email or existing_residente.residente_email)
+                final_is_active = updated_residente.is_active if hasattr(updated_residente, 'is_active') else (
+                    residente_data.is_active if residente_data.is_active is not None else existing_residente.is_active
                 )
                 await self.user_management_service.update_user_for_resident(
-                    existing_residente.ResidenteEmail,
+                    existing_residente.residente_email,
                     name=final_name,
                     new_email=final_email,
                     is_active=final_is_active,
@@ -176,16 +176,16 @@ class ResidenteService:
             raise NotFoundError("Residente no encontrado")
         
         # Cambiar el estado del residente
-        nuevo_estado = not residente.isActive
+        nuevo_estado = not residente.is_active
         
         # Crear objeto de actualización con todos los campos requeridos
         update_data = ResidenteUpdate(
-            residenteName=residente.residenteName,
-            residenteCode=residente.residenteCode,
-            ResidenteEmail=residente.ResidenteEmail,
+            residente_name=residente.residente_name,
+            residente_code=residente.residente_code,
+            residente_email=residente.residente_email,
             registro_medico=residente.registro_medico,
             observaciones=residente.observaciones,
-            isActive=nuevo_estado
+            is_active=nuevo_estado
         )
         
         try:
@@ -212,13 +212,13 @@ class ResidenteService:
         """Convertir modelo Residente a ResidenteResponse"""
         return ResidenteResponse(
             id=str(residente.id),
-            residenteName=residente.residenteName,
-            InicialesResidente=residente.InicialesResidente or "",
-            residenteCode=residente.residenteCode,
-            ResidenteEmail=residente.ResidenteEmail,
+            residente_name=residente.residente_name,
+            iniciales_residente=residente.iniciales_residente or "",
+            residente_code=residente.residente_code,
+            residente_email=residente.residente_email,
             registro_medico=residente.registro_medico,
             observaciones=residente.observaciones or "",
-            isActive=residente.isActive,
-            fecha_creacion=residente.fecha_creacion or datetime.utcnow(),
-            fecha_actualizacion=residente.fecha_actualizacion or datetime.utcnow()
+            is_active=residente.is_active,
+            fecha_creacion=residente.fecha_creacion or datetime.now(timezone.utc),
+            fecha_actualizacion=residente.fecha_actualizacion or datetime.now(timezone.utc)
         )

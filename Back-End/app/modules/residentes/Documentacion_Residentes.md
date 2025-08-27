@@ -1,7 +1,9 @@
 # Documentación del Módulo Residentes
 
-## ⚠️ IMPORTANTE: MÓDULO SIN AUTENTICACIÓN
-**Este módulo NO requiere autenticación.** Todos los endpoints están disponibles sin necesidad de tokens de acceso o credenciales de usuario. Esto facilita las pruebas y la integración, pero debe considerarse la seguridad en entornos de producción.
+## ⚠️ **IMPORTANTE: AUTENTICACIÓN REQUERIDA**
+Este módulo **SÍ requiere autenticación** para todas las operaciones. Incluye el header `Authorization: Bearer {token}` en todas las peticiones.
+
+**Nota**: Al crear residentes, el sistema también crea usuarios en la colección `usuarios` con rol "residente", lo que requiere permisos de administrador.
 
 ## Estructura del Modelo
 
@@ -9,11 +11,12 @@
 ```json
 {
     "_id": "ObjectId MongoDB",
-    "residenteName": "string (nombre completo del residente)",
-    "residenteCode": "string (cédula única del residente)",
-    "ResidenteEmail": "string (email único)",
+    "residente_name": "string (nombre completo del residente)",
+    "iniciales_residente": "string (iniciales del residente)",
+    "residente_code": "string (cédula única del residente)",
+    "residente_email": "string (email único)",
     "registro_medico": "string (registro médico único)",
-    "isActive": "boolean (estado activo/inactivo)",
+    "is_active": "boolean (estado activo/inactivo)",
     "observaciones": "string (notas adicionales, opcional)",
     "fecha_creacion": "datetime",
     "fecha_actualizacion": "datetime"
@@ -25,11 +28,13 @@
 - `false` - Residente inactivo
 
 ### Campos Requeridos para Crear
-- `residenteName`: Nombre completo del residente (2-200 caracteres)
-- `residenteCode`: Cédula única del residente (8-20 caracteres)
-- `ResidenteEmail`: Email único válido
-- `registro_medico`: Registro médico único (5-50 caracteres)
-- `isActive`: Estado activo (true/false, por defecto: true)
+- `residente_name`: Nombre completo del residente (2-100 caracteres)
+- `iniciales_residente`: Iniciales del residente (2-10 caracteres)
+- `residente_code`: Cédula única del residente (8-20 caracteres)
+- `residente_email`: Email único válido
+- `registro_medico`: Registro médico único (3-50 caracteres)
+- `password`: Contraseña para el usuario del residente (6-100 caracteres)
+- `is_active`: Estado activo (true/false, por defecto: true)
 - `observaciones`: Notas adicionales (opcional, máx 500 caracteres)
 
 ## Endpoints Disponibles
@@ -37,14 +42,22 @@
 ### 1. POST http://localhost:8000/api/v1/residentes/
 **Crear nuevo residente**
 
+Headers:
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
 Body:
 ```json
 {
-    "residenteName": "Carlos Eduardo Rodríguez Martínez",
-    "residenteCode": "12345678",
-    "ResidenteEmail": "carlos.rodriguez@hospital.com",
+    "residente_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_residente": "CERM",
+    "residente_code": "12345678",
+    "residente_email": "carlos.rodriguez@hospital.com",
     "registro_medico": "RM12345",
-    "isActive": true,
+    "password": "residente123",
+    "is_active": true,
     "observaciones": "Residente de patología con 2 años de experiencia"
 }
 ```
@@ -52,11 +65,13 @@ Body:
 Respuesta (201):
 ```json
 {
-    "residenteName": "Carlos Eduardo Rodríguez Martínez",
-    "residenteCode": "12345678",
-    "ResidenteEmail": "carlos.rodriguez@hospital.com",
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "residente_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_residente": "CERM",
+    "residente_code": "12345678",
+    "residente_email": "carlos.rodriguez@hospital.com",
     "registro_medico": "RM12345",
-    "isActive": true,
+    "is_active": true,
     "observaciones": "Residente de patología con 2 años de experiencia",
     "fecha_creacion": "2023-09-07T10:30:00Z",
     "fecha_actualizacion": "2023-09-07T10:30:00Z"
@@ -64,10 +79,15 @@ Respuesta (201):
 ```
 
 ### 2. GET http://localhost:8000/api/v1/residentes/
-**Listar residentes con filtros**
+**Listar residentes activos con paginación**
+
+Headers:
+```
+Authorization: Bearer {token}
+```
 
 URL con parámetros:
-- `http://localhost:8000/api/v1/residentes/` (todos los residentes)
+- `http://localhost:8000/api/v1/residentes/` (residentes activos)
 - `http://localhost:8000/api/v1/residentes/?skip=0&limit=10` (paginación)
 
 Parámetros de consulta:
@@ -78,101 +98,29 @@ Body: (sin body)
 
 Respuesta (200):
 ```json
-{
-    "residentes": [
-        {
-            "residenteName": "Carlos Eduardo Rodríguez Martínez",
-            "residenteCode": "12345678",
-            "ResidenteEmail": "carlos.rodriguez@hospital.com",
-            "registro_medico": "RM12345",
-            "isActive": true,
-            "observaciones": "Residente de patología con 2 años de experiencia",
-            "fecha_creacion": "2023-09-07T10:30:00Z",
-            "fecha_actualizacion": "2023-09-07T10:30:00Z"
-        },
-        {
-            "residenteName": "Dr. Juan Carlos Pérez González",
-            "residenteCode": "87654321",
-            "ResidenteEmail": "juan.perez@hospital.com",
-            "registro_medico": "MP-2024-001",
-            "isActive": true,
-            "observaciones": "Residente de anatomía patológica",
-            "fecha_creacion": "2023-09-07T10:30:00Z",
-            "fecha_actualizacion": "2023-09-07T10:30:00Z"
-        }
-    ],
-    "total": 2,
-    "skip": 0,
-    "limit": 10,
-    "has_next": false,
-    "has_prev": false
-}
+[
+    {
+        "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+        "residente_name": "Carlos Eduardo Rodríguez Martínez",
+        "iniciales_residente": "CERM",
+        "residente_code": "12345678",
+        "residente_email": "carlos.rodriguez@hospital.com",
+        "registro_medico": "RM12345",
+        "is_active": true,
+        "observaciones": "Residente de patología con 2 años de experiencia",
+        "fecha_creacion": "2023-09-07T10:30:00Z",
+        "fecha_actualizacion": "2023-09-07T10:30:00Z"
+    }
+]
 ```
 
-### 3. GET http://localhost:8000/api/v1/residentes/{residente_code}
-**Obtener residente específico por código**
-
-Ejemplos de URL:
-- `http://localhost:8000/api/v1/residentes/12345678`
-
-Body: (sin body)
-
-Respuesta (200):
-```json
-{
-    "residenteName": "Carlos Eduardo Rodríguez Martínez",
-    "residenteCode": "12345678",
-    "ResidenteEmail": "carlos.rodriguez@hospital.com",
-    "registro_medico": "RM12345",
-    "isActive": true,
-    "observaciones": "Residente de patología con 2 años de experiencia",
-    "fecha_creacion": "2023-09-07T10:30:00Z",
-    "fecha_actualizacion": "2023-09-07T11:15:00Z"
-}
-```
-
-### 4. PUT http://localhost:8000/api/v1/residentes/{residente_code}
-**Actualizar residente por código**
-
-Ejemplos de URL:
-- `http://localhost:8000/api/v1/residentes/12345678`
-
-Body:
-```json
-{
-    "residenteName": "Carlos Eduardo Rodríguez Martínez",
-    "observaciones": "Residente de patología y neuropatología con 2 años de experiencia"
-}
-```
-
-Respuesta (200):
-```json
-{
-    "residenteName": "Carlos Eduardo Rodríguez Martínez",
-    "residenteCode": "12345678",
-    "ResidenteEmail": "carlos.rodriguez@hospital.com",
-    "registro_medico": "RM12345",
-    "isActive": true,
-    "observaciones": "Residente de patología y neuropatología con 2 años de experiencia",
-    "fecha_creacion": "2023-09-07T10:30:00Z",
-    "fecha_actualizacion": "2023-09-07T12:45:00Z"
-}
-```
-
-### 5. DELETE http://localhost:8000/api/v1/residentes/{residente_code}
-**Eliminar residente por código (eliminación permanente)**
-
-Ejemplos de URL:
-- `http://localhost:8000/api/v1/residentes/12345678`
-
-Body: (sin body)
-
-Respuesta (204): (sin contenido)
-
-⚠️ **IMPORTANTE**: Esta operación elimina permanentemente el registro de la base de datos. No se puede deshacer.
-
-### 6. GET http://localhost:8000/api/v1/residentes/search
+### 3. GET http://localhost:8000/api/v1/residentes/search
 **Búsqueda avanzada de residentes**
+
+Headers:
+```
+Authorization: Bearer {token}
+```
 
 URL con parámetros:
 - `http://localhost:8000/api/v1/residentes/search?q=carlos` (búsqueda general)
@@ -182,17 +130,168 @@ URL con parámetros:
 
 Parámetros de consulta:
 - `q`: Término de búsqueda que busca en nombre, código, email y registro médico (opcional)
-- `especialidad`: Filtrar por especialidad (opcional)
-- `estado`: Filtrar por estado (opcional)
+- `residente_name`: Filtrar por nombre específico
+- `iniciales_residente`: Filtrar por iniciales
+- `residente_code`: Filtrar por código
+- `residente_email`: Filtrar por email
+- `registro_medico`: Filtrar por registro médico
+- `is_active`: Filtrar por estado activo
 - `skip`: Registros a omitir (default: 0)
 - `limit`: Máximo registros (default: 10, max: 100)
 
 Body: (sin body)
 
-Respuesta (200): (similar al endpoint GET principal)
+Respuesta (200):
+```json
+{
+    "residentes": [
+        {
+            "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+            "residente_name": "Carlos Eduardo Rodríguez Martínez",
+            "iniciales_residente": "CERM",
+            "residente_code": "12345678",
+            "residente_email": "carlos.rodriguez@hospital.com",
+            "registro_medico": "RM12345",
+            "is_active": true,
+            "observaciones": "Residente de patología con 2 años de experiencia",
+            "fecha_creacion": "2023-09-07T10:30:00Z",
+            "fecha_actualizacion": "2023-09-07T10:30:00Z"
+        }
+    ],
+    "total": 1,
+    "skip": 0,
+    "limit": 10
+}
+```
 
-### 6.2. PUT http://localhost:8000/api/v1/residentes/{residente_code}/estado
-**Cambiar estado activo/inactivo por código**
+### 4. GET http://localhost:8000/api/v1/residentes/{residente_code}
+**Obtener residente específico por código**
+
+Headers:
+```
+Authorization: Bearer {token}
+```
+
+Ejemplos de URL:
+- `http://localhost:8000/api/v1/residentes/12345678`
+
+Body: (sin body)
+
+Respuesta (200):
+```json
+{
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "residente_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_residente": "CERM",
+    "residente_code": "12345678",
+    "residente_email": "carlos.rodriguez@hospital.com",
+    "registro_medico": "RM12345",
+    "is_active": true,
+    "observaciones": "Residente de patología con 2 años de experiencia",
+    "fecha_creacion": "2023-09-07T10:30:00Z",
+    "fecha_actualizacion": "2023-09-07T11:15:00Z"
+}
+```
+
+### 5. PUT http://localhost:8000/api/v1/residentes/{residente_code}
+**Actualizar residente por código**
+
+Headers:
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+Ejemplos de URL:
+- `http://localhost:8000/api/v1/residentes/12345678`
+
+Body:
+```json
+{
+    "residente_name": "Carlos Eduardo Rodríguez Martínez",
+    "observaciones": "Residente de patología y neuropatología con 2 años de experiencia"
+}
+```
+
+Respuesta (200):
+```json
+{
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "residente_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_residente": "CERM",
+    "residente_code": "12345678",
+    "residente_email": "carlos.rodriguez@hospital.com",
+    "registro_medico": "RM12345",
+    "is_active": true,
+    "observaciones": "Residente de patología y neuropatología con 2 años de experiencia",
+    "fecha_creacion": "2023-09-07T10:30:00Z",
+    "fecha_actualizacion": "2023-09-07T12:45:00Z"
+}
+```
+
+### 6. DELETE http://localhost:8000/api/v1/residentes/{residente_code}
+**Eliminar residente por código (eliminación permanente)**
+
+Headers:
+```
+Authorization: Bearer {token}
+```
+
+Ejemplos de URL:
+- `http://localhost:8000/api/v1/residentes/12345678`
+
+Body: (sin body)
+
+Respuesta (200):
+```json
+{
+    "message": "Residente con código 12345678 ha sido eliminado correctamente"
+}
+```
+
+⚠️ **IMPORTANTE**: Esta operación elimina permanentemente el registro de la base de datos. No se puede deshacer.
+
+### 7. PATCH http://localhost:8000/api/v1/residentes/{residente_code}/toggle-estado
+**Cambiar estado activo/inactivo de un residente (toggle)**
+
+Headers:
+```
+Authorization: Bearer {token}
+```
+
+Ejemplos de URL:
+- `http://localhost:8000/api/v1/residentes/12345678/toggle-estado`
+
+Body: (sin body)
+
+Respuesta (200):
+```json
+{
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "residente_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_residente": "CERM",
+    "residente_code": "12345678",
+    "residente_email": "carlos.rodriguez@hospital.com",
+    "registro_medico": "RM12345",
+    "is_active": false,
+    "observaciones": "Residente de patología con 2 años de experiencia",
+    "fecha_creacion": "2023-09-07T10:30:00Z",
+    "fecha_actualizacion": "2023-09-07T14:10:00Z"
+}
+```
+
+**Funcionamiento**: 
+- Si el residente está activo (`is_active: true`) → lo desactiva (`is_active: false`)
+- Si el residente está inactivo (`is_active: false`) → lo activa (`is_active: true`)
+
+### 8. PUT http://localhost:8000/api/v1/residentes/{residente_code}/estado
+**Cambiar estado activo/inactivo de un residente (específico)**
+
+Headers:
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
 
 Ejemplos de URL:
 - `http://localhost:8000/api/v1/residentes/12345678/estado`
@@ -200,18 +299,20 @@ Ejemplos de URL:
 Body:
 ```json
 {
-    "isActive": false
+    "is_active": false
 }
 ```
 
 Respuesta (200):
 ```json
 {
-    "residenteName": "Carlos Eduardo Rodríguez Martínez",
-    "residenteCode": "12345678",
-    "ResidenteEmail": "carlos.rodriguez@hospital.com",
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "residente_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_residente": "CERM",
+    "residente_code": "12345678",
+    "residente_email": "carlos.rodriguez@hospital.com",
     "registro_medico": "RM12345",
-    "isActive": false,
+    "is_active": false,
     "observaciones": "Residente de patología con 2 años de experiencia",
     "fecha_creacion": "2023-09-07T10:30:00Z",
     "fecha_actualizacion": "2023-09-07T14:10:00Z"
@@ -220,24 +321,24 @@ Respuesta (200):
 
 ## Casos de Error
 
-### Cédula Duplicada (400)
+### Cédula Duplicada (409)
 ```json
 {
-    "detail": "Ya existe un residente con la cédula 12345678"
+    "detail": "El código ya está registrado"
 }
 ```
 
-### Email Duplicado (400)
+### Email Duplicado (409)
 ```json
 {
-    "detail": "Ya existe un residente con el email carlos.rodriguez@hospital.com"
+    "detail": "El email ya está registrado en residentes"
 }
 ```
 
-### Registro Médico Duplicado (400)
+### Registro Médico Duplicado (409)
 ```json
 {
-    "detail": "Ya existe un residente con el registro médico RM12345"
+    "detail": "El registro médico ya está registrado"
 }
 ```
 
@@ -253,24 +354,14 @@ Respuesta (200):
 {
     "detail": [
         {
-            "loc": ["body", "residenteName"],
+            "loc": ["body", "residente_name"],
             "msg": "field required",
             "type": "value_error.missing"
         },
         {
-            "loc": ["body", "residenteCode"],
-            "msg": "field required",
-            "type": "value_error.missing"
-        },
-        {
-            "loc": ["body", "ResidenteEmail"],
-            "msg": "field required",
-            "type": "value_error.missing"
-        },
-        {
-            "loc": ["body", "registro_medico"],
-            "msg": "field required",
-            "type": "value_error.missing"
+            "loc": ["body", "residente_code"],
+            "msg": "ensure this value has at least 8 characters",
+            "type": "value_error.any_str.min_length"
         }
     ]
 }
@@ -283,16 +374,23 @@ Respuesta (200):
 }
 ```
 
+### No Autorizado (401)
+```json
+{
+    "detail": "Not authenticated"
+}
+```
+
 ## Casos de Uso
 
 ### 1. Registro de Nuevo Residente
 **Escenario:** Registrar un nuevo residente en el sistema
 
 **Pasos:**
-1. Hacer POST a `/api/v1/residentes/` (sin autenticación requerida)
-2. Incluir campos requeridos: `residenteName`, `residenteCode`, `ResidenteEmail`, `registro_medico`
+1. Hacer POST a `/api/v1/residentes/` con autenticación
+2. Incluir campos requeridos: `residente_name`, `residente_code`, `residente_email`, `registro_medico`, `password`
 3. Verificar que email, cédula y registro médico sean únicos
-4. Establecer `isActive` como `true` por defecto
+4. El sistema crea automáticamente un usuario en la colección `usuarios`
 
 ### 2. Búsqueda de Residentes
 **Escenario:** Obtener lista de residentes disponibles
@@ -305,9 +403,9 @@ Respuesta (200):
 **Escenario:** Activar o desactivar residente
 
 **Pasos:**
-1. Hacer PUT a `/api/v1/residentes/{residente_code}/estado`
-2. El sistema alterna automáticamente entre activo/inactivo
-3. Eficiente y directo usando código de residente
+1. Hacer PATCH a `/api/v1/residentes/{residente_code}/toggle-estado` para alternar
+2. O hacer PUT a `/api/v1/residentes/{residente_code}/estado` para estado específico
+3. El sistema sincroniza automáticamente con la colección `usuarios`
 
 ### 4. Búsqueda Avanzada
 **Escenario:** Encontrar residentes con criterios específicos
@@ -326,7 +424,7 @@ Respuesta (200):
 1. Hacer DELETE a `/api/v1/residentes/{residente_code}`
 2. Confirmar que no hay casos pendientes asociados
 3. Operación irreversible - el registro se elimina completamente
-4. Para activar/desactivar usar PUT `/api/v1/residentes/{residente_code}/estado`
+4. Para activar/desactivar usar PATCH `/api/v1/residentes/{residente_code}/toggle-estado`
 
 ### 6. Consulta por Código
 **Escenario:** Buscar residente específico usando su cédula
@@ -342,11 +440,12 @@ Respuesta (200):
 ### Residente de Anatomía Patológica
 ```json
 {
-    "residenteName": "María Elena García López",
-    "residenteCode": "87654321",
-    "ResidenteEmail": "maria.garcia@hospital.com",
+    "residente_name": "María Elena García López",
+    "iniciales_residente": "MEGL",
+    "residente_code": "87654321",
+    "residente_email": "maria.garcia@hospital.com",
     "registro_medico": "RM54321",
-    "isActive": true,
+    "is_active": true,
     "observaciones": "Residente de anatomía patológica - segundo año"
 }
 ```
@@ -354,11 +453,12 @@ Respuesta (200):
 ### Residente de Patología Forense
 ```json
 {
-    "residenteName": "Juan Carlos Mendoza Silva",
-    "residenteCode": "11223344",
-    "ResidenteEmail": "juan.mendoza@medicina-legal.gov.co",
+    "residente_name": "Juan Carlos Mendoza Silva",
+    "iniciales_residente": "JCMS",
+    "residente_code": "11223344",
+    "residente_email": "juan.mendoza@medicina-legal.gov.co",
     "registro_medico": "RM11223",
-    "isActive": true,
+    "is_active": true,
     "observaciones": "Residente de patología forense - primer año"
 }
 ```
@@ -366,11 +466,12 @@ Respuesta (200):
 ### Residente de Neuropatología
 ```json
 {
-    "residenteName": "Ana Sofía Ramírez Torres",
-    "residenteCode": "55667788",
-    "ResidenteEmail": "ana.ramirez@neurologia.com",
+    "residente_name": "Ana Sofía Ramírez Torres",
+    "iniciales_residente": "ASRT",
+    "residente_code": "55667788",
+    "residente_email": "ana.ramirez@neurologia.com",
     "registro_medico": "RM55667",
-    "isActive": true,
+    "is_active": true,
     "observaciones": "Residente de neuropatología - tercer año"
 }
 ```
@@ -378,11 +479,12 @@ Respuesta (200):
 ### Residente de Citopatología
 ```json
 {
-    "residenteName": "Luis Fernando Vargas Herrera",
-    "residenteCode": "99887766",
-    "ResidenteEmail": "luis.vargas@laboratorio.com",
+    "residente_name": "Luis Fernando Vargas Herrera",
+    "iniciales_residente": "LFVH",
+    "residente_code": "99887766",
+    "residente_email": "luis.vargas@laboratorio.com",
     "registro_medico": "RM99887",
-    "isActive": false,
+    "is_active": false,
     "observaciones": "Residente de citopatología - actualmente en rotación externa"
 }
 ```
@@ -391,10 +493,11 @@ Respuesta (200):
 
 ### ✅ Funcionalidades Implementadas
 - **CRUD Completo**: Crear, leer, actualizar y eliminar residentes
-- **Sin Autenticación**: Todos los endpoints son públicos
+- **Autenticación Requerida**: Todos los endpoints requieren JWT Bearer token
+- **Creación de Usuarios**: Automáticamente crea usuarios en la colección `usuarios`
 - **Búsqueda Avanzada**: Búsqueda por múltiples campos con un solo parámetro
 - **Gestión de Estados**: Activar/desactivar residentes
-- **Estadísticas**: Métricas generales del sistema
+- **Sincronización**: Cambios se reflejan automáticamente en la colección `usuarios`
 - **Eliminación Permanente**: Eliminación real de registros (no soft delete)
 
 ### 🔧 Endpoints Disponibles
@@ -403,13 +506,26 @@ Respuesta (200):
 3. `GET /api/v1/residentes/search` - Búsqueda avanzada
 4. `GET /api/v1/residentes/{code}` - Obtener residente específico
 5. `PUT /api/v1/residentes/{code}` - Actualizar residente
-6. `PUT /api/v1/residentes/{code}/estado` - Cambiar estado activo/inactivo
-7. `DELETE /api/v1/residentes/{code}` - Eliminación permanente
+6. `PATCH /api/v1/residentes/{code}/toggle-estado` - Alternar estado activo/inactivo
+7. `PUT /api/v1/residentes/{code}/estado` - Cambiar estado específico
+8. `DELETE /api/v1/residentes/{code}` - Eliminación permanente
 
 ### ⚠️ Consideraciones Importantes
-- **Sin Autenticación**: Considerar implementar seguridad en producción
+- **Autenticación Requerida**: Todos los endpoints requieren JWT Bearer token
+- **Creación de Usuarios**: Al crear residentes se crean usuarios automáticamente
 - **Eliminación Permanente**: La operación DELETE es irreversible
-- **Separación de Funciones**: Eliminación vs Activación/Desactivación
+- **Sincronización**: Cambios se reflejan en ambas colecciones (residentes y usuarios)
 - **Validaciones**: Campos únicos (email, código, registro médico)
 - **Búsqueda Unificada**: Un solo parámetro `q` para búsqueda general
-- **Sin Campo Firma**: A diferencia del módulo patólogos, los residentes no manejan firmas digitales
+- **Nombres de Campos**: Todos en snake_case para consistencia
+
+## Validaciones
+
+- **residente_name**: 2-100 caracteres, no puede estar vacío
+- **iniciales_residente**: 2-10 caracteres, no puede estar vacío
+- **residente_code**: 8-20 caracteres, no puede estar vacío, debe ser único
+- **residente_email**: Email válido, debe ser único
+- **registro_medico**: 3-50 caracteres, debe ser único
+- **password**: 6-100 caracteres (solo para creación)
+- **is_active**: Boolean, por defecto true
+- **observaciones**: Opcional, máximo 500 caracteres

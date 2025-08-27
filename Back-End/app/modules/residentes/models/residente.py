@@ -8,10 +8,10 @@ from app.shared.models.base import BaseDocument
 class Residente(BaseDocument):
     """Modelo de Residente"""
     
-    residenteName: str = Field(..., description="Nombre del residente")
-    InicialesResidente: Optional[str] = Field(default="", description="Iniciales del residente")
-    residenteCode: str = Field(..., description="Código único del residente")
-    ResidenteEmail: str = Field(..., description="Email del residente")
+    residente_name: str = Field(..., description="Nombre del residente")
+    iniciales_residente: Optional[str] = Field(default="", description="Iniciales del residente")
+    residente_code: str = Field(..., description="Código único del residente")
+    residente_email: str = Field(..., description="Email del residente")
     registro_medico: str = Field(..., description="Número de registro médico")
     observaciones: Optional[str] = Field(default="", description="Observaciones adicionales")
     
@@ -24,10 +24,10 @@ class Residente(BaseDocument):
         }
         json_schema_extra = {
             "example": {
-                "residenteName": "Dr. María Elena Rodríguez López",
-                "InicialesResidente": "MERL",
-                "residenteCode": "12345678",
-                "ResidenteEmail": "maria.rodriguez@hospital.com",
+                "residente_name": "Dr. María Elena Rodríguez López",
+                "iniciales_residente": "MERL",
+                "residente_code": "12345678",
+                "residente_email": "maria.rodriguez@hospital.com",
                 "registro_medico": "RM-2024-001",
                 "observaciones": "Residente de segundo año en patología"
             }
