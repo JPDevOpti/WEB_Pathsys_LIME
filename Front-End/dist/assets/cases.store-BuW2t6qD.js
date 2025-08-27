@@ -1,1 +1,0 @@
-import{O as r,r as a}from"./index-CAHFE_9E.js";const u=r("cases",()=>{const s=a(new Date),e=a(!1);return{lastUpdate:s,needsRefresh:e,notifyCaseCreated:()=>{s.value=new Date,e.value=!0},markRefreshed:()=>{e.value=!1},shouldRefresh:()=>e.value}});export{u};
