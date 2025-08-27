@@ -1,7 +1,7 @@
 """Repositorio para operaciones CRUD de Patólogos"""
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
@@ -17,14 +17,14 @@ class PatologoRepository(BaseRepository[Patologo, PatologoCreate, PatologoUpdate
     
     async def get_by_email(self, email: str) -> Optional[Patologo]:
         """Obtener patólogo por email"""
-        document = await self.collection.find_one({"PatologoEmail": email})
+        document = await self.collection.find_one({"patologo_email": email})
         if document:
             return self.model_class(**document)
         return None
     
     async def get_by_codigo(self, codigo: str) -> Optional[Patologo]:
         """Obtener patólogo por código"""
-        document = await self.collection.find_one({"patologoCode": codigo})
+        document = await self.collection.find_one({"patologo_code": codigo})
         if document:
             return self.model_class(**document)
         return None
@@ -45,25 +45,25 @@ class PatologoRepository(BaseRepository[Patologo, PatologoCreate, PatologoUpdate
         # Búsqueda general con parámetro 'q'
         if search_params.q:
             filter_dict["$or"] = [
-                {"patologoName": {"$regex": search_params.q, "$options": "i"}},
-                {"patologoCode": {"$regex": search_params.q, "$options": "i"}},
-                {"PatologoEmail": {"$regex": search_params.q, "$options": "i"}},
+                {"patologo_name": {"$regex": search_params.q, "$options": "i"}},
+                {"patologo_code": {"$regex": search_params.q, "$options": "i"}},
+                {"patologo_email": {"$regex": search_params.q, "$options": "i"}},
                 {"registro_medico": {"$regex": search_params.q, "$options": "i"}}
             ]
         else:
             # Filtros específicos de texto (búsqueda parcial)
-            if search_params.patologoName:
-                filter_dict["patologoName"] = {"$regex": search_params.patologoName, "$options": "i"}
-            if search_params.PatologoEmail:
-                filter_dict["PatologoEmail"] = {"$regex": search_params.PatologoEmail, "$options": "i"}
-            if search_params.patologoCode:
-                filter_dict["patologoCode"] = search_params.patologoCode
+            if search_params.patologo_name:
+                filter_dict["patologo_name"] = {"$regex": search_params.patologo_name, "$options": "i"}
+            if search_params.patologo_email:
+                filter_dict["patologo_email"] = {"$regex": search_params.patologo_email, "$options": "i"}
+            if search_params.patologo_code:
+                filter_dict["patologo_code"] = search_params.patologo_code
             if search_params.registro_medico:
                 filter_dict["registro_medico"] = {"$regex": search_params.registro_medico, "$options": "i"}
         
         # Filtros exactos
-        if search_params.isActive is not None:
-            filter_dict["isActive"] = search_params.isActive
+        if search_params.is_active is not None:
+            filter_dict["is_active"] = search_params.is_active
         
         return await self.get_multi(skip=skip, limit=limit, filters=filter_dict)
     
@@ -77,11 +77,11 @@ class PatologoRepository(BaseRepository[Patologo, PatologoCreate, PatologoUpdate
         else:
             obj_data = obj_in.dict(by_alias=False, exclude={'password'})
         
-        obj_data["fecha_creacion"] = datetime.utcnow()
-        obj_data["fecha_actualizacion"] = datetime.utcnow()
-        # Asegurar que isActive esté presente si no se especifica
-        if "isActive" not in obj_data:
-            obj_data["isActive"] = True
+        obj_data["fecha_creacion"] = datetime.now(timezone.utc)
+        obj_data["fecha_actualizacion"] = datetime.now(timezone.utc)
+        # Asegurar que is_active esté presente si no se especifica
+        if "is_active" not in obj_data:
+            obj_data["is_active"] = True
         
         try:
             result = await self.collection.insert_one(obj_data)
@@ -99,6 +99,11 @@ class PatologoRepository(BaseRepository[Patologo, PatologoCreate, PatologoUpdate
         if not patologo:
             return None
         
-        new_state = not patologo.isActive
-        update_data = {"isActive": new_state, "fecha_actualizacion": datetime.utcnow()}
+        new_state = not patologo.is_active
+        update_data = {"is_active": new_state, "fecha_actualizacion": datetime.now(timezone.utc)}
+        return await self.update(patologo_id, update_data)
+    
+    async def update_firma(self, patologo_id: str, firma: str) -> Optional[Patologo]:
+        """Actualizar la firma digital de un patólogo"""
+        update_data = {"firma": firma, "fecha_actualizacion": datetime.now(timezone.utc)}
         return await self.update(patologo_id, update_data)

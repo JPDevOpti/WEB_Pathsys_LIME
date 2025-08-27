@@ -5,7 +5,8 @@ from .patologo import (
     PatologoUpdate,
     PatologoResponse,
     PatologoSearch,
-    PatologoEstadoUpdate
+    PatologoEstadoUpdate,
+    PatologoFirmaUpdate
 )
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     "PatologoUpdate",
     "PatologoResponse",
     "PatologoSearch",
-    "PatologoEstadoUpdate"
+    "PatologoEstadoUpdate",
+    "PatologoFirmaUpdate"
 ]

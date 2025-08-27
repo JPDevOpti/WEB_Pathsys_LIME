@@ -1,7 +1,9 @@
 # Guía de Patólogos - Postman
 
-## ⚠️ IMPORTANTE: MÓDULO SIN AUTENTICACIÓN
-**Este módulo NO requiere autenticación.** Todos los endpoints están disponibles sin necesidad de tokens de acceso o credenciales de usuario. Esto facilita las pruebas y la integración, pero debe considerarse la seguridad en entornos de producción.
+## ⚠️ **IMPORTANTE: AUTENTICACIÓN REQUERIDA**
+Este módulo **SÍ requiere autenticación** para todas las operaciones. Incluye el header `Authorization: Bearer {token}` en todas las peticiones.
+
+**Nota**: Al crear patólogos, el sistema también crea usuarios en la colección `usuarios` con rol "patologo", lo que requiere permisos de administrador.
 
 ## Estructura del Modelo
 
@@ -9,11 +11,12 @@
 ```json
 {
     "_id": "ObjectId MongoDB",
-    "patologoName": "string (nombre completo del patólogo)",
-    "patologoCode": "string (cédula única del patólogo)",
-    "PatologoEmail": "string (email único)",
+    "patologo_name": "string (nombre completo del patólogo)",
+    "iniciales_patologo": "string (iniciales del patólogo)",
+    "patologo_code": "string (cédula única del patólogo)",
+    "patologo_email": "string (email único)",
     "registro_medico": "string (registro médico único)",
-    "isActive": "boolean (estado activo/inactivo)",
+    "is_active": "boolean (estado activo/inactivo)",
     "firma": "string (URL de firma digital, por defecto vacío)",
     "observaciones": "string (notas adicionales, opcional)",
     "fecha_creacion": "datetime",
@@ -26,11 +29,14 @@
 - `false` - Patólogo inactivo
 
 ### Campos Requeridos para Crear
-- `patologoName`: Nombre completo del patólogo (2-200 caracteres)
-- `patologoCode`: Cédula única del patólogo (6-10 caracteres)
-- `PatologoEmail`: Email único válido
+- `patologo_name`: Nombre completo del patólogo (2-100 caracteres)
+- `iniciales_patologo`: Iniciales del patólogo (2-10 caracteres)
+- `patologo_code`: Cédula única del patólogo (6-10 caracteres)
+- `patologo_email`: Email único válido
 - `registro_medico`: Registro médico único (5-50 caracteres)
-- `isActive`: Estado activo (true/false, por defecto: true)
+- `password`: Contraseña para el usuario del patólogo (6-100 caracteres)
+- `is_active`: Estado activo (true/false, por defecto: true)
+- `firma`: URL de firma digital (opcional, por defecto vacío)
 - `observaciones`: Notas adicionales (opcional, máx 500 caracteres)
 
 ## Endpoints Disponibles
@@ -38,14 +44,22 @@
 ### 1. POST http://localhost:8000/api/v1/patologos/
 **Crear nuevo patólogo**
 
+Headers:
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
 Body:
 ```json
 {
-    "patologoName": "Carlos Eduardo Rodríguez Martínez",
-    "patologoCode": "12345678",
-    "PatologoEmail": "carlos.rodriguez@hospital.com",
+    "patologo_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_patologo": "CERM",
+    "patologo_code": "12345678",
+    "patologo_email": "carlos.rodriguez@hospital.com",
     "registro_medico": "RM12345",
-    "isActive": true,
+    "password": "patologo123",
+    "is_active": true,
     "firma": "https://storage.com/firmas/carlos_rodriguez.png",
     "observaciones": "Especialista en patología oncológica con 15 años de experiencia"
 }
@@ -54,11 +68,13 @@ Body:
 Respuesta (201):
 ```json
 {
-    "patologoName": "Carlos Eduardo Rodríguez Martínez",
-    "patologoCode": "12345678",
-    "PatologoEmail": "carlos.rodriguez@hospital.com",
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "patologo_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_patologo": "CERM",
+    "patologo_code": "12345678",
+    "patologo_email": "carlos.rodriguez@hospital.com",
     "registro_medico": "RM12345",
-    "isActive": true,
+    "is_active": true,
     "firma": "https://storage.com/firmas/carlos_rodriguez.png",
     "observaciones": "Especialista en patología oncológica con 15 años de experiencia",
     "fecha_creacion": "2023-09-07T10:30:00Z",
@@ -67,10 +83,15 @@ Respuesta (201):
 ```
 
 ### 2. GET http://localhost:8000/api/v1/patologos/
-**Listar patólogos con filtros**
+**Listar patólogos activos con paginación**
+
+Headers:
+```
+Authorization: Bearer {token}
+```
 
 URL con parámetros:
-- `http://localhost:8000/api/v1/patologos/` (todos los patólogos)
+- `http://localhost:8000/api/v1/patologos/` (patólogos activos)
 - `http://localhost:8000/api/v1/patologos/?skip=0&limit=10` (paginación)
 
 Parámetros de consulta:
@@ -81,106 +102,30 @@ Body: (sin body)
 
 Respuesta (200):
 ```json
-{
-    "patologos": [
-        {
-            "patologoName": "Carlos Eduardo Rodríguez Martínez",
-            "patologoCode": "12345678",
-            "PatologoEmail": "carlos.rodriguez@hospital.com",
-            "registro_medico": "RM12345",
-            "isActive": true,
-            "firma": "https://storage.com/firmas/carlos_rodriguez.png",
-            "observaciones": "Especialista en patología oncológica con 15 años de experiencia",
-            "fecha_creacion": "2023-09-07T10:30:00Z",
-            "fecha_actualizacion": "2023-09-07T10:30:00Z"
-        },
-        {
-            "patologoName": "Dr. Juan Carlos Pérez González",
-            "patologoCode": "12345678",
-            "PatologoEmail": "juan.perez@hospital.com",
-            "registro_medico": "MP-2024-001",
-            "isActive": true,
-            "firma": "",
-            "observaciones": "Especialista en anatomía patológica",
-            "fecha_creacion": "2023-09-07T10:30:00Z",
-            "fecha_actualizacion": "2023-09-07T10:30:00Z"
-        }
-    ],
-    "total": 2,
-    "skip": 0,
-    "limit": 10,
-    "has_next": false,
-    "has_prev": false
-}
+[
+    {
+        "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+        "patologo_name": "Carlos Eduardo Rodríguez Martínez",
+        "iniciales_patologo": "CERM",
+        "patologo_code": "12345678",
+        "patologo_email": "carlos.rodriguez@hospital.com",
+        "registro_medico": "RM12345",
+        "is_active": true,
+        "firma": "https://storage.com/firmas/carlos_rodriguez.png",
+        "observaciones": "Especialista en patología oncológica con 15 años de experiencia",
+        "fecha_creacion": "2023-09-07T10:30:00Z",
+        "fecha_actualizacion": "2023-09-07T10:30:00Z"
+    }
+]
 ```
 
-### 3. GET http://localhost:8000/api/v1/patologos/{patologo_code}
-**Obtener patólogo específico por código**
-
-Ejemplos de URL:
-- `http://localhost:8000/api/v1/patologos/12345678`
-
-Body: (sin body)
-
-Respuesta (200):
-```json
-{
-    "patologoName": "Carlos Eduardo Rodríguez Martínez",
-    "patologoCode": "12345678",
-    "PatologoEmail": "carlos.rodriguez@hospital.com",
-    "registro_medico": "RM12345",
-    "isActive": true,
-    "firma": "https://storage.com/firmas/carlos_rodriguez.png",
-    "observaciones": "Especialista en patología oncológica con 15 años de experiencia",
-    "fecha_creacion": "2023-09-07T10:30:00Z",
-    "fecha_actualizacion": "2023-09-07T11:15:00Z"
-}
-```
-
-### 4. PUT http://localhost:8000/api/v1/patologos/{patologo_code}
-**Actualizar patólogo por código**
-
-Ejemplos de URL:
-- `http://localhost:8000/api/v1/patologos/12345678`
-
-Body:
-```json
-{
-    "patologoName": "Carlos Eduardo Rodríguez Martínez",
-    "firma": "https://storage.com/firmas/carlos_rodriguez_updated.png",
-    "observaciones": "Especialista en patología oncológica y neuropatología con 15 años de experiencia"
-}
-```
-
-Respuesta (200):
-```json
-{
-    "patologoName": "Carlos Eduardo Rodríguez Martínez",
-    "patologoCode": "12345678",
-    "PatologoEmail": "carlos.rodriguez@hospital.com",
-    "registro_medico": "RM12345",
-    "isActive": true,
-    "firma": "https://storage.com/firmas/carlos_rodriguez_updated.png",
-    "observaciones": "Especialista en patología oncológica y neuropatología con 15 años de experiencia",
-    "fecha_creacion": "2023-09-07T10:30:00Z",
-    "fecha_actualizacion": "2023-09-07T12:45:00Z"
-}
-```
-
-### 5. DELETE http://localhost:8000/api/v1/patologos/{patologo_code}
-**Eliminar patólogo por código (eliminación permanente)**
-
-Ejemplos de URL:
-- `http://localhost:8000/api/v1/patologos/12345678`
-
-Body: (sin body)
-
-Respuesta (204): (sin contenido)
-
-⚠️ **IMPORTANTE**: Esta operación elimina permanentemente el registro de la base de datos. No se puede deshacer.
-
-### 6. GET http://localhost:8000/api/v1/patologos/search
+### 3. GET http://localhost:8000/api/v1/patologos/search
 **Búsqueda avanzada de patólogos**
+
+Headers:
+```
+Authorization: Bearer {token}
+```
 
 URL con parámetros:
 - `http://localhost:8000/api/v1/patologos/search?q=carlos` (búsqueda general)
@@ -190,19 +135,134 @@ URL con parámetros:
 
 Parámetros de consulta:
 - `q`: Término de búsqueda que busca en nombre, código, email y registro médico (opcional)
-- `especialidad`: Filtrar por especialidad (opcional)
-- `estado`: Filtrar por estado (opcional)
+- `patologo_name`: Filtrar por nombre específico
+- `iniciales_patologo`: Filtrar por iniciales
+- `patologo_code`: Filtrar por código
+- `patologo_email`: Filtrar por email
+- `registro_medico`: Filtrar por registro médico
+- `is_active`: Filtrar por estado activo
+- `observaciones`: Filtrar por observaciones
 - `skip`: Registros a omitir (default: 0)
-- `limit`: Máximo registros (default: 10, max: 100)
+- `limit`: Máximo registros (default: 100, max: 1000)
 
 Body: (sin body)
 
-Respuesta (200): (similar al endpoint GET principal)
+Respuesta (200):
+```json
+[
+    {
+        "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+        "patologo_name": "Carlos Eduardo Rodríguez Martínez",
+        "iniciales_patologo": "CERM",
+        "patologo_code": "12345678",
+        "patologo_email": "carlos.rodriguez@hospital.com",
+        "registro_medico": "RM12345",
+        "is_active": true,
+        "firma": "https://storage.com/firmas/carlos_rodriguez.png",
+        "observaciones": "Especialista en patología oncológica con 15 años de experiencia",
+        "fecha_creacion": "2023-09-07T10:30:00Z",
+        "fecha_actualizacion": "2023-09-07T10:30:00Z"
+    }
+]
+```
 
+### 4. GET http://localhost:8000/api/v1/patologos/{patologo_code}
+**Obtener patólogo específico por código**
 
+Headers:
+```
+Authorization: Bearer {token}
+```
 
-### 6.2. PUT http://localhost:8000/api/v1/patologos/{patologo_code}/estado
-**Cambiar estado activo/inactivo por código**
+Ejemplos de URL:
+- `http://localhost:8000/api/v1/patologos/12345678`
+
+Body: (sin body)
+
+Respuesta (200):
+```json
+{
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "patologo_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_patologo": "CERM",
+    "patologo_code": "12345678",
+    "patologo_email": "carlos.rodriguez@hospital.com",
+    "registro_medico": "RM12345",
+    "is_active": true,
+    "firma": "https://storage.com/firmas/carlos_rodriguez.png",
+    "observaciones": "Especialista en patología oncológica con 15 años de experiencia",
+    "fecha_creacion": "2023-09-07T10:30:00Z",
+    "fecha_actualizacion": "2023-09-07T11:15:00Z"
+}
+```
+
+### 5. PUT http://localhost:8000/api/v1/patologos/{patologo_code}
+**Actualizar patólogo por código**
+
+Headers:
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+Ejemplos de URL:
+- `http://localhost:8000/api/v1/patologos/12345678`
+
+Body:
+```json
+{
+    "patologo_name": "Carlos Eduardo Rodríguez Martínez",
+    "observaciones": "Especialista en patología oncológica y neuropatología con 15 años de experiencia"
+}
+```
+
+Respuesta (200):
+```json
+{
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "patologo_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_patologo": "CERM",
+    "patologo_code": "12345678",
+    "patologo_email": "carlos.rodriguez@hospital.com",
+    "registro_medico": "RM12345",
+    "is_active": true,
+    "firma": "https://storage.com/firmas/carlos_rodriguez.png",
+    "observaciones": "Especialista en patología oncológica y neuropatología con 15 años de experiencia",
+    "fecha_creacion": "2023-09-07T10:30:00Z",
+    "fecha_actualizacion": "2023-09-07T12:45:00Z"
+}
+```
+
+### 6. DELETE http://localhost:8000/api/v1/patologos/{patologo_code}
+**Eliminar patólogo por código (eliminación permanente)**
+
+Headers:
+```
+Authorization: Bearer {token}
+```
+
+Ejemplos de URL:
+- `http://localhost:8000/api/v1/patologos/12345678`
+
+Body: (sin body)
+
+Respuesta (200):
+```json
+{
+    "message": "Patólogo con código 12345678 ha sido eliminado correctamente"
+}
+```
+
+⚠️ **IMPORTANTE**: Esta operación elimina permanentemente el registro de la base de datos. No se puede deshacer.
+
+### 7. PUT http://localhost:8000/api/v1/patologos/{patologo_code}/estado
+**Cambiar estado activo/inactivo de un patólogo**
+
+Headers:
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
 
 Ejemplos de URL:
 - `http://localhost:8000/api/v1/patologos/12345678/estado`
@@ -210,18 +270,20 @@ Ejemplos de URL:
 Body:
 ```json
 {
-    "isActive": false
+    "is_active": false
 }
 ```
 
 Respuesta (200):
 ```json
 {
-    "patologoName": "Carlos Eduardo Rodríguez Martínez",
-    "patologoCode": "12345678",
-    "PatologoEmail": "carlos.rodriguez@hospital.com",
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "patologo_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_patologo": "CERM",
+    "patologo_code": "12345678",
+    "patologo_email": "carlos.rodriguez@hospital.com",
     "registro_medico": "RM12345",
-    "isActive": false,
+    "is_active": false,
     "firma": "https://storage.com/firmas/carlos_rodriguez.png",
     "observaciones": "Especialista en patología oncológica con 15 años de experiencia",
     "fecha_creacion": "2023-09-07T10:30:00Z",
@@ -229,30 +291,62 @@ Respuesta (200):
 }
 ```
 
+### 8. PUT http://localhost:8000/api/v1/patologos/{patologo_code}/firma
+**Actualizar la firma digital de un patólogo**
 
+Headers:
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
 
+Ejemplos de URL:
+- `http://localhost:8000/api/v1/patologos/12345678/firma`
 
+Body:
+```json
+{
+    "firma": "https://storage.com/firmas/carlos_rodriguez_updated.png"
+}
+```
+
+Respuesta (200):
+```json
+{
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "patologo_name": "Carlos Eduardo Rodríguez Martínez",
+    "iniciales_patologo": "CERM",
+    "patologo_code": "12345678",
+    "patologo_email": "carlos.rodriguez@hospital.com",
+    "registro_medico": "RM12345",
+    "is_active": true,
+    "firma": "https://storage.com/firmas/carlos_rodriguez_updated.png",
+    "observaciones": "Especialista en patología oncológica con 15 años de experiencia",
+    "fecha_creacion": "2023-09-07T10:30:00Z",
+    "fecha_actualizacion": "2023-09-07T15:20:00Z"
+}
+```
 
 ## Casos de Error
 
-### Cédula Duplicada (400)
+### Cédula Duplicada (409)
 ```json
 {
-    "detail": "Ya existe un patólogo con la cédula 12345678"
+    "detail": "El código ya está registrado"
 }
 ```
 
-### Email Duplicado (400)
+### Email Duplicado (409)
 ```json
 {
-    "detail": "Ya existe un patólogo con el email carlos.rodriguez@hospital.com"
+    "detail": "El email ya está registrado en patólogos"
 }
 ```
 
-### Registro Médico Duplicado (400)
+### Registro Médico Duplicado (409)
 ```json
 {
-    "detail": "Ya existe un patólogo con el registro médico RM12345"
+    "detail": "El registro médico ya está registrado"
 }
 ```
 
@@ -268,24 +362,14 @@ Respuesta (200):
 {
     "detail": [
         {
-            "loc": ["body", "patologoName"],
+            "loc": ["body", "patologo_name"],
             "msg": "field required",
             "type": "value_error.missing"
         },
         {
-            "loc": ["body", "patologoCode"],
-            "msg": "field required",
-            "type": "value_error.missing"
-        },
-        {
-            "loc": ["body", "PatologoEmail"],
-            "msg": "field required",
-            "type": "value_error.missing"
-        },
-        {
-            "loc": ["body", "registro_medico"],
-            "msg": "field required",
-            "type": "value_error.missing"
+            "loc": ["body", "patologo_code"],
+            "msg": "ensure this value has at least 6 characters",
+            "type": "value_error.any_str.min_length"
         }
     ]
 }
@@ -298,17 +382,23 @@ Respuesta (200):
 }
 ```
 
+### No Autorizado (401)
+```json
+{
+    "detail": "Not authenticated"
+}
+```
+
 ## Casos de Uso
 
 ### 1. Registro de Nuevo Patólogo
 **Escenario:** Registrar un nuevo patólogo en el sistema
 
 **Pasos:**
-1. Hacer POST a `/api/v1/patologos/` (sin autenticación requerida)
-2. Incluir campos requeridos: `patologoName`, `patologoCode`, `PatologoEmail`, `registro_medico`
+1. Hacer POST a `/api/v1/patologos/` con autenticación
+2. Incluir campos requeridos: `patologo_name`, `patologo_code`, `patologo_email`, `registro_medico`, `password`
 3. Verificar que email, cédula y registro médico sean únicos
-4. Establecer `isActive` como `true` por defecto
-5. Dejar `firma` vacío inicialmente
+4. El sistema crea automáticamente un usuario en la colección `usuarios`
 
 ### 2. Búsqueda de Patólogos
 **Escenario:** Obtener lista de patólogos disponibles
@@ -322,12 +412,10 @@ Respuesta (200):
 
 **Pasos:**
 1. Hacer PUT a `/api/v1/patologos/{patologo_code}/estado`
-2. El sistema alterna automáticamente entre activo/inactivo
+2. El sistema sincroniza automáticamente con la colección `usuarios`
 3. Eficiente y directo usando código de patólogo
 
-
-
-### 5. Búsqueda Avanzada
+### 4. Búsqueda Avanzada
 **Escenario:** Encontrar patólogos con criterios específicos
 
 **Pasos:**
@@ -335,9 +423,7 @@ Respuesta (200):
 2. El parámetro `q` busca en nombre, código, email y registro médico
 3. Aplicar paginación con `skip` y `limit` si es necesario
 
-
-
-### 7. Eliminación Permanente
+### 5. Eliminación Permanente
 **Escenario:** Remover patólogo del sistema (usar con EXTREMA precaución)
 
 **⚠️ ADVERTENCIA:** Esta operación elimina permanentemente el registro de la base de datos y NO se puede deshacer.
@@ -348,7 +434,7 @@ Respuesta (200):
 3. Operación irreversible - el registro se elimina completamente
 4. Para activar/desactivar usar PUT `/api/v1/patologos/{patologo_code}/estado`
 
-### 8. Consulta por Código
+### 6. Consulta por Código
 **Escenario:** Buscar patólogo específico usando su cédula
 
 **Pasos:**
@@ -357,16 +443,25 @@ Respuesta (200):
 3. Natural y directo usando código
 4. Útil para integraciones externas
 
+### 7. Gestión de Firmas Digitales
+**Escenario:** Actualizar la firma digital de un patólogo
+
+**Pasos:**
+1. Hacer PUT a `/api/v1/patologos/{patologo_code}/firma`
+2. Solo se actualiza el campo `firma`
+3. Útil para sistemas de firma digital
+
 ## Ejemplos de Patólogos
 
 ### Patólogo de Anatomía Patológica
 ```json
 {
-    "patologoName": "María Elena García López",
-    "patologoCode": "87654321",
-    "PatologoEmail": "maria.garcia@hospital.com",
+    "patologo_name": "María Elena García López",
+    "iniciales_patologo": "MEGL",
+    "patologo_code": "87654321",
+    "patologo_email": "maria.garcia@hospital.com",
     "registro_medico": "RM54321",
-    "isActive": true,
+    "is_active": true,
     "firma": "",
     "observaciones": "Especialista en anatomía patológica"
 }
@@ -375,11 +470,12 @@ Respuesta (200):
 ### Patólogo Forense
 ```json
 {
-    "patologoName": "Juan Carlos Mendoza Silva",
-    "patologoCode": "11223344",
-    "PatologoEmail": "juan.mendoza@medicina-legal.gov.co",
+    "patologo_name": "Juan Carlos Mendoza Silva",
+    "iniciales_patologo": "JCMS",
+    "patologo_code": "11223344",
+    "patologo_email": "juan.mendoza@medicina-legal.gov.co",
     "registro_medico": "RM11223",
-    "isActive": true,
+    "is_active": true,
     "firma": "",
     "observaciones": "Especialista en patología forense y anatomía patológica"
 }
@@ -388,11 +484,12 @@ Respuesta (200):
 ### Neuropatólogo
 ```json
 {
-    "patologoName": "Ana Sofía Ramírez Torres",
-    "patologoCode": "55667788",
-    "PatologoEmail": "ana.ramirez@neurologia.com",
+    "patologo_name": "Ana Sofía Ramírez Torres",
+    "iniciales_patologo": "ASRT",
+    "patologo_code": "55667788",
+    "patologo_email": "ana.ramirez@neurologia.com",
     "registro_medico": "RM55667",
-    "isActive": true,
+    "is_active": true,
     "firma": "",
     "observaciones": "Especialista en neuropatología y anatomía patológica"
 }
@@ -401,11 +498,12 @@ Respuesta (200):
 ### Citopatólogo
 ```json
 {
-    "patologoName": "Luis Fernando Vargas Herrera",
-    "patologoCode": "99887766",
-    "PatologoEmail": "luis.vargas@laboratorio.com",
+    "patologo_name": "Luis Fernando Vargas Herrera",
+    "iniciales_patologo": "LFVH",
+    "patologo_code": "99887766",
+    "patologo_email": "luis.vargas@laboratorio.com",
     "registro_medico": "RM99887",
-    "isActive": false,
+    "is_active": false,
     "firma": "",
     "observaciones": "Especialista en citopatología - actualmente en vacaciones"
 }
@@ -415,12 +513,14 @@ Respuesta (200):
 
 ### ✅ Funcionalidades Implementadas
 - **CRUD Completo**: Crear, leer, actualizar y eliminar patólogos
-- **Sin Autenticación**: Todos los endpoints son públicos
+- **Autenticación Requerida**: Todos los endpoints requieren JWT Bearer token
+- **Creación de Usuarios**: Automáticamente crea usuarios en la colección `usuarios`
 - **Búsqueda Avanzada**: Búsqueda por múltiples campos con un solo parámetro
 - **Gestión de Estados**: Activar/desactivar patólogos
 - **Gestión de Firmas**: Actualización específica de firmas digitales
-- **Estadísticas**: Métricas generales del sistema
+- **Sincronización**: Cambios se reflejan automáticamente en la colección `usuarios`
 - **Eliminación Permanente**: Eliminación real de registros (no soft delete)
+
 ### 🔧 Endpoints Disponibles
 1. `POST /api/v1/patologos/` - Crear patólogo
 2. `GET /api/v1/patologos/` - Listar patólogos activos
@@ -428,11 +528,27 @@ Respuesta (200):
 4. `GET /api/v1/patologos/{code}` - Obtener patólogo específico
 5. `PUT /api/v1/patologos/{code}` - Actualizar patólogo
 6. `PUT /api/v1/patologos/{code}/estado` - Cambiar estado activo/inactivo
-7. `DELETE /api/v1/patologos/{code}` - Eliminación permanente
+7. `PUT /api/v1/patologos/{code}/firma` - Actualizar firma digital
+8. `DELETE /api/v1/patologos/{code}` - Eliminación permanente
 
 ### ⚠️ Consideraciones Importantes
-- **Sin Autenticación**: Considerar implementar seguridad en producción
+- **Autenticación Requerida**: Todos los endpoints requieren JWT Bearer token
+- **Creación de Usuarios**: Al crear patólogos se crean usuarios automáticamente
 - **Eliminación Permanente**: La operación DELETE es irreversible
-- **Separación de Funciones**: Eliminación vs Activación/Desactivación
+- **Sincronización**: Cambios se reflejan en ambas colecciones (patólogos y usuarios)
 - **Validaciones**: Campos únicos (email, código, registro médico)
 - **Búsqueda Unificada**: Un solo parámetro `q` para búsqueda general
+- **Nombres de Campos**: Todos en snake_case para consistencia
+- **Gestión de Firmas**: Endpoint específico para actualizar firmas digitales
+
+## Validaciones
+
+- **patologo_name**: 2-100 caracteres, no puede estar vacío
+- **iniciales_patologo**: 2-10 caracteres, no puede estar vacío
+- **patologo_code**: 6-10 caracteres, no puede estar vacío, debe ser único
+- **patologo_email**: Email válido, debe ser único
+- **registro_medico**: 5-50 caracteres, debe ser único
+- **password**: 6-100 caracteres (solo para creación)
+- **is_active**: Boolean, por defecto true
+- **firma**: String, opcional, por defecto vacío
+- **observaciones**: Opcional, máximo 500 caracteres

@@ -1,7 +1,10 @@
 """Servicio para la lógica de negocio de Patólogos"""
 
+import logging
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 from app.modules.patologos.repositories.patologo_repository import PatologoRepository
 from app.modules.patologos.models.patologo import Patologo
@@ -28,17 +31,17 @@ class PatologoService:
     async def create_patologo(self, patologo_data: PatologoCreate) -> PatologoResponse:
         """Crear un nuevo patólogo y su usuario correspondiente"""
         # Verificar que el email no esté en uso en patólogos
-        existing_email = await self.patologo_repository.get_by_email(patologo_data.PatologoEmail)
+        existing_email = await self.patologo_repository.get_by_email(patologo_data.patologo_email)
         if existing_email:
             raise ConflictError("El email ya está registrado en patólogos")
         
         # Verificar que el email no esté en uso en usuarios
-        email_exists_in_users = await self.user_management_service.check_email_exists_in_users(patologo_data.PatologoEmail)
+        email_exists_in_users = await self.user_management_service.check_email_exists_in_users(patologo_data.patologo_email)
         if email_exists_in_users:
             raise ConflictError("El email ya está registrado en usuarios")
         
         # Verificar que el código no esté en uso
-        existing_codigo = await self.patologo_repository.get_by_codigo(patologo_data.patologoCode)
+        existing_codigo = await self.patologo_repository.get_by_codigo(patologo_data.patologo_code)
         if existing_codigo:
             raise ConflictError("El código ya está registrado")
         
@@ -60,10 +63,10 @@ class PatologoService:
             
             # Crear el usuario en la colección usuarios
             user = await self.user_management_service.create_user_for_pathologist(
-                name=patologo_data.patologoName,
-                email=patologo_data.PatologoEmail,
+                name=patologo_data.patologo_name,
+                email=patologo_data.patologo_email,
                 password=password,
-                is_active=patologo_data.isActive
+                is_active=patologo_data.is_active
             )
             
             return self._to_response(patologo)
@@ -79,7 +82,7 @@ class PatologoService:
             # Rollback: si se creó el usuario pero falló algo más, eliminar el usuario
             if user and not patologo:
                 try:
-                    await self.user_management_service.delete_user_by_email(patologo_data.PatologoEmail)
+                    await self.user_management_service.delete_user_by_email(patologo_data.patologo_email)
                 except:
                     pass
             
@@ -104,7 +107,7 @@ class PatologoService:
         limit: int = 100
     ) -> List[PatologoResponse]:
         """Obtener lista de patólogos activos"""
-        filters = {"isActive": True}
+        filters = {"is_active": True}
         patologos = await self.patologo_repository.get_multi(skip=skip, limit=limit, filters=filters)
         return [self._to_response(patologo) for patologo in patologos]
     
@@ -118,14 +121,14 @@ class PatologoService:
             raise NotFoundError("Patólogo no encontrado")
         
         # Verificar unicidad de email si se está actualizando
-        if patologo_data.PatologoEmail and patologo_data.PatologoEmail != existing_patologo.PatologoEmail:
-            existing_email = await self.patologo_repository.get_by_email(patologo_data.PatologoEmail)
+        if patologo_data.patologo_email and patologo_data.patologo_email != existing_patologo.patologo_email:
+            existing_email = await self.patologo_repository.get_by_email(patologo_data.patologo_email)
             if existing_email and str(existing_email.id) != str(existing_patologo.id):
                 raise ConflictError("El email ya está registrado")
         
         # Verificar unicidad de código si se está actualizando
-        if patologo_data.patologoCode and patologo_data.patologoCode != existing_patologo.patologoCode:
-            existing_codigo = await self.patologo_repository.get_by_codigo(patologo_data.patologoCode)
+        if patologo_data.patologo_code and patologo_data.patologo_code != existing_patologo.patologo_code:
+            existing_codigo = await self.patologo_repository.get_by_codigo(patologo_data.patologo_code)
             if existing_codigo and str(existing_codigo.id) != str(existing_patologo.id):
                 raise ConflictError("El código ya está registrado")
         
@@ -143,11 +146,11 @@ class PatologoService:
 
         # Sincronizar cambios con colección usuarios (nombre, email, estado, password opcional)
         try:
-            final_name = getattr(updated_patologo, 'patologoName', existing_patologo.patologoName)
-            final_email = getattr(updated_patologo, 'PatologoEmail', existing_patologo.PatologoEmail)
-            final_is_active = getattr(updated_patologo, 'isActive', existing_patologo.isActive)
-            await self.user_management_service.update_user_for_resident(
-                old_email=existing_patologo.PatologoEmail,
+            final_name = getattr(updated_patologo, 'patologo_name', existing_patologo.patologo_name)
+            final_email = getattr(updated_patologo, 'patologo_email', existing_patologo.patologo_email)
+            final_is_active = getattr(updated_patologo, 'is_active', existing_patologo.is_active)
+            await self.user_management_service.update_user(
+                old_email=existing_patologo.patologo_email,
                 name=final_name,
                 new_email=final_email,
                 is_active=final_is_active,
@@ -158,32 +161,7 @@ class PatologoService:
 
         return self._to_response(updated_patologo)
     
-    async def toggle_patologo_status(self, patologo_code: str) -> PatologoResponse:
-        """Cambiar el estado activo/inactivo de un patólogo por código"""
-        patologo = await self.patologo_repository.get_by_codigo(patologo_code)
-        if not patologo:
-            raise NotFoundError("Patólogo no encontrado")
-        
-        # Cambiar el estado del patólogo
-        nuevo_estado = not patologo.isActive
-        
-        # Crear objeto de actualización con todos los campos requeridos
-        patologo_update = PatologoUpdate(
-            patologoName=patologo.patologoName,
-            patologoCode=patologo.patologoCode,
-            PatologoEmail=patologo.PatologoEmail,
-            registro_medico=patologo.registro_medico,
-            firma=patologo.firma,
-            observaciones=patologo.observaciones,
-            isActive=nuevo_estado
-        )
-        
-        # Actualizar usando ID interno
-        updated_patologo = await self.patologo_repository.update(str(patologo.id), patologo_update)
-        if not updated_patologo:
-            raise BadRequestError("Error al cambiar estado")
-        
-        return self._to_response(updated_patologo)
+    
     
 
     
@@ -192,6 +170,12 @@ class PatologoService:
         patologo = await self.patologo_repository.get_by_codigo(patologo_code)
         if not patologo:
             raise NotFoundError("Patólogo no encontrado")
+        
+        # Eliminar el usuario correspondiente primero
+        try:
+            await self.user_management_service.delete_user_by_email(patologo.patologo_email)
+        except Exception as e:
+            logger.warning(f"No se pudo eliminar el usuario del patólogo {patologo_code}: {str(e)}")
         
         # Realizar eliminación permanente de la base de datos
         result = await self.patologo_repository.delete(str(patologo.id))
@@ -221,11 +205,21 @@ class PatologoService:
         if not patologo:
             raise NotFoundError("Patólogo no encontrado")
         
-        # Cambiar estado usando ID interno
-        update_data = PatologoUpdate(isActive=nuevo_estado)
-        updated_patologo = await self.patologo_repository.update(str(patologo.id), update_data)
+        # Usar el método específico del repositorio
+        updated_patologo = await self.patologo_repository.toggle_estado(str(patologo.id))
         if not updated_patologo:
             raise BadRequestError("Error al cambiar estado")
+        
+        # Sincronizar con la colección usuarios
+        try:
+            await self.user_management_service.update_user(
+                old_email=patologo.patologo_email,
+                name=updated_patologo.patologo_name,
+                new_email=updated_patologo.patologo_email,
+                is_active=nuevo_estado
+            )
+        except Exception as sync_err:
+            logger.warning(f"Warning: Falló sincronización con usuarios para patólogo {patologo_code}: {sync_err}")
         
         return self._to_response(updated_patologo)
     
@@ -235,12 +229,8 @@ class PatologoService:
         if not patologo:
             raise NotFoundError("Patólogo no encontrado")
         
-        # Actualizar solo el campo firma
-        patologo.firma = firma_url
-        patologo.fecha_actualizacion = datetime.utcnow()
-        
-        # Guardar en la base de datos
-        updated_patologo = await self.patologo_repository.update(str(patologo.id), patologo)
+        # Usar el método específico del repositorio
+        updated_patologo = await self.patologo_repository.update_firma(str(patologo.id), firma_url)
         if not updated_patologo:
             raise BadRequestError("Error al actualizar la firma")
         
@@ -256,14 +246,14 @@ class PatologoService:
         """Convertir modelo a esquema de respuesta"""
         return PatologoResponse(
             id=str(patologo.id),
-            patologoName=patologo.patologoName,
-            InicialesPatologo=getattr(patologo, 'InicialesPatologo', None),
-            patologoCode=patologo.patologoCode,
-            PatologoEmail=patologo.PatologoEmail,
+            patologo_name=patologo.patologo_name,
+            iniciales_patologo=getattr(patologo, 'iniciales_patologo', None),
+            patologo_code=patologo.patologo_code,
+            patologo_email=patologo.patologo_email,
             registro_medico=patologo.registro_medico,
-            isActive=patologo.isActive,
+            is_active=patologo.is_active,
             firma=patologo.firma,
             observaciones=patologo.observaciones,
-            fecha_creacion=patologo.fecha_creacion or datetime.utcnow(),
-            fecha_actualizacion=patologo.fecha_actualizacion or datetime.utcnow()
+            fecha_creacion=patologo.fecha_creacion or datetime.now(timezone.utc),
+            fecha_actualizacion=patologo.fecha_actualizacion or datetime.now(timezone.utc)
         )
