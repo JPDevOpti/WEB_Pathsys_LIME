@@ -1,7 +1,9 @@
 // Configuración de la API del Backend
 export const API_CONFIG = {
   // URL base de la API
-  BASE_URL: (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000',
+  BASE_URL:
+    (import.meta as any).env?.VITE_API_BASE_URL ||
+    ((import.meta as any).env?.PROD ? 'https://pathsys-backend.onrender.com' : 'http://localhost:8000'),
   
   // Versión de la API
   VERSION: '/api/v1',
