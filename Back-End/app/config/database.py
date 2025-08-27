@@ -4,6 +4,7 @@ from typing import Optional
 import logging
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 import certifi
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,10 @@ async def connect_to_mongo():
     """Crear conexión a la base de datos"""
     try:
         if database_manager.client is None:
+            parsed = urlparse(settings.MONGODB_URL)
+            safe_netloc = parsed.hostname
+            logger.info(f"Intentando conectar a MongoDB host={safe_netloc} scheme={parsed.scheme}")
+
             database_manager.client = AsyncIOMotorClient(
                 settings.MONGODB_URL,
                 tls=True,
