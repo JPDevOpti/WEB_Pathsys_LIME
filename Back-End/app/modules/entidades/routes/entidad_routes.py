@@ -1,6 +1,9 @@
+import logging
 from typing import List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
+logger = logging.getLogger(__name__)
 
 from app.modules.entidades.models.entidad import (
     EntidadCreate,
@@ -27,7 +30,14 @@ async def create_entidad(
     service: EntidadService = Depends(get_entidad_service)
 ):
     """Crear una nueva entidad"""
-    return await service.create_entidad(entidad_data)
+    try:
+        logger.info(f"Creando entidad: {entidad_data.entidad_code}")
+        return await service.create_entidad(entidad_data)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error inesperado al crear entidad: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 
 @router.get("/", response_model=Dict[str, Any])
@@ -54,10 +64,16 @@ async def get_entidad_by_code(
     service: EntidadService = Depends(get_entidad_service)
 ):
     """Obtener entidad por código"""
-    entidad = await service.get_entidad_by_code(code)
-    if not entidad:
-        raise HTTPException(status_code=404, detail="Entidad no encontrada")
-    return entidad
+    try:
+        entidad = await service.get_entidad_by_code(code)
+        if not entidad:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entidad no encontrada")
+        return entidad
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error inesperado al obtener entidad {code}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 
 @router.put("/code/{code}", response_model=EntidadResponse)
@@ -67,26 +83,49 @@ async def update_entidad_by_code(
     service: EntidadService = Depends(get_entidad_service)
 ):
     """Actualizar una entidad por código"""
-    return await service.update_entidad_by_code(code, entidad_update)
+    try:
+        logger.info(f"Actualizando entidad: {code}")
+        return await service.update_entidad_by_code(code, entidad_update)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error inesperado al actualizar entidad {code}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 
-@router.delete("/code/{code}", status_code=204)
+@router.delete("/code/{code}", status_code=200)
 async def delete_entidad_by_code(
     code: str,
     service: EntidadService = Depends(get_entidad_service)
 ):
     """Eliminar una entidad por código (eliminación permanente)"""
-    success = await service.delete_entidad_by_code(code)
-    if not success:
-        raise HTTPException(status_code=404, detail="Entidad no encontrada")
+    try:
+        logger.info(f"Eliminando entidad: {code}")
+        success = await service.delete_entidad_by_code(code)
+        if not success:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entidad no encontrada")
+        return {"message": f"Entidad con código {code} ha sido eliminada correctamente"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error inesperado al eliminar entidad {code}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 
-@router.patch("/code/{code}/toggle-active", status_code=204)
+@router.patch("/code/{code}/toggle-active", status_code=200)
 async def toggle_active_entidad_by_code(
     code: str,
     service: EntidadService = Depends(get_entidad_service)
 ):
     """Cambiar estado activo/inactivo de una entidad por código"""
-    success = await service.toggle_active_entidad_by_code(code)
-    if not success:
-        raise HTTPException(status_code=404, detail="Entidad no encontrada") 
+    try:
+        logger.info(f"Cambiando estado de entidad: {code}")
+        success = await service.toggle_active_entidad_by_code(code)
+        if not success:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entidad no encontrada")
+        return {"message": f"Estado de entidad {code} cambiado correctamente"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error inesperado al cambiar estado de entidad {code}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor") 

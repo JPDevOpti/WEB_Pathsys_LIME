@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 import logging
 
 from app.modules.entidades.models.entidad import (
@@ -24,25 +24,24 @@ class EntidadService:
         """Crear una nueva entidad"""
         try:
             # Verificar que el código no exista
-            existing_entidad = await self.repository.get_by_code_including_inactive(entidad_data.EntidadCode)
+            existing_entidad = await self.repository.get_by_code_including_inactive(entidad_data.entidad_code)
             if existing_entidad:
                 raise HTTPException(
-                    status_code=400,
-                    detail=f"Ya existe una entidad con el código {entidad_data.EntidadCode}"
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Ya existe una entidad con el código {entidad_data.entidad_code}"
                 )
             
             # Crear la entidad
             entidad = await self.repository.create(entidad_data)
-            logger.info(f"Entidad creada: {entidad.EntidadCode}")
+            logger.info(f"Entidad creada: {entidad.entidad_code}")
             
             return EntidadResponse(**entidad.model_dump())
             
         except HTTPException:
             raise
         except Exception as e:
-            import traceback
-            logger.error(f"Error creando entidad: {str(e)}\n{traceback.format_exc()}")
-            raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+            logger.error(f"Error creando entidad: {str(e)}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
     async def get_entidad_by_code(self, code: str) -> Optional[EntidadResponse]:
         """Obtener entidad por código"""
@@ -55,7 +54,7 @@ class EntidadService:
             
         except Exception as e:
             logger.error(f"Error obteniendo entidad por código {code}: {str(e)}")
-            raise HTTPException(status_code=500, detail="Error interno del servidor")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
     async def get_all_entidades(self, search_params: EntidadSearch) -> Dict[str, Any]:
         """Obtener todas las entidades con filtros y paginación"""
@@ -80,7 +79,7 @@ class EntidadService:
             
         except Exception as e:
             logger.error(f"Error obteniendo entidades: {str(e)}")
-            raise HTTPException(status_code=500, detail="Error interno del servidor")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
     async def update_entidad_by_code(self, code: str, entidad_update: EntidadUpdate) -> Optional[EntidadResponse]:
         """Actualizar una entidad por código"""
@@ -88,21 +87,21 @@ class EntidadService:
             # Verificar que la entidad existe
             existing_entidad = await self.repository.get_by_code(code)
             if not existing_entidad:
-                raise HTTPException(status_code=404, detail="Entidad no encontrada")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entidad no encontrada")
             
             # Si se está cambiando el código, verificar que el nuevo no exista
-            if entidad_update.EntidadCode and entidad_update.EntidadCode != code:
-                code_exists = await self.repository.get_by_code_including_inactive(entidad_update.EntidadCode)
+            if entidad_update.entidad_code and entidad_update.entidad_code != code:
+                code_exists = await self.repository.get_by_code_including_inactive(entidad_update.entidad_code)
                 if code_exists:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Ya existe una entidad con el código {entidad_update.EntidadCode}"
-                    )
+                                    raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Ya existe una entidad con el código {entidad_update.entidad_code}"
+                )
             
             # Actualizar la entidad
             updated_entidad = await self.repository.update_by_code(code, entidad_update)
             if not updated_entidad:
-                raise HTTPException(status_code=404, detail="Entidad no encontrada")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entidad no encontrada")
             
             logger.info(f"Entidad actualizada: {code}")
             return EntidadResponse(**updated_entidad.model_dump())
@@ -111,7 +110,7 @@ class EntidadService:
             raise
         except Exception as e:
             logger.error(f"Error actualizando entidad {code}: {str(e)}")
-            raise HTTPException(status_code=500, detail="Error interno del servidor")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
     async def delete_entidad_by_code(self, code: str) -> bool:
         """Eliminar una entidad por código (eliminación permanente)"""
@@ -130,7 +129,7 @@ class EntidadService:
             
         except Exception as e:
             logger.error(f"Error eliminando entidad {code}: {str(e)}")
-            raise HTTPException(status_code=500, detail="Error interno del servidor")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
     async def toggle_active_entidad_by_code(self, code: str) -> bool:
         """Cambiar estado activo/inactivo de una entidad por código"""
@@ -140,8 +139,8 @@ class EntidadService:
             if not existing_entidad:
                 return False
             
-            # Alternar el estado isActive
-            new_active_state = not existing_entidad.isActive
+            # Alternar el estado is_active
+            new_active_state = not existing_entidad.is_active
             success = await self.repository.toggle_active_by_code(code, new_active_state)
             
             if success:
@@ -152,4 +151,4 @@ class EntidadService:
             
         except Exception as e:
             logger.error(f"Error cambiando estado de entidad {code}: {str(e)}")
-            raise HTTPException(status_code=500, detail="Error interno del servidor") 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor") 
