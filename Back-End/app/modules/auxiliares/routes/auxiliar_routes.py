@@ -1,5 +1,6 @@
+import logging
 from typing import List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.config.database import get_database
@@ -19,6 +20,8 @@ from app.modules.auxiliares.schemas.auxiliar import (
 )
 from app.shared.services.user_management import UserManagementService
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(tags=["auxiliares"])
 
 # Dependency para obtener el servicio
@@ -34,13 +37,17 @@ async def create_auxiliar(
 ):
     """Crear un nuevo auxiliar"""
     try:
+        logger.info(f"Creando auxiliar: {auxiliar_data.auxiliar_email}")
         return await service.create_auxiliar(auxiliar_data)
     except ConflictError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        logger.warning(f"Conflicto al crear auxiliar: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except BadRequestError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Datos inválidos al crear auxiliar: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+        logger.error(f"Error inesperado al crear auxiliar: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.get("/", response_model=List[AuxiliarResponse])
 async def get_auxiliares(
@@ -56,19 +63,19 @@ async def get_auxiliares(
 
 @router.get("/search", response_model=Dict[str, Any])
 async def search_auxiliares(
-    auxiliarName: str = Query(None, description="Nombre del auxiliar"),
-    auxiliarCode: str = Query(None, description="Código del auxiliar"),
-    AuxiliarEmail: str = Query(None, description="Email del auxiliar"),
-    isActive: bool = Query(None, description="Estado del auxiliar"),
+    auxiliar_name: str = Query(None, description="Nombre del auxiliar"),
+    auxiliar_code: str = Query(None, description="Código del auxiliar"),
+    auxiliar_email: str = Query(None, description="Email del auxiliar"),
+    is_active: bool = Query(None, description="Estado del auxiliar"),
     service: AuxiliarService = Depends(get_auxiliar_service)
 ):
     """Buscar auxiliares con filtros avanzados"""
     try:
         search_params = AuxiliarSearch(
-            auxiliarName=auxiliarName,
-            auxiliarCode=auxiliarCode,
-            AuxiliarEmail=AuxiliarEmail,
-            isActive=isActive
+            auxiliar_name=auxiliar_name,
+            auxiliar_code=auxiliar_code,
+            auxiliar_email=auxiliar_email,
+            is_active=is_active
         )
         
         auxiliares = await service.search_auxiliares(search_params)
@@ -77,10 +84,10 @@ async def search_auxiliares(
             "auxiliares": auxiliares,
             "total": len(auxiliares),
             "filtros_aplicados": {
-                "auxiliarName": auxiliarName,
-                "auxiliarCode": auxiliarCode,
-                "AuxiliarEmail": AuxiliarEmail,
-                "isActive": isActive
+                "auxiliar_name": auxiliar_name,
+                "auxiliar_code": auxiliar_code,
+                "auxiliar_email": auxiliar_email,
+                "is_active": is_active
             }
         }
     except Exception as e:
@@ -187,11 +194,11 @@ async def update_auxiliar_estado(
     """Actualizar solo el estado de un auxiliar"""
     try:
         auxiliar_update = AuxiliarUpdate(
-            auxiliarName=None,
-            auxiliarCode=None,
-            AuxiliarEmail=None,
+            auxiliar_name=None,
+            auxiliar_code=None,
+            auxiliar_email=None,
             observaciones=None,
-            isActive=estado_data.isActive
+            is_active=estado_data.is_active
         )
         return await service.update_auxiliar(auxiliar_code, auxiliar_update)
     except NotFoundError as e:

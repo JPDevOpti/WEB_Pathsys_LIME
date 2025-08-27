@@ -1,7 +1,7 @@
 # Documentación del Módulo de Auxiliares
 
-## ⚠️ IMPORTANTE: MÓDULO SIN AUTENTICACIÓN
-**Este módulo NO requiere autenticación.** Todos los endpoints están disponibles sin necesidad de tokens de acceso o credenciales de usuario. Esto facilita las pruebas y la integración, pero debe considerarse la seguridad en entornos de producción.
+## ⚠️ IMPORTANTE: MÓDULO CON AUTENTICACIÓN
+**Este módulo SÍ requiere autenticación.** Los auxiliares son usuarios del sistema con rol "auxiliar" y tienen acceso a funcionalidades específicas según su nivel de permisos.
 
 ## Estructura del Modelo
 
@@ -9,10 +9,10 @@
 ```json
 {
     "_id": "ObjectId MongoDB",
-    "auxiliarName": "string (nombre completo del auxiliar)",
-    "auxiliarCode": "string (cédula única del auxiliar)",
-    "AuxiliarEmail": "string (email único)",
-    "isActive": "boolean (estado activo/inactivo)",
+    "auxiliar_name": "string (nombre completo del auxiliar)",
+    "auxiliar_code": "string (código único del auxiliar)",
+    "auxiliar_email": "string (email único)",
+    "is_active": "boolean (estado activo/inactivo)",
     "observaciones": "string (notas adicionales, opcional)",
     "fecha_creacion": "datetime",
     "fecha_actualizacion": "datetime"
@@ -23,13 +23,12 @@
 - `true` - Auxiliar activo y disponible
 - `false` - Auxiliar inactivo
 
-
-
 ### Campos Requeridos para Crear
-- `auxiliarName`: Nombre completo del auxiliar (2-200 caracteres)
-- `auxiliarCode`: Cédula única del auxiliar (8-20 caracteres)
-- `AuxiliarEmail`: Email único válido
-- `isActive`: Estado activo (true/false, por defecto: true)
+- `auxiliar_name`: Nombre completo del auxiliar (2-200 caracteres)
+- `auxiliar_code`: Código único del auxiliar (8-20 caracteres)
+- `auxiliar_email`: Email único válido
+- `password`: Contraseña para el usuario del sistema (6-128 caracteres)
+- `is_active`: Estado activo (true/false, por defecto: true)
 - `observaciones`: Notas adicionales (opcional, máx 500 caracteres)
 
 ## Endpoints Disponibles
@@ -40,10 +39,11 @@
 Body:
 ```json
 {
-    "auxiliarName": "María Elena González Pérez",
-    "auxiliarCode": "87654321",
-    "AuxiliarEmail": "maria.gonzalez@hospital.com",
-    "isActive": true,
+    "auxiliar_name": "María Elena González Pérez",
+    "auxiliar_code": "87654321",
+    "auxiliar_email": "maria.gonzalez@hospital.com",
+    "password": "contraseña123",
+    "is_active": true,
     "observaciones": "Auxiliar de laboratorio con 5 años de experiencia"
 }
 ```
@@ -52,10 +52,10 @@ Response 201:
 ```json
 {
     "_id": "507f1f77bcf86cd799439011",
-    "auxiliarName": "María Elena González Pérez",
-    "auxiliarCode": "87654321",
-    "AuxiliarEmail": "maria.gonzalez@hospital.com",
-    "isActive": true,
+    "auxiliar_name": "María Elena González Pérez",
+    "auxiliar_code": "87654321",
+    "auxiliar_email": "maria.gonzalez@hospital.com",
+    "is_active": true,
     "observaciones": "Auxiliar de laboratorio con 5 años de experiencia",
     "fecha_creacion": "2024-01-15T10:30:00Z",
     "fecha_actualizacion": "2024-01-15T10:30:00Z"
@@ -68,16 +68,16 @@ Response 201:
 URL con parámetros:
 - `http://localhost:8000/api/v1/auxiliares/` (todos los auxiliares)
 - `http://localhost:8000/api/v1/auxiliares/?skip=0&limit=10` (paginación)
-- `http://localhost:8000/api/v1/auxiliares/?isActive=true&limit=20` (solo activos)
-- `http://localhost:8000/api/v1/auxiliares/?auxiliarName=María` (filtrar por nombre)
+- `http://localhost:8000/api/v1/auxiliares/?is_active=true&limit=20` (solo activos)
+- `http://localhost:8000/api/v1/auxiliares/?auxiliar_name=María` (filtrar por nombre)
 
 Parámetros de consulta:
 - `skip`: Registros a omitir (default: 0)
 - `limit`: Máximo registros (default: 10, max: 100)
-- `auxiliarName`: Filtrar por nombre (búsqueda parcial)
-- `auxiliarCode`: Filtrar por código exacto
-- `AuxiliarEmail`: Filtrar por email exacto
-- `isActive`: Filtrar por estado (true/false)
+- `auxiliar_name`: Filtrar por nombre (búsqueda parcial)
+- `auxiliar_code`: Filtrar por código exacto
+- `auxiliar_email`: Filtrar por email exacto
+- `is_active`: Filtrar por estado (true/false)
 
 Body: (sin body)
 
@@ -87,26 +87,16 @@ Respuesta (200):
     "auxiliares": [
         {
             "_id": "507f1f77bcf86cd799439011",
-            "auxiliarName": "María Elena González Pérez",
-            "auxiliarCode": "87654321",
-            "AuxiliarEmail": "maria.gonzalez@hospital.com",
-            "isActive": true,
+            "auxiliar_name": "María Elena González Pérez",
+            "auxiliar_code": "87654321",
+            "auxiliar_email": "maria.gonzalez@hospital.com",
+            "is_active": true,
             "observaciones": "Auxiliar de laboratorio con 5 años de experiencia",
             "fecha_creacion": "2024-01-15T10:30:00Z",
             "fecha_actualizacion": "2024-01-15T10:30:00Z"
-        },
-        {
-            "_id": "507f1f77bcf86cd799439012",
-            "auxiliarName": "Ana María Rodríguez López",
-            "auxiliarCode": "12345678",
-            "AuxiliarEmail": "ana.rodriguez@hospital.com",
-            "isActive": true,
-            "observaciones": "Especialista en análisis de sangre",
-            "fecha_creacion": "2024-01-15T11:00:00Z",
-            "fecha_actualizacion": "2024-01-15T11:00:00Z"
         }
     ],
-    "total": 2,
+    "total": 1,
     "skip": 0,
     "limit": 10,
     "has_next": false,
@@ -127,10 +117,10 @@ Respuesta (200):
 ```json
 {
     "_id": "507f1f77bcf86cd799439011",
-    "auxiliarName": "María Elena González Pérez",
-    "auxiliarCode": "87654321",
-    "AuxiliarEmail": "maria.gonzalez@hospital.com",
-    "isActive": true,
+    "auxiliar_name": "María Elena González Pérez",
+    "auxiliar_code": "87654321",
+    "auxiliar_email": "maria.gonzalez@hospital.com",
+    "is_active": true,
     "observaciones": "Auxiliar de laboratorio",
     "fecha_creacion": "2024-01-15T10:30:00Z",
     "fecha_actualizacion": "2024-01-15T10:30:00Z"
@@ -147,10 +137,10 @@ Ejemplos de URL:
 Body:
 ```json
 {
-    "auxiliarName": "María Elena González Pérez",
-    "auxiliarCode": "87654321",
-    "AuxiliarEmail": "maria.gonzalez.nuevo@hospital.com",
-    "isActive": true,
+    "auxiliar_name": "María Elena González Pérez",
+    "auxiliar_code": "87654321",
+    "auxiliar_email": "maria.gonzalez.nuevo@hospital.com",
+    "is_active": true,
     "observaciones": "Auxiliar con email actualizado"
 }
 ```
@@ -159,10 +149,10 @@ Respuesta (200):
 ```json
 {
     "_id": "507f1f77bcf86cd799439011",
-    "auxiliarName": "María Elena González Pérez",
-    "auxiliarCode": "87654321",
-    "AuxiliarEmail": "maria.gonzalez.nuevo@hospital.com",
-    "isActive": true,
+    "auxiliar_name": "María Elena González Pérez",
+    "auxiliar_code": "87654321",
+    "auxiliar_email": "maria.gonzalez.nuevo@hospital.com",
+    "is_active": true,
     "observaciones": "Auxiliar con email actualizado",
     "fecha_creacion": "2024-01-15T10:30:00Z",
     "fecha_actualizacion": "2024-01-15T14:45:00Z"
@@ -178,11 +168,14 @@ Ejemplos de URL:
 
 Body: (sin body)
 
-Respuesta (204): (sin contenido)
+Respuesta (200): 
+```json
+{
+    "message": "Auxiliar con código 87654321 ha sido eliminado correctamente"
+}
+```
 
 ⚠️ **IMPORTANTE**: Esta operación elimina permanentemente el registro de la base de datos. No se puede deshacer.
-
-
 
 ### 6. GET http://localhost:8000/api/v1/auxiliares/search
 **Búsqueda avanzada de auxiliares**
@@ -195,7 +188,7 @@ URL con parámetros:
 
 Parámetros de consulta:
 - `q`: Término de búsqueda que busca en nombre, código, email y observaciones (opcional)
-- `isActive`: Filtrar por estado (opcional)
+- `is_active`: Filtrar por estado (opcional)
 - `skip`: Registros a omitir (default: 0)
 - `limit`: Máximo registros (default: 10, max: 100)
 
@@ -203,7 +196,7 @@ Body: (sin body)
 
 Respuesta (200): (similar al endpoint GET principal)
 
-### 6.2. PUT http://localhost:8000/api/v1/auxiliares/{auxiliar_code}/estado
+### 7. PATCH http://localhost:8000/api/v1/auxiliares/{auxiliar_code}/estado
 **Cambiar estado activo/inactivo por código**
 
 Ejemplos de URL:
@@ -213,7 +206,7 @@ Ejemplos de URL:
 Body:
 ```json
 {
-    "isActive": false
+    "is_active": false
 }
 ```
 
@@ -221,10 +214,10 @@ Respuesta (200):
 ```json
 {
     "_id": "507f1f77bcf86cd799439011",
-    "auxiliarName": "María Elena González Pérez",
-    "auxiliarCode": "87654321",
-    "AuxiliarEmail": "maria.gonzalez@hospital.com",
-    "isActive": false,
+    "auxiliar_name": "María Elena González Pérez",
+    "auxiliar_code": "87654321",
+    "auxiliar_email": "maria.gonzalez@hospital.com",
+    "is_active": false,
     "observaciones": "Auxiliar desactivado temporalmente",
     "fecha_creacion": "2024-01-15T10:30:00Z",
     "fecha_actualizacion": "2024-01-15T16:20:00Z"
@@ -259,7 +252,7 @@ Respuesta (200):
 {
     "detail": [
         {
-            "loc": ["body", "auxiliarName"],
+            "loc": ["body", "auxiliar_name"],
             "msg": "field required",
             "type": "value_error.missing"
         }
@@ -277,16 +270,17 @@ Respuesta (200):
 ## Validaciones
 
 ### Campos Únicos
-- `auxiliarCode`: Debe ser único en todo el sistema
-- `AuxiliarEmail`: Debe ser único en todo el sistema
+- `auxiliar_code`: Debe ser único en todo el sistema
+- `auxiliar_email`: Debe ser único en todo el sistema
 
 ### Reglas de Validación
 
-1. **auxiliarName**: 2-200 caracteres, solo letras, espacios y acentos
-2. **auxiliarCode**: 8-20 caracteres alfanuméricos, único en el sistema
-3. **AuxiliarEmail**: Formato de email válido, único en el sistema
-4. **observaciones**: Máximo 500 caracteres (opcional)
-5. **isActive**: Valor booleano (true/false)
+1. **auxiliar_name**: 2-200 caracteres, solo letras, espacios y acentos
+2. **auxiliar_code**: 8-20 caracteres alfanuméricos, único en el sistema
+3. **auxiliar_email**: Formato de email válido, único en el sistema
+4. **password**: 6-128 caracteres (requerido para crear usuario)
+5. **observaciones**: Máximo 500 caracteres (opcional)
+6. **is_active**: Valor booleano (true/false)
 
 ## Casos de Uso
 
@@ -305,6 +299,11 @@ Respuesta (200):
    - Actualización de datos personales
    - Seguimiento de cambios en la información
 
+4. **Gestión de Usuarios del Sistema**
+   - Creación automática de usuarios con rol "auxiliar"
+   - Sincronización entre colecciones auxiliares y usuarios
+   - Gestión de contraseñas y acceso al sistema
+
 ## Notas Importantes
 
 1. **Eliminación Permanente**: Los auxiliares eliminados se borran físicamente de la base de datos y no se pueden recuperar
@@ -313,6 +312,8 @@ Respuesta (200):
 4. **Fechas**: Las fechas se manejan automáticamente por el sistema
 5. **Búsquedas**: Las búsquedas por nombre son parciales (case-insensitive)
 6. **Paginación**: Todos los listados soportan paginación con skip/limit
+7. **Autenticación**: Este módulo requiere autenticación y crea usuarios del sistema
+8. **Sincronización**: Los cambios se sincronizan automáticamente entre las colecciones auxiliares y usuarios
 
 ## Ejemplos de Integración
 
@@ -320,49 +321,58 @@ Respuesta (200):
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auxiliares/" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
-    "auxiliarName": "María Elena González Pérez",
-    "auxiliarCode": "87654321",
-    "AuxiliarEmail": "maria.gonzalez@hospital.com",
+    "auxiliar_name": "María Elena González Pérez",
+    "auxiliar_code": "87654321",
+    "auxiliar_email": "maria.gonzalez@hospital.com",
+    "password": "contraseña123",
     "observaciones": "Auxiliar de laboratorio con 5 años de experiencia"
   }'
 ```
 
 ### 2. Listar todos los auxiliares con paginación
 ```bash
-curl "http://localhost:8000/api/v1/auxiliares/?skip=0&limit=5"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/auxiliares/?skip=0&limit=5"
 ```
 
 ### 3. Buscar auxiliares por nombre
 ```bash
-curl "http://localhost:8000/api/v1/auxiliares/?auxiliarName=María&isActive=true"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/auxiliares/?auxiliar_name=María&is_active=true"
 ```
 
 ### 4. Búsqueda avanzada
 ```bash
 # Buscar por término general
-curl "http://localhost:8000/api/v1/auxiliares/search?q=laboratorio&limit=10"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/auxiliares/search?q=laboratorio&limit=10"
 
 # Buscar por código específico
-curl "http://localhost:8000/api/v1/auxiliares/search?q=87654321"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/auxiliares/search?q=87654321"
 
 # Buscar solo auxiliares activos
-curl "http://localhost:8000/api/v1/auxiliares/search?q=maría&isActive=true"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/auxiliares/search?q=maría&is_active=true"
 ```
 
 ### 5. Obtener auxiliar específico por código
 ```bash
-curl "http://localhost:8000/api/v1/auxiliares/87654321"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/auxiliares/87654321"
 ```
 
 ### 6. Actualizar auxiliar completo
 ```bash
 curl -X PUT "http://localhost:8000/api/v1/auxiliares/87654321" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
-    "auxiliarName": "María Elena González Pérez",
-    "auxiliarCode": "87654321",
-    "AuxiliarEmail": "maria.gonzalez.nuevo@hospital.com",
+    "auxiliar_name": "María Elena González Pérez",
+    "auxiliar_code": "87654321",
+    "auxiliar_email": "maria.gonzalez.nuevo@hospital.com",
     "observaciones": "Auxiliar con email actualizado y mayor experiencia"
   }'
 ```
@@ -370,20 +380,23 @@ curl -X PUT "http://localhost:8000/api/v1/auxiliares/87654321" \
 ### 7. Cambiar estado del auxiliar
 ```bash
 # Desactivar auxiliar
-curl -X PUT "http://localhost:8000/api/v1/auxiliares/87654321/estado" \
+curl -X PATCH "http://localhost:8000/api/v1/auxiliares/87654321/estado" \
   -H "Content-Type: application/json" \
-  -d '{"isActive": false}'
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"is_active": false}'
 
 # Reactivar auxiliar
-curl -X PUT "http://localhost:8000/api/v1/auxiliares/87654321/estado" \
+curl -X PATCH "http://localhost:8000/api/v1/auxiliares/87654321/estado" \
   -H "Content-Type: application/json" \
-  -d '{"isActive": true}'
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"is_active": true}'
 ```
 
 ### 8. Eliminar auxiliar (permanente)
 ```bash
-curl -X DELETE "http://localhost:8000/api/v1/auxiliares/87654321"
-# Respuesta: 204 No Content (sin cuerpo)
+curl -X DELETE -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/auxiliares/87654321"
+# Respuesta: 200 OK con mensaje de confirmación
 # ⚠️ ADVERTENCIA: Esta operación es irreversible
 ```
 
@@ -392,28 +405,33 @@ curl -X DELETE "http://localhost:8000/api/v1/auxiliares/87654321"
 # 1. Crear auxiliar
 AUXILIAR_ID=$(curl -s -X POST "http://localhost:8000/api/v1/auxiliares/" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
-    "auxiliarName": "Ana María Rodríguez",
-    "auxiliarCode": "12345678",
-    "AuxiliarEmail": "ana.rodriguez@hospital.com",
+    "auxiliar_name": "Ana María Rodríguez",
+    "auxiliar_code": "12345678",
+    "auxiliar_email": "ana.rodriguez@hospital.com",
+    "password": "contraseña123",
     "observaciones": "Especialista en análisis de sangre"
   }' | jq -r '._id')
 
 # 2. Verificar creación
-curl "http://localhost:8000/api/v1/auxiliares/12345678"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/auxiliares/12345678"
 
 # 3. Actualizar información
 curl -X PUT "http://localhost:8000/api/v1/auxiliares/12345678" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
-    "auxiliarName": "Ana María Rodríguez López",
-    "auxiliarCode": "12345678",
-    "AuxiliarEmail": "ana.rodriguez@hospital.com",
+    "auxiliar_name": "Ana María Rodríguez López",
+    "auxiliar_code": "12345678",
+    "auxiliar_email": "ana.rodriguez@hospital.com",
     "observaciones": "Especialista en análisis de sangre y microbiología"
   }'
 
 # 4. Desactivar temporalmente
-curl -X PUT "http://localhost:8000/api/v1/auxiliares/12345678/estado" \
+curl -X PATCH "http://localhost:8000/api/v1/auxiliares/12345678/estado" \
   -H "Content-Type: application/json" \
-  -d '{"isActive": false}'
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"is_active": false}'
 ```

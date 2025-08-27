@@ -1,5 +1,6 @@
+import logging
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 
 from app.modules.auxiliares.repositories.auxiliar_repository import AuxiliarRepository
@@ -17,6 +18,8 @@ from app.core.exceptions import (
 )
 from app.shared.services.user_management import UserManagementService
 
+logger = logging.getLogger(__name__)
+
 class AuxiliarService:
     """Servicio para la lógica de negocio de Auxiliares"""
     
@@ -27,17 +30,17 @@ class AuxiliarService:
     async def create_auxiliar(self, auxiliar_data: AuxiliarCreate) -> AuxiliarResponse:
         """Crear un nuevo auxiliar y su usuario correspondiente"""
         # Verificar que el email no esté en uso en auxiliares
-        existing_email = await self.auxiliar_repository.get_by_email(auxiliar_data.AuxiliarEmail)
+        existing_email = await self.auxiliar_repository.get_by_email(auxiliar_data.auxiliar_email)
         if existing_email:
             raise ConflictError("El email ya está registrado en auxiliares")
         
         # Verificar que el email no esté en uso en usuarios
-        email_exists_in_users = await self.user_management_service.check_email_exists_in_users(auxiliar_data.AuxiliarEmail)
+        email_exists_in_users = await self.user_management_service.check_email_exists_in_users(auxiliar_data.auxiliar_email)
         if email_exists_in_users:
             raise ConflictError("El email ya está registrado en usuarios")
         
         # Verificar que el código no esté en uso
-        existing_codigo = await self.auxiliar_repository.get_by_codigo(auxiliar_data.auxiliarCode)
+        existing_codigo = await self.auxiliar_repository.get_by_codigo(auxiliar_data.auxiliar_code)
         if existing_codigo:
             raise ConflictError("El código ya está registrado")
         
@@ -54,10 +57,10 @@ class AuxiliarService:
             
             # Crear el usuario en la colección usuarios con rol "auxiliar"
             user = await self.user_management_service.create_user_for_auxiliary(
-                name=auxiliar_data.auxiliarName,
-                email=auxiliar_data.AuxiliarEmail,
+                name=auxiliar_data.auxiliar_name,
+                email=auxiliar_data.auxiliar_email,
                 password=password,
-                is_active=auxiliar_data.isActive
+                is_active=auxiliar_data.is_active
             )
             
             return self._to_response(auxiliar)
@@ -73,7 +76,7 @@ class AuxiliarService:
             # Rollback: si se creó el usuario pero falló algo más, eliminar el usuario
             if user and not auxiliar:
                 try:
-                    await self.user_management_service.delete_user_by_email(auxiliar_data.AuxiliarEmail)
+                    await self.user_management_service.delete_user_by_email(auxiliar_data.auxiliar_email)
                 except:
                     pass
             
@@ -107,18 +110,18 @@ class AuxiliarService:
             raise NotFoundError("Auxiliar no encontrado")
         
         # Verificar conflictos de email si se está actualizando
-        if auxiliar_data.AuxiliarEmail and auxiliar_data.AuxiliarEmail != existing_auxiliar.AuxiliarEmail:
+        if auxiliar_data.auxiliar_email and auxiliar_data.auxiliar_email != existing_auxiliar.auxiliar_email:
             email_exists = await self.auxiliar_repository.exists_by_email(
-                auxiliar_data.AuxiliarEmail, 
+                auxiliar_data.auxiliar_email, 
                 exclude_id=ObjectId(existing_auxiliar.id)
             )
             if email_exists:
                 raise ConflictError("El email ya está registrado")
         
         # Verificar conflictos de código si se está actualizando
-        if auxiliar_data.auxiliarCode and auxiliar_data.auxiliarCode != existing_auxiliar.auxiliarCode:
+        if auxiliar_data.auxiliar_code and auxiliar_data.auxiliar_code != existing_auxiliar.auxiliar_code:
             codigo_exists = await self.auxiliar_repository.exists_by_codigo(
-                auxiliar_data.auxiliarCode,
+                auxiliar_data.auxiliar_code,
                 exclude_id=ObjectId(existing_auxiliar.id)
             )
             if codigo_exists:
@@ -132,21 +135,21 @@ class AuxiliarService:
 
             # Sincronizar cambios con la colección usuarios (similar a residentes)
             try:
-                final_name = getattr(updated_auxiliar, 'auxiliarName', None) or auxiliar_data.auxiliarName or existing_auxiliar.auxiliarName
-                final_email = getattr(updated_auxiliar, 'AuxiliarEmail', None) or auxiliar_data.AuxiliarEmail or existing_auxiliar.AuxiliarEmail
-                final_is_active = getattr(updated_auxiliar, 'isActive', None)
+                final_name = getattr(updated_auxiliar, 'auxiliar_name', None) or auxiliar_data.auxiliar_name or existing_auxiliar.auxiliar_name
+                final_email = getattr(updated_auxiliar, 'auxiliar_email', None) or auxiliar_data.auxiliar_email or existing_auxiliar.auxiliar_email
+                final_is_active = getattr(updated_auxiliar, 'is_active', None)
                 if final_is_active is None:
-                    final_is_active = auxiliar_data.isActive if auxiliar_data.isActive is not None else existing_auxiliar.isActive
+                    final_is_active = auxiliar_data.is_active if auxiliar_data.is_active is not None else existing_auxiliar.is_active
 
                 await self.user_management_service.update_user_for_auxiliary(
-                    existing_auxiliar.AuxiliarEmail,
+                    existing_auxiliar.auxiliar_email,
                     name=final_name,
                     new_email=final_email,
                     is_active=final_is_active,
                     new_password=(auxiliar_data.password if hasattr(auxiliar_data, 'password') else None)
                 )
             except Exception as sync_error:
-                print(f"Warning: Falló sincronización con usuarios para auxiliar {auxiliar_code}: {sync_error}")
+                logger.warning(f"Falló sincronización con usuarios para auxiliar {auxiliar_code}: {sync_error}")
 
             return self._to_response(updated_auxiliar)
         except Exception as e:
@@ -166,7 +169,7 @@ class AuxiliarService:
         if not auxiliar:
             raise NotFoundError("Auxiliar no encontrado")
         
-        if auxiliar.isActive:
+        if auxiliar.is_active:
             raise BadRequestError("El auxiliar ya está activo")
         
         success = await self.auxiliar_repository.activate_by_codigo(auxiliar_code)
@@ -209,11 +212,11 @@ class AuxiliarService:
         """Convertir modelo a respuesta"""
         return AuxiliarResponse(
             id=str(auxiliar.id),
-            auxiliarName=auxiliar.auxiliarName,
-            auxiliarCode=auxiliar.auxiliarCode,
-            AuxiliarEmail=auxiliar.AuxiliarEmail,
-            isActive=auxiliar.isActive,
+            auxiliar_name=auxiliar.auxiliar_name,
+            auxiliar_code=auxiliar.auxiliar_code,
+            auxiliar_email=auxiliar.auxiliar_email,
+            is_active=auxiliar.is_active,
             observaciones=auxiliar.observaciones or "",
-            fecha_creacion=auxiliar.fecha_creacion or datetime.utcnow(),
-            fecha_actualizacion=auxiliar.fecha_actualizacion or datetime.utcnow()
+            fecha_creacion=auxiliar.fecha_creacion or datetime.now(timezone.utc),
+            fecha_actualizacion=auxiliar.fecha_actualizacion or datetime.now(timezone.utc)
         )

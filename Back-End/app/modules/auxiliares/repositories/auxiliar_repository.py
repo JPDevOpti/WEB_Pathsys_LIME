@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
@@ -15,33 +15,33 @@ class AuxiliarRepository(BaseRepository[Auxiliar, AuxiliarCreate, AuxiliarUpdate
     
     async def get_by_email(self, email: str) -> Optional[Auxiliar]:
         """Obtener auxiliar por email"""
-        document = await self.collection.find_one({"AuxiliarEmail": email})
+        document = await self.collection.find_one({"auxiliar_email": email})
         if document:
             return self.model_class(**document)
         return None
     
     async def get_by_codigo(self, codigo: str) -> Optional[Auxiliar]:
         """Obtener auxiliar por código"""
-        document = await self.collection.find_one({"auxiliarCode": codigo})
+        document = await self.collection.find_one({"auxiliar_code": codigo})
         if document:
             return self.model_class(**document)
         return None
     
     async def search_auxiliares(self, search_params: AuxiliarSearch) -> List[Auxiliar]:
         """Buscar auxiliares con filtros avanzados"""
-        query: Dict[str, Any] = {"isActive": True}
+        query: Dict[str, Any] = {"is_active": True}
         
-        if search_params.auxiliarName:
-            query["auxiliarName"] = {"$regex": search_params.auxiliarName, "$options": "i"}
+        if search_params.auxiliar_name:
+            query["auxiliar_name"] = {"$regex": search_params.auxiliar_name, "$options": "i"}
         
-        if search_params.auxiliarCode:
-            query["auxiliarCode"] = {"$regex": search_params.auxiliarCode, "$options": "i"}
+        if search_params.auxiliar_code:
+            query["auxiliar_code"] = {"$regex": search_params.auxiliar_code, "$options": "i"}
         
-        if search_params.AuxiliarEmail:
-            query["AuxiliarEmail"] = {"$regex": search_params.AuxiliarEmail, "$options": "i"}
+        if search_params.auxiliar_email:
+            query["auxiliar_email"] = {"$regex": search_params.auxiliar_email, "$options": "i"}
         
-        if search_params.isActive is not None:
-            query["isActive"] = search_params.isActive
+        if search_params.is_active is not None:
+            query["is_active"] = search_params.is_active
         
         cursor = self.collection.find(query)
         documents = await cursor.to_list(length=None)
@@ -49,23 +49,23 @@ class AuxiliarRepository(BaseRepository[Auxiliar, AuxiliarCreate, AuxiliarUpdate
     
     async def get_activos(self) -> List[Auxiliar]:
         """Obtener todos los auxiliares activos"""
-        cursor = self.collection.find({"isActive": True})
+        cursor = self.collection.find({"is_active": True})
         documents = await cursor.to_list(length=None)
         return [self.model_class(**doc) for doc in documents]
     
     async def get_inactivos(self) -> List[Auxiliar]:
         """Obtener todos los auxiliares inactivos"""
-        cursor = self.collection.find({"isActive": False})
+        cursor = await self.collection.find({"is_active": False})
         documents = await cursor.to_list(length=None)
         return [self.model_class(**doc) for doc in documents]
     
     async def count_by_status(self, is_active: bool) -> int:
         """Contar auxiliares por estado"""
-        return await self.collection.count_documents({"isActive": is_active})
+        return await self.collection.count_documents({"is_active": is_active})
     
     async def exists_by_email(self, email: str, exclude_id: Optional[ObjectId] = None) -> bool:
         """Verificar si existe un auxiliar con el email dado"""
-        filters: Dict[str, Any] = {"AuxiliarEmail": email}
+        filters: Dict[str, Any] = {"auxiliar_email": email}
         if exclude_id:
             filters["_id"] = {"$ne": exclude_id}
         
@@ -74,7 +74,7 @@ class AuxiliarRepository(BaseRepository[Auxiliar, AuxiliarCreate, AuxiliarUpdate
     
     async def exists_by_codigo(self, codigo: str, exclude_id: Optional[ObjectId] = None) -> bool:
         """Verificar si existe un auxiliar con el código dado"""
-        filters: Dict[str, Any] = {"auxiliarCode": codigo}
+        filters: Dict[str, Any] = {"auxiliar_code": codigo}
         if exclude_id:
             filters["_id"] = {"$ne": exclude_id}
         
@@ -84,11 +84,11 @@ class AuxiliarRepository(BaseRepository[Auxiliar, AuxiliarCreate, AuxiliarUpdate
     async def soft_delete_by_codigo(self, codigo: str) -> bool:
         """Eliminación suave por código"""
         result = await self.collection.update_one(
-            {"auxiliarCode": codigo, "isActive": True},
+            {"auxiliar_code": codigo, "is_active": True},
             {
                 "$set": {
-                    "isActive": False,
-                    "fecha_actualizacion": datetime.utcnow()
+                    "is_active": False,
+                    "fecha_actualizacion": datetime.now(timezone.utc)
                 }
             }
         )
@@ -96,7 +96,7 @@ class AuxiliarRepository(BaseRepository[Auxiliar, AuxiliarCreate, AuxiliarUpdate
     
     async def hard_delete_by_codigo(self, codigo: str) -> bool:
         """Eliminación física por código"""
-        result = await self.collection.delete_one({"auxiliarCode": codigo})
+        result = await self.collection.delete_one({"auxiliar_code": codigo})
         return result.deleted_count > 0
     
     async def create_auxiliar_from_schema(self, obj_in: AuxiliarCreate) -> Auxiliar:
@@ -107,11 +107,11 @@ class AuxiliarRepository(BaseRepository[Auxiliar, AuxiliarCreate, AuxiliarUpdate
         else:
             obj_data = obj_in.dict(by_alias=False, exclude={'password'})
         
-        obj_data["fecha_creacion"] = datetime.utcnow()
-        obj_data["fecha_actualizacion"] = datetime.utcnow()
-        # Asegurar que isActive esté presente si no se especifica
-        if "isActive" not in obj_data:
-            obj_data["isActive"] = True
+        obj_data["fecha_creacion"] = datetime.now(timezone.utc)
+        obj_data["fecha_actualizacion"] = datetime.now(timezone.utc)
+        # Asegurar que is_active esté presente si no se especifica
+        if "is_active" not in obj_data:
+            obj_data["is_active"] = True
         
         try:
             result = await self.collection.insert_one(obj_data)
@@ -126,11 +126,11 @@ class AuxiliarRepository(BaseRepository[Auxiliar, AuxiliarCreate, AuxiliarUpdate
     async def activate_by_codigo(self, codigo: str) -> bool:
         """Activar auxiliar por código"""
         result = await self.collection.update_one(
-            {"auxiliarCode": codigo, "isActive": False},
+            {"auxiliar_code": codigo, "is_active": False},
             {
                 "$set": {
-                    "isActive": True,
-                    "fecha_actualizacion": datetime.utcnow()
+                    "is_active": True,
+                    "fecha_actualizacion": datetime.now(timezone.utc)
                 }
             }
         )
