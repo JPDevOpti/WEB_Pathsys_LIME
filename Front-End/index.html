@@ -8,6 +8,23 @@
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      (function() {
+        var PROD_HOST = 'https://pathsys-backend.onrender.com'
+        var isRender = typeof location !== 'undefined' && /onrender\.com$/.test(location.hostname)
+        var origFetch = window.fetch
+        if (isRender && typeof origFetch === 'function') {
+          window.fetch = function(input, init) {
+            try {
+              if (typeof input === 'string' && input.indexOf('http://localhost:8000') === 0) {
+                input = input.replace('http://localhost:8000', PROD_HOST)
+              }
+            } catch (_) { /* no-op */ }
+            return origFetch.apply(this, [input, init])
+          }
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
