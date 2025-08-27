@@ -12,8 +12,10 @@ RUN npm ci
 # Copiar código fuente
 COPY . .
 
-# Configurar variable de entorno para Docker
-ENV VITE_API_BASE_URL=http://localhost:8000
+# Configurar variable de entorno para Docker (honrar valor provisto por Render)
+# Si no se define en el entorno de build, usar el backend de Render por defecto
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL:-https://pathsys-backend.onrender.com}
 
 # Construir la aplicación (solo vite build, sin type checking)
 RUN npx vite build
