@@ -11,9 +11,9 @@
     <script>
       (function() {
         var PROD_HOST = 'https://pathsys-backend.onrender.com'
-        var isRender = typeof location !== 'undefined' && /onrender\.com$/.test(location.hostname)
         var origFetch = window.fetch
-        if (isRender && typeof origFetch === 'function') {
+        // Reemplazar cualquier intento de llamar a localhost en PRODUCCIÓN o en cualquier dominio no-local
+        if (typeof origFetch === 'function') {
           window.fetch = function(input, init) {
             try {
               if (typeof input === 'string' && input.indexOf('http://localhost:8000') === 0) {

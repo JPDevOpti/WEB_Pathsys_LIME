@@ -21,12 +21,14 @@ class ApiClient {
     })
 
     // Salvaguarda en tiempo de ejecución: si por cualquier motivo quedó localhost en el build,
-    // y estamos en Render (dominio onrender.com), forzar la URL del backend de producción.
+    // y estamos en cualquier dominio no-local, forzar la URL del backend de producción.
     try {
-      const isRender = typeof window !== 'undefined' && window.location.hostname.endsWith('onrender.com')
+      const isBrowser = typeof window !== 'undefined'
+      const hostname = isBrowser ? window.location.hostname : ''
+      const isLocalEnv = hostname === 'localhost' || hostname === '127.0.0.1'
       const currentBaseUrl: string = (this.instance.defaults as any).baseURL || ''
       const isLocalhost = currentBaseUrl.includes('http://localhost:8000') || currentBaseUrl.includes('127.0.0.1')
-      if (isRender && isLocalhost) {
+      if (!isLocalEnv && isLocalhost) {
         ;(this.instance.defaults as any).baseURL = `https://pathsys-backend.onrender.com${API_CONFIG.VERSION}`
       }
     } catch (_) {
