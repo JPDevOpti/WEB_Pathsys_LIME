@@ -1,10 +1,10 @@
 from typing import List, Optional, Dict, Any
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
-from app.modules.pruebas.models.prueba import (
-    Prueba,
+from app.modules.pruebas.models.prueba import Prueba
+from app.modules.pruebas.schemas.prueba import (
     PruebaCreate,
     PruebaUpdate,
     PruebaSearch
@@ -21,7 +21,7 @@ class PruebaRepository:
     async def create(self, prueba_data: PruebaCreate) -> Prueba:
         """Crear una nueva prueba"""
         prueba_dict = prueba_data.model_dump()
-        prueba_dict["fecha_creacion"] = datetime.utcnow()
+        prueba_dict["fecha_creacion"] = datetime.now(timezone.utc)
         
         result = await self.collection.insert_one(prueba_dict)
         prueba_dict["_id"] = result.inserted_id
@@ -30,14 +30,14 @@ class PruebaRepository:
 
     async def get_by_code(self, code: str) -> Optional[Prueba]:
         """Obtener prueba por código"""
-        prueba_doc = await self.collection.find_one({"pruebaCode": code})
+        prueba_doc = await self.collection.find_one({"prueba_code": code})
         if prueba_doc:
             return Prueba(**prueba_doc)
         return None
 
     async def get_by_code_including_inactive(self, code: str) -> Optional[Prueba]:
         """Obtener prueba por código incluyendo inactivas (para uso interno)"""
-        prueba_doc = await self.collection.find_one({"pruebaCode": code})
+        prueba_doc = await self.collection.find_one({"prueba_code": code})
         if prueba_doc:
             return Prueba(**prueba_doc)
         return None
@@ -49,13 +49,13 @@ class PruebaRepository:
         # Aplicar filtros
         if search_params.query:
             filter_dict["$or"] = [
-                {"pruebasName": {"$regex": search_params.query, "$options": "i"}},
-                {"pruebaCode": {"$regex": search_params.query, "$options": "i"}},
-                {"pruebasDescription": {"$regex": search_params.query, "$options": "i"}}
+                {"prueba_name": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_code": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_description": {"$regex": search_params.query, "$options": "i"}}
             ]
         
         if search_params.activo is not None:
-            filter_dict["isActive"] = search_params.activo
+            filter_dict["is_active"] = search_params.activo
         
         cursor = self.collection.find(filter_dict)
         cursor = cursor.skip(search_params.skip).limit(search_params.limit)
@@ -72,10 +72,10 @@ class PruebaRepository:
         if not update_data:
             return await self.get_by_code(code)
         
-        update_data["fecha_actualizacion"] = datetime.utcnow()
+        update_data["fecha_actualizacion"] = datetime.now(timezone.utc)
         
         result = await self.collection.update_one(
-            {"pruebaCode": code},
+            {"prueba_code": code},
             {"$set": update_data}
         )
         
@@ -85,18 +85,18 @@ class PruebaRepository:
     
     async def delete_by_code(self, code: str) -> bool:
         """Eliminar una prueba por código (eliminación permanente)"""
-        result = await self.collection.delete_one({"pruebaCode": code})
+        result = await self.collection.delete_one({"prueba_code": code})
         return result.deleted_count > 0
 
     async def toggle_active_by_code(self, code: str, new_active_state: bool) -> bool:
         """Cambiar estado activo de una prueba por código"""
         update_data = {
-            "isActive": new_active_state,
-            "fecha_actualizacion": datetime.utcnow()
+            "is_active": new_active_state,
+            "fecha_actualizacion": datetime.now(timezone.utc)
         }
         
         result = await self.collection.update_one(
-            {"pruebaCode": code},
+            {"prueba_code": code},
             {"$set": update_data}
         )
         
@@ -108,12 +108,12 @@ class PruebaRepository:
         
         if search_params.query:
             filter_dict["$or"] = [
-                {"pruebasName": {"$regex": search_params.query, "$options": "i"}},
-                {"pruebaCode": {"$regex": search_params.query, "$options": "i"}},
-                {"pruebasDescription": {"$regex": search_params.query, "$options": "i"}}
+                {"prueba_name": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_code": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_description": {"$regex": search_params.query, "$options": "i"}}
             ]
         
         if search_params.activo is not None:
-            filter_dict["isActive"] = search_params.activo
+            filter_dict["is_active"] = search_params.activo
         
         return await self.collection.count_documents(filter_dict)

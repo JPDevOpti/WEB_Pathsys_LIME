@@ -2,12 +2,13 @@ from typing import List, Optional, Dict, Any
 from fastapi import HTTPException
 import logging
 
-from app.modules.pruebas.models.prueba import (
-    Prueba,
+from app.modules.pruebas.models.prueba import Prueba
+from app.modules.pruebas.schemas.prueba import (
     PruebaCreate,
     PruebaUpdate,
     PruebaResponse,
-    PruebaSearch
+    PruebaSearch,
+    PruebasListResponse
 )
 from app.modules.pruebas.repositories.prueba_repository import PruebaRepository
 
@@ -24,16 +25,16 @@ class PruebaService:
         """Crear una nueva prueba"""
         try:
             # Verificar que el código no exista
-            existing_prueba = await self.repository.get_by_code(prueba_data.pruebaCode)
+            existing_prueba = await self.repository.get_by_code(prueba_data.prueba_code)
             if existing_prueba:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Ya existe una prueba con el código {prueba_data.pruebaCode}"
+                    detail=f"Ya existe una prueba con el código {prueba_data.prueba_code}"
                 )
             
             # Crear la prueba
             prueba = await self.repository.create(prueba_data)
-            logger.info(f"Prueba creada: {prueba.pruebaCode}")
+            logger.info(f"Prueba creada: {prueba.prueba_code}")
             
             prueba_dict = prueba.model_dump()
             prueba_dict["id"] = str(prueba_dict.get("_id", prueba_dict.get("id", "")))
@@ -60,7 +61,7 @@ class PruebaService:
             logger.error(f"Error obteniendo prueba por código {code}: {str(e)}")
             raise HTTPException(status_code=500, detail="Error interno del servidor")
 
-    async def get_all_pruebas(self, search_params: PruebaSearch) -> Dict[str, Any]:
+    async def get_all_pruebas(self, search_params: PruebaSearch) -> PruebasListResponse:
         """Obtener todas las pruebas con filtros y paginación"""
         try:
             # Si no se especifica activo, filtrar solo activos por defecto
@@ -76,14 +77,14 @@ class PruebaService:
                 prueba_dict["id"] = str(prueba_dict.get("_id", prueba_dict.get("id", "")))
                 pruebas_response.append(PruebaResponse(**prueba_dict))
             
-            return {
-                "pruebas": pruebas_response,
-                "total": total,
-                "skip": search_params.skip,
-                "limit": search_params.limit,
-                "has_next": search_params.skip + len(pruebas_response) < total,
-                "has_prev": search_params.skip > 0
-            }
+            return PruebasListResponse(
+                pruebas=pruebas_response,
+                total=total,
+                skip=search_params.skip,
+                limit=search_params.limit,
+                has_next=search_params.skip + len(pruebas_response) < total,
+                has_prev=search_params.skip > 0
+            )
             
         except Exception as e:
             logger.error(f"Error obteniendo pruebas: {str(e)}")
@@ -98,12 +99,12 @@ class PruebaService:
                 raise HTTPException(status_code=404, detail="Prueba no encontrada")
             
             # Si se está cambiando el código, verificar que el nuevo no exista
-            if prueba_update.pruebaCode and prueba_update.pruebaCode != code:
-                code_exists = await self.repository.get_by_code(prueba_update.pruebaCode)
+            if prueba_update.prueba_code and prueba_update.prueba_code != code:
+                code_exists = await self.repository.get_by_code(prueba_update.prueba_code)
                 if code_exists:
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Ya existe una prueba con el código {prueba_update.pruebaCode}"
+                        detail=f"Ya existe una prueba con el código {prueba_update.prueba_code}"
                     )
             
             # Actualizar la prueba
@@ -149,8 +150,8 @@ class PruebaService:
             if not existing_prueba:
                 return False
             
-            # Alternar el estado isActive
-            new_active_state = not existing_prueba.isActive
+            # Alternar el estado is_active
+            new_active_state = not existing_prueba.is_active
             success = await self.repository.toggle_active_by_code(code, new_active_state)
             
             if success:
