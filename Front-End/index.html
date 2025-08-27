@@ -12,12 +12,13 @@
       (function() {
         var PROD_HOST = 'https://pathsys-backend.onrender.com'
         var origFetch = window.fetch
-        // Reemplazar cualquier intento de llamar a localhost en PRODUCCIÓN o en cualquier dominio no-local
+        // Reemplazar cualquier intento de llamar a localhost o 127.0.0.1 en cualquier puerto
         if (typeof origFetch === 'function') {
+          var localhostRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\\d+)?/i
           window.fetch = function(input, init) {
             try {
-              if (typeof input === 'string' && input.indexOf('http://localhost:8000') === 0) {
-                input = input.replace('http://localhost:8000', PROD_HOST)
+              if (typeof input === 'string' && localhostRegex.test(input)) {
+                input = input.replace(localhostRegex, PROD_HOST)
               }
             } catch (_) { /* no-op */ }
             return origFetch.apply(this, [input, init])
