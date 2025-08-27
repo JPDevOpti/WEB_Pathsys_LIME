@@ -43,6 +43,8 @@ def create_application() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.BACKEND_CORS_ORIGINS,
+        # Starlette no soporta comodines en allow_origins. Usar regex para subdominios de Render.
+        allow_origin_regex=r"https:\/\/.*\.onrender\.com",
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
         allow_headers=["*"],
