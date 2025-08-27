@@ -1,6 +1,7 @@
 """Rutas de autenticación"""
 
 from fastapi import APIRouter, Depends, HTTPException, status
+import logging
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.modules.auth.schemas.login import LoginRequest, LoginResponse
 from app.modules.auth.schemas.token import RefreshTokenRequest
@@ -45,9 +46,12 @@ async def login(
             detail=str(e)
         )
     except Exception as e:
+        # Log detallado para diagnosticar en producción
+        logging.exception("Error en /auth/login")
+        # Devolver el mensaje para facilitar el diagnóstico temporalmente
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno del servidor"
+            detail=str(e)
         )
 
 @auth_router.post("/refresh")
@@ -64,9 +68,10 @@ async def refresh_token(
             detail=str(e)
         )
     except Exception as e:
+        logging.exception("Error en /auth/refresh")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno del servidor"
+            detail=str(e)
         )
 
 @auth_router.post("/logout")
@@ -86,9 +91,10 @@ async def logout(
                 detail="Error al cerrar sesión"
             )
     except Exception as e:
+        logging.exception("Error en /auth/logout")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno del servidor"
+            detail=str(e)
         )
 
 @auth_router.get("/me")
@@ -113,9 +119,10 @@ async def get_current_user_endpoint(
             detail=str(e)
         )
     except Exception as e:
+        logging.exception("Error en /auth/me")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno del servidor"
+            detail=str(e)
         )
 
 @auth_router.get("/verify")
@@ -140,7 +147,8 @@ async def verify_token(
         else:
             return {"valid": False}
     except Exception as e:
+        logging.exception("Error en /auth/verify")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno del servidor"
+            detail=str(e)
         )
