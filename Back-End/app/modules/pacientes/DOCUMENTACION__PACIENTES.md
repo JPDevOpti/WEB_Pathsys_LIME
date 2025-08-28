@@ -44,7 +44,8 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ### Campos del Modelo Paciente
 ```json
 {
-    "id": "string (cédula del paciente, único)",
+    "id": "string (ID automático de MongoDB)",
+    "paciente_code": "string (código único del paciente, 6-12 dígitos)",
     "nombre": "string (2-200 caracteres)",
     "edad": "integer (0-150)",
     "sexo": "string (Masculino, Femenino)",
@@ -53,7 +54,6 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
         "nombre": "string (nombre de la entidad de salud)"
     },
     "tipo_atencion": "string (Ambulatorio, Hospitalizado)",
-    "cedula": "string (6-12 dígitos, única)",
     "observaciones": "string (opcional, máx 500 caracteres)",
     "fecha_creacion": "datetime",
     "fecha_actualizacion": "datetime",
@@ -62,12 +62,12 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Campos Requeridos para Crear
+- `paciente_code`: Código único del paciente (6-12 dígitos)
 - `nombre`: Nombre completo del paciente
 - `edad`: Edad del paciente (0-150 años)
 - `sexo`: Género del paciente
 - `entidad_info`: Información de la entidad de salud
 - `tipo_atencion`: Tipo de atención médica
-- `cedula`: Número de cédula (único en el sistema)
 
 ### Campos Opcionales
 - `observaciones`: Observaciones adicionales del paciente
@@ -78,11 +78,12 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 **Crear nuevo paciente**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, recepcionista
+**Roles permitidos**: admin, auxiliar
 
 #### Ejemplo: Crear paciente básico
 ```json
 {
+  "paciente_code": "12345678",
   "nombre": "Juan Carlos Pérez",
   "edad": 35,
   "sexo": "Masculino",
@@ -91,7 +92,6 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     "nombre": "EPS Sanitas"
   },
   "tipo_atencion": "Ambulatorio",
-  "cedula": "12345678",
   "observaciones": "Paciente con antecedentes de hipertensión"
 }
 ```
@@ -99,6 +99,7 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 #### Ejemplo: Crear paciente mínimo
 ```json
 {
+  "paciente_code": "87654321",
   "nombre": "María González",
   "edad": 28,
   "sexo": "Femenino",
@@ -106,15 +107,15 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     "id": "ent_002",
     "nombre": "Sura"
   },
-  "tipo_atencion": "Hospitalizado",
-  "cedula": "87654321"
+  "tipo_atencion": "Hospitalizado"
 }
 ```
 
 Respuesta (201):
 ```json
 {
-  "id": "12345678",
+  "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+  "paciente_code": "12345678",
   "nombre": "Juan Carlos Pérez",
   "edad": 35,
   "sexo": "Masculino",
@@ -123,7 +124,6 @@ Respuesta (201):
     "nombre": "EPS Sanitas"
   },
   "tipo_atencion": "Ambulatorio",
-  "cedula": "12345678",
   "observaciones": "Paciente con antecedentes de hipertensión",
   "fecha_creacion": "2024-01-15T10:30:00.000Z",
   "fecha_actualizacion": "2024-01-15T10:30:00.000Z",
@@ -135,7 +135,7 @@ Respuesta (201):
 **Listar pacientes con filtros**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, patologo, recepcionista
+**Roles permitidos**: admin, patologo, auxiliar
 
 URL con parámetros:
 - `http://localhost:8000/api/v1/pacientes/` (todos los pacientes)
@@ -146,7 +146,7 @@ URL con parámetros:
 Parámetros de consulta:
 - `skip`: Registros a omitir (default: 0)
 - `limit`: Máximo registros (default: 100, max: 1000)
-- `buscar`: Buscar por nombre o cédula
+- `buscar`: Buscar por nombre o código
 - `entidad`: Filtrar por nombre de entidad
 - `sexo`: Filtrar por sexo (Masculino, Femenino)
 - `tipo_atencion`: Filtrar por tipo (Ambulatorio, Hospitalizado)
@@ -155,7 +155,8 @@ Respuesta (200):
 ```json
 [
   {
-    "id": "12345678",
+    "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+    "paciente_code": "12345678",
     "nombre": "Juan Carlos Pérez",
     "edad": 35,
     "sexo": "Masculino",
@@ -164,7 +165,6 @@ Respuesta (200):
       "nombre": "EPS Sanitas"
     },
     "tipo_atencion": "Ambulatorio",
-    "cedula": "12345678",
     "observaciones": "Paciente con antecedentes de hipertensión",
     "fecha_creacion": "2024-01-15T10:30:00.000Z",
     "fecha_actualizacion": "2024-01-15T10:30:00.000Z",
@@ -177,11 +177,11 @@ Respuesta (200):
 **Búsqueda avanzada de pacientes**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, patologo, recepcionista
+**Roles permitidos**: admin, patologo, auxiliar
 
 **Query Parameters**:
 - `nombre`: Buscar por nombre del paciente
-- `cedula`: Buscar por número de cédula
+- `paciente_code`: Buscar por código del paciente
 - `edad_min`: Edad mínima (0-150)
 - `edad_max`: Edad máxima (0-150)
 - `entidad`: Filtrar por entidad de salud
@@ -210,7 +210,8 @@ Respuesta (200):
 {
   "pacientes": [
     {
-      "id": "12345678",
+      "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+      "paciente_code": "12345678",
       "nombre": "Juan Carlos Pérez",
       "edad": 35,
       "sexo": "Masculino",
@@ -219,7 +220,6 @@ Respuesta (200):
         "nombre": "EPS Sanitas"
       },
       "tipo_atencion": "Ambulatorio",
-      "cedula": "12345678",
       "observaciones": "Paciente con antecedentes de hipertensión",
       "fecha_creacion": "2024-01-15T10:30:00.000Z",
       "fecha_actualizacion": "2024-01-15T10:30:00.000Z",
@@ -232,15 +232,15 @@ Respuesta (200):
 }
 ```
 
-### 4. GET http://localhost:8000/api/v1/pacientes/cedula/{cedula}
-**Obtener paciente por cédula**
+### 4. GET http://localhost:8000/api/v1/pacientes/codigo/{paciente_code}
+**Obtener paciente por código**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, patologo, recepcionista
+**Roles permitidos**: admin, patologo, auxiliar
 
 Ejemplos de URL:
-- `http://localhost:8000/api/v1/pacientes/cedula/12345678`
-- `http://localhost:8000/api/v1/pacientes/cedula/87654321`
+- `http://localhost:8000/api/v1/pacientes/codigo/12345678`
+- `http://localhost:8000/api/v1/pacientes/codigo/87654321`
 
 Respuesta (200): (paciente completo como en la respuesta de creación)
 
@@ -248,11 +248,11 @@ Respuesta (200): (paciente completo como en la respuesta de creación)
 **Obtener paciente por ID**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, patologo, recepcionista
+**Roles permitidos**: admin, patologo, auxiliar
 
 Ejemplos de URL:
-- `http://localhost:8000/api/v1/pacientes/12345678`
-- `http://localhost:8000/api/v1/pacientes/87654321`
+- `http://localhost:8000/api/v1/pacientes/64f8a1b2c3d4e5f6a7b8c9d0`
+- `http://localhost:8000/api/v1/pacientes/64f8a1b2c3d4e5f6a7b8c9d1`
 
 Respuesta (200): (paciente completo como en la respuesta de creación)
 
@@ -260,7 +260,7 @@ Respuesta (200): (paciente completo como en la respuesta de creación)
 **Actualizar paciente**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, recepcionista
+**Roles permitidos**: admin, auxiliar
 
 Ejemplos de URL:
 - `http://localhost:8000/api/v1/pacientes/12345678`
@@ -292,7 +292,8 @@ Ejemplos de URL:
 Respuesta (200):
 ```json
 {
-  "id": "12345678",
+  "id": "64f8a1b2c3d4e5f6a7b8c9d0",
+  "paciente_code": "12345678",
   "nombre": "Juan Carlos Pérez Rodríguez",
   "edad": 36,
   "sexo": "Masculino",
@@ -301,7 +302,6 @@ Respuesta (200):
     "nombre": "Nueva EPS"
   },
   "tipo_atencion": "Hospitalizado",
-  "cedula": "12345678",
   "observaciones": "Paciente con hipertensión controlada y diabetes tipo 2",
   "fecha_creacion": "2024-01-15T10:30:00.000Z",
   "fecha_actualizacion": "2024-01-15T11:15:00.000Z",
@@ -334,7 +334,7 @@ Respuesta (200):
 **Agregar caso a paciente**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, recepcionista
+**Roles permitidos**: admin, auxiliar
 
 Ejemplos de URL:
 - `http://localhost:8000/api/v1/pacientes/12345678/casos/2025-00001`
@@ -351,7 +351,7 @@ Respuesta (200):
 **Remover caso de paciente**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, recepcionista
+**Roles permitidos**: admin, auxiliar
 
 Ejemplos de URL:
 - `http://localhost:8000/api/v1/pacientes/12345678/casos/2025-00001`
@@ -368,7 +368,7 @@ Respuesta (200):
 **Obtener total de pacientes**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, patologo, recepcionista
+**Roles permitidos**: admin, patologo, auxiliar
 
 Respuesta (200):
 ```json
@@ -381,7 +381,7 @@ Respuesta (200):
 **Listar entidades únicas**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, patologo, recepcionista
+**Roles permitidos**: admin, patologo, auxiliar
 
 Respuesta (200):
 ```json
@@ -398,7 +398,7 @@ Respuesta (200):
 **Obtener estadísticas de pacientes**
 
 **Autenticación**: Requerida  
-**Roles permitidos**: admin, patologo, recepcionista
+**Roles permitidos**: admin, patologo, auxiliar
 
 Respuesta (200):
 ```json
@@ -446,17 +446,17 @@ Respuesta (200):
 ## Reglas de Validación
 
 #### Campos Obligatorios
+- **paciente_code**: Requerido, 6-12 dígitos, único en el sistema
 - **nombre**: Requerido, 2-200 caracteres
 - **edad**: Requerido, 0-150 años
 - **sexo**: Requerido, "Masculino" o "Femenino"
 - **entidad_info**: Requerido (objeto completo)
 - **tipo_atencion**: Requerido, "Ambulatorio" o "Hospitalizado"
-- **cedula**: Requerido, 6-12 dígitos, único en el sistema
 
 #### Validaciones Específicas
-1. **nombre**: Se capitaliza automáticamente, solo letras, espacios y acentos
-2. **edad**: Número entero entre 0 y 150
-3. **cedula**: Se limpia automáticamente (solo números), debe ser única
+1. **paciente_code**: Se limpia automáticamente (solo números), debe ser único, 6-12 dígitos
+2. **nombre**: Se capitaliza automáticamente, solo letras, espacios y acentos
+3. **edad**: Número entero entre 0 y 150
 4. **sexo**: Valores válidos: "Masculino", "Femenino"
 5. **tipo_atencion**: Valores válidos: "Ambulatorio", "Hospitalizado"
 6. **entidad_info.id**: Requerido cuando se proporciona entidad_info
@@ -466,10 +466,10 @@ Respuesta (200):
 
 ## Casos de Error Comunes
 
-### 1. Cédula Duplicada (400 Bad Request)
+### 1. Código Duplicado (400 Bad Request)
 ```json
 {
-  "detail": "Ya existe un paciente con esta cédula"
+  "detail": "Ya existe un paciente con este código"
 }
 ```
 
@@ -546,9 +546,9 @@ Estas interfaces proporcionan documentación interactiva y permiten probar los e
 ## Notas Importantes
 
 1. **Gestión de Casos**: Los pacientes pueden tener casos asociados a través del campo `id_casos`
-2. **Validación de Cédula**: La cédula se usa como ID único del paciente y debe ser única en el sistema
+2. **Validación de Código**: El `paciente_code` se usa como identificador principal del paciente y debe ser único en el sistema
 3. **Capitalización Automática**: Los nombres se capitalizan automáticamente
-4. **Limpieza de Datos**: La cédula se limpia automáticamente removiendo caracteres no numéricos
+4. **Limpieza de Datos**: El código del paciente se limpia automáticamente removiendo caracteres no numéricos
 5. **Campos Opcionales**: Solo "observaciones" es opcional en la creación
 6. **Respuestas Consistentes**: Todas las respuestas incluyen timestamps y arrays de casos
 7. **Búsqueda Avanzada**: Endpoint especializado con múltiples filtros y paginación completa

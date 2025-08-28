@@ -6,7 +6,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, validator
 from app.shared.models.base import PyObjectId
 from app.shared.schemas.common import EstadoCasoEnum
-from app.modules.pruebas.models.prueba import PruebasItem
+from app.modules.pruebas.schemas.prueba import PruebasItem
 
 
 class EntidadInfo(BaseModel):
@@ -90,7 +90,7 @@ class Caso(BaseModel):
     """Modelo principal de Caso para MongoDB."""
     
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
-    caso_code: str = Field(..., max_length=50, alias="CasoCode")
+    caso_code: str = Field(..., max_length=50)
     paciente: PacienteInfo
     medico_solicitante: Optional[MedicoInfo] = None
     servicio: Optional[str] = Field(None, max_length=100)

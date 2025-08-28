@@ -97,7 +97,7 @@ class ResidenteService:
     async def get_residentes(self, skip: int = 0, limit: int = 10) -> List[ResidenteResponse]:
         """Obtener lista de residentes activos con paginación"""
         residentes = await self.residente_repository.get_multi(
-            filters={"isActive": True},
+            filters={"is_active": True},
             skip=skip,
             limit=limit
         )

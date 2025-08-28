@@ -19,7 +19,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
     
     async def get_by_codigo(self, caso_code: str) -> Optional[Caso]:
         """Obtener caso por código."""
-        document = await self.collection.find_one({"CasoCode": caso_code})
+        document = await self.collection.find_one({"caso_code": caso_code})
         return self.model_class(**document) if document else None
     
     async def get_by_caso_code(self, caso_code: str) -> Optional[Caso]:
@@ -33,7 +33,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             "fecha_actualizacion": datetime.utcnow()
         }
         
-        await self.collection.update_one({"CasoCode": caso_code}, {"$set": update_data})
+        await self.collection.update_one({"caso_code": caso_code}, {"$set": update_data})
         return await self.get_by_caso_code(caso_code)
     
     async def desasignar_patologo_por_caso_code(self, caso_code: str) -> Optional[Caso]:
@@ -43,7 +43,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             "fecha_actualizacion": datetime.utcnow()
         }
         
-        await self.collection.update_one({"CasoCode": caso_code}, {"$set": update_data})
+        await self.collection.update_one({"caso_code": caso_code}, {"$set": update_data})
         return await self.get_by_caso_code(caso_code)
     
     async def update_by_caso_code(self, caso_code: str, update_data: Dict[str, Any]) -> Optional[Caso]:
@@ -52,12 +52,12 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             return await self.get_by_caso_code(caso_code)
         # Asegurar fecha de actualización
         update_data = {**update_data, "fecha_actualizacion": datetime.utcnow()}
-        await self.collection.update_one({"CasoCode": caso_code}, {"$set": update_data})
+        await self.collection.update_one({"caso_code": caso_code}, {"$set": update_data})
         return await self.get_by_caso_code(caso_code)
 
     async def delete_by_caso_code(self, caso_code: str) -> bool:
         """Eliminar un caso por su código de caso."""
-        result = await self.collection.delete_one({"CasoCode": caso_code})
+        result = await self.collection.delete_one({"caso_code": caso_code})
         return result.deleted_count > 0
     
     
@@ -234,7 +234,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         
         # Mapeo de campos de búsqueda
         field_mappings = {
-            'CasoCode': ("CasoCode", "regex"),
+            'caso_code': ("caso_code", "regex"),
             'paciente_cedula': ("paciente.cedula", "exact"),
             'paciente_nombre': ("paciente.nombre", "regex"),
             'medico_nombre': ("medico_solicitante.nombre", "regex"),
@@ -276,7 +276,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         # Búsqueda general
         if search_params.query:
             query["$or"] = [
-                {"CasoCode": {"$regex": search_params.query, "$options": "i"}},
+                {"caso_code": {"$regex": search_params.query, "$options": "i"}},
                 {"paciente.nombre": {"$regex": search_params.query, "$options": "i"}},
                 {"paciente.cedula": {"$regex": search_params.query, "$options": "i"}},
                 {"medico_solicitante.nombre": {"$regex": search_params.query, "$options": "i"}}
@@ -900,7 +900,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             {
                 "$project": {
                     "_id": 0,
-                    "caso_code": "$CasoCode",
+                    "caso_code": "$caso_code",
                     "fecha_creacion": "$fecha_creacion",
                     "entidad_nombre": "$paciente.entidad_info.nombre",
                     "entidad_codigo": "$paciente.entidad_info.codigo",

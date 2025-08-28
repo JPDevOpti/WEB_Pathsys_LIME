@@ -134,7 +134,7 @@ async def import_diseases(diseases: List[Dict[str, str]], dry_run: bool) -> Tupl
                     codigo=disease['codigo'],
                     nombre=disease['nombre'],
                     descripcion=disease['descripcion'],
-                    isActive=True
+                    is_active=True
                 )
                 await repo.create(payload)
                 print(f"[OK] Enfermedad creada: {codigo} - {disease['nombre']}")

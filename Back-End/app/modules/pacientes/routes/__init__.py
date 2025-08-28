@@ -1,5 +1,5 @@
-"""Routes for pacientes module"""
+"""Rutas del módulo de pacientes"""
 
-from .router import router
+from .paciente_routes import router
 
 __all__ = ["router"]

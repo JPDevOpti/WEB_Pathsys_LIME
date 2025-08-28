@@ -63,7 +63,6 @@ async def get_database() -> AsyncIOMotorDatabase:
         logger.error("No se pudo establecer conexión con la base de datos")
         raise Exception("No se pudo establecer conexión con la base de datos")
     
-    # Verificar que la conexión sigue activa
     try:
         await database_manager.client.admin.command('ping')
     except Exception:
@@ -74,7 +73,6 @@ async def get_database() -> AsyncIOMotorDatabase:
         
     return database_manager.database
 
-# Función síncrona para compatibilidad con scripts
 def get_database_sync() -> Optional[AsyncIOMotorDatabase]:
     """Obtener instancia de la base de datos de forma síncrona (para scripts)"""
     return database_manager.database
@@ -89,32 +87,32 @@ async def create_basic_indexes():
         await db.usuarios.create_index("username", unique=True)
         
         # Índices para entidades
-        await db.entidades.create_index("EntidadCode", unique=True)
+        await db.entidades.create_index("entidad_code", unique=True)
         
         # Índices para patólogos
-        await db.patologos.create_index("patologoCode", unique=True)
-        await db.patologos.create_index("PatologoEmail", unique=True)
+        await db.patologos.create_index("patologo_code", unique=True)
+        await db.patologos.create_index("patologo_email", unique=True)
         await db.patologos.create_index("registro_medico", unique=True)
         
         # Índices para residentes
-        await db.residentes.create_index("residenteCode", unique=True)
-        await db.residentes.create_index("ResidenteEmail", unique=True)
+        await db.residentes.create_index("residente_code", unique=True)
+        await db.residentes.create_index("residente_email", unique=True)
         
         # Índices para auxiliares
-        await db.auxiliares.create_index("auxiliarCode", unique=True)
-        await db.auxiliares.create_index("AuxiliarEmail", unique=True)
+        await db.auxiliares.create_index("auxiliar_code", unique=True)
+        await db.auxiliares.create_index("auxiliar_email", unique=True)
         
         # Índices para pruebas
-        await db.pruebas.create_index("pruebaCode", unique=True)
+        await db.pruebas.create_index("prueba_code", unique=True)
         
         # Índices para casos
         await db.casos.create_index("caso_code", unique=True)
-        await db.casos.create_index("paciente.cedula")
+        await db.casos.create_index("paciente.paciente_code")
         await db.casos.create_index("estado")
         await db.casos.create_index("fecha_creacion")
         
         # Índices para pacientes
-        await db.pacientes.create_index("cedula", unique=True)
+        await db.pacientes.create_index("paciente_code", unique=True)
         
         logger.info("Índices básicos creados correctamente")
         

@@ -39,7 +39,7 @@ async def create_enfermedad(
         "codigo": "A000",
         "nombre": "COLERA DEBIDO A VIBRIO CHOLERAE 01, BIOTIPO CHOLERAE",
         "descripcion": "COLERA",
-        "isActive": true
+        "is_active": true
     }
     ```
     """

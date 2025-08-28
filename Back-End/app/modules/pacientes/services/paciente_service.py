@@ -1,9 +1,13 @@
 """Servicio para el módulo de pacientes"""
 
+import logging
 from typing import List, Optional, Dict, Any
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from ..models import (
+logger = logging.getLogger(__name__)
+
+from ..models import Paciente
+from ..schemas import (
     PacienteCreate,
     PacienteUpdate,
     PacienteResponse,
@@ -22,11 +26,14 @@ class PacienteService:
 
     async def create_paciente(self, paciente: PacienteCreate) -> PacienteResponse:
         """Crear un nuevo paciente"""
+        logger.info(f"Creando nuevo paciente: {paciente.paciente_code}")
+        
         # Validaciones adicionales de negocio
         await self._validate_paciente_data(paciente)
         
         # Crear el paciente
         paciente_data = await self.repository.create(paciente)
+        logger.info(f"Paciente creado exitosamente: {paciente.paciente_code}")
         return PacienteResponse(**paciente_data)
 
     async def get_paciente_by_id(self, paciente_id: str) -> PacienteResponse:
@@ -36,11 +43,11 @@ class PacienteService:
             raise NotFoundError(f"Paciente con ID {paciente_id} no encontrado")
         return PacienteResponse(**paciente_data)
 
-    async def get_paciente_by_cedula(self, cedula: str) -> PacienteResponse:
-        """Buscar un paciente por su número de cédula"""
-        paciente_data = await self.repository.get_by_cedula(cedula)
+    async def get_paciente_by_paciente_code(self, paciente_code: str) -> PacienteResponse:
+        """Buscar un paciente por su código"""
+        paciente_data = await self.repository.get_by_paciente_code(paciente_code)
         if not paciente_data:
-            raise NotFoundError(f"Paciente con cédula {cedula} no encontrado")
+            raise NotFoundError(f"Paciente con código {paciente_code} no encontrado")
         return PacienteResponse(**paciente_data)
 
     async def update_paciente(self, paciente_id: str, paciente_update: PacienteUpdate) -> PacienteResponse:
@@ -54,19 +61,25 @@ class PacienteService:
 
     async def delete_paciente(self, paciente_id: str) -> bool:
         """Eliminar un paciente"""
+        logger.info(f"Intentando eliminar paciente: {paciente_id}")
+        
         # Verificar si el paciente tiene casos asociados
         paciente_data = await self.repository.get_by_id(paciente_id)
         if not paciente_data:
+            logger.warning(f"Paciente no encontrado para eliminar: {paciente_id}")
             raise NotFoundError(f"Paciente con ID {paciente_id} no encontrado")
         
         # Si tiene casos, no permitir eliminación
         if paciente_data.get("id_casos") and len(paciente_data["id_casos"]) > 0:
+            logger.warning(f"No se puede eliminar paciente {paciente_id} - tiene casos asociados")
             raise BadRequestError(
                 "No se puede eliminar un paciente que tiene casos asociados. "
                 "Primero debe eliminar o reasignar los casos."
             )
         
-        return await self.repository.delete(paciente_id)
+        result = await self.repository.delete(paciente_id)
+        logger.info(f"Paciente eliminado exitosamente: {paciente_id}")
+        return result
 
     async def list_pacientes(
         self,
@@ -136,6 +149,7 @@ class PacienteService:
 
     async def get_statistics(self) -> PacienteStats:
         """Obtener estadísticas generales de pacientes"""
+        logger.info("Obteniendo estadísticas de pacientes")
         stats_data = await self.repository.get_statistics()
         
         # Procesar los datos para el esquema PacienteStats
@@ -179,7 +193,7 @@ class PacienteService:
             "otro": general.get("total_pacientes", 0) - total_hombres - total_mujeres
         }
         
-        return PacienteStats(
+        stats = PacienteStats(
             total_pacientes=general.get("total_pacientes", 0),
             total_hombres=total_hombres,
             total_mujeres=total_mujeres,
@@ -190,21 +204,25 @@ class PacienteService:
             total_hospitalizados=total_hospitalizados,
             entidades_mas_frecuentes=por_entidad,
             pacientes_con_casos=pacientes_con_casos,
-            pacientes_mes_actual=mensuales.get("pacientes_mes_anterior", 0),
-            pacientes_mes_anterior=mensuales.get("pacientes_mes_anterior_anterior", 0),
+            pacientes_mes_actual=mensuales.get("pacientes_mes_actual", 0),
+            pacientes_mes_anterior=mensuales.get("pacientes_mes_anterior", 0),
             cambio_porcentual=mensuales.get("cambio_porcentual", 0.0),
             distribucion_genero=distribucion_genero
         )
+        
+        logger.info(f"Estadísticas obtenidas: {stats.total_pacientes} pacientes totales")
+        return stats
 
     # Métodos privados para validaciones
     async def _validate_paciente_data(self, paciente: PacienteCreate) -> None:
         """Validar datos del paciente antes de crear"""
         # Validaciones adicionales de negocio
         if paciente.edad < 0 or paciente.edad > 150:
+            logger.warning(f"Edad inválida para paciente {paciente.paciente_code}: {paciente.edad}")
             raise BadRequestError("La edad debe estar entre 0 y 150 años")
         
         # Validaciones adicionales pueden agregarse aquí
-        pass
+        logger.debug(f"Validaciones de paciente {paciente.paciente_code} completadas")
 
     async def _validate_date_range(self, fecha_desde: Optional[str], fecha_hasta: Optional[str]) -> None:
         """Validar rango de fechas"""
@@ -215,9 +233,11 @@ class PacienteService:
                 fecha_fin = datetime.fromisoformat(fecha_hasta)
                 
                 if fecha_inicio > fecha_fin:
+                    logger.warning(f"Rango de fechas inválido: {fecha_desde} > {fecha_hasta}")
                     raise BadRequestError("La fecha de inicio no puede ser posterior a la fecha de fin")
                     
             except ValueError:
+                logger.warning(f"Formato de fecha inválido: {fecha_desde} o {fecha_hasta}")
                 raise BadRequestError("Formato de fecha inválido. Use YYYY-MM-DD")
 
     def _is_valid_email(self, email: str) -> bool:

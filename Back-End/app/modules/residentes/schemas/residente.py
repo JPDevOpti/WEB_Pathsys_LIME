@@ -10,7 +10,7 @@ class ResidenteCreate(BaseCreateModel, ResidenteEmail):
     """Esquema para crear un residente"""
     residente_name: str = Field(..., min_length=2, max_length=100, description="Nombre del residente")
     iniciales_residente: str = Field(..., min_length=2, max_length=10, description="Iniciales del residente")
-    residente_code: str = Field(..., min_length=8, max_length=20, description="Código único del residente")
+    residente_code: str = Field(..., min_length=1, max_length=20, description="Código único del residente")
     registro_medico: str = Field(..., min_length=3, max_length=50, description="Número de registro médico")
     password: str = Field(..., min_length=6, max_length=100, description="Contraseña para el usuario del residente")
     is_active: bool = Field(default=True, description="Estado activo del residente")
@@ -35,7 +35,7 @@ class ResidenteUpdate(BaseUpdateModel):
     """Esquema para actualizar un residente"""
     residente_name: Optional[str] = Field(None, min_length=2, max_length=100, description="Nombre del residente")
     iniciales_residente: Optional[str] = Field(None, min_length=2, max_length=10, description="Iniciales del residente")
-    residente_code: Optional[str] = Field(None, min_length=8, max_length=20, description="Código único del residente")
+    residente_code: Optional[str] = Field(None, min_length=1, max_length=20, description="Código único del residente")
     residente_email: Optional[EmailStr] = Field(None, description="Email del residente")
     registro_medico: Optional[str] = Field(None, min_length=3, max_length=50, description="Número de registro médico")
     is_active: Optional[bool] = Field(None, description="Estado activo del residente")

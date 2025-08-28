@@ -1,18 +1,21 @@
 """Router para el módulo de pacientes"""
 
+import logging
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.modules.pacientes.models import (
+logger = logging.getLogger(__name__)
+
+from app.modules.pacientes.schemas import (
     PacienteCreate, 
     PacienteUpdate, 
     PacienteResponse, 
     PacienteSearch,
     Sexo,
-    TipoAtencion
+    TipoAtencion,
+    PacienteStats
 )
-from app.modules.pacientes.schemas import PacienteStats
 from ..services import get_paciente_service, PacienteService
 from app.config.database import get_database
 from app.core.exceptions import NotFoundError, BadRequestError
@@ -36,18 +39,21 @@ async def create_paciente(
 ) -> PacienteResponse:
     """Crear un nuevo paciente"""
     try:
+        logger.info(f"Creando nuevo paciente: {paciente.paciente_code}")
         return await service.create_paciente(paciente)
     except BadRequestError as e:
+        logger.warning(f"Error de validación al crear paciente: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+        logger.error(f"Error inesperado creando paciente: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.get("/", response_model=List[PacienteResponse])
 async def list_pacientes(
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
-    buscar: Optional[str] = Query(None, description="Buscar por nombre o cédula"),
+    buscar: Optional[str] = Query(None, description="Buscar por nombre o código"),
     entidad: Optional[str] = Query(None, description="Filtrar por entidad"),
     sexo: Optional[Sexo] = Query(None, description="Filtrar por sexo"),
     tipo_atencion: Optional[TipoAtencion] = Query(None, description="Filtrar por tipo de atención"),
@@ -70,7 +76,7 @@ async def list_pacientes(
 @router.get("/buscar/avanzada", response_model=Dict[str, Any])
 async def advanced_search(
     nombre: Optional[str] = Query(None, description="Buscar por nombre"),
-    cedula: Optional[str] = Query(None, description="Buscar por cédula"),
+    paciente_code: Optional[str] = Query(None, description="Buscar por código"),
     edad_min: Optional[int] = Query(None, ge=0, le=150, description="Edad mínima"),
     edad_max: Optional[int] = Query(None, ge=0, le=150, description="Edad máxima"),
     entidad: Optional[str] = Query(None, description="Filtrar por entidad"),
@@ -85,9 +91,10 @@ async def advanced_search(
 ) -> Dict[str, Any]:
     """Búsqueda avanzada de pacientes con múltiples filtros"""
     try:
+        logger.info(f"Búsqueda avanzada de pacientes - skip: {skip}, limit: {limit}")
         search_params = PacienteSearch(
             nombre=nombre,
-            cedula=cedula,
+            paciente_code=paciente_code,
             edad_min=edad_min,
             edad_max=edad_max,
             entidad=entidad,
@@ -99,12 +106,15 @@ async def advanced_search(
             skip=skip,
             limit=limit
         )
-        return await service.advanced_search(search_params)
+        result = await service.advanced_search(search_params)
+        logger.info(f"Búsqueda avanzada completada: {result.get('total', 0)} resultados")
+        return result
     except BadRequestError as e:
+        logger.warning(f"Error de validación en búsqueda avanzada: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
-
+        logger.error(f"Error inesperado en búsqueda avanzada: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 
@@ -126,10 +136,13 @@ async def get_total_count(
 ) -> Dict[str, int]:
     """Obtener el total de pacientes registrados"""
     try:
+        logger.info("Obteniendo total de pacientes")
         total = await service.get_total_count()
+        logger.info(f"Total de pacientes: {total}")
         return {"total": total}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+        logger.error(f"Error obteniendo total de pacientes: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.get("/estadisticas", response_model=PacienteStats)
@@ -138,19 +151,23 @@ async def get_statistics(
 ) -> PacienteStats:
     """Obtener estadísticas generales de pacientes"""
     try:
-        return await service.get_statistics()
+        logger.info("Obteniendo estadísticas de pacientes")
+        stats = await service.get_statistics()
+        logger.info(f"Estadísticas obtenidas: {stats.total_pacientes} pacientes totales")
+        return stats
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+        logger.error(f"Error obteniendo estadísticas: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
-@router.get("/cedula/{cedula}", response_model=PacienteResponse)
-async def get_paciente_by_cedula(
-    cedula: str,
+@router.get("/codigo/{paciente_code}", response_model=PacienteResponse)
+async def get_paciente_by_paciente_code(
+    paciente_code: str,
     service: PacienteService = Depends(get_service)
 ) -> PacienteResponse:
-    """Buscar un paciente por su número de cédula"""
+    """Buscar un paciente por su código"""
     try:
-        return await service.get_paciente_by_cedula(cedula)
+        return await service.get_paciente_by_paciente_code(paciente_code)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -195,17 +212,23 @@ async def delete_paciente(
 ) -> Dict[str, str]:
     """Eliminar un paciente"""
     try:
+        logger.info(f"Eliminando paciente: {paciente_id}")
         success = await service.delete_paciente(paciente_id)
         if success:
+            logger.info(f"Paciente eliminado exitosamente: {paciente_id}")
             return {"message": f"Paciente {paciente_id} eliminado exitosamente"}
         else:
+            logger.error(f"Error al eliminar paciente: {paciente_id}")
             raise HTTPException(status_code=500, detail="Error al eliminar el paciente")
     except NotFoundError as e:
+        logger.warning(f"Paciente no encontrado para eliminar: {paciente_id}")
         raise HTTPException(status_code=404, detail=str(e))
     except BadRequestError as e:
+        logger.warning(f"Error de validación al eliminar paciente {paciente_id}: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+        logger.error(f"Error inesperado eliminando paciente {paciente_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.post("/{paciente_id}/casos/{id_caso}", response_model=Dict[str, str])
@@ -216,15 +239,20 @@ async def add_caso_to_paciente(
 ) -> Dict[str, str]:
     """Agregar un caso a un paciente"""
     try:
+        logger.info(f"Agregando caso {id_caso} al paciente {paciente_id}")
         success = await service.add_caso_to_paciente(paciente_id, id_caso)
         if success:
+            logger.info(f"Caso {id_caso} agregado exitosamente al paciente {paciente_id}")
             return {"message": f"Caso {id_caso} agregado al paciente {paciente_id}"}
         else:
+            logger.error(f"Error al agregar caso {id_caso} al paciente {paciente_id}")
             raise HTTPException(status_code=500, detail="Error al agregar el caso")
     except NotFoundError as e:
+        logger.warning(f"Paciente no encontrado para agregar caso: {paciente_id}")
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+        logger.error(f"Error inesperado agregando caso {id_caso} al paciente {paciente_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.delete("/{paciente_id}/casos/{id_caso}", response_model=Dict[str, str])
@@ -235,12 +263,17 @@ async def remove_caso_from_paciente(
 ) -> Dict[str, str]:
     """Remover un caso de un paciente"""
     try:
+        logger.info(f"Removiendo caso {id_caso} del paciente {paciente_id}")
         success = await service.remove_caso_from_paciente(paciente_id, id_caso)
         if success:
+            logger.info(f"Caso {id_caso} removido exitosamente del paciente {paciente_id}")
             return {"message": f"Caso {id_caso} removido del paciente {paciente_id}"}
         else:
+            logger.error(f"Error al remover caso {id_caso} del paciente {paciente_id}")
             raise HTTPException(status_code=500, detail="Error al remover el caso")
     except NotFoundError as e:
+        logger.warning(f"Paciente no encontrado para remover caso: {paciente_id}")
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+        logger.error(f"Error inesperado removiendo caso {id_caso} del paciente {paciente_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")

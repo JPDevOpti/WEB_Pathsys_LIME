@@ -26,7 +26,7 @@ from app.modules.casos.schemas.caso import (
     ResultadoInfo,
 )
 from app.modules.pruebas.repositories.prueba_repository import PruebaRepository
-from app.modules.pruebas.models.prueba import PruebasItem
+from app.modules.pruebas.schemas.prueba import PruebasItem
 from app.modules.patologos.repositories.patologo_repository import PatologoRepository
 from app.modules.entidades.repositories.entidad_repository import EntidadRepository
 from app.modules.entidades.models.entidad import EntidadSearch
@@ -169,7 +169,7 @@ async def load_entities(db) -> Dict[str, Dict]:
             break
         for e in page:
             doc = e.model_dump() if hasattr(e, "model_dump") else e
-            name_to_entity[doc["EntidadName"]] = doc
+            name_to_entity[doc.get("entidad_name") or doc.get("EntidadName")] = doc
         if len(page) < limit:
             break
         skip += limit
@@ -182,7 +182,7 @@ async def load_patologos(db) -> List[Dict]:
     skip = 0
     limit = 200
     while True:
-        page = await repo.get_multi(skip=skip, limit=limit, filters={"isActive": True})
+        page = await repo.get_multi(skip=skip, limit=limit, filters={"is_active": True})
         if not page:
             break
         for p in page:
@@ -198,15 +198,15 @@ async def load_pruebas(db) -> List[Dict]:
     repo = PruebaRepository(db)
     pruebas: List[Dict] = []
     # Reusar get_all con búsqueda amplia
-    from app.modules.pruebas.models.prueba import PruebaSearch
+    from app.modules.pruebas.schemas.prueba import PruebaSearch
     search = PruebaSearch(query=None, activo=True, skip=0, limit=1000)
     page = await repo.get_all(search)
     for pr in page:
         doc = pr.model_dump() if hasattr(pr, "model_dump") else pr
         # id puede venir como ObjectId; asegurar string
         _id = str(doc.get("_id") or doc.get("id"))
-        codigo = doc.get("pruebaCode", _id)  # Usar código si existe, sino usar ID
-        nombre = doc.get("pruebasName", "Prueba sin nombre")
+        codigo = doc.get("prueba_code", _id)  # Usar código si existe, sino usar ID
+        nombre = doc.get("prueba_name", "Prueba sin nombre")
         pruebas.append({"id": codigo, "nombre": nombre})  # Usar código como ID
     return pruebas
 
@@ -214,12 +214,16 @@ async def load_pruebas(db) -> List[Dict]:
 async def load_pacientes(db, batch_size: int = 1000) -> List[Dict]:
     # Cargar pacientes desde la colección directamente (estructura dict con entidad_info {nombre})
     pacientes: List[Dict] = []
-    cursor = db.pacientes.find({}, {"_id": 1, "nombre": 1, "edad": 1, "sexo": 1, "entidad_info": 1, "tipo_atencion": 1})
+    cursor = db.pacientes.find({}, {"_id": 1, "paciente_code": 1, "nombre": 1, "edad": 1, "sexo": 1, "entidad_info": 1, "tipo_atencion": 1})
     while True:
         chunk = await cursor.to_list(length=batch_size)
         if not chunk:
             break
         for doc in chunk:
+            # Asegurar que entidad_info tenga la estructura correcta
+            if "entidad_info" in doc and isinstance(doc["entidad_info"], dict):
+                if "nombre" not in doc["entidad_info"]:
+                    doc["entidad_info"]["nombre"] = "Entidad Desconocida"
             pacientes.append(doc)
         if len(chunk) < batch_size:
             break
@@ -310,8 +314,8 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 # Si no se encuentra por nombre, elegir una al azar
                 entidad_doc = random.choice(list(entidades_by_name.values()))
             entidad_info = CasoEntidadInfo(
-                codigo=entidad_doc["EntidadCode"],
-                nombre=entidad_doc["EntidadName"],
+                codigo=entidad_doc.get("entidad_code") or entidad_doc.get("EntidadCode"),
+                nombre=entidad_doc.get("entidad_name") or entidad_doc.get("EntidadName"),
             )
             # Asegurar que el tipo de atención sea válido (solo Ambulatorio o Hospitalizado)
             tipo_atencion_original = str(p.get("tipo_atencion", "Ambulatorio"))
@@ -321,8 +325,8 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 tipo_atencion_valido = tipo_atencion_original
             
             paciente_info = CasoPacienteInfo(
-                codigo=str(p.get("_id")),
-                cedula=str(p.get("_id")),
+                codigo=str(p.get("paciente_code") or p.get("_id")),
+                cedula=str(p.get("paciente_code") or p.get("_id")),
                 nombre=p.get("nombre", "Paciente Sin Nombre"),
                 edad=max(1, int(p.get("edad", 30))),  # Asegurar edad válida
                 sexo=str(p.get("sexo", "Masculino")),
@@ -456,8 +460,8 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 
                 if random.random() < probabilidad_patologo.get(estado_final, 0.8):
                     pat = random.choice(patologos)
-                    pat_codigo = pat.get("patologoCode")
-                    pat_nombre = pat.get("patologoName")
+                    pat_codigo = pat.get("patologo_code") or pat.get("patologoCode")
+                    pat_nombre = pat.get("patologo_name") or pat.get("patologoName")
                     if pat_codigo and pat_nombre:
                         patologo_info = CasoPatologoInfo(codigo=pat_codigo, nombre=pat_nombre)
 

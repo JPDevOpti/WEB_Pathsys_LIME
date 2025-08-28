@@ -74,23 +74,23 @@ class PacienteBase(BaseModel):
 
 class PacienteCreate(PacienteBase):
     """Esquema para crear un paciente"""
-    cedula: str = Field(
+    paciente_code: str = Field(
         ..., 
-        description="Número de cédula del paciente (será usado como ID único)"
+        description="Código único del paciente (será usado como identificador principal)"
     )
     
-    @validator('cedula', pre=True)
-    def validate_cedula(cls, v):
-        """Validar número de cédula"""
+    @validator('paciente_code', pre=True)
+    def validate_paciente_code(cls, v):
+        """Validar código del paciente"""
         if not v or not v.strip():
-            raise ValueError('La cédula no puede estar vacía')
+            raise ValueError('El código del paciente no puede estar vacío')
         # Remover espacios y caracteres no numéricos
-        cedula_clean = ''.join(c for c in v if c.isdigit())
-        if not cedula_clean:
-            raise ValueError('La cédula debe contener al menos un dígito')
-        if len(cedula_clean) < 6 or len(cedula_clean) > 12:
-            raise ValueError('La cédula debe tener entre 6 y 12 dígitos')
-        return cedula_clean
+        codigo_clean = ''.join(c for c in v if c.isdigit())
+        if not codigo_clean:
+            raise ValueError('El código del paciente debe contener al menos un dígito')
+        if len(codigo_clean) < 6 or len(codigo_clean) > 12:
+            raise ValueError('El código del paciente debe tener entre 6 y 12 dígitos')
+        return codigo_clean
 
 
 class PacienteUpdate(BaseModel):
@@ -121,10 +121,10 @@ class PacienteUpdate(BaseModel):
 
 class PacienteResponse(PacienteBase):
     """Esquema de respuesta para un paciente"""
-    id: str = Field(..., description="ID único del paciente (cédula)")
-    cedula: str = Field(
+    id: str = Field(..., description="ID único del paciente (generado automáticamente)")
+    paciente_code: str = Field(
         ..., 
-        description="Número de cédula del paciente"
+        description="Código único del paciente"
     )
     fecha_creacion: Optional[datetime] = Field(
         None,
@@ -147,7 +147,7 @@ class PacienteResponse(PacienteBase):
 class PacienteSearch(BaseModel):
     """Esquema para búsqueda de pacientes"""
     nombre: Optional[str] = None
-    cedula: Optional[str] = None
+    paciente_code: Optional[str] = None
     edad_min: Optional[int] = Field(None, ge=0)
     edad_max: Optional[int] = Field(None, le=150)
     entidad: Optional[str] = None  # Nombre de la entidad para filtrar

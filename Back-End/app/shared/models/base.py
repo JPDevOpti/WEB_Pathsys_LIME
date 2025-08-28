@@ -30,7 +30,7 @@ class BaseDocument(BaseModel):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     fecha_creacion: Optional[datetime] = Field(default_factory=datetime.utcnow)
     fecha_actualizacion: Optional[datetime] = Field(default_factory=datetime.utcnow)
-    isActive: bool = Field(default=True)
+    is_active: bool = Field(default=True, alias="isActive")
     
     class Config:
         populate_by_name = True
@@ -51,7 +51,7 @@ class BaseResponseModel(BaseModel):
     id: str
     fecha_creacion: datetime
     fecha_actualizacion: datetime
-    isActive: bool
+    is_active: bool = Field(alias="isActive")
     
     class Config:
         from_attributes = True
@@ -63,6 +63,6 @@ class TimestampMixin(BaseModel):
 
 class SoftDeleteMixin(BaseModel):
     """Mixin para soft delete"""
-    isActive: bool = Field(default=True)
+    is_active: bool = Field(default=True, alias="isActive")
     fecha_eliminacion: Optional[datetime] = None
     eliminado_por: Optional[str] = None

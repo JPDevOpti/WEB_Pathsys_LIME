@@ -1,7 +1,7 @@
 """Modelo para Patólogo"""
 
 from typing import Optional
-from pydantic import Field, EmailStr
+from pydantic import Field
 from datetime import datetime
 from bson import ObjectId
 
@@ -12,8 +12,8 @@ class Patologo(BaseDocument):
     """Modelo de Patólogo para MongoDB"""
     patologo_name: str = Field(..., min_length=2, max_length=100, description="Nombre completo del patólogo")
     iniciales_patologo: Optional[str] = Field(None, min_length=2, max_length=10, description="Iniciales del patólogo")
-    patologo_code: str = Field(..., min_length=6, max_length=10, description="Cédula única del patólogo")
-    patologo_email: EmailStr = Field(..., description="Email único del patólogo")
+    patologo_code: str = Field(..., min_length=6, max_length=10, description="Código único del patólogo (identificador principal)")
+    patologo_email: str = Field(..., description="Email único del patólogo")
     registro_medico: str = Field(..., min_length=5, max_length=50, description="Número de registro médico único")
     is_active: bool = Field(default=True, description="Estado activo/inactivo del patólogo")
     firma: str = Field(default="", description="URL de firma digital, por defecto vacío")

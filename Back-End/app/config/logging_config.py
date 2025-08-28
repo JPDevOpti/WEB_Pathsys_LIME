@@ -2,11 +2,18 @@ import logging
 import logging.config
 import sys
 from typing import Dict, Any
+import os
 from app.config.settings import settings
 
 def setup_logging() -> None:
     """Configurar logging estructurado para la aplicación"""
     
+    # Asegurar que exista el directorio de logs
+    try:
+        os.makedirs("logs", exist_ok=True)
+    except Exception:
+        pass
+
     # Configuración base
     log_config: Dict[str, Any] = {
         "version": 1,

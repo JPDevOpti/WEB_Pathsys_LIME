@@ -1,21 +1,5 @@
-"""Models for pacientes module"""
+"""Modelos del módulo de pacientes"""
 
-from .models import (
-    Sexo,
-    TipoAtencion,
-    PacienteBase,
-    PacienteCreate,
-    PacienteUpdate,
-    PacienteResponse,
-    PacienteSearch
-)
+from .paciente import Paciente
 
-__all__ = [
-    "Sexo",
-    "TipoAtencion",
-    "PacienteBase",
-    "PacienteCreate",
-    "PacienteUpdate",
-    "PacienteResponse",
-    "PacienteSearch"
-]
+__all__ = ["Paciente"]

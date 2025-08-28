@@ -1,9 +1,24 @@
+#!/usr/bin/env python3
+"""
+Script para insertar residentes del sistema
+
+Este script crea residentes en la base de datos con los códigos y nombres especificados.
+Los residentes incluyen médicos residentes en patología con sus respectivos datos.
+
+Uso:
+    python3 scripts/import_residents.py [--dry-run]
+
+Argumentos:
+    --dry-run: Solo mostrar qué se haría sin ejecutar cambios reales
+"""
+
 import os
 import sys
 from pathlib import Path
 import asyncio
 import argparse
 from typing import Optional, Tuple, List, Dict
+from datetime import datetime
 
 # Ensure 'app' package is importable when running this script directly
 CURRENT_DIR = Path(__file__).resolve().parent
@@ -52,23 +67,63 @@ RESIDENTS_LIST: List[Dict[str, str]] = [
 
 
 async def import_residents(dry_run: bool) -> Tuple[int, int]:
-    """Import embedded residents list. Returns (created, skipped)."""
+    """Importar lista de residentes embebida. Retorna (created, skipped)."""
     created = 0
     skipped = 0
+    errors = 0
+
+    print(f"{'='*60}")
+    print("IMPORTACIÓN DE RESIDENTES")
+    print(f"{'='*60}")
+    print(f"Modo: {'DRY-RUN (sin cambios)' if dry_run else 'EJECUCIÓN REAL'}")
+    print(f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Total residentes a procesar: {len(RESIDENTS_LIST)}")
+    print(f"{'='*60}")
 
     # Dry run: do not connect to DB
     if dry_run:
-        for row in RESIDENTS_LIST:
+        for i, row in enumerate(RESIDENTS_LIST, 1):
             raw_code = str(row.get("raw_code", "")).strip()
             raw_name = str(row.get("raw_name", "")).strip()
             raw_siglas = row.get("raw_siglas")
+            
+            print(f"\n[{i}/{len(RESIDENTS_LIST)}] Procesando: {raw_name}")
+            print(f"  Código: {raw_code}")
+            print(f"  Siglas: {raw_siglas}")
+            
+            # Validaciones previas
             if not raw_code or not raw_name:
+                print(f"  [SKIP] Código o nombre vacío")
                 skipped += 1
                 continue
+                
+            # Validar longitud del código según el esquema (1-20 caracteres)
+            if len(raw_code) < 1 or len(raw_code) > 20:
+                print(f"  [SKIP] Código debe tener entre 1 y 20 caracteres, actual: {len(raw_code)}")
+                skipped += 1
+                continue
+                
+            # Validar longitud del nombre (2-100 caracteres)
+            if len(raw_name) < 2 or len(raw_name) > 100:
+                print(f"  [SKIP] Nombre debe tener entre 2 y 100 caracteres, actual: {len(raw_name)}")
+                skipped += 1
+                continue
+                
             initials = derive_initials(raw_siglas, raw_name)
             email = compose_email(raw_code, initials)
             registro_medico = f"PEND-{raw_code}"
-            print(f"[DRY-RUN] {raw_name} ({raw_code}) -> email={email} password=<doc> registro_medico='{registro_medico}' observaciones=None")
+            
+            # Validar longitud de iniciales (2-10 caracteres)
+            if len(initials) < 2 or len(initials) > 10:
+                print(f"  [SKIP] Iniciales deben tener entre 2 y 10 caracteres, actual: {len(initials)}")
+                skipped += 1
+                continue
+            
+            print(f"  [DRY-RUN] Se crearía el residente: {raw_name}")
+            print(f"    - Código: {raw_code}")
+            print(f"    - Email: {email}")
+            print(f"    - Iniciales: {initials}")
+            print(f"    - Registro médico: {registro_medico}")
             created += 1
         return created, skipped
 
@@ -78,37 +133,87 @@ async def import_residents(dry_run: bool) -> Tuple[int, int]:
         user_service = UserManagementService(db)
         service = ResidenteService(repo, user_service)
 
-        for row in RESIDENTS_LIST:
+        for i, row in enumerate(RESIDENTS_LIST, 1):
             raw_code = str(row.get("raw_code", "")).strip()
             raw_name = str(row.get("raw_name", "")).strip()
             raw_siglas = row.get("raw_siglas")
 
-            if not raw_code or not raw_name:
-                skipped += 1
-                continue
-
-            initials = derive_initials(raw_siglas, raw_name)
-            email = compose_email(raw_code, initials)
-            registro_medico = f"PEND-{raw_code}"  # Respect min_length and uniqueness intent
-
-            payload = ResidenteCreate(
-                residenteName=raw_name,
-                InicialesResidente=initials,
-                residenteCode=raw_code,
-                ResidenteEmail=email,
-                registro_medico=registro_medico,
-                password=raw_code,  # Password equals document number
-                isActive=True,
-                observaciones=None,
-            )
+            print(f"\n[{i}/{len(RESIDENTS_LIST)}] Procesando: {raw_name}")
+            print(f"  Código: {raw_code}")
+            print(f"  Siglas: {raw_siglas}")
 
             try:
+                # Validaciones previas
+                if not raw_code or not raw_name:
+                    print(f"  [SKIP] Código o nombre vacío")
+                    skipped += 1
+                    continue
+                    
+                # Validar longitud del código según el esquema (1-20 caracteres)
+                if len(raw_code) < 1 or len(raw_code) > 20:
+                    print(f"  [SKIP] Código debe tener entre 1 y 20 caracteres, actual: {len(raw_code)}")
+                    skipped += 1
+                    continue
+
+                # Validar longitud del nombre (2-100 caracteres)
+                if len(raw_name) < 2 or len(raw_name) > 100:
+                    print(f"  [SKIP] Nombre debe tener entre 2 y 100 caracteres, actual: {len(raw_name)}")
+                    skipped += 1
+                    continue
+
+                initials = derive_initials(raw_siglas, raw_name)
+                email = compose_email(raw_code, initials)
+                registro_medico = f"PEND-{raw_code}"
+
+                # Validar longitud de iniciales (2-10 caracteres)
+                if len(initials) < 2 or len(initials) > 10:
+                    print(f"  [SKIP] Iniciales deben tener entre 2 y 10 caracteres, actual: {len(initials)}")
+                    skipped += 1
+                    continue
+
+                # Crear payload usando el esquema de validación
+                payload = ResidenteCreate(
+                    residente_name=raw_name,
+                    iniciales_residente=initials,
+                    residente_code=raw_code,
+                    residente_email=email,
+                    registro_medico=registro_medico,
+                    password=raw_code,  # Password equals document number
+                    is_active=True,
+                    observaciones=None,
+                )
+
                 await service.create_residente(payload)
+                print(f"  [OK] Residente creado exitosamente")
+                print(f"    - Código: {raw_code}")
+                print(f"    - Email: {email}")
+                print(f"    - Iniciales: {initials}")
+                print(f"    - Registro médico: {registro_medico}")
                 created += 1
-                print(f"[OK] Residente creado: {raw_name} ({raw_code})")
-            except Exception as e:
+                
+            except ValueError as e:
+                print(f"  [SKIP] Error de validación: {str(e)}")
                 skipped += 1
-                print(f"[SKIP] {raw_name} ({raw_code}) -> {e}")
+            except Exception as e:
+                print(f"  [ERROR] Error inesperado: {str(e)}")
+                errors += 1
+
+        # Resumen final
+        print(f"\n{'='*60}")
+        print("RESUMEN DE IMPORTACIÓN")
+        print(f"{'='*60}")
+        print(f"Total procesados: {len(RESIDENTS_LIST)}")
+        print(f"Creados: {created}")
+        print(f"Saltados: {skipped}")
+        print(f"Errores: {errors}")
+        
+        if dry_run:
+            print(f"\n⚠️  MODO DRY-RUN: No se realizaron cambios en la base de datos")
+            print(f"Para ejecutar realmente, ejecuta el script sin --dry-run")
+        else:
+            print(f"\n✅ Importación completada")
+            
+        print(f"{'='*60}")
 
         return created, skipped
     finally:
@@ -116,12 +221,27 @@ async def import_residents(dry_run: bool) -> Tuple[int, int]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Import residents from embedded list")
-    parser.add_argument("--dry-run", action="store_true", help="Do not write to DB, just preview")
+    """Función principal"""
+    parser = argparse.ArgumentParser(
+        description="Importar residentes del sistema",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Ejemplos:
+  python3 scripts/import_residents.py --dry-run    # Solo mostrar qué se haría
+  python3 scripts/import_residents.py              # Ejecutar realmente
+        """
+    )
+    
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Solo mostrar qué se haría sin ejecutar cambios reales"
+    )
+    
     args = parser.parse_args()
-
-    created, skipped = asyncio.run(import_residents(dry_run=args.dry_run))
-    print(f"Done. Created: {created}, Skipped: {skipped}")
+    
+    # Ejecutar la importación
+    asyncio.run(import_residents(dry_run=args.dry_run))
 
 
 if __name__ == "__main__":

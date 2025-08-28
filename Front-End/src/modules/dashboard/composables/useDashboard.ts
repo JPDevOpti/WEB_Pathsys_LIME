@@ -9,11 +9,7 @@ import type {
   MuestraStats
 } from '../types/dashboard.types'
 
-/**
- * Composable para manejar el estado y lógica del dashboard
- */
 export function useDashboard() {
-  // Estados reactivos
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const metricas = ref<DashboardMetrics | null>(null)
@@ -22,25 +18,19 @@ export function useDashboard() {
   const estadisticasOportunidad = ref<EstadisticasOportunidad | null>(null)
   const estadisticasMuestras = ref<MuestraStats | null>(null)
 
-  // Estados de carga individuales
   const loadingMetricas = ref(false)
   const loadingCasosPorMes = ref(false)
   const loadingCasosUrgentes = ref(false)
   const loadingOportunidad = ref(false)
   const loadingMuestras = ref(false)
 
-  // Computed properties
   const totalCasosAño = computed(() => casosPorMes.value?.total || 0)
   const añoActual = computed(() => new Date().getFullYear())
 
-  /**
-   * Cargar métricas principales del dashboard
-   */
   const cargarMetricas = async () => {
     try {
       loadingMetricas.value = true
       error.value = null
-      
       metricas.value = await dashboardApiService.getMetricasDashboard()
     } catch (err: any) {
       error.value = err.message || 'Error al cargar las métricas del dashboard'
@@ -50,17 +40,10 @@ export function useDashboard() {
     }
   }
 
-  /**
-   * Cargar estadísticas de casos por mes
-   */
   const cargarCasosPorMes = async (año?: number) => {
     try {
       loadingCasosPorMes.value = true
       error.value = null
-      
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
       casosPorMes.value = await dashboardApiService.getCasosPorMes(año)
     } catch (err: any) {
       error.value = err.message || 'Error al cargar estadísticas de casos por mes'
@@ -70,14 +53,10 @@ export function useDashboard() {
     }
   }
 
-  /**
-   * Cargar casos urgentes
-   */
   const cargarCasosUrgentes = async (filtros: FiltrosCasosUrgentes = {}) => {
     try {
       loadingCasosUrgentes.value = true
       error.value = null
-      
       casosUrgentes.value = await dashboardApiService.getCasosUrgentes(filtros)
     } catch (err: any) {
       error.value = err.message || 'Error al cargar casos urgentes'
@@ -87,14 +66,10 @@ export function useDashboard() {
     }
   }
 
-  /**
-   * Cargar estadísticas de oportunidad
-   */
   const cargarEstadisticasOportunidad = async () => {
     try {
       loadingOportunidad.value = true
       error.value = null
-      
       estadisticasOportunidad.value = await dashboardApiService.getEstadisticasOportunidad()
     } catch (err: any) {
       error.value = err.message || 'Error al cargar estadísticas de oportunidad'
@@ -104,14 +79,10 @@ export function useDashboard() {
     }
   }
 
-  /**
-   * Cargar estadísticas de muestras
-   */
   const cargarEstadisticasMuestras = async () => {
     try {
       loadingMuestras.value = true
       error.value = null
-      
       estadisticasMuestras.value = await dashboardApiService.getEstadisticasMuestras()
     } catch (err: any) {
       error.value = err.message || 'Error al cargar estadísticas de muestras'
@@ -121,15 +92,10 @@ export function useDashboard() {
     }
   }
 
-  /**
-   * Cargar todos los datos del dashboard
-   */
   const cargarTodosDatos = async () => {
     try {
       isLoading.value = true
       error.value = null
-      
-      // Cargar datos en paralelo para mejor rendimiento
       await Promise.all([
         cargarMetricas(),
         cargarCasosPorMes(),
@@ -144,9 +110,6 @@ export function useDashboard() {
     }
   }
 
-  /**
-   * Recargar datos específicos
-   */
   const recargarDatos = async (tipo: 'metricas' | 'casos-mes' | 'casos-urgentes' | 'oportunidad' | 'muestras' | 'todos') => {
     try {
       switch (tipo) {
@@ -170,57 +133,37 @@ export function useDashboard() {
           break
       }
     } catch (err) {
-      // Error ya manejado en las funciones individuales
     }
   }
 
-  /**
-   * Limpiar errores
-   */
   const limpiarError = () => {
     error.value = null
   }
 
-  /**
-   * Formatear números con separadores de miles
-   */
   const formatearNumero = (num: number): string => {
     return new Intl.NumberFormat('es-CO').format(num)
   }
 
-  /**
-   * Obtener clase CSS para porcentajes de cambio
-   */
   const obtenerClasePorcentaje = (porcentaje: number): string => {
-    if (porcentaje >= 0) {
-      return 'bg-green-50 text-green-600 hover:bg-green-100'
-    } else {
-      return 'bg-red-50 text-red-600 hover:bg-red-100'
-    }
+    return porcentaje >= 0 
+      ? 'bg-green-50 text-green-600 hover:bg-green-100'
+      : 'bg-red-50 text-red-600 hover:bg-red-100'
   }
 
-  /**
-   * Listener para detectar cuando se crea un nuevo caso
-   */
-  const handleCaseCreated = (event: CustomEvent) => {
-    // Recargar métricas y casos urgentes cuando se crea un nuevo caso
+  const handleCaseCreated = () => {
     cargarMetricas()
     cargarCasosUrgentes()
   }
 
-  // Configurar listeners al montar
   onMounted(() => {
-    // Agregar listener para eventos de creación de casos
     window.addEventListener('case-created', handleCaseCreated as EventListener)
   })
 
-  // Limpiar listeners al desmontar
   onUnmounted(() => {
     window.removeEventListener('case-created', handleCaseCreated as EventListener)
   })
 
   return {
-    // Estados
     isLoading,
     error,
     metricas,
@@ -228,19 +171,13 @@ export function useDashboard() {
     casosUrgentes,
     estadisticasOportunidad,
     estadisticasMuestras,
-    
-    // Estados de carga individuales
     loadingMetricas,
     loadingCasosPorMes,
     loadingCasosUrgentes,
     loadingOportunidad,
     loadingMuestras,
-    
-    // Computed
     totalCasosAño,
     añoActual,
-    
-    // Métodos
     cargarMetricas,
     cargarCasosPorMes,
     cargarCasosUrgentes,

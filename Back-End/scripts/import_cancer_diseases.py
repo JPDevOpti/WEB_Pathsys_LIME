@@ -165,7 +165,7 @@ async def import_cancer_diseases(diseases: List[Dict[str, str]], dry_run: bool) 
                     codigo=disease['codigo'],
                     nombre=disease['nombre'],
                     descripcion=disease['descripcion'],
-                    isActive=True
+                    is_active=True
                 )
                 await repo.create(payload)
                 print(f"[OK] Enfermedad de cáncer creada: {codigo} - {disease['nombre']}")

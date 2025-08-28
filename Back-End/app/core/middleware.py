@@ -74,9 +74,6 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             import traceback
             logger.error(f"Unhandled exception: {str(e)}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
-            print(f"DEBUG - Exception type: {type(e)}")
-            print(f"DEBUG - Exception message: {str(e)}")
-            print(f"DEBUG - Full traceback: {traceback.format_exc()}")
             raise InternalServerError(detail="Error interno del servidor")
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

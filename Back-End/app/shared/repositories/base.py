@@ -23,6 +23,25 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self.database = database
         self.collection: AsyncIOMotorCollection = database[collection_name]
         self.model_class = model_class
+        
+    def _normalize_boolean_fields_for_write(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Sincroniza claves is_active e isActive para mantener compatibilidad."""
+        if "is_active" in data and "isActive" not in data:
+            data["isActive"] = data["is_active"]
+        elif "isActive" in data and "is_active" not in data:
+            data["is_active"] = data["isActive"]
+        return data
+
+    def _normalize_boolean_filters_for_query(self, filters: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Permite filtrar por is_active o isActive indistintamente."""
+        query = filters.copy() if filters else {}
+        if "is_active" in query and "isActive" not in query:
+            value = query.pop("is_active")
+            query["$or"] = query.get("$or", []) + [{"is_active": value}, {"isActive": value}]
+        elif "isActive" in query and "is_active" not in query:
+            value = query.pop("isActive")
+            query["$or"] = query.get("$or", []) + [{"is_active": value}, {"isActive": value}]
+        return query
     
     async def create(self, obj_in: CreateSchemaType) -> ModelType:
         """Crear un nuevo documento"""
@@ -33,9 +52,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         
         obj_data.setdefault("fecha_creacion", datetime.utcnow())
         obj_data["fecha_actualizacion"] = datetime.utcnow()
-        # Asegurar que is_active esté presente si no se especifica
-        if "is_active" not in obj_data:
+        if "is_active" not in obj_data and "isActive" not in obj_data:
             obj_data["is_active"] = True
+        obj_data = self._normalize_boolean_fields_for_write(obj_data)
         
         try:
             result = await self.collection.insert_one(obj_data)
@@ -64,7 +83,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         filters: Optional[Dict[str, Any]] = None
     ) -> List[ModelType]:
         """Obtener múltiples documentos"""
-        query = filters or {}
+        query = self._normalize_boolean_filters_for_query(filters)
         cursor = self.collection.find(query).skip(skip).limit(limit)
         documents = await cursor.to_list(length=limit)
         return [self.model_class(**doc) for doc in documents]
@@ -77,6 +96,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True, by_alias=False)
         if update_data:
             update_data["fecha_actualizacion"] = datetime.utcnow()
+            update_data = self._normalize_boolean_fields_for_write(update_data)
             
             await self.collection.update_one(
                 {"_id": ObjectId(id)},

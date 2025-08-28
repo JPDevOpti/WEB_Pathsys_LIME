@@ -23,6 +23,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.config.database import get_database
 from app.shared.services.user_management import UserManagementService
+from app.modules.auth.schemas.administrator import AdministratorCreate
 
 
 # Datos de los administradores
@@ -74,6 +75,30 @@ async def create_administrators(dry_run: bool = False):
             print(f"  Rol: administrador")
             
             try:
+                # Validaciones previas
+                if not nombre or not nombre.strip():
+                    print(f"  [SKIP] Nombre vacío o inválido")
+                    skipped += 1
+                    continue
+                
+                if not email or not email.strip():
+                    print(f"  [SKIP] Email vacío o inválido")
+                    skipped += 1
+                    continue
+                
+                if not password or len(password) < 6:
+                    print(f"  [SKIP] Contraseña debe tener al menos 6 caracteres")
+                    skipped += 1
+                    continue
+                
+                # Validar datos usando el esquema de administrador
+                admin_schema = AdministratorCreate(
+                    nombre=nombre,
+                    email=email,
+                    password=password,
+                    is_active=True
+                )
+                
                 # Verificar si el usuario ya existe
                 existing_user = await user_service.check_email_exists_in_users(email)
                 
@@ -87,14 +112,15 @@ async def create_administrators(dry_run: bool = False):
                     print(f"    - Email: {email}")
                     print(f"    - Rol: administrador")
                     print(f"    - Estado: activo")
+                    print(f"    - Validación: ✅ Datos válidos")
                     created += 1
                 else:
                     # Crear el administrador
                     user = await user_service.create_user_for_administrator(
-                        name=nombre,
-                        email=email,
-                        password=password,
-                        is_active=True
+                        name=admin_schema.nombre,
+                        email=admin_schema.email,
+                        password=admin_schema.password,
+                        is_active=admin_schema.is_active
                     )
                     
                     if user:
@@ -109,7 +135,7 @@ async def create_administrators(dry_run: bool = False):
                         errors += 1
                         
             except ValueError as e:
-                print(f"  [SKIP] {str(e)}")
+                print(f"  [SKIP] Error de validación: {str(e)}")
                 skipped += 1
             except Exception as e:
                 print(f"  [ERROR] Error inesperado: {str(e)}")

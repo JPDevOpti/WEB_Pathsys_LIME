@@ -4,8 +4,8 @@
 set -e
 
 # Variables de configuración
-DOCKER_COMPOSE_FILE="docker-compose.yml"
-DOCKER_COMPOSE_ATLAS_FILE="Back-End/docker-compose.atlas.yml"
+# Usar el docker-compose disponible en Back-End
+DOCKER_COMPOSE_FILE="Back-End/docker-compose.dev.yml"
 
 function setup() {
   echo "🔧 Verificando dependencias del sistema..."
@@ -29,7 +29,8 @@ function setup() {
   fi
   
   echo "📦 Instalando dependencias Front-End..."
-  if cd Front-End && npm install && cd ..; then
+  if cd Front-End && npm install --legacy-peer-deps || npm install --force; then
+    cd ..
     echo "✅ Dependencias Front-End instaladas"
   else
     echo "❌ Error instalando dependencias Front-End"
@@ -78,6 +79,13 @@ function start_docker() {
     return 1
   fi
   
+  # Verificar que el archivo docker-compose exista
+  if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
+    echo "❌ No se encontró $DOCKER_COMPOSE_FILE."
+    echo "   Revisa que exista 'Back-End/docker-compose.dev.yml' o ajusta el script."
+    return 1
+  fi
+  
   # Detener contenedores existentes
   echo "🛑 Deteniendo contenedores existentes..."
   docker-compose -f "$DOCKER_COMPOSE_FILE" down 2>/dev/null || true
@@ -99,36 +107,9 @@ function start_docker() {
 
 function start_docker_atlas() {
   echo "🐳 Iniciando servicios con Docker y MongoDB Atlas..."
-  
-  # Verificar configuración de Atlas
-  if [ ! -f "Back-End/config.atlas.env" ]; then
-    echo "❌ Configuración de MongoDB Atlas no encontrada."
-    echo "   Ejecuta: ./Run.sh setup-atlas"
-    return 1
-  fi
-  
-  # Verificar que Docker esté corriendo
-  if ! docker info >/dev/null 2>&1; then
-    echo "❌ Docker no está corriendo. Por favor, inicia Docker Desktop."
-    return 1
-  fi
-  
-  # Detener contenedores existentes
-  echo "🛑 Deteniendo contenedores existentes..."
-  docker-compose -f "$DOCKER_COMPOSE_ATLAS_FILE" down 2>/dev/null || true
-  
-  # Construir e iniciar servicios
-  echo "🔨 Construyendo e iniciando servicios con MongoDB Atlas..."
-  docker-compose -f "$DOCKER_COMPOSE_ATLAS_FILE" up --build -d
-  
-  echo "⏳ Esperando que los servicios estén listos..."
-  sleep 10
-  
-  echo "✅ Servicios Docker con MongoDB Atlas iniciados"
-  echo "🌐 MongoDB: MongoDB Atlas"
-  echo "🔧 API: http://localhost:8000"
-  echo "📖 API Docs: http://localhost:8000/docs"
-  echo "🌐 Frontend: http://localhost:5174"
+  echo "⚠️  Modo Docker + Atlas no está soportado actualmente porque no existe 'Back-End/docker-compose.atlas.yml'."
+  echo "   Usa 'docker' (Mongo local) o 'local'. Si requieres Atlas, puedo habilitarlo ajustando el compose."
+  return 1
 }
 
 function start_local() {
@@ -218,10 +199,8 @@ function status() {
     echo "✅ Docker: Corriendo"
     
     # Verificar contenedores Docker
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" ps | grep -q "Up"; then
+    if [ -f "$DOCKER_COMPOSE_FILE" ] && docker-compose -f "$DOCKER_COMPOSE_FILE" ps | grep -q "Up"; then
       echo "✅ Docker Compose: Contenedores activos"
-    elif docker-compose -f "$DOCKER_COMPOSE_ATLAS_FILE" ps | grep -q "Up"; then
-      echo "✅ Docker Compose: Stack Atlas activo"
     else
       echo "❌ Docker Compose: Sin contenedores activos"
     fi
@@ -264,8 +243,9 @@ function stop() {
   
   # Detener contenedores Docker
   echo "  • Deteniendo contenedores Docker..."
-  docker-compose -f "$DOCKER_COMPOSE_FILE" down 2>/dev/null || true
-  docker-compose -f "$DOCKER_COMPOSE_ATLAS_FILE" down 2>/dev/null || true
+  if [ -f "$DOCKER_COMPOSE_FILE" ]; then
+    docker-compose -f "$DOCKER_COMPOSE_FILE" down 2>/dev/null || true
+  fi
   
   # Detener procesos específicos por puerto
   echo "  • Deteniendo Backend (puerto 8000)..."

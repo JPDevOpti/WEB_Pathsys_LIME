@@ -1,17 +1,6 @@
-<!--
-  Componente MetricsBlocks
-  Muestra dos tarjetas con métricas importantes del sistema:
-  - Número de pacientes del mes actual
-  - Número de muestras del mes actual
-  Cada tarjeta incluye un icono, valor numérico y porcentaje de cambio
-  comparado con el mes anterior.
-  Versión compacta para el dashboard.
--->
 <template>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-    <!-- Tarjeta de Pacientes -->
-    <Card class="p-4 md:p-5">
-      <!-- Icono con fondo y efectos hover -->
+    <Card class="group p-4 md:p-5">
       <div class="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg transition-colors duration-300 group-hover:bg-blue-50">
         <svg
           class="fill-gray-800 transition-colors duration-300 group-hover:fill-blue-600"
@@ -30,19 +19,19 @@
         </svg>
       </div>
 
-      <!-- Contenido de la tarjeta: título, valor y porcentaje -->
       <div class="flex items-end justify-between mt-3">
         <div>
-          <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">Pacientes ingresados este mes</span>
+          <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
+            Pacientes ingresados mes anterior
+          </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
-            {{ isLoading ? '...' : formatNumber(estadisticas?.pacientes?.mes_actual || 0) }}
+            {{ isLoading ? '...' : formatNumber(pacientesMesActual) }}
           </h4>
         </div>
 
-        <!-- Indicador de porcentaje con animación -->
         <span
           v-if="!isLoading && estadisticas?.pacientes"
-          :class="getPorcentajeClass(estadisticas.pacientes.cambio_porcentual)"
+          :class="getPorcentajeClass(pacientesCambio)"
           class="flex items-center gap-1 rounded-full py-0.5 pl-2 pr-2.5 text-xs font-medium transition-all duration-300"
         >
           <svg
@@ -54,7 +43,7 @@
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              v-if="estadisticas.pacientes.cambio_porcentual >= 0"
+              v-if="pacientesCambio >= 0"
               fill-rule="evenodd"
               clip-rule="evenodd"
               d="M5.56462 1.62393C5.70193 1.47072 5.90135 1.37432 6.12329 1.37432C6.1236 1.37432 6.12391 1.37432 6.12422 1.37432C6.31631 1.37415 6.50845 1.44731 6.65505 1.59381L9.65514 4.5918C9.94814 4.88459 9.94831 5.35947 9.65552 5.65246C9.36273 5.94546 8.88785 5.94562 8.59486 5.65283L6.87329 3.93247L6.87329 10.125C6.87329 10.5392 6.53751 10.875 6.12329 10.875C5.70908 10.875 5.37329 10.5392 5.37329 10.125L5.37329 3.93578L3.65516 5.65282C3.36218 5.94562 2.8873 5.94547 2.5945 5.65248C2.3017 5.35949 2.30185 4.88462 2.59484 4.59182L5.56462 1.62393Z"
@@ -68,14 +57,12 @@
               fill=""
             />
           </svg>
-          {{ Math.abs(estadisticas.pacientes.cambio_porcentual) }}%
+          {{ Math.abs(pacientesCambio) }}%
         </span>
       </div>
     </Card>
 
-    <!-- Tarjeta de Casos del Mes Actual -->
-    <Card class="p-4 md:p-5">
-      <!-- Icono con fondo y efectos hover -->
+    <Card class="group p-4 md:p-5">
       <div class="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg transition-colors duration-300 group-hover:bg-blue-50">
         <svg
           class="fill-gray-800 transition-colors duration-300 group-hover:fill-blue-600"
@@ -94,19 +81,18 @@
         </svg>
       </div>
 
-      <!-- Contenido de la tarjeta: título, valor y porcentaje -->
       <div class="flex items-end justify-between mt-3">
         <div>
-          <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">Casos ingresados este mes</span>
+          <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
+            Casos ingresados mes anterior
+          </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
-            {{ isLoading ? '...' : formatNumber(estadisticas?.casos?.mes_actual || 0) }}
+            {{ isLoading ? '...' : formatNumber(casosMesActual) }}
           </h4>
         </div>
-
-        <!-- Indicador de porcentaje con animación -->
         <span
           v-if="!isLoading && estadisticas?.casos"
-          :class="getPorcentajeClass(estadisticas.casos.cambio_porcentual)"
+          :class="getPorcentajeClass(casosCambio)"
           class="flex items-center gap-1 rounded-full py-0.5 pl-2 pr-2.5 text-xs font-medium transition-all duration-300"
         >
           <svg
@@ -118,7 +104,7 @@
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              v-if="estadisticas.casos.cambio_porcentual >= 0"
+              v-if="casosCambio >= 0"
               fill-rule="evenodd"
               clip-rule="evenodd"
               d="M5.56462 1.62393C5.70193 1.47072 5.90135 1.37432 6.12329 1.37432C6.1236 1.37432 6.12391 1.37432 6.12422 1.37432C6.31631 1.37415 6.50845 1.44731 6.65505 1.59381L9.65514 4.5918C9.94814 4.88459 9.94831 5.35947 9.65552 5.65246C9.36273 5.94546 8.88785 5.94562 8.59486 5.65283L6.87329 3.93247L6.87329 10.125C6.87329 10.5392 6.53751 10.875 6.12329 10.875C5.70908 10.875 5.37329 10.5392 5.37329 10.125L5.37329 3.93578L3.65516 5.65282C3.36218 5.94562 2.8873 5.94547 2.5945 5.65248C2.3017 5.35949 2.30185 4.88462 2.59484 4.59182L5.56462 1.62393Z"
@@ -132,12 +118,11 @@
               fill=""
             />
           </svg>
-          {{ Math.abs(estadisticas.casos.cambio_porcentual) }}%
+          {{ Math.abs(casosCambio) }}%
         </span>
       </div>
     </Card>
 
-    <!-- Mensaje de error si ocurre un problema -->
     <div v-if="error" class="col-span-full p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
       <p class="text-sm">
         <strong>Error al cargar estadísticas:</strong> {{ error }}
@@ -153,11 +138,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { Card } from '@/shared/components/ui/data-display'
 import { useDashboard } from '../composables/useDashboard'
 
-// Usar el composable del dashboard
 const {
   metricas,
   loadingMetricas: isLoading,
@@ -167,33 +151,25 @@ const {
   obtenerClasePorcentaje: getPorcentajeClass
 } = useDashboard()
 
-// Alias para compatibilidad con el template existente
 const estadisticas = metricas
+const pacientesMesActual = computed(() => Number(estadisticas.value?.pacientes?.mes_actual ?? 0))
+const pacientesCambio = computed(() => Number(estadisticas.value?.pacientes?.cambio_porcentual ?? 0))
+const casosMesActual = computed(() => Number(estadisticas.value?.casos?.mes_actual ?? 0))
+const casosCambio = computed(() => Number(estadisticas.value?.casos?.cambio_porcentual ?? 0))
 
-/**
- * Carga las estadísticas desde la API
- */
 const cargarEstadisticas = async () => {
-  await Promise.all([
-    cargarMetricas(),
-  ])
+  await cargarMetricas()
 }
 
-// Cargar estadísticas al montar el componente
 onMounted(() => {
   cargarEstadisticas()
 })
 </script>
 
 <style scoped>
-/* Animación de pulso para los indicadores de porcentaje */
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .animate-pulse {

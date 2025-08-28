@@ -10,7 +10,7 @@ class EnfermedadCreateSchema(BaseModel):
     codigo: str = Field(..., description="Código de la enfermedad")
     nombre: str = Field(..., description="Nombre de la enfermedad")
     descripcion: Optional[str] = Field(None, description="Descripción general de la enfermedad")
-    isActive: bool = Field(True, description="Estado activo de la enfermedad")
+    is_active: bool = Field(True, description="Estado activo de la enfermedad")
 
 
 class EnfermedadUpdateSchema(BaseModel):
@@ -19,7 +19,7 @@ class EnfermedadUpdateSchema(BaseModel):
     codigo: Optional[str] = Field(None, description="Código de la enfermedad")
     nombre: Optional[str] = Field(None, description="Nombre de la enfermedad")
     descripcion: Optional[str] = Field(None, description="Descripción general de la enfermedad")
-    isActive: Optional[bool] = Field(None, description="Estado activo de la enfermedad")
+    is_active: Optional[bool] = Field(None, description="Estado activo de la enfermedad")
 
 
 class EnfermedadResponseSchema(BaseModel):
@@ -29,7 +29,7 @@ class EnfermedadResponseSchema(BaseModel):
     codigo: str = Field(..., description="Código de la enfermedad")
     nombre: str = Field(..., description="Nombre de la enfermedad")
     descripcion: Optional[str] = Field(None, description="Descripción general de la enfermedad")
-    isActive: bool = Field(..., description="Estado activo de la enfermedad")
+    is_active: bool = Field(..., description="Estado activo de la enfermedad")
     created_at: datetime = Field(..., description="Fecha de creación")
     updated_at: datetime = Field(..., description="Fecha de última actualización")
 

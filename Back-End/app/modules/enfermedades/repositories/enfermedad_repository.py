@@ -58,7 +58,7 @@ class EnfermedadRepository:
         """Obtener todas las enfermedades con paginación"""
         filter_query = {}
         if is_active is not None:
-            filter_query["isActive"] = is_active
+            filter_query["is_active"] = is_active
         
         cursor = self.collection.find(filter_query).skip(skip).limit(limit)
         documents = await cursor.to_list(length=limit)
@@ -86,7 +86,7 @@ class EnfermedadRepository:
         """Buscar enfermedades por nombre"""
         filter_query = {
             "nombre": {"$regex": nombre, "$options": "i"},
-            "isActive": True
+            "is_active": True
         }
         
         cursor = self.collection.find(filter_query).skip(skip).limit(limit)
@@ -113,7 +113,7 @@ class EnfermedadRepository:
         """Buscar enfermedades por código"""
         filter_query = {
             "codigo": {"$regex": codigo, "$options": "i"},
-            "isActive": True
+            "is_active": True
         }
         
         cursor = self.collection.find(filter_query).skip(skip).limit(limit)
@@ -140,7 +140,7 @@ class EnfermedadRepository:
         """Obtener enfermedades por tabla de referencia"""
         filter_query = {
             "tabla": tabla,
-            "isActive": True
+            "is_active": True
         }
         
         cursor = self.collection.find(filter_query).skip(skip).limit(limit)
@@ -186,7 +186,7 @@ class EnfermedadRepository:
             obj_id = ObjectId(enfermedad_id)
             result = await self.collection.update_one(
                 {"_id": obj_id},
-                {"$set": {"isActive": False, "updated_at": datetime.utcnow()}}
+                {"$set": {"is_active": False, "updated_at": datetime.utcnow()}}
             )
             return result.modified_count > 0
         except Exception:
@@ -205,7 +205,7 @@ class EnfermedadRepository:
         """Contar total de enfermedades"""
         filter_query = {}
         if is_active is not None:
-            filter_query["isActive"] = is_active
+            filter_query["is_active"] = is_active
         
         return await self.collection.count_documents(filter_query)
     

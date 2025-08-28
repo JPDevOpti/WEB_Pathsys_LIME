@@ -1,8 +1,24 @@
+#!/usr/bin/env python3
+"""
+Script para insertar pruebas del sistema
+
+Este script crea pruebas en la base de datos con los códigos y nombres especificados.
+Las pruebas incluyen estudios anatomopatológicos, inmunohistoquímicos, citológicos, etc.
+
+Uso:
+    python3 scripts/import_tests.py [--dry-run]
+
+Argumentos:
+    --dry-run: Solo mostrar qué se haría sin ejecutar cambios reales
+"""
+
 import sys
+import os
 from pathlib import Path
 import asyncio
 import argparse
 from typing import Dict, List, Tuple
+from datetime import datetime
 
 # Ensure 'app' package is importable when running directly
 CURRENT_DIR = Path(__file__).resolve().parent
@@ -13,7 +29,7 @@ if str(BACKEND_ROOT) not in sys.path:
 from app.config.database import connect_to_mongo, close_mongo_connection
 from app.modules.pruebas.repositories.prueba_repository import PruebaRepository
 from app.modules.pruebas.services.prueba_service import PruebaService
-from app.modules.pruebas.models.prueba import PruebaCreate
+from app.modules.pruebas.schemas.prueba import PruebaCreate
 
 
 def normalize_text(text: str) -> str:
@@ -71,13 +87,26 @@ def coalesce_rows(rows: List[Dict[str, str]]) -> Dict[str, Dict[str, str]]:
 async def import_tests(dry_run: bool) -> Tuple[int, int]:
     created = 0
     skipped = 0
-    tiempo_hours = 6  # Valor solicitado
+    errors = 0
+    tiempo_minutes = 360  # 6 horas en minutos
 
     merged = coalesce_rows(RAW_TEST_ROWS)
 
+    print(f"{'='*60}")
+    print("IMPORTACIÓN DE PRUEBAS")
+    print(f"{'='*60}")
+    print(f"Modo: {'DRY-RUN (sin cambios)' if dry_run else 'EJECUCIÓN REAL'}")
+    print(f"Total pruebas a procesar: {len(merged)}")
+    print(f"Tiempo por defecto: {tiempo_minutes} minutos (6 horas)")
+    print(f"{'='*60}")
+
     if dry_run:
-        for code, data in merged.items():
-            print(f"[DRY-RUN] {code} -> name='{data['name']}', tiempo={tiempo_hours}h, desc_len={len(data.get('desc') or '')}")
+        for i, (code, data) in enumerate(merged.items(), 1):
+            print(f"\n[{i}/{len(merged)}] Procesando: {code}")
+            print(f"  Nombre: {data['name']}")
+            print(f"  Tiempo: {tiempo_minutes} minutos")
+            print(f"  Descripción: {len(data.get('desc') or '')} caracteres")
+            print(f"  [DRY-RUN] Se crearía la prueba: {code}")
             created += 1
         return created, skipped
 
@@ -85,33 +114,109 @@ async def import_tests(dry_run: bool) -> Tuple[int, int]:
     try:
         repo = PruebaRepository(db)
         service = PruebaService(repo)
-        for code, data in merged.items():
-            payload = PruebaCreate(
-                pruebasName=data["name"],
-                pruebaCode=code,
-                pruebasDescription=data.get("desc"),
-                tiempo=tiempo_hours,
-                isActive=True,
-            )
+        
+        for i, (code, data) in enumerate(merged.items(), 1):
+            print(f"\n[{i}/{len(merged)}] Procesando: {code}")
+            print(f"  Nombre: {data['name']}")
+            print(f"  Tiempo: {tiempo_minutes} minutos")
+            
             try:
+                # Validaciones previas
+                if not code or not code.strip():
+                    print(f"  [SKIP] Código vacío o inválido")
+                    skipped += 1
+                    continue
+                
+                if not data['name'] or not data['name'].strip():
+                    print(f"  [SKIP] Nombre vacío o inválido")
+                    skipped += 1
+                    continue
+                
+                # Validar longitud del código
+                if len(code) < 2 or len(code) > 20:
+                    print(f"  [SKIP] Código debe tener entre 2 y 20 caracteres, actual: {len(code)}")
+                    skipped += 1
+                    continue
+                
+                # Validar longitud del nombre
+                if len(data['name']) < 2 or len(data['name']) > 200:
+                    print(f"  [SKIP] Nombre debe tener entre 2 y 200 caracteres, actual: {len(data['name'])}")
+                    skipped += 1
+                    continue
+                
+                # Validar longitud de la descripción
+                if data.get('desc') and len(data['desc']) > 500:
+                    print(f"  [SKIP] Descripción no puede exceder 500 caracteres, actual: {len(data['desc'])}")
+                    skipped += 1
+                    continue
+                
+                # Crear payload usando el esquema de validación
+                payload = PruebaCreate(
+                    prueba_name=data["name"],
+                    prueba_code=code,
+                    prueba_description=data.get("desc"),
+                    tiempo=tiempo_minutes,
+                    is_active=True,
+                )
+                
                 await service.create_prueba(payload)
-                print(f"[OK] Prueba creada: {code} - {data['name']}")
+                print(f"  [OK] Prueba creada exitosamente")
+                print(f"    - Código: {code}")
+                print(f"    - Nombre: {data['name']}")
+                print(f"    - Tiempo: {tiempo_minutes} minutos")
                 created += 1
-            except Exception as e:
-                print(f"[SKIP] {code} - {data['name']} -> {e}")
+                
+            except ValueError as e:
+                print(f"  [SKIP] Error de validación: {str(e)}")
                 skipped += 1
+            except Exception as e:
+                print(f"  [ERROR] Error inesperado: {str(e)}")
+                errors += 1
+        
+        # Resumen final
+        print(f"\n{'='*60}")
+        print("RESUMEN DE IMPORTACIÓN")
+        print(f"{'='*60}")
+        print(f"Total procesados: {len(merged)}")
+        print(f"Creados: {created}")
+        print(f"Saltados: {skipped}")
+        print(f"Errores: {errors}")
+        
+        if dry_run:
+            print(f"\n⚠️  MODO DRY-RUN: No se realizaron cambios en la base de datos")
+            print(f"Para ejecutar realmente, ejecuta el script sin --dry-run")
+        else:
+            print(f"\n✅ Importación completada")
+            
+        print(f"{'='*60}")
+        
         return created, skipped
     finally:
         await close_mongo_connection()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Import tests (pruebas) from embedded list with tiempo=6 hours")
-    parser.add_argument("--dry-run", action="store_true", help="Do not write to DB, just preview")
+    """Función principal"""
+    parser = argparse.ArgumentParser(
+        description="Importar pruebas del sistema",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Ejemplos:
+  python3 scripts/import_tests.py --dry-run    # Solo mostrar qué se haría
+  python3 scripts/import_tests.py              # Ejecutar realmente
+        """
+    )
+    
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Solo mostrar qué se haría sin ejecutar cambios reales"
+    )
+    
     args = parser.parse_args()
-
-    created, skipped = asyncio.run(import_tests(dry_run=args.dry_run))
-    print(f"Done. Created: {created}, Skipped: {skipped}")
+    
+    # Ejecutar la importación
+    asyncio.run(import_tests(dry_run=args.dry_run))
 
 
 if __name__ == "__main__":

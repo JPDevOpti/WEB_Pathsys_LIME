@@ -235,14 +235,14 @@ async def obtener_estadisticas_oportunidad_mensual_detalle(
 # Endpoints de consulta por código
 # -------------------------------
 
-@router.get("/caso-code/{CasoCode}", response_model=CasoResponse)
+@router.get("/caso-code/{caso_code}", response_model=CasoResponse)
 @handle_exceptions
 async def obtener_caso_por_codigo(
-    CasoCode: str,
+    caso_code: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
     """Obtener un caso por código de caso."""
-    return await caso_service.obtener_caso_por_caso_code(CasoCode)
+    return await caso_service.obtener_caso_por_caso_code(caso_code)
 
 
 # -------------------------------
@@ -308,95 +308,95 @@ async def obtener_casos_firmados(caso_service: CasoService = Depends(get_caso_se
 # Endpoints de gestión de patólogos
 # -------------------------------
 
-@router.put("/caso-code/{CasoCode}/asignar-patologo", response_model=CasoResponse)
+@router.put("/caso-code/{caso_code}/asignar-patologo", response_model=CasoResponse)
 @handle_exceptions
 async def asignar_patologo(
-    CasoCode: str,
+    caso_code: str,
     patologo_info: PatologoInfo,
     caso_service: CasoService = Depends(get_caso_service)
 ):
     """Asignar patólogo a un caso por código de caso."""
-    return await caso_service.asignar_patologo_por_caso_code(CasoCode, patologo_info, "sistema")
+    return await caso_service.asignar_patologo_por_caso_code(caso_code, patologo_info, "sistema")
 
 
-@router.delete("/caso-code/{CasoCode}/desasignar-patologo", response_model=CasoResponse)
+@router.delete("/caso-code/{caso_code}/desasignar-patologo", response_model=CasoResponse)
 @handle_exceptions
 async def desasignar_patologo(
-    CasoCode: str,
+    caso_code: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
     """Desasignar patólogo de un caso por código de caso."""
-    return await caso_service.desasignar_patologo_por_caso_code(CasoCode, "sistema")
+    return await caso_service.desasignar_patologo_por_caso_code(caso_code, "sistema")
 
 
 # -------------------------------
 # Endpoints de gestión de casos
 # -------------------------------
 
-@router.put("/caso-code/{CasoCode}", response_model=CasoResponse)
+@router.put("/caso-code/{caso_code}", response_model=CasoResponse)
 @handle_exceptions
 async def actualizar_caso(
-    CasoCode: str,
+    caso_code: str,
     caso_update: CasoUpdate,
     caso_service: CasoService = Depends(get_caso_service)
 ):
     """Actualizar un caso por código de caso."""
-    return await caso_service.actualizar_caso_por_caso_code(CasoCode, caso_update, "sistema")
+    return await caso_service.actualizar_caso_por_caso_code(caso_code, caso_update, "sistema")
 
 
-@router.delete("/caso-code/{CasoCode}", response_model=CasoDeleteResponse)
+@router.delete("/caso-code/{caso_code}", response_model=CasoDeleteResponse)
 @handle_exceptions
 async def eliminar_caso(
-    CasoCode: str,
+    caso_code: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
     """Eliminar un caso por código de caso (eliminación permanente)."""
-    await caso_service.eliminar_caso_por_caso_code(CasoCode)
+    await caso_service.eliminar_caso_por_caso_code(caso_code)
     return CasoDeleteResponse(
-        message=f"El caso {CasoCode} ha sido eliminado exitosamente",
-        caso_code=CasoCode
+        message=f"El caso {caso_code} ha sido eliminado exitosamente",
+        caso_code=caso_code
     )
 
 # -------------------------------
 # Endpoints de resultados del caso
 # -------------------------------
 
-@router.get("/caso-code/{CasoCode}/resultado", response_model=ResultadoInfo)
+@router.get("/caso-code/{caso_code}/resultado", response_model=ResultadoInfo)
 @handle_exceptions
 async def obtener_resultado(
-    CasoCode: str,
+    caso_code: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
     """Obtener resultado del caso por código de caso."""
-    return await caso_service.obtener_resultado_por_caso_code(CasoCode)
+    return await caso_service.obtener_resultado_por_caso_code(caso_code)
 
 
-@router.put("/caso-code/{CasoCode}/resultado", response_model=CasoResponse)
+@router.put("/caso-code/{caso_code}/resultado", response_model=CasoResponse)
 @handle_exceptions
 async def upsert_resultado(
-    CasoCode: str,
+    caso_code: str,
     resultado: ResultadoInfo,
     caso_service: CasoService = Depends(get_caso_service)
 ):
     """Crear o actualizar resultado del caso por código de caso."""
-    return await caso_service.agregar_o_actualizar_resultado_por_caso_code(CasoCode, resultado, "sistema")
+    return await caso_service.agregar_o_actualizar_resultado_por_caso_code(caso_code, resultado, "sistema")
 
 
-@router.post("/caso-code/{CasoCode}/resultado/firmar", response_model=CasoResponse)
+@router.post("/caso-code/{caso_code}/resultado/firmar", response_model=CasoResponse)
 @handle_exceptions
 async def firmar_resultado(
-    CasoCode: str,
+    caso_code: str,
     patologo_codigo: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
     """Firmar el resultado del caso por código de caso."""
-    return await caso_service.firmar_resultado_por_caso_code(CasoCode, patologo_codigo)
+    return await caso_service.firmar_resultado_por_caso_code(caso_code, patologo_codigo)
 
 
-@router.post("/caso-code/{CasoCode}/resultado/firmar-con-diagnosticos", response_model=CasoResponse)
+@router.post("/caso-code/{caso_code}/resultado/firmar-con-diagnosticos", response_model=CasoResponse)
 @handle_exceptions
 async def firmar_resultado_con_diagnosticos(
-    CasoCode: str,
+    caso_code: str,
     patologo_codigo: str,
     diagnostico_cie10: Optional[Dict[str, Any]] = Body(None, description="Diagnóstico CIE-10"),
     diagnostico_cieo: Optional[Dict[str, Any]] = Body(None, description="Diagnóstico CIEO"),
@@ -404,7 +404,7 @@ async def firmar_resultado_con_diagnosticos(
 ):
     """Firmar el resultado del caso incluyendo diagnósticos CIE-10 y CIEO."""
     return await caso_service.firmar_resultado_con_diagnosticos(
-        CasoCode, 
+        caso_code, 
         patologo_codigo, 
         diagnostico_cie10, 
         diagnostico_cieo

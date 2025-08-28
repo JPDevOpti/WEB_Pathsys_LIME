@@ -9,10 +9,7 @@ logs/
 .vscode/
 .idea/
 
-# ---- Environment / Secrets ----
-.env
-.env.*
-*.env
+
 
 # ---- Python (Back-End) ----
 __pycache__/

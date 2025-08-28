@@ -118,11 +118,11 @@ class ResidenteRepository(BaseRepository[Residente, ResidenteCreate, ResidenteUp
                 query["registro_medico"] = {"$regex": search_params.registro_medico, "$options": "i"}
         
         # Aplicar filtro de estado activo
-        if search_params.isActive is not None:
-            query["isActive"] = search_params.isActive
+        if hasattr(search_params, "is_active") and search_params.is_active is not None:
+            query["is_active"] = search_params.is_active
         else:
             # Por defecto, solo mostrar activos en búsquedas generales
-            query["isActive"] = True
+            query["is_active"] = True
         
         return await self.collection.count_documents(query)
     

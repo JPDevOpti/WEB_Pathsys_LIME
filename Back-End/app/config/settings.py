@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     @classmethod
     def validate_secret_key(cls, v: str) -> str:
         if not v:
+            # Permitir valor por defecto seguro en desarrollo
+            env = os.getenv("ENVIRONMENT", "development")
+            if env == "development":
+                return "dev-secret-key-please-change-in-prod-32-chars-min"
             raise ValueError("SECRET_KEY debe estar configurada en producción")
         if len(v) < 32:
             raise ValueError("SECRET_KEY debe tener al menos 32 caracteres")
@@ -46,9 +50,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8080",
-        # Docker
         "http://frontend:3000",
-        # Agregar más puertos si es necesario
     ]
     
     # Environment

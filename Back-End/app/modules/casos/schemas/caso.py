@@ -8,7 +8,7 @@ from app.shared.schemas.common import (
     TipoDocumentoEnum,
     GeneroEnum
 )
-from app.modules.pruebas.models.prueba import PruebasItem
+from app.modules.pruebas.schemas.prueba import PruebasItem
 
 
 class DiagnosticoCIE10(BaseModel):
@@ -85,7 +85,7 @@ class ResultadoInfo(BaseModel):
 
 class CasoBase(BaseModel):
     """Modelo base para casos"""
-    CasoCode: str = Field(..., max_length=50, description="Código único del caso")
+    caso_code: str = Field(..., max_length=50, description="Código único del caso")
     paciente: PacienteInfo = Field(..., description="Información del paciente")
     medico_solicitante: Optional[MedicoInfo] = Field(None, description="Médico que solicita (opcional)")
     servicio: Optional[str] = Field(None, max_length=100, description="Servicio médico o especialidad")
@@ -97,7 +97,7 @@ class CasoBase(BaseModel):
     fecha_actualizacion: datetime = Field(default_factory=datetime.utcnow, description="Fecha de última actualización")
     observaciones_generales: Optional[str] = Field(None, max_length=1000, description="Observaciones generales del caso")
     
-    @validator('CasoCode')
+    @validator('caso_code')
     def validate_caso_code(cls, v):
         if not v or not v.strip():
             raise ValueError('El código del caso es requerido')
@@ -137,7 +137,7 @@ class CasoCreateRequest(BaseModel):
 
 class CasoCreateWithCode(BaseModel):
     """Modelo para crear un nuevo caso CON código específico (desde frontend)"""
-    CasoCode: str = Field(..., max_length=50, description="Código único del caso")
+    caso_code: str = Field(..., max_length=50, description="Código único del caso")
     paciente: PacienteInfo = Field(..., description="Información del paciente")
     medico_solicitante: Optional[MedicoInfo] = Field(None, description="Médico que solicita (opcional)")
     servicio: Optional[str] = Field(None, max_length=100, description="Servicio médico o especialidad")
@@ -149,7 +149,7 @@ class CasoCreateWithCode(BaseModel):
     fecha_actualizacion: datetime = Field(default_factory=datetime.utcnow, description="Fecha de última actualización")
     observaciones_generales: Optional[str] = Field(None, max_length=1000, description="Observaciones generales del caso")
     
-    @validator('CasoCode')
+    @validator('caso_code')
     def validate_caso_code(cls, v):
         if not v or not v.strip():
             raise ValueError('El código del caso es requerido')
@@ -210,7 +210,7 @@ class CasoResponse(CasoBase):
 class CasoSearch(BaseModel):
     """Modelo para búsqueda de casos"""
     query: Optional[str] = Field(None, description="Búsqueda general")
-    CasoCode: Optional[str] = Field(None, description="Código específico del caso")
+    caso_code: Optional[str] = Field(None, description="Código específico del caso")
     paciente_cedula: Optional[str] = Field(None, description="Cédula del paciente")
     paciente_nombre: Optional[str] = Field(None, description="Nombre del paciente")
     medico_nombre: Optional[str] = Field(None, description="Nombre del médico")

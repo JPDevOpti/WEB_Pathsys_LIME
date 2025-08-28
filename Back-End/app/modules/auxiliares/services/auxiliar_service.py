@@ -96,7 +96,7 @@ class AuxiliarService:
     async def get_auxiliares(self, skip: int = 0, limit: int = 10) -> List[AuxiliarResponse]:
         """Obtener lista de auxiliares activos con paginación"""
         auxiliares = await self.auxiliar_repository.get_multi(
-            filters={"isActive": True},
+            filters={"is_active": True},
             skip=skip,
             limit=limit
         )

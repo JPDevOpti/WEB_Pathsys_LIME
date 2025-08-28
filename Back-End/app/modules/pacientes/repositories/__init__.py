@@ -1,5 +1,5 @@
-"""Repositories for pacientes module"""
+"""Repositorios del módulo de pacientes"""
 
-from .repository import PacienteRepository
+from .paciente_repository import PacienteRepository
 
 __all__ = ["PacienteRepository"]

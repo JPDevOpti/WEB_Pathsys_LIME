@@ -3,12 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.middleware import setup_middleware
 from app.api.v1.router import api_router
 from app.config.settings import settings
-from app.config.database import connect_to_mongo, close_mongo_connection
+from app.config.database import connect_to_mongo, close_mongo_connection, get_database
+from app.config.database_indexes import create_all_indexes
 from contextlib import asynccontextmanager
 import logging
+from app.config.logging_config import setup_logging
 
-# Configurar logging
-logging.basicConfig(level=logging.INFO)
+# Configurar logging estructurado
+setup_logging()
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
@@ -18,6 +20,14 @@ async def lifespan(app: FastAPI):
     try:
         await connect_to_mongo()
         logger.info("Conexión a MongoDB establecida exitosamente")
+        # Crear índices en startup si está habilitado
+        try:
+            if settings.CREATE_INDEXES_ON_STARTUP:
+                db = await get_database()
+                await create_all_indexes(db)
+                logger.info("Índices de base de datos verificados/creados")
+        except Exception as idx_err:
+            logger.error(f"Error creando índices en startup: {idx_err}")
     except Exception as e:
         logger.error(f"Error al conectar con MongoDB: {e}")
         raise

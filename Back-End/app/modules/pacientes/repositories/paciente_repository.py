@@ -1,11 +1,12 @@
 """Repositorio para el módulo de pacientes"""
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import DuplicateKeyError
 
-from ..models import (
+from ..models import Paciente
+from ..schemas import (
     PacienteCreate,
     PacienteUpdate,
     PacienteSearch
@@ -25,69 +26,69 @@ class PacienteRepository:
         if doc:
             # Asignar explícitamente el campo id desde _id
             doc["id"] = str(doc["_id"])
-            doc["cedula"] = str(doc["_id"])
+            doc["paciente_code"] = doc.get("paciente_code", "")
         return doc
 
     async def create(self, paciente: PacienteCreate) -> dict:
         """Crear un nuevo paciente"""
         try:
             # Preparar datos del paciente
-            paciente_data = paciente.dict(exclude={"cedula"})
-            paciente_data["_id"] = paciente.cedula
-            paciente_data["fecha_creacion"] = datetime.utcnow()
-            paciente_data["fecha_actualizacion"] = datetime.utcnow()
+            paciente_data = paciente.dict(exclude={"paciente_code"})
+            paciente_data["paciente_code"] = paciente.paciente_code
+            paciente_data["fecha_creacion"] = datetime.now(timezone.utc)
+            paciente_data["fecha_actualizacion"] = datetime.now(timezone.utc)
             paciente_data["id_casos"] = []
 
             # Insertar en la base de datos
             await self.collection.insert_one(paciente_data)
 
             # Recuperar el paciente creado
-            created_patient = await self.collection.find_one({"_id": paciente.cedula})
+            created_patient = await self.collection.find_one({"paciente_code": paciente.paciente_code})
             if not created_patient:
                 raise ConflictError("Error al crear el paciente")
             return self._convert_doc_to_response(dict(created_patient))
 
         except DuplicateKeyError:
-            raise ConflictError(f"Ya existe un paciente con la cédula {paciente.cedula}")
+            raise ConflictError(f"Ya existe un paciente con el código {paciente.paciente_code}")
 
     async def get_by_id(self, paciente_id: str) -> Optional[dict]:
-        """Obtener un paciente por su ID (cédula)"""
-        paciente = await self.collection.find_one({"_id": paciente_id})
+        """Obtener un paciente por su ID (paciente_code)"""
+        paciente = await self.collection.find_one({"paciente_code": paciente_id})
         if not paciente:
             return None
         return self._convert_doc_to_response(dict(paciente))
 
-    async def get_by_cedula(self, cedula: str) -> Optional[dict]:
-        """Buscar un paciente por su número de cédula"""
-        return await self.get_by_id(cedula)
+    async def get_by_paciente_code(self, paciente_code: str) -> Optional[dict]:
+        """Buscar un paciente por su código"""
+        return await self.get_by_id(paciente_code)
 
     async def update(self, paciente_id: str, paciente_update: PacienteUpdate) -> dict:
         """Actualizar un paciente existente"""
         # Verificar que el paciente existe
-        existing_patient = await self.collection.find_one({"_id": paciente_id})
+        existing_patient = await self.collection.find_one({"paciente_code": paciente_id})
         if not existing_patient:
             raise NotFoundError("Paciente no encontrado")
 
         # Preparar datos para actualización (solo campos no nulos)
         update_data = {k: v for k, v in paciente_update.dict().items() if v is not None}
         if update_data:
-            update_data["fecha_actualizacion"] = datetime.utcnow()
+            update_data["fecha_actualizacion"] = datetime.now(timezone.utc)
             
             # Actualizar el paciente
             await self.collection.update_one(
-                {"_id": paciente_id},
+                {"paciente_code": paciente_id},
                 {"$set": update_data}
             )
 
         # Retornar el paciente actualizado
-        updated_patient = await self.collection.find_one({"_id": paciente_id})
+        updated_patient = await self.collection.find_one({"paciente_code": paciente_id})
         if not updated_patient:
             raise NotFoundError("Paciente no encontrado después de la actualización")
         return self._convert_doc_to_response(dict(updated_patient))
 
     async def delete(self, paciente_id: str) -> bool:
         """Eliminar un paciente"""
-        result = await self.collection.delete_one({"_id": paciente_id})
+        result = await self.collection.delete_one({"paciente_code": paciente_id})
         if result.deleted_count == 0:
             raise NotFoundError("Paciente no encontrado")
         return True
@@ -108,14 +109,14 @@ class PacienteRepository:
         if buscar:
             filtro["$or"] = [
                 {"nombre": {"$regex": buscar, "$options": "i"}},
-                {"_id": {"$regex": str(buscar), "$options": "i"}}
+                {"paciente_code": {"$regex": str(buscar), "$options": "i"}}
             ]
         
         if entidad:
             filtro["entidad_info.nombre"] = {"$regex": entidad, "$options": "i"}
         
         if sexo:
-            filtro["sexo"] = sexo.lower()
+            filtro["sexo"] = sexo
         
         if tipo_atencion:
             filtro["tipo_atencion"] = tipo_atencion
@@ -133,8 +134,8 @@ class PacienteRepository:
         if search_params.nombre:
             filtro["nombre"] = {"$regex": search_params.nombre, "$options": "i"}
         
-        if search_params.cedula:
-            filtro["_id"] = {"$regex": search_params.cedula, "$options": "i"}
+        if search_params.paciente_code:
+            filtro["paciente_code"] = {"$regex": search_params.paciente_code, "$options": "i"}
         
         if search_params.edad_min is not None or search_params.edad_max is not None:
             edad_filter = {}
@@ -144,7 +145,7 @@ class PacienteRepository:
                 edad_filter["$lte"] = search_params.edad_max
             filtro["edad"] = edad_filter
         
-        if search_params.entidad:
+        if hasattr(search_params, 'entidad') and search_params.entidad:
             filtro["entidad_info.nombre"] = {"$regex": search_params.entidad, "$options": "i"}
         
         if search_params.sexo:
@@ -185,7 +186,7 @@ class PacienteRepository:
             "filtros_aplicados": {
                 k: v for k, v in {
                     "nombre": search_params.nombre,
-                    "cedula": search_params.cedula,
+                    "paciente_code": search_params.paciente_code,
                     "edad_min": search_params.edad_min,
                     "edad_max": search_params.edad_max,
                     "entidad": search_params.entidad,
@@ -248,7 +249,7 @@ class PacienteRepository:
             },
             {
                 "$group": {
-                    "_id": "$entidad",
+                    "_id": "$entidad_info.nombre",
                     "count": {"$sum": 1}
                 }
             },
@@ -267,7 +268,7 @@ class PacienteRepository:
             },
             {
                 "$group": {
-                    "_id": "$tipoAtencion",
+                    "_id": "$tipo_atencion",
                     "count": {"$sum": 1}
                 }
             }
@@ -300,7 +301,7 @@ class PacienteRepository:
         stats_casos = await self.collection.aggregate(pipeline_casos).to_list(None)
         
         # Estadísticas mensuales para el dashboard
-        ahora = datetime.utcnow()
+        ahora = datetime.now(timezone.utc)
         inicio_mes_actual = ahora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
         # Mes anterior
@@ -311,29 +312,21 @@ class PacienteRepository:
         
         fin_mes_anterior = inicio_mes_actual - timedelta(seconds=1)
         
-        # Mes anterior al anterior
-        if inicio_mes_anterior.month == 1:
-            inicio_mes_anterior_anterior = inicio_mes_anterior.replace(year=inicio_mes_anterior.year - 1, month=12)
-        else:
-            inicio_mes_anterior_anterior = inicio_mes_anterior.replace(month=inicio_mes_anterior.month - 1)
-        
-        fin_mes_anterior_anterior = inicio_mes_anterior - timedelta(seconds=1)
+        # Pacientes del mes actual (desde inicio del mes hasta ahora)
+        pacientes_mes_actual = await self.collection.count_documents({
+            "fecha_creacion": {"$gte": inicio_mes_actual}
+        })
         
         # Pacientes del mes anterior
         pacientes_mes_anterior = await self.collection.count_documents({
             "fecha_creacion": {"$gte": inicio_mes_anterior, "$lte": fin_mes_anterior}
         })
         
-        # Pacientes del mes anterior al anterior
-        pacientes_mes_anterior_anterior = await self.collection.count_documents({
-            "fecha_creacion": {"$gte": inicio_mes_anterior_anterior, "$lte": fin_mes_anterior_anterior}
-        })
-        
-        # Calcular cambio porcentual (mes anterior vs mes anterior al anterior)
+        # Calcular cambio porcentual (mes actual vs mes anterior)
         cambio_porcentual = 0.0
-        if pacientes_mes_anterior_anterior > 0:
-            cambio_porcentual = round(((pacientes_mes_anterior - pacientes_mes_anterior_anterior) / pacientes_mes_anterior_anterior) * 100, 2)
-        elif pacientes_mes_anterior > 0:
+        if pacientes_mes_anterior > 0:
+            cambio_porcentual = round(((pacientes_mes_actual - pacientes_mes_anterior) / pacientes_mes_anterior) * 100, 2)
+        elif pacientes_mes_actual > 0:
             cambio_porcentual = 100.0
         
         return {
@@ -348,8 +341,8 @@ class PacienteRepository:
             "por_tipo_atencion": stats_atencion,
             "casos": stats_casos,
             "mensuales": {
+                "pacientes_mes_actual": pacientes_mes_actual,
                 "pacientes_mes_anterior": pacientes_mes_anterior,
-                "pacientes_mes_anterior_anterior": pacientes_mes_anterior_anterior,
                 "cambio_porcentual": cambio_porcentual
             }
         }
@@ -362,7 +355,7 @@ class PacienteRepository:
     async def add_caso_to_paciente(self, paciente_id: str, id_caso: str) -> bool:
         """Agregar un ID de caso a un paciente"""
         result = await self.collection.update_one(
-            {"_id": paciente_id},
+            {"paciente_code": paciente_id},
             {"$addToSet": {"id_casos": id_caso}}
         )
         return result.modified_count > 0
@@ -370,7 +363,7 @@ class PacienteRepository:
     async def remove_caso_from_paciente(self, paciente_id: str, id_caso: str) -> bool:
         """Remover un ID de caso de un paciente"""
         result = await self.collection.update_one(
-            {"_id": paciente_id},
+            {"paciente_code": paciente_id},
             {"$pull": {"id_casos": id_caso}}
         )
         return result.modified_count > 0
@@ -381,5 +374,5 @@ class PacienteRepository:
 
     async def exists(self, paciente_id: str) -> bool:
         """Verificar si existe un paciente"""
-        count = await self.collection.count_documents({"_id": paciente_id})
+        count = await self.collection.count_documents({"paciente_code": paciente_id})
         return count > 0
