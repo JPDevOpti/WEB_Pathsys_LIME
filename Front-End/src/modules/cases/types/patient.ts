@@ -6,7 +6,7 @@
  * Datos del paciente para formularios
  */
 export interface PatientData {
-  numeroCedula: string
+  pacienteCode: string
   nombrePaciente: string
   sexo: 'masculino' | 'femenino' | ''
   edad: string
@@ -25,7 +25,7 @@ export interface PatientData {
  * Errores de validación del formulario de paciente
  */
 export interface PatientFormErrors {
-  numeroCedula: string[]
+  pacienteCode: string[]
   nombrePaciente: string[]
   edad: string[]
 }
@@ -34,7 +34,7 @@ export interface PatientFormErrors {
  * Advertencias del formulario de paciente
  */
 export interface PatientFormWarnings {
-  numeroCedula: string[]
+  pacienteCode: string[]
   edad: string[]
 }
 

@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { FormTextarea } from '@/shared/components/ui/forms'
+import { FormTextarea } from '@/shared/components/forms'
 import { computed } from 'vue'
 
 type EditorSectionKey = 'method' | 'macro' | 'micro' | 'diagnosis'

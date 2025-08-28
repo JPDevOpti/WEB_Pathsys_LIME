@@ -1,10 +1,5 @@
-/**
- * Exportaciones centralizadas de componentes comunes
- * Facilita las importaciones y mantiene una estructura organizada
- */
+// Exportar ComponentCard desde el directorio layout
+export { default as ComponentCard } from '../layout/ComponentCard.vue'
 
-// Componentes de navegación
-export { PageBreadcrumb } from '../ui/navigation'
-
-// Componentes de UI
-export { ComponentCard } from '../ui' 
+// Exportar PageBreadcrumb desde el directorio navigation
+export { default as PageBreadcrumb } from '../navigation/PageBreadcrumb.vue' 

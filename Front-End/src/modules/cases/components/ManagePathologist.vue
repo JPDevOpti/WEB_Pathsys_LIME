@@ -1,28 +1,15 @@
 <template>
   <form class="space-y-4" @submit.prevent="onAssign">
+    <!-- Campos de búsqueda y selección de patólogo -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <FormInputField
-        v-model="searchQuery"
-        label="Buscar patólogo"
-        placeholder="Nombre o documento"
-      />
-
-      <FormSelect
-        v-model="selectedPathologist"
-        :options="pathologistOptions"
-        label="Patólogo"
-        placeholder="Seleccione un patólogo"
-        required
-      />
+      <FormInputField v-model="searchQuery" label="Buscar patólogo" placeholder="Nombre o documento" />
+      <FormSelect v-model="selectedPathologist" :options="pathologistOptions" label="Patólogo" placeholder="Seleccione un patólogo" required />
     </div>
 
-    <FormTextarea
-      v-model="observaciones"
-      label="Observaciones"
-      placeholder="Notas de la asignación"
-      rows="3"
-    />
+    <!-- Campo de observaciones para la asignación -->
+    <FormTextarea v-model="observaciones" label="Observaciones" placeholder="Notas de la asignación" :rows="3" />
 
+    <!-- Botones de acción del formulario -->
     <div class="flex flex-wrap items-center gap-3">
       <SaveButton label="Asignar" />
       <ActionButton color="danger" @click="onUnassign" type="button">Desasignar</ActionButton>
@@ -33,35 +20,32 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/ui/forms'
-import { SaveButton, ClearButton, ActionButton } from '@/shared/components/ui/buttons'
+import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
+import { SaveButton, ClearButton, ActionButton } from '@/shared/components/buttons'
 
-// ============================================================================
-// ESTADO
-// ============================================================================
-
+// Estado del formulario
 const searchQuery = ref('')
 const selectedPathologist = ref('')
 const observaciones = ref('')
 
+// Opciones de patólogos disponibles
 const pathologistOptions = [
   { value: 'p1', label: 'Dra. Ana Gómez (AG)' },
   { value: 'p2', label: 'Dr. Carlos Pérez (CP)' },
-  { value: 'p3', label: 'Dra. Laura Ríos (LR)' },
+  { value: 'p3', label: 'Dra. Laura Ríos (LR)' }
 ]
 
-// ============================================================================
-// FUNCIONES
-// ============================================================================
-
+// Asignar patólogo al caso
 const onAssign = () => {
   // Lógica de asignación
 }
 
+// Desasignar patólogo del caso
 const onUnassign = () => {
   // Lógica de desasignación
 }
 
+// Limpiar formulario
 const onClear = () => {
   searchQuery.value = ''
   selectedPathologist.value = ''

@@ -8,12 +8,12 @@ import type { FormPathologistInfo } from '../types'
 export interface PathologistBackendResponse {
   id?: string
   _id?: string
-  patologoName: string
-  InicialesPatologo?: string
-  patologoCode: string
-  PatologoEmail?: string
+  patologo_name: string
+  iniciales_patologo?: string
+  patologo_code: string
+  patologo_email?: string
   registro_medico: string
-  isActive?: boolean
+  is_active?: boolean
   firma?: string
   observaciones?: string
   fecha_creacion?: string
@@ -45,8 +45,7 @@ export class PathologistApiService {
       
       return this.transformPathologistsResponse(response)
     } catch (error: any) {
-      console.error('Error al obtener patólogos:', error)
-      throw new Error(error.message || 'Error al obtener la lista de patólogos')
+      throw new Error(`Error al obtener patólogos: ${error.message}`)
     }
   }
 
@@ -60,8 +59,7 @@ export class PathologistApiService {
       const response = await apiClient.get<PathologistBackendResponse>(`${this.endpoint}/${id}`)
       return this.transformPathologistResponse(response)
     } catch (error: any) {
-      console.error(`Error al obtener patólogo ${id}:`, error)
-      throw new Error(error.message || `Error al obtener el patólogo ${id}`)
+      throw new Error(`Error al obtener patólogo: ${error.message}`)
     }
   }
 
@@ -78,7 +76,6 @@ export class PathologistApiService {
       
       return this.transformPathologistsResponse(response)
     } catch (error: any) {
-      console.error(`Error al buscar patólogos con query "${query}":`, error)
       // En caso de error, devolver lista vacía en lugar de lanzar excepción
       return []
     }
@@ -93,7 +90,12 @@ export class PathologistApiService {
    * @param fullName - Nombre completo del patólogo
    * @returns Iniciales generadas
    */
-  private generateInitials(fullName: string): string {
+  private generateInitials(fullName?: string): string {
+    // Validar que fullName exista y no esté vacío
+    if (!fullName || typeof fullName !== 'string' || fullName.trim().length === 0) {
+      return 'N/A'
+    }
+    
     // Remover títulos comunes
     const nameClean = fullName.replace(/\b(Dr\.?|Dra\.?|Doctor|Doctora)\b\s*/gi, '')
     
@@ -123,14 +125,19 @@ export class PathologistApiService {
    * @returns Patólogo transformado
    */
   private transformPathologistResponse(pathologist: PathologistBackendResponse): FormPathologistInfo {
+    // Validar campos requeridos
+    if (!pathologist.patologo_name || !pathologist.patologo_code) {
+      // Patólogo con datos incompletos, usar valores por defecto
+    }
+    
     return {
-      id: pathologist.id || pathologist._id || pathologist.patologoCode,
-      nombre: pathologist.patologoName,
-      iniciales: pathologist.InicialesPatologo || this.generateInitials(pathologist.patologoName),
-      documento: pathologist.patologoCode,
-      email: pathologist.PatologoEmail || '',
-      medicalLicense: pathologist.registro_medico,
-      isActive: pathologist.isActive ?? true
+      id: pathologist.id || pathologist._id || pathologist.patologo_code || 'N/A',
+      nombre: pathologist.patologo_name || 'Sin nombre',
+      iniciales: pathologist.iniciales_patologo || this.generateInitials(pathologist.patologo_name),
+      documento: pathologist.patologo_code || 'N/A',
+      email: pathologist.patologo_email || '',
+      medicalLicense: pathologist.registro_medico || 'N/A',
+      isActive: pathologist.is_active ?? true
     }
   }
 }

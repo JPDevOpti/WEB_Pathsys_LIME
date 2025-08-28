@@ -368,8 +368,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Card } from '@/shared/components/ui/data-display'
-import PathologistList from '@/shared/components/ui/List/PathologistList.vue'
+import { Card } from '@/shared/components/layout'
+import PathologistList from '@/shared/components/List/PathologistList.vue'
 import { useDashboard } from '../composables/useDashboard'
 import type { CasoUrgente } from '../types/dashboard.types'
 import type { FormPathologistInfo } from '@/modules/cases/types'

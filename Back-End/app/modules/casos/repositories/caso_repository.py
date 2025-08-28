@@ -235,7 +235,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         # Mapeo de campos de búsqueda
         field_mappings = {
             'caso_code': ("caso_code", "regex"),
-            'paciente_cedula': ("paciente.cedula", "exact"),
+            'paciente_code': ("paciente.paciente_code", "exact"),
             'paciente_nombre': ("paciente.nombre", "regex"),
             'medico_nombre': ("medico_solicitante.nombre", "regex"),
             'patologo_codigo': ("patologo_asignado.codigo", "exact"),
@@ -278,7 +278,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             query["$or"] = [
                 {"caso_code": {"$regex": search_params.query, "$options": "i"}},
                 {"paciente.nombre": {"$regex": search_params.query, "$options": "i"}},
-                {"paciente.cedula": {"$regex": search_params.query, "$options": "i"}},
+                {"paciente.paciente_code": {"$regex": search_params.query, "$options": "i"}},
                 {"medico_solicitante.nombre": {"$regex": search_params.query, "$options": "i"}}
             ]
         
@@ -291,9 +291,9 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         documents = await cursor.to_list(length=limit)
         return [self.model_class(**doc) for doc in documents]
 
-    async def get_by_paciente_documento(self, numero_documento: str, skip: int = 0, limit: int = 100) -> List[Caso]:
-        """Obtener casos por número de documento del paciente (cédula)."""
-        return await self._get_casos_by_field("paciente.cedula", numero_documento, skip, limit)
+    async def get_by_paciente_code(self, paciente_code: str, skip: int = 0, limit: int = 100) -> List[Caso]:
+        """Obtener casos por código del paciente."""
+        return await self._get_casos_by_field("paciente.paciente_code", paciente_code, skip, limit)
     
     def _get_estados_finalizados(self) -> List[str]:
         """Obtener lista de estados considerados como finalizados."""

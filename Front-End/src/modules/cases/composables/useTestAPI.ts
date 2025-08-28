@@ -1,138 +1,108 @@
 import { ref } from 'vue'
 import { testsApiService } from '../services/testsApiService'
-import type { TestDetails, TestOperationResult } from '../types/test'
+import type { TestDetails, TestOperationResult } from '../types'
 
-/**
- * Composable para manejar operaciones con pruebas médicas
- */
 export function useTestAPI() {
-  // Estado reactivo
   const tests = ref<TestDetails[]>([])
   const isLoading = ref(false)
   const error = ref('')
 
-  /**
-   * Cargar todas las pruebas activas
-   */
   const loadTests = async (): Promise<TestOperationResult> => {
     isLoading.value = true
     error.value = ''
 
     try {
-      const result = await testsApiService.getAllActiveTests()
-      tests.value = result
+      const response = await testsApiService.getTests()
+      
+      // Actualizar el estado local con las pruebas cargadas
+      tests.value = response.pruebas || []
       
       return {
         success: true,
-        tests: result,
-        message: 'Pruebas cargadas exitosamente'
+        tests: tests.value
       }
     } catch (err: any) {
-      let errorMessage = 'Error al cargar pruebas'
-      
-      // Log detallado del error para debugging
-      console.error('Error completo al cargar pruebas:', {
-        error: err,
-        response: err.response,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data,
-        message: err.message
-      })
-      
-      if (err.response?.status === 307) {
-        errorMessage = 'Error de redirección en el servidor. Verificar configuración de endpoints.'
-      } else if (err.response?.data?.detail) {
-        errorMessage = `Error de validación: ${JSON.stringify(err.response.data.detail)}`
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message
-      } else if (err.message) {
-        errorMessage = err.message
-      }
-      
-      error.value = errorMessage
+      error.value = err.message || 'Error al cargar las pruebas'
       
       return {
         success: false,
-        error: errorMessage
+        error: error.value
       }
     } finally {
       isLoading.value = false
     }
   }
 
-  /**
-   * Buscar pruebas por término
-   */
-  const searchTests = async (query: string, limit: number = 50): Promise<TestOperationResult> => {
+  const searchTests = async (query: string): Promise<TestOperationResult> => {
+    if (!query.trim()) {
+      return await loadTests()
+    }
+
     isLoading.value = true
     error.value = ''
 
     try {
-      const result = await testsApiService.searchTests(query, limit)
+      const results = await testsApiService.searchTests(query)
+      
+      // Actualizar el estado local con los resultados de búsqueda
+      tests.value = results || []
       
       return {
         success: true,
-        tests: result,
-        message: 'Búsqueda completada'
+        tests: tests.value
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Error en la búsqueda'
-      error.value = errorMessage
-      
-      console.error('Error al buscar pruebas:', err)
+      error.value = err.message || 'Error al buscar pruebas'
       
       return {
         success: false,
-        error: errorMessage
+        error: error.value
       }
     } finally {
       isLoading.value = false
     }
   }
 
-  /**
-   * Obtener prueba por código
-   */
   const getTestByCode = async (pruebaCode: string): Promise<TestOperationResult> => {
     isLoading.value = true
     error.value = ''
 
     try {
-      const result = await testsApiService.getTestByCode(pruebaCode)
+      const test = await testsApiService.getTestByCode(pruebaCode)
       
-      return {
-        success: true,
-        test: result,
-        message: 'Prueba encontrada'
+      if (test) {
+        return {
+          success: true,
+          test
+        }
+      } else {
+        return {
+          success: false,
+          error: 'Prueba no encontrada'
+        }
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Prueba no encontrada'
-      error.value = errorMessage
+      error.value = err.message || 'Error al obtener la prueba'
       
       return {
         success: false,
-        error: errorMessage
+        error: error.value
       }
     } finally {
       isLoading.value = false
     }
   }
 
-  /**
-   * Limpiar estado de errores
-   */
   const clearState = () => {
+    tests.value = []
     error.value = ''
+    isLoading.value = false
   }
 
   return {
-    // Estado
     tests,
     isLoading,
     error,
-    
-    // Métodos
     loadTests,
     searchTests,
     getTestByCode,

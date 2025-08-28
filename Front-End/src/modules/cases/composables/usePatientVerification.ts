@@ -31,7 +31,7 @@ export function usePatientVerification() {
     })()
     const entidadCodigo = apiPatient.entidad_info?.codigo || apiPatient.entidad_info?.id
     return {
-      numeroCedula: apiPatient.cedula,
+      pacienteCode: apiPatient.paciente_code || apiPatient.cedula,
       nombrePaciente: apiPatient.nombre,
       sexo: apiPatient.sexo.toLowerCase(),
       edad: apiPatient.edad.toString(),

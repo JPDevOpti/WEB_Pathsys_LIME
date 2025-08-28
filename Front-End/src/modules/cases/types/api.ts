@@ -5,22 +5,21 @@ import type { CaseModel, CaseListItem, CaseStatistics, CaseState } from './case'
 // ============================================================================
 
 /**
- * Request para crear un nuevo caso (SIN CasoCode - se genera automáticamente)
+ * Request para crear un nuevo caso
  */
 export interface CreateCaseRequest {
-  // CasoCode se omite - backend genera automáticamente
   paciente: {
-    codigo: string
-    cedula: string
-    nombre: string
-    edad: number
-    sexo: string
-    entidad_info: {
-      codigo: string  // ✅ Cambiar de 'id' a 'codigo' según backend
-      nombre: string
+    paciente_code: string  // ✅ REQUERIDO - Código único del paciente
+    cedula: string      // ✅ REQUERIDO - Número de cédula
+    nombre: string      // ✅ REQUERIDO - Nombre completo
+    edad: number        // ✅ REQUERIDO - Edad del paciente
+    sexo: string        // ✅ REQUERIDO - Sexo del paciente
+    entidad_info: {     // ✅ REQUERIDO - Información de la entidad
+      id: string        // ✅ REQUERIDO - Código de la entidad
+      nombre: string    // ✅ REQUERIDO - Nombre de la entidad
     }
-    tipo_atencion: string
-    observaciones?: string
+    tipo_atencion: string  // ✅ REQUERIDO - Tipo de atención
+    observaciones?: string // ❌ OPCIONAL - Observaciones del paciente
   }
   medico_solicitante?: {
     nombre: string
@@ -36,10 +35,6 @@ export interface CreateCaseRequest {
   }>
   estado: CaseState
   observaciones_generales?: string
-  entidad_info?: {
-    id: string  // Cambiado de 'codigo' a 'id' según documentación del backend
-    nombre: string
-  }
 }
 
 /**
@@ -74,18 +69,18 @@ export interface UpdateCaseRequest {
   observaciones_generales?: string
   // Campo permitido por el backend para actualizar la entidad del caso
   entidad_info?: {
-    codigo: string
+    id: string
     nombre: string
   }
   // Permitir actualizar información del paciente dentro del caso
   paciente?: {
-    codigo: string
+    paciente_code: string
     cedula: string
     nombre: string
     edad: number
     sexo: string
     entidad_info: {
-      codigo: string
+      id: string
       nombre: string
     }
     tipo_atencion: string

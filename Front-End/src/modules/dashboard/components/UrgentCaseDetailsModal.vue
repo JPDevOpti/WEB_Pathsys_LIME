@@ -93,8 +93,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import type { CasoUrgente } from '../types/dashboard.types'
-import PreviewButton from '@/shared/components/ui/buttons/PreviewButton.vue'
-import ActionButton from '@/shared/components/ui/buttons/ActionButton.vue'
+import { PreviewButton, ActionButton } from '@/shared/components/buttons'
 
 const props = defineProps<{ caseItem: CasoUrgente | null }>()
 const emit = defineEmits<{ 

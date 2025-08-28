@@ -2,14 +2,7 @@
   <div class="space-y-6">
     <!-- Card de selección de período, entidad, estado y acciones -->
     <ComponentCard title="Reporte de pruebas realizadas" description="Seleccione período, entidad y estado para generar el informe.">
-      <!-- Estado del backend -->
-      <div class="mb-4 flex justify-end">
-        <BackendStatus 
-          :is-connected="backendConnected" 
-          :is-loading="isCheckingConnection"
-          @reconnect="checkBackendConnection"
-        />
-      </div>
+
       
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <FormSelect v-model="selectedMonth" label="Mes" :options="monthOptions" placeholder="Seleccione mes" />
@@ -117,9 +110,9 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue'
-import { FormSelect, BackendStatus } from '@/shared/components/ui'
-import { EntityList } from '@/shared/components/ui/List'
-import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import { FormSelect } from '@/shared/components'
+import { EntityList } from '@/shared/components/List'
+import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ComponentCard } from '@/shared/components/common'
 import { RefreshIcon } from '@/assets/icons'
 import TestsSummary from './TestsSummary.vue'

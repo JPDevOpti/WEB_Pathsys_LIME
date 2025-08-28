@@ -87,11 +87,11 @@
 
 <script setup lang="ts">
 import { reactive, ref, watch, computed, onMounted } from 'vue'
-import { BaseButton, ComponentCard } from '@/shared/components/ui'
+import { BaseButton, ComponentCard } from '@/shared/components'
 import { RefreshIcon, DocsIcon, TrashIcon } from '@/assets/icons'
-import { FormInputField, FormSelect, DateInputField } from '@/shared/components/ui/forms'
-import { SearchButton } from '@/shared/components/ui/buttons'
-import { EntityList, PathologistList, TestList } from '@/shared/components/ui/List'
+import { FormInputField, FormSelect, DateInputField } from '@/shared/components/forms'
+import { SearchButton } from '@/shared/components/buttons'
+import { EntityList, PathologistList, TestList } from '@/shared/components/List'
 import type { Filters } from '../types/case.types'
 import { getDefaultDateRange } from '../utils/dateUtils'
 import { usePermissions } from '@/shared/composables/usePermissions'

@@ -314,7 +314,7 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 # Si no se encuentra por nombre, elegir una al azar
                 entidad_doc = random.choice(list(entidades_by_name.values()))
             entidad_info = CasoEntidadInfo(
-                codigo=entidad_doc.get("entidad_code") or entidad_doc.get("EntidadCode"),
+                id=entidad_doc.get("entidad_code") or entidad_doc.get("EntidadCode"),
                 nombre=entidad_doc.get("entidad_name") or entidad_doc.get("EntidadName"),
             )
             # Asegurar que el tipo de atención sea válido (solo Ambulatorio o Hospitalizado)
@@ -325,8 +325,7 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 tipo_atencion_valido = tipo_atencion_original
             
             paciente_info = CasoPacienteInfo(
-                codigo=str(p.get("paciente_code") or p.get("_id")),
-                cedula=str(p.get("paciente_code") or p.get("_id")),
+                paciente_code=str(p.get("paciente_code") or p.get("_id")),
                 nombre=p.get("nombre", "Paciente Sin Nombre"),
                 edad=max(1, int(p.get("edad", 30))),  # Asegurar edad válida
                 sexo=str(p.get("sexo", "Masculino")),

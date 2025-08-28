@@ -134,9 +134,9 @@
 
 <script setup lang="ts">
 import { reactive, computed, watch, nextTick, ref } from 'vue'
-import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/ui/forms'
-import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
-import { Notification, ValidationAlert } from '@/shared/components/ui/feedback'
+import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
+import { SaveButton, ClearButton } from '@/shared/components/buttons'
+import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useAuxiliaryCreation } from '../../composables/useAuxiliaryCreation'
 import type { AuxiliaryFormModel, AuxiliaryCreateResponse } from '../../types/auxiliary.types'
 

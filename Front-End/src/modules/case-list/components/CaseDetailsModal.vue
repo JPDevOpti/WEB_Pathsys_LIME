@@ -176,8 +176,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Case } from '../types/case.types'
-import PreviewButton from '@/shared/components/ui/buttons/PreviewButton.vue'
-import ActionButton from '@/shared/components/ui/buttons/ActionButton.vue'
+import { PreviewButton, ActionButton } from '@/shared/components/buttons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 
 defineProps<{ caseItem: Case | null }>()

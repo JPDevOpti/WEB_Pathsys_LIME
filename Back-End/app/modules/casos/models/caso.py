@@ -11,7 +11,7 @@ from app.modules.pruebas.schemas.prueba import PruebasItem
 
 class EntidadInfo(BaseModel):
     """Información de la entidad de salud."""
-    codigo: str = Field(..., max_length=50)
+    id: str = Field(..., max_length=50)
     nombre: str = Field(..., max_length=200)
 
 
@@ -23,8 +23,7 @@ class MuestraInfo(BaseModel):
 
 class PacienteInfo(BaseModel):
     """Información del paciente en un caso."""
-    codigo: str = Field(..., max_length=50)
-    cedula: str = Field(..., max_length=20)
+    paciente_code: str = Field(..., max_length=50)
     nombre: str = Field(..., max_length=200)
     edad: int = Field(..., ge=0, le=150)
     sexo: str = Field(..., max_length=20)
@@ -38,6 +37,27 @@ class PacienteInfo(BaseModel):
         if v < 0 or v > 150:
             raise ValueError('La edad debe estar entre 0 y 150 años')
         return v
+
+    @validator('nombre', pre=True)
+    def validate_nombre(cls, v):
+        """Validar y normalizar nombre del paciente"""
+        if not v or not v.strip():
+            raise ValueError('El nombre del paciente no puede estar vacío')
+        # Capitalizar cada palabra del nombre
+        return ' '.join(word.capitalize() for word in v.strip().split())
+
+    @validator('paciente_code', pre=True)
+    def validate_paciente_code(cls, v):
+        """Validar código del paciente"""
+        if not v or not v.strip():
+            raise ValueError('El código del paciente no puede estar vacío')
+        # Remover espacios y caracteres no numéricos
+        codigo_clean = ''.join(c for c in v if c.isdigit())
+        if not codigo_clean:
+            raise ValueError('El código del paciente debe contener al menos un dígito')
+        if len(codigo_clean) < 6 or len(codigo_clean) > 12:
+            raise ValueError('El código del paciente debe tener entre 6 y 12 dígitos')
+        return codigo_clean
 
 
 class MedicoInfo(BaseModel):

@@ -81,7 +81,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
             <div>
               <span class="font-medium text-green-700">Código:</span>
-              <p class="text-green-800 font-mono">{{ casoInfo.CasoCode }}</p>
+              <p class="text-green-800 font-mono">{{ (casoInfo as any).caso_code }}</p>
             </div>
             <div>
               <span class="font-medium text-green-700">Estado:</span>
@@ -93,7 +93,7 @@
             </div>
             <div>
               <span class="font-medium text-green-700">Cédula:</span>
-              <p class="text-green-800 font-mono">{{ casoInfo.paciente.cedula }}</p>
+              <p class="text-green-800 font-mono">{{ casoInfo.paciente.paciente_code }}</p>
             </div>
             <div>
               <span class="font-medium text-green-700">Entidad:</span>
@@ -193,14 +193,11 @@ import type {
 } from '../types'
 
 // Componentes UI
-import ComponentCard from '../../../shared/components/ui/ComponentCard.vue'
-import FormInputField from '../../../shared/components/ui/forms/FormInputField.vue'
-import { PathologistList } from '../../../shared/components/ui/List'
-import SearchButton from '../../../shared/components/ui/buttons/SearchButton.vue'
-import SaveButton from '../../../shared/components/ui/buttons/SaveButton.vue'
-import ClearButton from '../../../shared/components/ui/buttons/ClearButton.vue'
-import ValidationAlert from '../../../shared/components/ui/feedback/ValidationAlert.vue'
-import Notification from '../../../shared/components/ui/feedback/Notification.vue'
+import { ComponentCard } from '@/shared/components'
+import { FormInputField } from '@/shared/components/forms'
+import { PathologistList } from '@/shared/components/List'
+import { SearchButton, SaveButton, ClearButton } from '@/shared/components/buttons'
+import { ValidationAlert, Notification } from '@/shared/components/feedback'
 
 // ============================================================================
 // ESTADO DEL COMPONENTE
@@ -376,7 +373,6 @@ const buscarCaso = async () => {
     
     
   } catch (error: any) {
-    console.error('❌ Error al buscar caso:', error)
     casoEncontrado.value = false
     casoInfo.value = null
     
@@ -417,10 +413,15 @@ const asignarPatologo = async () => {
   isLoadingAssignment.value = true
 
   try {
+    // Usar el código correcto del caso (backend devuelve caso_code)
+    const codigoCaso = (casoInfo.value as any).caso_code
     
+    if (!codigoCaso) {
+      throw new Error(`Código del caso no disponible. Estructura: ${JSON.stringify(casoInfo.value)}`)
+    }
     
     // Realizar asignación usando el composable
-    const result = await assignPathologist(casoInfo.value.CasoCode, {
+    const result = await assignPathologist(codigoCaso, {
       patologoId: formData.patologoId,
       fechaAsignacion: new Date().toISOString().split('T')[0]
     })
@@ -453,18 +454,21 @@ const handleAsignacionExitosa = async (result: any) => {
     }
   }
   
+  // Obtener el código correcto del caso (backend devuelve caso_code)
+  const codigoCaso = (casoInfo.value as any).caso_code
+  
   // Mostrar notificación de éxito
   const accion = casoInfo.value?.patologo_asignado ? 'reasignado' : 'asignado'
   showNotification(
     'success',
     `¡Patólogo ${accion} exitosamente!`,
-    `El patólogo ha sido ${accion} al caso ${casoInfo.value?.CasoCode} correctamente.`,
+    `El patólogo ha sido ${accion} al caso ${codigoCaso} correctamente.`,
     0
   )
 
   // Emitir evento de éxito
   emit('patologo-asignado', {
-    codigoCaso: casoInfo.value?.CasoCode || '',
+    codigoCaso: codigoCaso,
     patologo: formData.patologoId
   })
 
@@ -477,21 +481,23 @@ const handleAsignacionExitosa = async (result: any) => {
  * @param error - Error capturado
  */
 const handleErrorAsignacion = async (error: any) => {
-  console.error('❌ Error al asignar patólogo:', error)
   
   // Si el error indica que ya tiene patólogo asignado, tratarlo como reasignación exitosa
   if (isReasignacionError(error.message)) {
     
     
+    // Obtener el código correcto del caso (backend devuelve caso_code)
+    const codigoCaso = (casoInfo.value as any).caso_code
+    
     showNotification(
       'success',
       '¡Patólogo reasignado exitosamente!',
-      `El patólogo ha sido reasignado al caso ${casoInfo.value?.CasoCode} correctamente.`,
+      `El patólogo ha sido reasignado al caso ${codigoCaso} correctamente.`,
       0
     )
 
     emit('patologo-asignado', {
-      codigoCaso: casoInfo.value?.CasoCode || '',
+      codigoCaso: codigoCaso,
       patologo: formData.patologoId
     })
 

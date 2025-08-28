@@ -122,7 +122,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, useAttrs, watch } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
-import { Card } from '@/shared/components/ui/data-display'
+import { Card } from '@/shared/components/layout'
 import { useDashboard } from '../composables/useDashboard'
 
 const {

@@ -32,7 +32,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { AdminLayout } from '@/shared'
-import { PageBreadcrumb } from '@/shared/components/common'
+import { PageBreadcrumb } from '@/shared/components/navigation'
 import NewPatient from '../components/NewPatient.vue'
 import NewCase from '../components/NewCase.vue'
 import CasePathologist from '../components/CasePathologist.vue'

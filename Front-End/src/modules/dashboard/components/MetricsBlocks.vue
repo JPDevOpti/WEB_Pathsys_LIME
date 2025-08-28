@@ -139,7 +139,7 @@
 
 <script setup lang="ts">
 import { onMounted, computed } from 'vue'
-import { Card } from '@/shared/components/ui/data-display'
+import { Card } from '@/shared/components/layout'
 import { useDashboard } from '../composables/useDashboard'
 
 const {

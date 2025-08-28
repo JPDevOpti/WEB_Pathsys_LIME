@@ -10,7 +10,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { AdminLayout } from '@/shared/components/layout'
-import PageBreadcrumb from '@/shared/components/ui/navigation/PageBreadcrumb.vue'
+import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import { PerformResults } from '../components'
 
 const pageTitle = 'Realizar Resultados'

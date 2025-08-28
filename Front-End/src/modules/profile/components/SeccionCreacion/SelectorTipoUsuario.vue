@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { FormSelect } from '@/shared/components/ui/forms'
+import { FormSelect } from '@/shared/components/forms'
 
 defineProps<{ tipoSeleccionado: string }>()
 

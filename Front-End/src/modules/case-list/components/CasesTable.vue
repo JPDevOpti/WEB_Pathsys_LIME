@@ -390,7 +390,7 @@ import type { Case } from '../types/case.types'
 import { InfoCircleIcon, SettingsIcon, DocsIcon } from '@/assets/icons'
 import { useRouter } from 'vue-router'
 import { ref, computed, watch } from 'vue'
-import FormCheckbox from '@/shared/components/ui/forms/FormCheckbox.vue'
+import FormCheckbox from '@/shared/components/forms/FormCheckbox.vue'
 import { useBatchDownload } from '../composables/useBatchDownload'
 
 interface Column { 

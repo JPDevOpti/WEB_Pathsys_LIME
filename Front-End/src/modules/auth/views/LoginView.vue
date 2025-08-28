@@ -91,8 +91,8 @@ import FullScreenLayout from '@/shared/layouts/FullScreenLayout.vue'
 import EmailInput from '../components/EmailInput.vue'
 import PasswordInput from '../components/PasswordInput.vue'
 import RememberMeCheckbox from '../components/RememberMeCheckbox.vue'
-import { FormButton } from '@/shared/components/ui/forms'
-import { ErrorMessage } from '@/shared/components/ui/feedback'
+import { FormButton } from '@/shared/components/forms'
+import { ErrorMessage } from '@/shared/components/feedback'
 import { useLoginForm } from '../composables/useLoginForm'
 
 // Icono para el botón

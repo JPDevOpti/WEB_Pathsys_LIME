@@ -36,19 +36,14 @@ export function usePatientAPI() {
     success.value = false
 
     try {
-  
-
       // Validar datos antes del envío
       const validation = validatePatientData(patientData)
       if (!validation.isValid) {
         throw new Error(validation.errors.join(', '))
       }
 
-      // Verificar si el paciente ya existe
-      const exists = await checkPatientExists(patientData.numeroCedula)
-      if (exists) {
-        throw new Error(`Ya existe un paciente registrado con la cédula ${patientData.numeroCedula}`)
-      }
+      // El backend valida automáticamente si el paciente ya existe
+      // No es necesario verificar previamente
 
       // Crear el paciente
       const newPatient = await patientsApiService.createPatient(patientData)
@@ -58,7 +53,6 @@ export function usePatientAPI() {
 
       success.value = true
 
-
       return {
         success: true,
         patient: newPatient,
@@ -67,7 +61,6 @@ export function usePatientAPI() {
 
     } catch (err: any) {
       error.value = err.message || 'Error desconocido al crear el paciente'
-
       
       return {
         success: false,
@@ -89,7 +82,6 @@ export function usePatientAPI() {
     error.value = null
 
     try {
-
       const patient = await patientsApiService.getPatientByCedula(cedula)
       
       return {
@@ -100,7 +92,6 @@ export function usePatientAPI() {
 
     } catch (err: any) {
       error.value = err.message || 'Error al buscar el paciente'
-
       
       return {
         success: false,

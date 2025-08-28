@@ -25,33 +25,29 @@ export function useCaseAPI() {
    * @returns Nombre de la entidad
    */
   const getEntityNameByCode = async (entityCode: string): Promise<string> => {
-    console.log('🔍 getEntityNameByCode llamado con código:', entityCode)
-    
     // Verificar si ya tenemos el nombre en cache
     if (entitiesCache.value.has(entityCode)) {
       const cachedName = entitiesCache.value.get(entityCode)
-      console.log('✅ Nombre encontrado en cache:', cachedName)
       return cachedName || entityCode
     }
     
     try {
-      console.log('📡 Llamando a la API para obtener entidad:', entityCode)
+      // Validar que entityCode no sea undefined
+      if (!entityCode) {
+        return 'Entidad no especificada'
+      }
+      
       // Buscar la entidad por código
       const entity = await entitiesApiService.getEntityByCode(entityCode)
-      console.log('📋 Respuesta de la API para entidad:', entity)
       
-      const entityName = entity.nombre || entityCode
-      console.log('🏷️ Nombre de entidad extraído:', entityName)
+      const entityName = entity?.nombre || entityCode
       
       // Guardar en cache
       entitiesCache.value.set(entityCode, entityName)
-      console.log('💾 Entidad guardada en cache:', entityCode, '->', entityName)
       
       return entityName
     } catch (error) {
-      console.error('💥 Error al obtener nombre de entidad:', entityCode, error)
-      console.warn(`No se pudo obtener el nombre de la entidad ${entityCode}:`, error)
-      return entityCode // Fallback al código si no se puede obtener el nombre
+      return entityCode || 'Entidad no especificada' // Fallback al código si no se puede obtener el nombre
     }
   }
   
@@ -106,35 +102,25 @@ export function useCaseAPI() {
    * @returns Datos transformados para la API
    */
   const transformCaseFormToApiRequest = async (formData: CaseFormData, verifiedPatient: any): Promise<CreateCaseRequest> => {
-    console.log('🔄 transformCaseFormToApiRequest - Datos de entrada:', {
-      entidadPaciente: formData.entidadPaciente,
-      entidadCodigo: verifiedPatient.entidadCodigo,
-      entidad: verifiedPatient.entidad
-    })
-    
     // Obtener el nombre de la entidad
     let entidadNombre = verifiedPatient.entidad
     if (formData.entidadPaciente) {
-      console.log('🏥 Obteniendo nombre de entidad para código:', formData.entidadPaciente)
       entidadNombre = await getEntityNameByCode(formData.entidadPaciente)
-      console.log('🏷️ Nombre de entidad obtenido:', entidadNombre)
     }
-    
-
     
     const requestData = {
       paciente: {
-        codigo: verifiedPatient.codigo || `PAC_${verifiedPatient.numeroCedula}`,
-        cedula: verifiedPatient.numeroCedula,
-        nombre: verifiedPatient.nombrePaciente,
-        edad: parseInt(verifiedPatient.edad),
-        sexo: normalizeSexo(verifiedPatient.sexo),
-        entidad_info: {
-          codigo: formData.entidadPaciente || verifiedPatient.entidadCodigo || 'ent_default',
+        paciente_code: verifiedPatient.pacienteCode || verifiedPatient.codigo || `PAC_${verifiedPatient.numeroCedula}`,  // ✅ REQUERIDO
+        cedula: verifiedPatient.numeroCedula || verifiedPatient.cedula || formData.pacienteCedula,  // ✅ REQUERIDO
+        nombre: verifiedPatient.nombrePaciente,                                  // ✅ REQUERIDO
+        edad: parseInt(verifiedPatient.edad),                                   // ✅ REQUERIDO
+        sexo: normalizeSexo(verifiedPatient.sexo),                              // ✅ REQUERIDO
+        entidad_info: {                                                         // ✅ REQUERIDO
+          id: formData.entidadPaciente || verifiedPatient.entidadCodigo || 'ent_default',
           nombre: entidadNombre
         },
-        tipo_atencion: normalizeTipoAtencion(formData.tipoAtencionPaciente),
-        observaciones: verifiedPatient.observaciones || undefined
+        tipo_atencion: normalizeTipoAtencion(formData.tipoAtencionPaciente),    // ✅ REQUERIDO
+        observaciones: verifiedPatient.observaciones || undefined                // ❌ OPCIONAL
       },
       medico_solicitante: formData.medicoSolicitante ? {
         nombre: formData.medicoSolicitante
@@ -152,7 +138,6 @@ export function useCaseAPI() {
       observaciones_generales: formData.observaciones || undefined
     }
     
-    console.log('📤 Datos finales enviados a la API:', JSON.stringify(requestData, null, 2))
     return requestData
   }
 
@@ -165,15 +150,15 @@ export function useCaseAPI() {
    */
   const buildCreatedCase = (apiResponse: any, verifiedPatient: any, caseData: CaseFormData): CreatedCase => {
     return {
-      id: apiResponse._id || apiResponse.CasoCode,
-      codigo: apiResponse.CasoCode,
+      id: apiResponse._id || apiResponse.caso_code,
+      codigo: apiResponse.caso_code,
       paciente: {
         cedula: apiResponse.paciente?.cedula || verifiedPatient.numeroCedula,
         nombre: apiResponse.paciente?.nombre || verifiedPatient.nombrePaciente,
         edad: apiResponse.paciente?.edad || parseInt(verifiedPatient.edad),
         sexo: apiResponse.paciente?.sexo || verifiedPatient.sexo,
         entidad: apiResponse.paciente?.entidad_info?.nombre || verifiedPatient.entidad,
-        entidadCodigo: apiResponse.paciente?.entidad_info?.codigo || caseData.entidadPaciente,
+        entidadCodigo: apiResponse.paciente?.entidad_info?.id || caseData.entidadPaciente,
         tipoAtencion: apiResponse.paciente?.tipo_atencion || caseData.tipoAtencionPaciente
       },
       fechaIngreso: apiResponse.fecha_ingreso || caseData.fechaIngreso,
@@ -231,20 +216,14 @@ export function useCaseAPI() {
         }
         
         await patientsApiService.updatePatient(verifiedPatient.numeroCedula, patientUpdateData)
-        console.log('Paciente actualizado con nuevos valores del formulario:', {
-          entidad: entidadNombre,
-          entidadCodigo: caseData.entidadPaciente,
-          tipoAtencion: caseData.tipoAtencionPaciente
-        })
       } catch (updateError) {
-        console.warn('El caso se creó pero falló la actualización del paciente:', updateError)
         // No fallar la creación del caso por un error en la actualización del paciente
       }
       
       // Construir respuesta exitosa
       const result: CaseCreationResult = {
         success: true,
-        codigo: apiResponse.CasoCode,
+        codigo: apiResponse.caso_code,
         message: 'Caso creado exitosamente',
         case: buildCreatedCase(apiResponse, verifiedPatient, caseData)
       }

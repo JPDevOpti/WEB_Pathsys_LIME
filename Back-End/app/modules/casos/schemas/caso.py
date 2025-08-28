@@ -27,7 +27,7 @@ class DiagnosticoCIEO(BaseModel):
 
 class EntidadInfo(BaseModel):
     """Información de la entidad asignada"""
-    codigo: str = Field(..., max_length=50, description="Código único de la entidad")
+    id: str = Field(..., max_length=50, description="ID único de la entidad")
     nombre: str = Field(..., max_length=200, description="Nombre de la entidad")
 
 class MuestraInfo(BaseModel):
@@ -37,13 +37,12 @@ class MuestraInfo(BaseModel):
 
 class PacienteInfo(BaseModel):
     """Información básica del paciente en un caso"""
-    codigo: str = Field(..., max_length=50, description="Código único del paciente")
+    paciente_code: str = Field(..., max_length=50, description="Código único del paciente")
     nombre: str = Field(..., max_length=200, description="Nombre completo del paciente")
-    edad: int = Field(..., description="Edad del paciente")
+    edad: int = Field(..., ge=0, le=150, description="Edad del paciente")
     sexo: str = Field(..., max_length=20, description="Sexo del paciente")
     entidad_info: EntidadInfo = Field(..., description="Información de la entidad de salud")
     tipo_atencion: str = Field(..., max_length=50, description="Tipo de atención")
-    cedula: str = Field(..., max_length=20, description="Número de cédula")
     observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones del paciente")
     fecha_actualizacion: datetime = Field(default_factory=datetime.utcnow)
 
@@ -57,6 +56,27 @@ class PacienteInfo(BaseModel):
         if tipo not in tipos_validos:
             raise ValueError(f'El tipo de atención debe ser uno de: {", ".join(tipos_validos)}')
         return tipo
+
+    @validator('nombre', pre=True)
+    def validate_nombre(cls, v):
+        """Validar y normalizar nombre del paciente"""
+        if not v or not v.strip():
+            raise ValueError('El nombre del paciente no puede estar vacío')
+        # Capitalizar cada palabra del nombre
+        return ' '.join(word.capitalize() for word in v.strip().split())
+
+    @validator('paciente_code', pre=True)
+    def validate_paciente_code(cls, v):
+        """Validar código del paciente"""
+        if not v or not v.strip():
+            raise ValueError('El código del paciente no puede estar vacío')
+        # Remover espacios y caracteres no numéricos
+        codigo_clean = ''.join(c for c in v if c.isdigit())
+        if not codigo_clean:
+            raise ValueError('El código del paciente debe contener al menos un dígito')
+        if len(codigo_clean) < 6 or len(codigo_clean) > 12:
+            raise ValueError('El código del paciente debe tener entre 6 y 12 dígitos')
+        return codigo_clean
 
 class MedicoInfo(BaseModel):
     """Información del médico solicitante"""
@@ -211,7 +231,7 @@ class CasoSearch(BaseModel):
     """Modelo para búsqueda de casos"""
     query: Optional[str] = Field(None, description="Búsqueda general")
     caso_code: Optional[str] = Field(None, description="Código específico del caso")
-    paciente_cedula: Optional[str] = Field(None, description="Cédula del paciente")
+    paciente_code: Optional[str] = Field(None, description="Código del paciente")
     paciente_nombre: Optional[str] = Field(None, description="Nombre del paciente")
     medico_nombre: Optional[str] = Field(None, description="Nombre del médico")
     patologo_codigo: Optional[str] = Field(None, description="Código del patólogo asignado")

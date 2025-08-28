@@ -29,12 +29,8 @@ export function usePathologistAPI() {
     error.value = ''
 
     try {
-  
-      
       const response = await pathologistApi.getPathologists()
       pathologists.value = response
-      
-
       
       return {
         success: true,
@@ -42,7 +38,6 @@ export function usePathologistAPI() {
       }
       
     } catch (err: any) {
-
       error.value = err.message || 'Error al cargar la lista de patólogos'
       
       return {
@@ -69,12 +64,8 @@ export function usePathologistAPI() {
     error.value = ''
 
     try {
-
-      
       const results = await pathologistApi.searchPathologists(searchTerm)
       pathologists.value = results
-      
-
       
       return {
         success: true,
@@ -82,7 +73,6 @@ export function usePathologistAPI() {
       }
       
     } catch (err: any) {
-
       error.value = err.message || 'Error al buscar patólogos'
       
       return {
@@ -113,11 +103,8 @@ export function usePathologistAPI() {
     error.value = ''
 
     try {
-
-      
       // Cargar patólogos si la lista está vacía
       if (pathologists.value.length === 0) {
-
         const loadResult = await loadPathologists()
         if (!loadResult.success) {
           throw new Error('No se pudieron cargar los patólogos: ' + loadResult.message)
@@ -147,11 +134,9 @@ export function usePathologistAPI() {
         }
       }
       
-
       return result
       
     } catch (err: any) {
-
       error.value = err.response?.data?.detail || err.message || 'Error al asignar el patólogo'
       
       return {
@@ -173,8 +158,6 @@ export function usePathologistAPI() {
     error.value = ''
 
     try {
-
-      
       await casesApi.unassignPathologist(caseId)
       
       const result: PathologistAssignmentResult = {
@@ -185,11 +168,9 @@ export function usePathologistAPI() {
         }
       }
       
-
       return result
       
     } catch (err: any) {
-
       error.value = err.response?.data?.detail || err.message || 'Error al desasignar el patólogo'
       
       return {
@@ -211,13 +192,7 @@ export function usePathologistAPI() {
    * @returns Patólogo encontrado o undefined
    */
   const findSelectedPathologist = (patologoId: string): FormPathologistInfo | undefined => {
-    const selectedPathologist = pathologists.value.find(p => p.documento === patologoId)
-    
-    if (!selectedPathologist) {
-      // Patólogo no encontrado
-    }
-    
-    return selectedPathologist
+    return pathologists.value.find(p => p.id === patologoId)
   }
 
   /**
@@ -227,7 +202,7 @@ export function usePathologistAPI() {
    */
   const buildPathologistApiData = (pathologist: FormPathologistInfo) => {
     return {
-      codigo: pathologist.documento,
+      codigo: pathologist.id,
       nombre: pathologist.nombre
     }
   }

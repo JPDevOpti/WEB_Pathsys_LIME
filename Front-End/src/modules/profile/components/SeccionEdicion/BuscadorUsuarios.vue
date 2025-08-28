@@ -24,8 +24,8 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { FormInput } from '@/shared/components/ui/forms'
-import { SearchButton, ClearButton } from '@/shared/components/ui/buttons'
+import { FormInput } from '@/shared/components/forms'
+import { SearchButton, ClearButton } from '@/shared/components/buttons'
 
 const props = defineProps<{ busqueda: string; tipoBusqueda: string; estaBuscando: boolean; error: string }>()
 const emit = defineEmits<{

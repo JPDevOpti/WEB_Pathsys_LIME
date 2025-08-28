@@ -102,9 +102,9 @@
 
 <script setup lang="ts">
 import { reactive, computed, watch, nextTick, ref } from 'vue'
-import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/ui/forms'
-import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
-import { Notification, ValidationAlert } from '@/shared/components/ui/feedback'
+import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
+import { SaveButton, ClearButton } from '@/shared/components/buttons'
+import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { usePathologistEdition } from '../../composables/usePathologistEdition'
 import type { PathologistEditFormModel } from '../../types/pathologist.types'
 import { RefreshIcon } from '@/shared/icons'

@@ -7,7 +7,7 @@ export function usePatientForm() {
   // ============================================================================
   
   const formData = reactive<PatientData>({
-    numeroCedula: '',
+    pacienteCode: '',
     nombrePaciente: '',
     sexo: '',
     edad: '',
@@ -27,13 +27,13 @@ export function usePatientForm() {
   })
 
   const errors = reactive<PatientFormErrors>({
-    numeroCedula: [],
+    pacienteCode: [],
     nombrePaciente: [],
     edad: []
   })
 
   const warnings = reactive<PatientFormWarnings>({
-    numeroCedula: [],
+    pacienteCode: [],
     edad: []
   })
 
@@ -48,37 +48,37 @@ export function usePatientForm() {
    * @returns true si la cédula es válida
    */
   const validateCedula = (): boolean => {
-    const cedula = formData.numeroCedula.trim()
-    errors.numeroCedula = []
-    warnings.numeroCedula = []
+    const cedula = formData.pacienteCode.trim()
+    errors.pacienteCode = []
+    warnings.pacienteCode = []
 
     if (!cedula) {
       if (validationState.hasAttemptedSubmit) {
-        errors.numeroCedula.push('La cédula es obligatoria')
+        errors.pacienteCode.push('La cédula es obligatoria')
       }
       return false
     }
 
     // Validar solo números
     if (!/^\d+$/.test(cedula)) {
-      errors.numeroCedula.push('La cédula debe contener solo números')
+      errors.pacienteCode.push('La cédula debe contener solo números')
       return false
     }
 
     // Validar longitud máxima
     if (cedula.length > 10) {
-      errors.numeroCedula.push('La cédula no puede tener más de 10 dígitos')
+      errors.pacienteCode.push('La cédula no puede tener más de 10 dígitos')
       return false
     }
 
     // Mensaje reactivo: cuántos dígitos faltan para ser válida (mínimo 6)
     if (cedula.length > 0 && cedula.length < 6) {
       const faltan = 6 - cedula.length
-      warnings.numeroCedula.push(`Faltan ${faltan} dígito${faltan === 1 ? '' : 's'} para una cédula válida`)
+      warnings.pacienteCode.push(`Faltan ${faltan} dígito${faltan === 1 ? '' : 's'} para una cédula válida`)
       
       if (validationState.hasAttemptedSubmit) {
-        errors.numeroCedula.push('La cédula debe tener al menos 6 dígitos')
-        warnings.numeroCedula = []
+        errors.pacienteCode.push('La cédula debe tener al menos 6 dígitos')
+        warnings.pacienteCode = []
         return false
       }
     }
@@ -194,14 +194,14 @@ export function usePatientForm() {
   const handleCedulaInput = (value: string): void => {
     // Solo permitir números
     const numericValue = value.replace(/\D/g, '')
-    formData.numeroCedula = numericValue
+    formData.pacienteCode = numericValue
     
     // Validar en tiempo real
     if (numericValue.length > 0) {
       validateCedula()
     } else {
-      errors.numeroCedula = []
-      warnings.numeroCedula = []
+      errors.pacienteCode = []
+      warnings.pacienteCode = []
     }
   }
 
@@ -287,15 +287,15 @@ export function usePatientForm() {
   const getCedulaFieldClasses = computed(() => {
     const baseClasses = "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
     
-    if (errors.numeroCedula.length > 0) {
+    if (errors.pacienteCode.length > 0) {
       return `${baseClasses} border-red-500 bg-red-50`
     }
     
-    if (warnings.numeroCedula.length > 0) {
+    if (warnings.pacienteCode.length > 0) {
       return `${baseClasses} border-yellow-500 bg-yellow-50`
     }
     
-    if (formData.numeroCedula && errors.numeroCedula.length === 0) {
+    if (formData.pacienteCode && errors.pacienteCode.length === 0) {
       return `${baseClasses} border-green-500 bg-green-50`
     }
     

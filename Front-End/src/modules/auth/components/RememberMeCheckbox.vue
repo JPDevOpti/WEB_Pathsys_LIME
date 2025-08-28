@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { FormCheckbox } from '@/shared/components/ui/forms'
+import { FormCheckbox } from '@/shared/components/forms'
 
 interface Props {
   modelValue: boolean

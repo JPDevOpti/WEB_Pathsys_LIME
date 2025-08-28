@@ -1,12 +1,6 @@
 <template>
   <div class="space-y-4">
-    <!-- Encabezado interno removido para evitar duplicidad con ComponentCard -->
-
-    <!-- Formulario de edición -->
     <form class="space-y-4" @submit.prevent="onSubmit">
-
-      
-      <!-- Sección de búsqueda de caso (siempre visible como bloque secundario) -->
       <div v-if="!caseCodeProp" class="bg-gray-50 rounded-lg border border-gray-200">
         <div class="px-4 pt-4 pb-4">
           <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
@@ -16,94 +10,60 @@
             Buscar Caso para Editar
           </h3>
       
-      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
-        <div class="flex-1">
-          <FormInputField
-            v-model="searchCaseCode"
-            type="text"
-            placeholder="Ej: 2025-00001"
-            maxlength="10"
-            autocomplete="off"
-            :disabled="isSearching"
-            @update:model-value="handleCaseCodeChange"
-            @keydown.enter.prevent="searchCase"
-          />
-          
-          <!-- Validación de formato del código -->
-          <div v-if="searchCaseCode && !isValidCaseCodeFormat(searchCaseCode)" class="mt-1 text-xs text-red-600">
-            El código debe tener el formato YYYY-NNNNN (Ejemplo: 2025-00001)
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
+            <div class="flex-1">
+              <FormInputField
+                v-model="searchCaseCode"
+                type="text"
+                placeholder="Ej: 2025-00001"
+                maxlength="10"
+                autocomplete="off"
+                :disabled="isSearching"
+                @update:model-value="handleCaseCodeChange"
+                @keydown.enter.prevent="searchCase"
+              />
+              <div v-if="searchCaseCode && !isValidCaseCodeFormat(searchCaseCode)" class="mt-1 text-xs text-red-600">
+                El código debe tener el formato YYYY-NNNNN (Ejemplo: 2025-00001)
+              </div>
+            </div>
+            <div class="flex gap-2 sm:gap-3">
+              <SearchButton text="Buscar" loading-text="Buscando..." :loading="isSearching" @click="searchCase" size="md" variant="primary" />
+              <ClearButton v-if="caseFound" text="Limpiar" @click="onReset" />
+            </div>
           </div>
-        </div>
-        
-        <div class="flex gap-2 sm:gap-3">
-          <SearchButton
-            text="Buscar"
-            loading-text="Buscando..."
-            :loading="isSearching"
-            @click="searchCase"
-            size="md"
-            variant="primary"
-          />
-          <ClearButton
-            v-if="caseFound"
-            text="Limpiar"
-            @click="onReset"
-          />
+
+          <div v-if="searchError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <p class="text-sm text-red-600">{{ searchError }}</p>
+            </div>
+          </div>
+
+          <div v-if="caseFound && foundCaseInfo" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h4 class="text-sm font-semibold text-green-800">Caso Encontrado y Cargado</h4>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+              <div><span class="font-medium text-green-700">Código del Caso:</span><p class="text-green-800 font-mono">{{ foundCaseInfo.CasoCode || 'N/A' }}</p></div>
+              <div><span class="font-medium text-green-700">Nombre del Paciente:</span><p class="text-green-800 break-words">{{ foundCaseInfo.paciente?.nombre || 'N/A' }}</p></div>
+              <div><span class="font-medium text-green-700">Cédula del Paciente:</span><p class="text-green-800 font-mono">{{ foundCaseInfo.paciente?.paciente_code || 'N/A' }}</p></div>
+              <div><span class="font-medium text-green-700">Edad:</span><p class="text-green-800">{{ foundCaseInfo.paciente?.edad || 'N/A' }} años</p></div>
+              <div><span class="font-medium text-green-700">Sexo:</span><p class="text-green-800">{{ foundCaseInfo.paciente?.sexo || 'N/A' }}</p></div>
+              <div><span class="font-medium text-green-700">Entidad:</span><p class="text-green-800 break-words">{{ foundCaseInfo.paciente?.entidad_info?.nombre || foundCaseInfo.entidad_info?.nombre || 'N/A' }}</p></div>
+              <div><span class="font-medium text-green-700">Tipo de Atención:</span><p class="text-green-800 break-words">{{ foundCaseInfo.paciente?.tipo_atencion || 'N/A' }}</p></div>
+              <div><span class="font-medium text-green-700">Estado del Caso:</span><p class="text-green-800">{{ foundCaseInfo.estado || 'N/A' }}</p></div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Mensaje de error de búsqueda -->
-      <div v-if="searchError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-        <div class="flex items-center">
-          <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          <p class="text-sm text-red-600">{{ searchError }}</p>
-        </div>
-      </div>
-
-      <!-- Información del caso encontrado y cargado -->
-      <div v-if="caseFound && foundCaseInfo" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center">
-            <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <h4 class="text-sm font-semibold text-green-800">Caso Encontrado y Cargado</h4>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-          <div>
-            <span class="font-medium text-green-700">Código:</span>
-            <p class="text-green-800 font-mono">{{ foundCaseInfo.CasoCode || 'N/A' }}</p>
-          </div>
-          <div>
-            <span class="font-medium text-green-700">Paciente:</span>
-            <p class="text-green-800 break-words">{{ foundCaseInfo.paciente?.nombre || 'N/A' }}</p>
-          </div>
-          <div>
-            <span class="font-medium text-green-700">Cédula:</span>
-            <p class="text-green-800 font-mono">{{ foundCaseInfo.paciente?.cedula || 'N/A' }}</p>
-          </div>
-          <div>
-            <span class="font-medium text-green-700">Estado:</span>
-            <p class="text-green-800">{{ foundCaseInfo.estado || 'N/A' }}</p>
-          </div>
-          <div>
-            <span class="font-medium text-green-700">Entidad:</span>
-            <p class="text-green-800 break-words">{{ foundCaseInfo.entidad_info?.nombre || foundCaseInfo.paciente?.entidad_info?.nombre || 'N/A' }}</p>
-          </div>
-          <div>
-            <span class="font-medium text-green-700">Tipo de Atención:</span>
-            <p class="text-green-800 break-words">{{ foundCaseInfo.paciente?.tipo_atencion || 'N/A' }}</p>
-          </div>
-        </div>
-      </div>
-      </div>
-    </div>
-
-      <!-- Mensaje informativo cuando no hay caso encontrado -->
       <div v-if="!caseFound && !notification.visible" class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
         <div class="flex flex-col items-center space-y-3">
           <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,94 +74,27 @@
         </div>
       </div>
 
-      
-
-      <!-- Formulario principal (solo visible cuando se encuentra un caso) -->
       <div v-if="caseFound" class="space-y-6">
-        <!-- Primera línea: Médico Solicitante y Servicio -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField
-            v-model="form.medicoSolicitante"
-            label="Médico Solicitante"
-            placeholder="Médico que solicita el estudio"
-            :required="false"
-            :max-length="100"
-          />
-          
-          <FormInputField
-            v-model="form.servicio"
-            label="Servicio"
-            placeholder="Procedencia del caso"
-            :required="false"
-            :max-length="100"
-          />
+          <FormInputField v-model="form.medicoSolicitante" label="Médico Solicitante" placeholder="Médico que solicita el estudio" :required="false" :max-length="100" />
+          <FormInputField v-model="form.servicio" label="Servicio" placeholder="Procedencia del caso" :required="false" :max-length="100" />
         </div>
 
-        <!-- Segunda línea: Entidad y Tipo de Atención -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <EntityList
-            :key="'entity-' + resetKey"
-            v-model="form.entidadPaciente"
-            label="Entidad del Paciente"
-            placeholder="Buscar entidad..."
-            :required="true"
-            :auto-load="true"
-            @entity-selected="onEntitySelected"
-          />
-          
-          <FormSelect
-            :key="'tipoAtencion-' + resetKey + '-' + form.tipoAtencionPaciente"
-            v-model="form.tipoAtencionPaciente"
-            label="Tipo de Atención"
-            placeholder="Seleccione el tipo de atención"
-            :required="true"
-            :options="tipoAtencionOptions"
-          />
+          <EntityList :key="'entity-' + resetKey" v-model="form.entidadPaciente" label="Entidad del Paciente" placeholder="Buscar entidad..." :required="true" :auto-load="true" @entity-selected="onEntitySelected" />
+          <FormSelect :key="'tipoAtencion-' + resetKey + '-' + form.tipoAtencionPaciente" v-model="form.tipoAtencionPaciente" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" />
         </div>
 
-        <!-- Tercera línea: Número de Muestras, Fecha de Ingreso y Estado -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          <FormInputField
-            v-model="form.numeroMuestras"
-            label="Número de Muestras"
-            type="number"
-            :min="1"
-            :max="99"
-            :required="true"
-            @input="handleLocalNumeroMuestrasChange"
-          />
-          
-          <FormInputField
-            v-model="form.fechaIngreso"
-            label="Fecha de creación"
-            type="date"
-            :required="true"
-          />
-          
-          <FormSelect
-            :key="'estado-' + resetKey"
-            v-model="form.estado"
-            label="Estado del Caso"
-            placeholder="Seleccione el estado"
-            :required="true"
-            :options="estadoOptions"
-          />
+          <FormInputField v-model="form.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="99" :required="true" @input="handleLocalNumeroMuestrasChange" />
+          <FormInputField v-model="form.fechaIngreso" label="Fecha de creación" type="date" :required="true" />
+          <FormSelect :key="'estado-' + resetKey" v-model="form.estado" label="Estado del Caso" placeholder="Seleccione el estado" :required="true" :options="estadoOptions" />
         </div>
 
-        <!-- Cuarta línea: Patólogo asignado -->
         <div class="max-w-md">
-          <PathologistList
-            :key="'pathologist-' + resetKey"
-            v-model="form.patologoAsignado"
-            label="Patólogo Asignado"
-            placeholder="Buscar patólogo..."
-            :required="false"
-            :auto-load="true"
-            @pathologist-selected="onPathologistSelected"
-          />
+          <PathologistList :key="'pathologist-' + resetKey" v-model="form.patologoAsignado" label="Patólogo Asignado" placeholder="Buscar patólogo..." :required="false" :auto-load="true" @pathologist-selected="onPathologistSelected" />
         </div>
 
-        <!-- Información de Submuestras -->
         <div v-if="form.muestras.length > 0" class="space-y-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center">
             <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,72 +104,29 @@
           </h3>
           
           <div class="space-y-6">
-            <div 
-              v-for="(muestra, muestraIndex) in form.muestras" 
-              :key="muestra.numero + '-' + resetKey"
-              class="border border-gray-200 rounded-lg p-4 bg-gray-50"
-            >
-              <h4 class="font-medium text-gray-700 mb-4">
-                Submuestra {{ muestra.numero }}
-              </h4>
+            <div v-for="(muestra, muestraIndex) in form.muestras" :key="muestra.numero + '-' + resetKey" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <h4 class="font-medium text-gray-700 mb-4">Submuestra {{ muestra.numero }}</h4>
               
-              <!-- Región del Cuerpo -->
               <div class="mb-4">
-                <BodyRegionList
-                  :key="'region-' + muestraIndex + '-' + resetKey"
-                  v-model="muestra.regionCuerpo"
-                  :label="`Región del Cuerpo - Submuestra ${muestra.numero}`"
-                  placeholder="Buscar región del cuerpo..."
-                  :required="true"
-                  help-text="Seleccione la región anatómica de donde proviene la muestra"
-                />
+                <BodyRegionList :key="'region-' + muestraIndex + '-' + resetKey" v-model="muestra.regionCuerpo" :label="`Región del Cuerpo - Submuestra ${muestra.numero}`" placeholder="Buscar región del cuerpo..." :required="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
               </div>
               
-              <!-- Pruebas -->
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                  <label class="block text-sm font-medium text-gray-700">
-                    Pruebas a Realizar <span class="text-red-500">*</span>
-                  </label>
-                  <AddButton
-                    text="Agregar Prueba"
-                    @click="addLocalPruebaToMuestra(muestraIndex)"
-                  />
+                  <label class="block text-sm font-medium text-gray-700">Pruebas a Realizar <span class="text-red-500">*</span></label>
+                  <AddButton text="Agregar Prueba" @click="addLocalPruebaToMuestra(muestraIndex)" />
                 </div>
                 
                 <div class="space-y-2">
-                  <div 
-                    v-for="(prueba, pruebaIndex) in muestra.pruebas" 
-                    :key="pruebaIndex + '-' + resetKey"
-                    class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-end"
-                  >
+                  <div v-for="(prueba, pruebaIndex) in muestra.pruebas" :key="pruebaIndex + '-' + resetKey" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-end">
                     <div class="flex-1 min-w-0">
-                      <TestList
-                        :key="'test-' + muestraIndex + '-' + pruebaIndex + '-' + resetKey"
-                        v-model="prueba.code"
-                        :label="`Prueba ${pruebaIndex + 1}`"
-                        :placeholder="`Buscar y seleccionar prueba ${pruebaIndex + 1}...`"
-                        :required="true"
-                        :auto-load="true"
-                        @test-selected="(test) => handleTestSelected(muestraIndex, pruebaIndex, test)"
-                      />
+                      <TestList :key="'test-' + muestraIndex + '-' + pruebaIndex + '-' + resetKey" v-model="prueba.code" :label="`Prueba ${pruebaIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${pruebaIndex + 1}...`" :required="true" :auto-load="true" @test-selected="(test) => handleTestSelected(muestraIndex, pruebaIndex, test)" />
                     </div>
                     <div class="w-full sm:w-24">
-                      <FormInputField
-                        v-model.number="prueba.cantidad"
-                        label="Cantidad"
-                        type="number"
-                        :min="1"
-                        :max="10"
-                        placeholder="Cantidad"
-                      />
+                      <FormInputField v-model.number="prueba.cantidad" label="Cantidad" type="number" :min="1" :max="10" placeholder="Cantidad" />
                     </div>
                     <div class="flex items-end justify-center sm:w-10 pb-1">
-                      <RemoveButton
-                        v-if="muestra.pruebas.length > 1"
-                        @click="removeLocalPruebaFromMuestra(muestraIndex, pruebaIndex)"
-                        title="Eliminar prueba"
-                      />
+                      <RemoveButton v-if="muestra.pruebas.length > 1" @click="removeLocalPruebaFromMuestra(muestraIndex, pruebaIndex)" title="Eliminar prueba" />
                     </div>
                   </div>
                 </div>
@@ -285,143 +135,59 @@
           </div>
         </div>
 
-        <!-- Observaciones -->
-        <FormTextarea
-          v-model="form.observaciones"
-          label="Observaciones del Caso"
-          placeholder="Observaciones adicionales sobre el caso o procedimiento..."
-          :rows="3"
-          :max-length="500"
-          :show-counter="true"
-          help-text="Información adicional relevante para el procesamiento del caso"
-        />
+        <FormTextarea v-model="form.observaciones" label="Observaciones del Caso" placeholder="Observaciones adicionales sobre el caso o procedimiento..." :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional relevante para el procesamiento del caso" />
 
-        <!-- Botones de Acción (alineados como en EditPatientForm) -->
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-          <ClearButton
-            @click="onReset"
-            :disabled="isLoading"
-          />
-          <SaveButton
-            text="Guardar Cambios"
-            @click="onSubmit"
-            :disabled="isLoading || !isFormValid"
-            :loading="isLoading"
-          />
+          <ClearButton @click="onReset" :disabled="isLoading" />
+          <SaveButton text="Guardar Cambios" @click="onSubmit" :disabled="isLoading || !isFormValid" :loading="isLoading" />
         </div>
-
-        
       </div>
       
-      <!-- Notificación - fuera del contenedor condicionado por caseFound -->
       <div ref="notificationContainer" v-if="notification.visible">
-        <Notification
-          :visible="notification.visible"
-          :type="notification.type"
-          :title="notification.title"
-          :message="notification.message"
-          :inline="true"
-          :auto-close="false"
-          @close="handleNotificationClosed"
-        >
+        <Notification :visible="notification.visible" :type="notification.type" :title="notification.title" :message="notification.message" :inline="true" :auto-close="false" @close="handleNotificationClosed">
           <template v-if="notification.type === 'success' && updatedCase" #content>
             <div class="relative p-4 sm:p-5 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div class="space-y-4">
-                <!-- Header del Caso -->
                 <div class="text-center pb-3 border-b border-gray-200">
                   <p class="font-mono font-bold text-2xl text-gray-900">{{ getCaseCode() }}</p>
                 </div>
 
-                <!-- Grid Principal -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <!-- Información del Paciente -->
                   <div>
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Información del Paciente</h4>
                     <div class="space-y-2 text-sm">
-                      <div>
-                        <span class="text-gray-500 font-medium">Nombre:</span>
-                        <p class="text-gray-900 font-semibold">{{ getPatientInfo('nombre') }}</p>
-                      </div>
-                      <div>
-                        <span class="text-gray-500 font-medium">Cédula:</span>
-                        <p class="text-gray-900 font-mono font-semibold">{{ getPatientInfo('cedula') }}</p>
-                      </div>
-                      <div>
-                        <span class="text-gray-500 font-medium">Edad:</span>
-                        <p class="text-gray-900 font-semibold">{{ getPatientInfo('edad') }} años</p>
-                      </div>
-                      <div>
-                        <span class="text-gray-500 font-medium">Sexo:</span>
-                        <p class="text-gray-900 font-semibold">{{ getPatientInfo('sexo') }}</p>
-                      </div>
-                      <div>
-                        <span class="text-gray-500 font-medium">Entidad:</span>
-                        <p class="text-gray-900 font-semibold">{{ getPatientInfo('entidad') }}</p>
-                      </div>
-                      <div>
-                        <span class="text-gray-500 font-medium">Tipo de Atención:</span>
-                        <p class="text-gray-900 font-semibold">{{ getPatientInfo('tipoAtencion') }}</p>
-                      </div>
+                      <div><span class="text-gray-500 font-medium">Nombre:</span><p class="text-gray-900 font-semibold">{{ getPatientInfo('nombre') }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Cédula:</span><p class="text-gray-900 font-mono font-semibold">{{ getPatientInfo('cedula') }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Edad:</span><p class="text-gray-900 font-semibold">{{ getPatientInfo('edad') }} años</p></div>
+                      <div><span class="text-gray-500 font-medium">Sexo:</span><p class="text-gray-900 font-semibold">{{ getPatientInfo('sexo') }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Entidad:</span><p class="text-gray-900 font-semibold">{{ getPatientInfo('entidad') }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Tipo de Atención:</span><p class="text-gray-900 font-semibold">{{ getPatientInfo('tipoAtencion') }}</p></div>
                     </div>
                   </div>
 
-                  <!-- Detalles del Caso -->
                   <div>
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Detalles del Caso</h4>
                     <div class="space-y-2 text-sm">
-                      <div>
-                        <span class="text-gray-500 font-medium">Estado:</span>
-                        <p class="text-gray-900 font-semibold">{{ updatedCase.estado || 'Pendiente' }}</p>
-                      </div>
-                      <div>
-                        <span class="text-gray-500 font-medium">Médico Solicitante:</span>
-                        <p class="text-gray-900 font-semibold">{{ getMedicoSolicitante() }}</p>
-                      </div>
-                      <div>
-                        <span class="text-gray-500 font-medium">Servicio:</span>
-                        <p class="text-gray-900 font-semibold">{{ getServicio() }}</p>
-                      </div>
-                      <div>
-                        <span class="text-gray-500 font-medium">Número de Submuestras:</span>
-                        <p class="text-gray-900 font-semibold">{{ getMuestrasCount() }}</p>
-                      </div>
-                      <div v-if="getObservaciones()">
-                        <span class="text-gray-500 font-medium">Observaciones:</span>
-                        <p class="text-gray-900">{{ getObservaciones() }}</p>
-                      </div>
+                      <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ updatedCase.estado || 'Pendiente' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ getMedicoSolicitante() }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ getServicio() }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Número de Submuestras:</span><p class="text-gray-900 font-semibold">{{ getMuestrasCount() }}</p></div>
+                      <div v-if="getObservaciones()"><span class="text-gray-500 font-medium">Observaciones:</span><p class="text-gray-900">{{ getObservaciones() }}</p></div>
                     </div>
                   </div>
                 </div>
 
-                <!-- Resumen de Submuestras -->
                 <div>
                   <h4 class="font-semibold text-gray-800 mb-3 text-base">Submuestras Actualizadas</h4>
                   <div class="space-y-3">
-                    <div
-                      v-for="(muestra, index) in getMuestras()"
-                      :key="index"
-                      class="border border-gray-200 rounded-lg p-3 bg-gray-50"
-                    >
+                    <div v-for="(muestra, index) in getMuestras()" :key="index" class="border border-gray-200 rounded-lg p-3 bg-gray-50">
                       <div class="flex items-center justify-between mb-2">
                         <span class="font-medium text-gray-900 text-sm">Submuestra {{ index + 1 }}</span>
-                        <span class="text-sm text-gray-500">
-                          {{ getPruebasCount(muestra) }} prueba{{ getPruebasCount(muestra) !== 1 ? 's' : '' }}
-                        </span>
+                        <span class="text-sm text-gray-500">{{ getPruebasCount(muestra) }} prueba{{ getPruebasCount(muestra) !== 1 ? 's' : '' }}</span>
                       </div>
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <span class="text-gray-500 font-medium">Región:</span>
-                          <p class="text-gray-900">{{ muestra.regionCuerpo || 'Sin especificar' }}</p>
-                        </div>
-                        <div>
-                          <span class="text-gray-500 font-medium">Pruebas:</span>
-                          <div class="text-gray-900">
-                            <span v-if="muestra.pruebas?.length > 0">
-                              {{ getPruebasText(muestra) }}
-                            </span>
-                            <span v-else class="text-gray-400">Sin pruebas</span>
-                          </div>
-                        </div>
+                        <div><span class="text-gray-500 font-medium">Región:</span><p class="text-gray-900">{{ muestra.regionCuerpo || 'Sin especificar' }}</p></div>
+                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="muestra.pruebas?.length > 0">{{ getPruebasText(muestra) }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
                       </div>
                     </div>
                   </div>
@@ -437,11 +203,11 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed, watch, onMounted, nextTick } from 'vue'
-import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/ui/forms'
-import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/ui/buttons'
-import { EntityList, TestList, BodyRegionList, PathologistList } from '@/shared/components/ui/List'
+import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
+import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
+import { EntityList, TestList, BodyRegionList, PathologistList } from '@/shared/components/List'
 import { useNotifications } from '../composables/useNotifications'
-import Notification from '@/shared/components/ui/feedback/Notification.vue'
+import Notification from '@/shared/components/feedback/Notification.vue'
 import { useCaseForm } from '../composables/useCaseForm'
 import { casesApiService } from '../services/casesApi.service'
 import { patientsApiService } from '../services/patientsApi.service'
@@ -679,10 +445,6 @@ const loadCaseData = async () => {
     
     await loadCaseDataFromFound(caseData)
   } catch (error: any) {
-    console.error('=== ERROR AL CARGAR CASO ===')
-    console.error('Error completo:', error)
-    console.error('Mensaje:', error.message)
-    console.error('Response:', error.response?.data)
     showError('Error al cargar los datos del caso', error.message || 'Error desconocido')
   } finally {
     isLoading.value = false
@@ -711,7 +473,7 @@ const onSubmit = async () => {
   }
 
   // Validar que hay información del paciente cargada
-  const cedulaToUse = form.pacienteCedula || foundCaseInfo.value?.paciente?.cedula
+  const cedulaToUse = form.pacienteCedula || foundCaseInfo.value?.paciente?.paciente_code
   if (!cedulaToUse) {
     showError('Información incompleta', 'No se encontró información del paciente para este caso')
     return
@@ -722,15 +484,15 @@ const onSubmit = async () => {
     // Preparar datos para la actualización
     const entityInfoToSend = (() => {
       if (selectedEntity.value?.codigo && selectedEntity.value?.nombre) {
-        return { codigo: selectedEntity.value.codigo, nombre: selectedEntity.value.nombre }
+        return { id: selectedEntity.value.codigo, nombre: selectedEntity.value.nombre }
       }
       const fromCase = (foundCaseInfo.value as any)?.entidad_info || (foundCaseInfo.value as any)?.paciente?.entidad_info
       if (fromCase?.codigo && fromCase?.nombre) {
-        return { codigo: fromCase.codigo, nombre: fromCase.nombre }
+        return { id: fromCase.codigo, nombre: fromCase.nombre }
       }
       if (form.entidadPaciente) {
         const nombre = selectedEntity.value?.nombre || (foundCaseInfo.value as any)?.paciente?.entidad_info?.nombre || ''
-        if (nombre) return { codigo: form.entidadPaciente, nombre }
+        if (nombre) return { id: form.entidadPaciente, nombre }
       }
       return undefined
     })()
@@ -765,13 +527,13 @@ const onSubmit = async () => {
       entidad_info: entityInfoToSend,
       // Incluir paciente con tipo_atencion actualizado
       paciente: {
-        codigo: patientInfo.value?.codigo || cedulaToUse,
+        paciente_code: patientInfo.value?.codigo || cedulaToUse,
         cedula: cedulaToUse,
         nombre: patientInfo.value?.nombre || '',
         edad: patientInfo.value?.edad || 0,
         sexo: patientInfo.value?.sexo || '',
         entidad_info: entityInfoToSend || {
-          codigo: form.entidadPaciente,
+          id: form.entidadPaciente,
           nombre: selectedEntity.value?.nombre || ''
         },
         tipo_atencion: mapTipoAtencionToBackend(form.tipoAtencionPaciente),
@@ -791,7 +553,7 @@ const onSubmit = async () => {
       return ''
     })()
     const patientDataToUpdate: PatientData = {
-      numeroCedula: cedulaToUse,
+      pacienteCode: cedulaToUse,
       nombrePaciente: String(patientInfo.value?.nombre || ''),
       sexo: sexoForm as any,
       edad: String(patientInfo.value?.edad || ''),
@@ -803,7 +565,6 @@ const onSubmit = async () => {
     try {
       await patientsApiService.updatePatient(cedulaToUse, patientDataToUpdate)
     } catch (e: any) {
-      console.error('Error al actualizar paciente (coherencia):', e)
       throw new Error('El caso se actualizó, pero falló la actualización del paciente')
     }
     
@@ -820,7 +581,6 @@ const onSubmit = async () => {
     // La notificación usará únicamente los datos de updatedCase/foundCaseInfo.
     clearFormAfterSave()
   } catch (error: any) {
-    console.error('Error al actualizar caso:', error)
     showError('Error al actualizar el caso', error.message || 'Error desconocido')
   } finally {
     isLoading.value = false
@@ -886,7 +646,6 @@ const searchCase = async () => {
       foundCaseInfo.value = null
     }
   } catch (error: any) {
-    console.error('Error al buscar caso:', error)
     if (error.message.includes('404') || error.message.includes('No encontrado')) {
       searchError.value = 'No se encontró un caso con el código especificado.'
     } else {
@@ -918,7 +677,7 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
     // Intentar múltiples posibles estructuras de datos del backend
     const formData = {
       pacienteCedula: 
-        caseData.paciente?.cedula || 
+        caseData.paciente?.paciente_code || 
         (caseData.paciente as any)?.numeroCedula ||
         (caseData as any).cedula_paciente || 
         '',
@@ -943,6 +702,7 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
         
       entidadPaciente: 
         caseData.entidad_info?.codigo || 
+        (caseData.paciente?.entidad_info as any)?.id || 
         caseData.paciente?.entidad_info?.codigo || 
         (caseData as any).entidadPaciente ||
         (caseData as any).entidad_codigo ||
@@ -1027,8 +787,8 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
         (caseData as any).nombre_paciente ||
         '',
       cedula: 
-        caseData.paciente?.cedula || 
-        (caseData as any)?.numeroCedula ||
+        caseData.paciente?.paciente_code || 
+        (caseData.paciente as any)?.numeroCedula ||
         (caseData as any).cedula_paciente ||
         formData.pacienteCedula ||
         '',
@@ -1058,6 +818,12 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
         codigo: caseData.entidad_info.codigo,
         nombre: caseData.entidad_info.nombre
       }
+    } else if ((caseData.paciente?.entidad_info as any)?.id) {
+      // El backend usa 'id' en lugar de 'codigo' para entidades
+      selectedEntity.value = {
+        codigo: (caseData.paciente.entidad_info as any).id,
+        nombre: caseData.paciente.entidad_info.nombre
+      }
     } else if (caseData.paciente?.entidad_info?.codigo) {
       selectedEntity.value = {
         codigo: caseData.paciente.entidad_info.codigo,
@@ -1072,7 +838,6 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
     caseLoaded.value = true
             // showSuccess('Caso cargado exitosamente', '') - Removido según requerimientos
   } catch (error: any) {
-    console.error('Error al mapear datos del caso:', error)
     showError('Error al cargar datos del caso', error.message || 'Error desconocido')
   }
 }
@@ -1274,7 +1039,7 @@ const getPatientInfo = (field: string): string => {
     }
     case 'cedula': {
       return (
-        uc.paciente?.cedula || fc.paciente?.cedula || cp.cedula || 'N/A'
+        uc.paciente?.paciente_code || fc.paciente?.paciente_code || cp.cedula || 'N/A'
       )
     }
     case 'edad': {
@@ -1389,7 +1154,7 @@ const getServicio = (): string => {
  */
 const getCaseCode = (): string => {
   return currentCaseCode.value || 
-         (updatedCase.value as any)?.codigo || 
+         (updatedCase.value as any)?.CasoCode || 
          (updatedCase.value as any)?.code || 
          searchCaseCode.value || 
          props.caseCodeProp || 

@@ -1,5 +1,5 @@
 <template>
-  <div class="pathologist-combobox">
+  <div class="test-combobox">
     <!-- Label -->
     <label v-if="label" class="block text-sm font-medium text-gray-700 mb-1">
       {{ label }}
@@ -12,24 +12,23 @@
       <div class="relative">
         <input
           ref="inputRef"
-          :value="displayText"
+          v-model="searchQuery"
           type="text"
           :placeholder="placeholder"
-          :disabled="disabled || isPatologoUser"
+          :disabled="disabled"
           :class="[
             'w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white appearance-none',
             errorString ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300',
-            (disabled || isPatologoUser) ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'text-gray-900'
+            disabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'text-gray-900'
           ]"
           @focus="handleFocus"
           @blur="handleBlur"
-          @input="handleInput"
           @keydown="handleKeyDown"
           autocomplete="off"
         />
         
         <!-- Loading spinner -->
-        <div v-if="isLoadingPathologists" class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+        <div v-if="isLoadingTests" class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
           <svg class="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -39,22 +38,12 @@
         <!-- Dropdown arrow -->
         <div v-else class="absolute inset-y-0 right-0 pr-3 flex items-center">
           <svg 
-            v-if="!isPatologoUser"
             class="h-4 w-4 text-gray-400 cursor-pointer transition-transform"
             :class="{ 'transform rotate-180': isOpen }"
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
             @click="toggleDropdown"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-          <svg 
-            v-else
-            class="h-4 w-4 text-gray-400"
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
           >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
@@ -67,13 +56,13 @@
         class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       >
         <!-- Loading state -->
-        <div v-if="isLoadingPathologists" class="px-3 py-2 text-sm text-gray-500 text-center">
-          Cargando patólogos...
+        <div v-if="isLoadingTests" class="px-3 py-2 text-sm text-gray-500 text-center">
+          Cargando pruebas...
         </div>
         
         <!-- No results -->
         <div v-else-if="filteredOptions.length === 0" class="px-3 py-2 text-sm text-gray-500 text-center">
-          {{ searchQuery.trim() ? 'No se encontraron patólogos' : 'No hay patólogos disponibles' }}
+          {{ searchQuery.trim() ? 'No se encontraron pruebas' : (tests && tests.length > 0 ? 'No hay pruebas disponibles' : 'Cargando pruebas...') }}
         </div>
         
         <!-- Options -->
@@ -83,15 +72,22 @@
           :class="[
             'px-3 py-2 text-sm cursor-pointer transition-colors',
             index === highlightedIndex ? 'bg-blue-50 text-blue-900' : 'text-gray-900 hover:bg-gray-100',
-            selectedPathologist === option.value ? 'bg-blue-100 text-blue-900 font-medium' : ''
+            selectedTest === option.value ? 'bg-blue-100 text-blue-900 font-medium' : ''
           ]"
           @click="selectOption(option)"
           @mouseenter="highlightedIndex = index"
         >
           <div class="flex items-center justify-between">
-            <span>{{ option.label }}</span>
+            <div class="flex flex-col">
+              <span class="font-medium">{{ option.label }}</span>
+              <div class="flex items-center gap-2 text-xs text-gray-500">
+                <span>{{ option.test.pruebaCode }}</span>
+                <span v-if="option.test.tiempo" class="text-blue-600">{{ option.test.tiempo }} día{{ option.test.tiempo !== 1 ? 's' : '' }}</span>
+              </div>
+              <span v-if="option.description" class="text-xs text-gray-400 mt-1">{{ option.description }}</span>
+            </div>
             <svg 
-              v-if="selectedPathologist === option.value"
+              v-if="selectedTest === option.value"
               class="h-4 w-4 text-blue-600"
               fill="currentColor"
               viewBox="0 0 20 20"
@@ -107,11 +103,6 @@
     <p v-if="helpText" class="mt-1 text-xs text-gray-500">
       {{ helpText }}
     </p>
-    
-    <!-- Mensaje informativo para patólogos -->
-    <p v-if="isPatologoUser" class="mt-1 text-xs text-blue-600">
-      Tu patólogo está pre-seleccionado automáticamente
-    </p>
 
     <!-- Error message -->
     <p v-if="errorString" class="mt-1 text-sm text-red-600">
@@ -125,9 +116,9 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
         </svg>
         <div>
-          <p class="text-sm text-amber-800">No se pudieron cargar los patólogos.</p>
+          <p class="text-sm text-amber-800">No se pudieron cargar las pruebas.</p>
           <button
-            @click="reloadPathologists"
+            @click="reloadTests"
             class="mt-1 text-sm text-amber-700 hover:text-amber-800 underline font-medium"
           >
             Intentar cargar nuevamente
@@ -139,11 +130,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch, nextTick } from 'vue'
-import { usePathologistAPI } from '@/modules/cases/composables/usePathologistAPI'
-import { usePermissions } from '@/shared/composables/usePermissions'
-import { useAuthStore } from '@/stores/auth.store'
-import type { FormPathologistInfo, SelectOption } from '@/modules/cases/types'
+import { computed, ref, watch, onMounted, nextTick } from 'vue'
+import type { TestDetails, TestSelectOption } from '../../../modules/cases/types/test'
+import { useTestAPI } from '../../../modules/cases/composables/useTestAPI'
 
 // Props
 interface Props {
@@ -160,7 +149,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   label: '',
-  placeholder: 'Buscar y seleccionar patólogo...',
+  placeholder: 'Buscar y seleccionar prueba...',
   required: false,
   disabled: false,
   helpText: '',
@@ -171,15 +160,13 @@ const props = withDefaults(defineProps<Props>(), {
 // Emits
 const emit = defineEmits<{
   'update:modelValue': [value: string]
-  'pathologist-selected': [pathologist: FormPathologistInfo | null]
+  'test-selected': [test: TestDetails | null]
   'load-error': [error: string]
-  'load-success': [pathologists: FormPathologistInfo[]]
+  'load-success': [tests: TestDetails[]]
 }>()
 
 // Composables
-const { pathologists, loadPathologists, isLoading: isLoadingPathologists } = usePathologistAPI()
-const { isPatologo } = usePermissions()
-const authStore = useAuthStore()
+const { tests, loadTests, isLoading: isLoadingTests } = useTestAPI()
 
 // Refs
 const inputRef = ref<HTMLInputElement>()
@@ -190,50 +177,55 @@ const loadError = ref('')
 const isFocused = ref(false)
 
 // Estado interno del componente seleccionado
-const selectedPathologist = ref(props.modelValue)
+const selectedTest = ref(props.modelValue)
 
 // Computed
 const errorString = computed(() => {
   return Array.isArray(props.errors) ? props.errors.join(', ') : ''
 })
 
-// Convertir patólogos a opciones del select
-const pathologistOptions = computed((): (SelectOption & { pathologist: FormPathologistInfo })[] => {
-  return pathologists.value.map(pathologist => ({
-    value: pathologist.documento, // Usar documento como valor (esto es el código)
-    label: pathologist.iniciales 
-      ? `${pathologist.iniciales} - ${pathologist.nombre}`
-      : pathologist.nombre,
-    pathologist
+// Convertir pruebas a opciones del select
+const testOptions = computed((): TestSelectOption[] => {
+  // Validar que tests.value exista y sea un array
+  if (!tests.value || !Array.isArray(tests.value)) {
+    return []
+  }
+  
+  return tests.value.map(test => ({
+    value: test.pruebaCode,
+    label: test.pruebasName,
+    description: test.pruebasDescription,
+    time: test.tiempo,
+    test
   }))
 })
 
 // Filtrar opciones basado en la búsqueda
-const filteredOptions = computed((): (SelectOption & { pathologist: FormPathologistInfo })[] => {
+const filteredOptions = computed((): TestSelectOption[] => {
   if (!searchQuery.value.trim()) {
-    return pathologistOptions.value
+    return testOptions.value
   }
   
   const query = searchQuery.value.toLowerCase().trim()
-  return pathologistOptions.value.filter(option => {
+  return testOptions.value.filter(option => {
     const label = option.label.toLowerCase()
-    const pathologist = option.pathologist
+    const code = option.test.pruebaCode.toLowerCase()
+    const description = option.description?.toLowerCase() || ''
     
     return (
       label.includes(query) ||
-      pathologist.nombre.toLowerCase().includes(query) ||
-      (pathologist.iniciales && pathologist.iniciales.toLowerCase().includes(query)) ||
-      pathologist.documento.toLowerCase().includes(query)
+      code.includes(query) ||
+      description.includes(query)
     )
   })
 })
 
-// Obtener el patólogo seleccionado actual
-const currentSelectedPathologist = computed((): FormPathologistInfo | null => {
-  if (!selectedPathologist.value) return null
+// Obtener la prueba seleccionada actual
+const currentSelectedTest = computed((): TestDetails | null => {
+  if (!selectedTest.value) return null
   
-  const option = pathologistOptions.value.find(opt => opt.value === selectedPathologist.value)
-  return option?.pathologist || null
+  const option = testOptions.value.find(opt => opt.value === selectedTest.value)
+  return option?.test || null
 })
 
 // Texto que se muestra en el input
@@ -242,11 +234,8 @@ const displayText = computed(() => {
     return searchQuery.value
   }
   
-  if (selectedPathologist.value && currentSelectedPathologist.value) {
-    const pathologist = currentSelectedPathologist.value
-    return pathologist.iniciales 
-      ? `${pathologist.iniciales} - ${pathologist.nombre}`
-      : pathologist.nombre
+  if (selectedTest.value && currentSelectedTest.value) {
+    return currentSelectedTest.value.pruebasName
   }
   
   return searchQuery.value
@@ -254,8 +243,6 @@ const displayText = computed(() => {
 
 // Funciones del combobox
 const handleFocus = () => {
-  if (isPatologoUser.value) return // No permitir focus si es patólogo
-  
   isFocused.value = true
   searchQuery.value = ''
   isOpen.value = true
@@ -269,14 +256,14 @@ const handleBlur = () => {
     isOpen.value = false
     
     // Restaurar texto si no hay selección válida
-    if (!selectedPathologist.value) {
+    if (!selectedTest.value) {
       searchQuery.value = ''
     }
   }, 150)
 }
 
 const toggleDropdown = () => {
-  if (props.disabled || isPatologoUser.value) return
+  if (props.disabled) return
   
   if (isOpen.value) {
     inputRef.value?.blur()
@@ -285,37 +272,22 @@ const toggleDropdown = () => {
   }
 }
 
-const handleInput = (event: Event) => {
-  if (isPatologoUser.value) return // No permitir input si es patólogo
-  
-  const target = event.target as HTMLInputElement
-  searchQuery.value = target.value
-  
-  // Si el usuario está escribiendo, abrir el dropdown
-  if (searchQuery.value.trim()) {
-    isOpen.value = true
-    highlightedIndex.value = -1
-  }
-}
-
-const selectOption = (option: SelectOption & { pathologist: FormPathologistInfo }) => {
-  if (isPatologoUser.value) return // No permitir cambiar selección si es patólogo
-  
-  selectedPathologist.value = option.value
+const selectOption = (option: TestSelectOption) => {
+  selectedTest.value = option.value
   searchQuery.value = ''
   isOpen.value = false
   highlightedIndex.value = -1
   
   // Emit events
   emit('update:modelValue', option.value)
-  emit('pathologist-selected', option.pathologist)
+  emit('test-selected', option.test)
   
   // Quitar focus del input
   inputRef.value?.blur()
 }
 
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (props.disabled || isPatologoUser.value) return
+  if (props.disabled) return
   
   switch (event.key) {
     case 'ArrowDown':
@@ -353,96 +325,35 @@ const handleKeyDown = (event: KeyboardEvent) => {
   }
 }
 
-// Computed para determinar si el usuario es patólogo (no administrador)
-const isPatologoUser = computed(() => {
-  return isPatologo.value && authStore.userRole !== 'administrador'
-})
-
-// Función para buscar automáticamente el patólogo del usuario logueado
-const buscarPatologoUsuario = () => {
-  // Permitir que patólogos Y administradores puedan tener patólogo pre-seleccionado
-  const puedeTenerPatologo = isPatologo.value || authStore.userRole === 'administrador'
-  
-  if (puedeTenerPatologo && authStore.user && !selectedPathologist.value) {
-    // Intentar diferentes campos posibles para el nombre
-    const nombreUsuario = authStore.user.nombre || 
-                         authStore.user.nombres || 
-                         authStore.user.nombre_completo || 
-                         authStore.user.full_name || 
-                         authStore.user.username || 
-                         ''
-    
-    if (nombreUsuario && pathologists.value.length > 0) {
-      // Buscar patólogo que coincida con el nombre del usuario
-      const patologoEncontrado = pathologists.value.find(p => 
-        p.nombre && p.nombre.toLowerCase().includes(nombreUsuario.toLowerCase())
-      )
-      
-      if (patologoEncontrado) {
-        // Establecer automáticamente el patólogo encontrado
-        selectedPathologist.value = patologoEncontrado.documento
-        emit('update:modelValue', patologoEncontrado.documento)
-        emit('pathologist-selected', patologoEncontrado)
-      }
-    }
-  }
-}
-
-// Función para recargar patólogos
-const reloadPathologists = async () => {
+// Función para recargar pruebas
+const reloadTests = async () => {
   try {
     loadError.value = ''
-    const result = await loadPathologists()
+    const result = await loadTests()
     
     if (result.success) {
-      emit('load-success', pathologists.value)
-      
-      // Después de cargar patólogos, buscar automáticamente el del usuario
-      nextTick(() => {
-        buscarPatologoUsuario()
-      })
+      emit('load-success', tests.value)
     } else {
-      loadError.value = result.message || 'Error al cargar patólogos'
+      loadError.value = result.error || 'Error al cargar pruebas'
       emit('load-error', loadError.value)
     }
   } catch (error: any) {
-    const errorMessage = 'Error al cargar la lista de patólogos'
+    const errorMessage = 'Error al cargar la lista de pruebas'
     loadError.value = errorMessage
     emit('load-error', errorMessage)
-    console.error('Error al recargar patólogos:', error)
   }
 }
 
 // Watchers
 watch(() => props.modelValue, (newValue) => {
-  selectedPathologist.value = newValue || ''
+  selectedTest.value = newValue || ''
 }, { immediate: true })
 
-watch(selectedPathologist, (newValue) => {
+watch(selectedTest, (newValue) => {
   if (newValue !== props.modelValue) {
     emit('update:modelValue', newValue)
   }
 })
-
-// Watcher para buscar automáticamente el patólogo del usuario cuando se cargan los patólogos
-watch(pathologists, (newPathologists) => {
-  const puedeTenerPatologo = isPatologo.value || authStore.userRole === 'administrador'
-  if (newPathologists.length > 0 && puedeTenerPatologo && !selectedPathologist.value) {
-    nextTick(() => {
-      buscarPatologoUsuario()
-    })
-  }
-}, { immediate: true })
-
-// Watcher para cuando cambie el usuario o el rol
-watch([() => authStore.user, () => isPatologo.value, () => authStore.userRole], () => {
-  const puedeTenerPatologo = isPatologo.value || authStore.userRole === 'administrador'
-  if (pathologists.value.length > 0 && puedeTenerPatologo && !selectedPathologist.value) {
-    nextTick(() => {
-      buscarPatologoUsuario()
-    })
-  }
-}, { immediate: true })
 
 // Watcher para la búsqueda - esto permite la búsqueda automática
 watch(searchQuery, () => {
@@ -454,8 +365,8 @@ watch(searchQuery, () => {
 
 // Lifecycle
 onMounted(async () => {
-  if (props.autoLoad && pathologists.value.length === 0) {
-    await reloadPathologists()
+  if (props.autoLoad && (!tests.value || tests.value.length === 0)) {
+    await reloadTests()
   }
 })
 
@@ -467,12 +378,10 @@ watch([displayText, isFocused], () => {
     })
   }
 })
-
-
 </script>
 
 <style scoped>
-.pathologist-combobox {
+.test-combobox {
   position: relative;
 }
 </style>

@@ -37,7 +37,7 @@ class CasoService:
         
         caso_dict = caso_data.model_dump()
         caso_dict.update({
-            "CasoCode": caso_code,
+            "caso_code": caso_code,
             "creado_por": usuario_id,
             "actualizado_por": usuario_id
         })
@@ -48,9 +48,9 @@ class CasoService:
     
     async def crear_caso_con_codigo(self, caso_data: CasoCreateWithCode, usuario_id: str) -> CasoResponse:
         """Crear un nuevo caso con código específico proporcionado."""
-        caso_existente = await self.repository.get_by_caso_code(caso_data.CasoCode)
+        caso_existente = await self.repository.get_by_caso_code(caso_data.caso_code)
         if caso_existente:
-            raise ConflictError(f"Ya existe un caso con el código {caso_data.CasoCode}")
+            raise ConflictError(f"Ya existe un caso con el código {caso_data.caso_code}")
         
         caso_dict = caso_data.model_dump()
         caso_dict.update({
@@ -100,9 +100,9 @@ class CasoService:
         casos = await self.repository.search_casos(search_params, skip=skip, limit=limit)
         return [self._to_response(caso) for caso in casos]
     
-    async def obtener_casos_por_paciente(self, numero_documento: str) -> List[CasoResponse]:
-        """Obtener casos de un paciente por documento."""
-        casos = await self.repository.get_by_paciente_documento(numero_documento)
+    async def obtener_casos_por_paciente(self, paciente_code: str) -> List[CasoResponse]:
+        """Obtener casos de un paciente por código."""
+        casos = await self.repository.get_by_paciente_code(paciente_code)
         return [self._to_response(caso) for caso in casos]
     
     async def obtener_casos_por_patologo(self, patologo_codigo: str) -> List[CasoResponse]:

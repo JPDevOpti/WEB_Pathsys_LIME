@@ -18,7 +18,7 @@
 import { ref } from 'vue'
 import { AdminLayout } from '@/shared'
 import { PageBreadcrumb } from '@/shared/components/common'
-import AccessDeniedAlert from '@/shared/components/ui/feedback/AccessDeniedAlert.vue'
+import AccessDeniedAlert from '@/shared/components/feedback/AccessDeniedAlert.vue'
 import OpportunityReport from '../components/opportunity/OpportunityReport.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 

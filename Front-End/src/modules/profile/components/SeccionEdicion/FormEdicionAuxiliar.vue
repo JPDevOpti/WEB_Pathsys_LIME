@@ -91,9 +91,9 @@
 
 <script setup lang="ts">
 import { reactive, computed, watch, ref, nextTick } from 'vue'
-import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/ui/forms'
-import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
-import { Notification, ValidationAlert } from '@/shared/components/ui/feedback'
+import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
+import { SaveButton, ClearButton } from '@/shared/components/buttons'
+import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useAuxiliaryEdition } from '../../composables/useAuxiliaryEdition'
 import type { AuxiliaryEditFormModel } from '../../types/auxiliary.types'
 import { RefreshIcon } from '@/shared/icons'

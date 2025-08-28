@@ -43,11 +43,11 @@
 import { computed, onMounted, onUnmounted } from 'vue'
 import { AdminLayout } from '@/shared/components/layout'
 import { useRouter } from 'vue-router'
-import PageBreadcrumb from '@/shared/components/ui/navigation/PageBreadcrumb.vue'
-import Card from '@/shared/components/ui/data-display/Card.vue'
-import { BaseButton } from '@/shared/components/ui'
+import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
+import Card from '@/shared/components/layout/Card.vue'
+import { BaseButton } from '@/shared/components'
 import { RefreshIcon } from '@/shared/icons'
-import LoadingSpinner from '@/shared/components/ui/feedback/LoadingSpinner.vue'
+import LoadingSpinner from '@/shared/components/feedback/LoadingSpinner.vue'
 
 import FiltersBar from '../components/FiltersBar.vue'
 import CasesTable from '../components/CasesTable.vue'
@@ -179,17 +179,17 @@ function previewCase(c: any) {
     diagnosis: {
       cie10: c.result?.diagnostico_cie10 ? {
         primary: c.result.diagnostico_cie10,
-        formatted: c.result.diagnostico_cie10?.codigo && c.result.diagnostico_cie10?.nombre 
+        formatted: c.result.diagnostico_cie10?.codigo && c.result.diagnostico_cie10?.nombre
           ? `${c.result.diagnostico_cie10.codigo} - ${c.result.diagnostico_cie10.nombre}`
           : ''
       } : undefined,
       cieo: c.result?.diagnostico_cieo ? {
         primary: c.result.diagnostico_cieo,
-        formatted: c.result.diagnostico_cieo?.codigo && c.result.diagnostico_cieo?.nombre 
+        formatted: c.result.diagnostico_cieo?.codigo && c.result.diagnostico_cieo?.nombre
           ? `${c.result.diagnostico_cieo.codigo} - ${c.result.diagnostico_cieo.nombre}`
           : ''
       } : undefined,
-      formatted: c.result?.diagnostico_cie10?.codigo && c.result?.diagnostico_cie10?.nombre 
+      formatted: c.result?.diagnostico_cie10?.codigo && c.result?.diagnostico_cie10?.nombre
         ? `${c.result.diagnostico_cie10.codigo} - ${c.result.diagnostico_cie10.nombre}`
         : (c.result?.diagnosis || c.resultado?.diagnostico || '')
     },

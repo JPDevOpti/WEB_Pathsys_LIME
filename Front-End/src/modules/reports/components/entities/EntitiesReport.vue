@@ -49,8 +49,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { FormSelect } from '@/shared/components/ui'
-import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import { FormSelect } from '@/shared/components'
+import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ComponentCard } from '@/shared/components/common'
 import { RefreshIcon } from '@/assets/icons'
 import EntitiesSummary from './EntitiesSummary.vue'

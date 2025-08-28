@@ -1,11 +1,9 @@
 <template>
-  <div
-    :class="[
-      'rounded-2xl border border-gray-200 bg-white transition-all duration-300 hover:shadow-lg',
-      paddingClass,
-      customClass
-    ]"
-  >
+  <div :class="[
+    'rounded-2xl border border-gray-200 bg-white transition-all duration-300 hover:shadow-lg',
+    paddingClass,
+    customClass
+  ]">
     <slot />
   </div>
 </template>
@@ -35,4 +33,4 @@ const paddingClass = computed(() => {
 })
 
 const customClass = computed(() => props.class)
-</script> 
+</script>

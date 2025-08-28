@@ -35,8 +35,7 @@ export interface EntityInfo {
  * Información del paciente dentro del caso
  */
 export interface PatientInfo {
-  codigo: string
-  cedula: string
+  paciente_code: string
   nombre: string
   edad: number
   sexo: Gender

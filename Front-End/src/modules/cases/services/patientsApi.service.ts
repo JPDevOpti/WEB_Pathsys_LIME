@@ -6,6 +6,7 @@ import type { PatientData } from '../types'
  * Interfaz para el request de crear paciente (según backend)
  */
 interface CreatePatientRequest {
+  paciente_code: string
   nombre: string
   edad: number
   sexo: string
@@ -14,7 +15,6 @@ interface CreatePatientRequest {
     nombre: string
   }
   tipo_atencion: string
-  cedula: string
   observaciones?: string
 }
 
@@ -78,37 +78,55 @@ export class PatientsApiService {
   async getPatientByCedula(cedula: string): Promise<PatientResponse | null> {
     try {
 
-      const response = await apiClient.get<PatientResponse>(`${this.endpoint}/cedula/${cedula}`)
+      const response = await apiClient.get<PatientResponse>(`${this.endpoint}/codigo/${cedula}`)
 
       return response
     } catch (error: any) {
       if (error.response?.status === 404) {
-
+        // Paciente no encontrado - esto es normal para crear uno nuevo
         return null
       }
-
-      throw new Error(error.message || `Error al buscar paciente con cédula ${cedula}`)
+      throw new Error(`Error al buscar paciente: ${error.message}`)
     }
   }
 
   /**
    * Actualiza los datos de un paciente existente
    * @param cedula - Cédula del paciente a actualizar
-   * @param patientData - Datos actualizados del paciente
+   * @param patientData - Datos actualizados del paciente (puede ser PatientData o formato directo del backend)
    * @returns Paciente actualizado
    */
-  async updatePatient(cedula: string, patientData: PatientData): Promise<PatientResponse> {
+  async updatePatient(cedula: string, patientData: any): Promise<PatientResponse> {
     try {
-
-
-      const patientRequest = this.buildPatientRequest(patientData)
+      // Si es PatientData, construir el request; si no, usar directamente
+      const patientRequest = patientData.pacienteCode ? this.buildPatientRequest(patientData) : patientData
+      
+      // Debug: mostrar qué se está enviando
+      console.log('Service - Datos enviados al backend:', patientRequest)
+      console.log('Service - Endpoint:', `${this.endpoint}/${cedula}`)
+      
       const response = await apiClient.put<PatientResponse>(`${this.endpoint}/${cedula}`, patientRequest)
-
-
       return response
     } catch (error: any) {
-
-      throw new Error(error.message || `Error al actualizar el paciente con cédula ${cedula}`)
+      // Mejorar el manejo de errores para mostrar detalles de validación
+      if (error.response?.data?.detail) {
+        let errorMessage = 'Error de validación: '
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage += error.response.data.detail.map((err: any) => {
+            if (typeof err === 'object' && err !== null) {
+              return err.msg || err.loc?.join('.') || JSON.stringify(err)
+            }
+            return String(err)
+          }).join(', ')
+        } else {
+          errorMessage += JSON.stringify(error.response.data.detail)
+        }
+        throw new Error(errorMessage)
+      } else if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      } else {
+        throw new Error(error.message || `Error al actualizar el paciente con cédula ${cedula}`)
+      }
     }
   }
 
@@ -140,7 +158,7 @@ export class PatientsApiService {
     const errors: string[] = []
 
     // Validar cédula
-    if (!patientData.numeroCedula || patientData.numeroCedula.length < 6 || patientData.numeroCedula.length > 10) {
+    if (!patientData.pacienteCode || patientData.pacienteCode.length < 6 || patientData.pacienteCode.length > 10) {
       errors.push('La cédula debe tener entre 6 y 10 dígitos')
     }
 
@@ -187,15 +205,15 @@ export class PatientsApiService {
    */
   private buildPatientRequest(patientData: PatientData): CreatePatientRequest {
     return {
+      paciente_code: patientData.pacienteCode,
       nombre: patientData.nombrePaciente,
       edad: parseInt(patientData.edad),
-      sexo: this.mapGenderToApiFormat(patientData.sexo),
+      sexo: patientData.sexo, // Ya está en el formato correcto del backend
       entidad_info: {
         id: patientData.entidadCodigo || this.extractEntityId(patientData.entidad),
         nombre: patientData.entidad
       },
-      tipo_atencion: this.mapAttentionTypeToApiFormat(patientData.tipoAtencion),
-      cedula: patientData.numeroCedula,
+      tipo_atencion: patientData.tipoAtencion, // Ya está en el formato correcto del backend
       observaciones: patientData.observaciones || undefined
     }
   }
