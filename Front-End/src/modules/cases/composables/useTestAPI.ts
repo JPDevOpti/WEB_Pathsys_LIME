@@ -13,51 +13,29 @@ export function useTestAPI() {
 
     try {
       const response = await testsApiService.getTests()
-      
-      // Actualizar el estado local con las pruebas cargadas
       tests.value = response.pruebas || []
-      
-      return {
-        success: true,
-        tests: tests.value
-      }
+      return { success: true, tests: tests.value }
     } catch (err: any) {
       error.value = err.message || 'Error al cargar las pruebas'
-      
-      return {
-        success: false,
-        error: error.value
-      }
+      return { success: false, error: error.value }
     } finally {
       isLoading.value = false
     }
   }
 
   const searchTests = async (query: string): Promise<TestOperationResult> => {
-    if (!query.trim()) {
-      return await loadTests()
-    }
+    if (!query.trim()) return await loadTests()
 
     isLoading.value = true
     error.value = ''
 
     try {
       const results = await testsApiService.searchTests(query)
-      
-      // Actualizar el estado local con los resultados de búsqueda
       tests.value = results || []
-      
-      return {
-        success: true,
-        tests: tests.value
-      }
+      return { success: true, tests: tests.value }
     } catch (err: any) {
       error.value = err.message || 'Error al buscar pruebas'
-      
-      return {
-        success: false,
-        error: error.value
-      }
+      return { success: false, error: error.value }
     } finally {
       isLoading.value = false
     }
@@ -70,24 +48,11 @@ export function useTestAPI() {
     try {
       const test = await testsApiService.getTestByCode(pruebaCode)
       
-      if (test) {
-        return {
-          success: true,
-          test
-        }
-      } else {
-        return {
-          success: false,
-          error: 'Prueba no encontrada'
-        }
-      }
+      if (test) return { success: true, test }
+      else return { success: false, error: 'Prueba no encontrada' }
     } catch (err: any) {
       error.value = err.message || 'Error al obtener la prueba'
-      
-      return {
-        success: false,
-        error: error.value
-      }
+      return { success: false, error: error.value }
     } finally {
       isLoading.value = false
     }
@@ -100,12 +65,6 @@ export function useTestAPI() {
   }
 
   return {
-    tests,
-    isLoading,
-    error,
-    loadTests,
-    searchTests,
-    getTestByCode,
-    clearState
+    tests, isLoading, error, loadTests, searchTests, getTestByCode, clearState
   }
 }

@@ -2,34 +2,22 @@ import { apiClient } from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 import type { PatientData } from '../types'
 
-/**
- * Interfaz para el request de crear paciente (según backend)
- */
 interface CreatePatientRequest {
   paciente_code: string
   nombre: string
   edad: number
   sexo: string
-  entidad_info: {
-    id: string
-    nombre: string
-  }
+  entidad_info: { id: string; nombre: string }
   tipo_atencion: string
   observaciones?: string
 }
 
-/**
- * Interfaz para la respuesta del paciente creado (según backend)
- */
 interface PatientResponse {
-  id: string // El ID es igual a la cédula
+  id: string
   nombre: string
   edad: number
   sexo: string
-  entidad_info: {
-    id: string
-    nombre: string
-  }
+  entidad_info: { id: string; nombre: string }
   tipo_atencion: string
   cedula: string
   observaciones?: string
@@ -38,77 +26,68 @@ interface PatientResponse {
   id_casos: string[]
 }
 
-/**
- * Servicio específico para operaciones de pacientes
- * Maneja ÚNICAMENTE la colección de pacientes, NO casos
- */
 export class PatientsApiService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.PATIENTS
 
-  // ============================================================================
-  // FUNCIONES PRINCIPALES
-  // ============================================================================
-
-  /**
-   * Crea un paciente en la colección de pacientes
-   * @param patientData - Datos del paciente a crear
-   * @returns Paciente creado
-   */
   async createPatient(patientData: PatientData): Promise<PatientResponse> {
     try {
-  
-
       const patientRequest = this.buildPatientRequest(patientData)
       const response = await apiClient.post<PatientResponse>(this.endpoint, patientRequest)
-      
-
       return response
-
     } catch (error: any) {
-
-      throw new Error(error.message || 'Error al registrar el paciente')
+      if (error.response?.data?.detail) {
+        let errorMessage = 'Error de validación: '
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage += error.response.data.detail.map((err: any) => {
+            if (typeof err === 'object' && err !== null) {
+              return err.msg || err.loc?.join('.') || JSON.stringify(err)
+            }
+            return String(err)
+          }).join(', ')
+        } else {
+          errorMessage += JSON.stringify(error.response.data.detail)
+        }
+        throw new Error(errorMessage)
+      } else if (error.response?.data?.message) {
+        const message = String(error.response.data.message)
+        if (message.toLowerCase().includes('duplicad') || message.toLowerCase().includes('ya existe') || message.toLowerCase().includes('repetid')) {
+          throw new Error('Ya existe un paciente con este número de identificación')
+        }
+        throw new Error(message)
+      } else if (error.response?.status === 409) {
+        throw new Error('Ya existe un paciente con este número de identificación')
+      } else if (error.response?.status === 400) {
+        throw new Error('Datos del paciente inválidos')
+      } else if (error.response?.status === 422) {
+        throw new Error('Error de validación en los datos del paciente')
+      } else if (error.response?.status === 500) {
+        const errorText = error.message || 'Error interno del servidor'
+        if (errorText.toLowerCase().includes('duplicad') || errorText.toLowerCase().includes('ya existe') || errorText.toLowerCase().includes('repetid')) {
+          throw new Error('Ya existe un paciente con este número de identificación')
+        }
+        throw new Error('Error interno del servidor al registrar el paciente')
+      } else {
+        throw new Error(error.message || 'Error interno del servidor al registrar el paciente')
+      }
     }
   }
 
-  /**
-   * Busca un paciente por cédula
-   * @param cedula - Número de cédula del paciente
-   * @returns Paciente encontrado o null
-   */
   async getPatientByCedula(cedula: string): Promise<PatientResponse | null> {
     try {
-
       const response = await apiClient.get<PatientResponse>(`${this.endpoint}/codigo/${cedula}`)
-
       return response
     } catch (error: any) {
-      if (error.response?.status === 404) {
-        // Paciente no encontrado - esto es normal para crear uno nuevo
-        return null
-      }
+      if (error.response?.status === 404) return null
       throw new Error(`Error al buscar paciente: ${error.message}`)
     }
   }
 
-  /**
-   * Actualiza los datos de un paciente existente
-   * @param cedula - Cédula del paciente a actualizar
-   * @param patientData - Datos actualizados del paciente (puede ser PatientData o formato directo del backend)
-   * @returns Paciente actualizado
-   */
   async updatePatient(cedula: string, patientData: any): Promise<PatientResponse> {
     try {
-      // Si es PatientData, construir el request; si no, usar directamente
       const patientRequest = patientData.pacienteCode ? this.buildPatientRequest(patientData) : patientData
-      
-      // Debug: mostrar qué se está enviando
-      console.log('Service - Datos enviados al backend:', patientRequest)
-      console.log('Service - Endpoint:', `${this.endpoint}/${cedula}`)
-      
       const response = await apiClient.put<PatientResponse>(`${this.endpoint}/${cedula}`, patientRequest)
       return response
     } catch (error: any) {
-      // Mejorar el manejo de errores para mostrar detalles de validación
       if (error.response?.data?.detail) {
         let errorMessage = 'Error de validación: '
         if (Array.isArray(error.response.data.detail)) {
@@ -130,142 +109,62 @@ export class PatientsApiService {
     }
   }
 
-  /**
-   * Verifica si un paciente ya existe en el sistema
-   * @param cedula - Número de cédula a verificar
-   * @returns true si el paciente existe
-   */
   async checkPatientExists(cedula: string): Promise<boolean> {
     try {
       const patient = await this.getPatientByCedula(cedula)
       return patient !== null
     } catch (error) {
-      // Si hay error (ej: 404), asumimos que no existe
       return false
     }
   }
 
-  // ============================================================================
-  // FUNCIONES DE VALIDACIÓN
-  // ============================================================================
-
-  /**
-   * Valida datos del paciente antes del envío
-   * @param patientData - Datos del paciente a validar
-   * @returns Resultado de la validación
-   */
   validatePatientData(patientData: PatientData): { isValid: boolean; errors: string[] } {
     const errors: string[] = []
 
-    // Validar cédula
     if (!patientData.pacienteCode || patientData.pacienteCode.length < 6 || patientData.pacienteCode.length > 10) {
       errors.push('La cédula debe tener entre 6 y 10 dígitos')
     }
 
-    // Validar nombre
     if (!patientData.nombrePaciente || patientData.nombrePaciente.length < 2) {
       errors.push('El nombre debe tener al menos 2 caracteres')
     }
 
-    // Validar edad
     const edad = parseInt(patientData.edad)
     if (!edad || edad < 0 || edad > 150) {
       errors.push('La edad debe ser un número válido entre 0 y 150')
     }
 
-    // Validar sexo
-    if (!patientData.sexo) {
-      errors.push('Debe seleccionar el sexo del paciente')
-    }
+    if (!patientData.sexo) errors.push('Debe seleccionar el sexo del paciente')
+    if (!patientData.entidad) errors.push('Debe seleccionar una entidad de salud')
+    if (!patientData.tipoAtencion) errors.push('Debe seleccionar el tipo de atención')
 
-    // Validar entidad
-    if (!patientData.entidad) {
-      errors.push('Debe seleccionar una entidad de salud')
-    }
-
-    // Validar tipo de atención
-    if (!patientData.tipoAtencion) {
-      errors.push('Debe seleccionar el tipo de atención')
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    }
+    return { isValid: errors.length === 0, errors }
   }
 
-  // ============================================================================
-  // FUNCIONES DE TRANSFORMACIÓN
-  // ============================================================================
-
-  /**
-   * Construye el request para crear paciente
-   * @param patientData - Datos del paciente del formulario
-   * @returns Request formateado para la API
-   */
   private buildPatientRequest(patientData: PatientData): CreatePatientRequest {
     return {
       paciente_code: patientData.pacienteCode,
       nombre: patientData.nombrePaciente,
       edad: parseInt(patientData.edad),
-      sexo: patientData.sexo, // Ya está en el formato correcto del backend
+      sexo: patientData.sexo,
       entidad_info: {
         id: patientData.entidadCodigo || this.extractEntityId(patientData.entidad),
         nombre: patientData.entidad
       },
-      tipo_atencion: patientData.tipoAtencion, // Ya está en el formato correcto del backend
+      tipo_atencion: patientData.tipoAtencion,
       observaciones: patientData.observaciones || undefined
     }
   }
 
-  /**
-   * Mapea el género del formulario al formato de la API
-   * @param gender - Género del formulario
-   * @returns Género formateado para la API
-   */
-  private mapGenderToApiFormat(gender: string): string {
-    const genderMap: Record<string, string> = {
-      'masculino': 'Masculino',
-      'femenino': 'Femenino',
-      '': 'Otro'
-    }
-    return genderMap[gender] || 'Otro'
-  }
-
-  /**
-   * Mapea el tipo de atención del formulario al formato de la API
-   * @param attentionType - Tipo de atención del formulario
-   * @returns Tipo de atención formateado para la API
-   */
-  private mapAttentionTypeToApiFormat(attentionType: string): string {
-    const attentionMap: Record<string, string> = {
-      'ambulatorio': 'Ambulatorio',
-      'hospitalizado': 'Hospitalizado',
-      '': 'Particular'
-    }
-    return attentionMap[attentionType] || 'Particular'
-  }
-
-  /**
-   * Extrae el ID de entidad del nombre (simplificado)
-   * TODO: En el futuro esto debería venir de un servicio de entidades
-   * @param entityName - Nombre de la entidad
-   * @returns ID de la entidad
-   */
   private extractEntityId(entityName: string): string {
-    // Por ahora usar IDs conocidos según la documentación
     const entityMap: Record<string, string> = {
-      'EPS Sanitas': 'ent_001',
-      'Sura': 'ent_002',
-      'Nueva EPS': 'ent_003',
-      'Compensar': 'ent_004',
-      'Particular': 'ent_999'
+      'EPS Sanitas': 'ent_001', 'Sura': 'ent_002', 'Nueva EPS': 'ent_003',
+      'Compensar': 'ent_004', 'Particular': 'ent_999'
     }
     
-    return entityMap[entityName] || 'ent_001' // Default a EPS Sanitas
+    return entityMap[entityName] || 'ent_001'
   }
 }
 
-// Exportar instancia singleton
 export const patientsApiService = new PatientsApiService()
 export default patientsApiService

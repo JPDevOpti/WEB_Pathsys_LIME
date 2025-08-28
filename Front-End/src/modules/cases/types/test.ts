@@ -1,10 +1,3 @@
-/**
- * Tipos para el manejo de pruebas médicas
- */
-
-/**
- * Información básica de una prueba médica
- */
 export interface TestDetails {
   id: string
   pruebaCode: string
@@ -16,9 +9,6 @@ export interface TestDetails {
   fechaActualizacion?: string
 }
 
-/**
- * Parámetros de búsqueda para pruebas
- */
 export interface TestSearchParams {
   query?: string
   activo?: boolean
@@ -26,9 +16,6 @@ export interface TestSearchParams {
   limit?: number
 }
 
-/**
- * Response de lista de pruebas con paginación
- */
 export interface TestListResponse {
   pruebas: TestDetails[]
   total: number
@@ -38,9 +25,6 @@ export interface TestListResponse {
   has_prev: boolean
 }
 
-/**
- * Resultado de operaciones con pruebas
- */
 export interface TestOperationResult {
   success: boolean
   test?: TestDetails
@@ -49,9 +33,6 @@ export interface TestOperationResult {
   error?: string
 }
 
-/**
- * Opción para selector de pruebas
- */
 export interface TestSelectOption {
   value: string
   label: string

@@ -15,7 +15,7 @@ from ..schemas import (
 )
 from ..schemas import PacienteStats
 from ..repositories import PacienteRepository
-from app.core.exceptions import NotFoundError, BadRequestError
+from app.core.exceptions import NotFoundError, BadRequestError, ConflictError
 
 
 class PacienteService:
@@ -28,13 +28,20 @@ class PacienteService:
         """Crear un nuevo paciente"""
         logger.info(f"Creando nuevo paciente: {paciente.paciente_code}")
         
-        # Validaciones adicionales de negocio
-        await self._validate_paciente_data(paciente)
-        
-        # Crear el paciente
-        paciente_data = await self.repository.create(paciente)
-        logger.info(f"Paciente creado exitosamente: {paciente.paciente_code}")
-        return PacienteResponse(**paciente_data)
+        try:
+            # Validaciones adicionales de negocio
+            await self._validate_paciente_data(paciente)
+            
+            # Crear el paciente
+            paciente_data = await self.repository.create(paciente)
+            logger.info(f"Paciente creado exitosamente: {paciente.paciente_code}")
+            return PacienteResponse(**paciente_data)
+        except ConflictError as e:
+            logger.warning(f"Conflicto al crear paciente {paciente.paciente_code}: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Error inesperado creando paciente {paciente.paciente_code}: {str(e)}")
+            raise
 
     async def get_paciente_by_id(self, paciente_id: str) -> PacienteResponse:
         """Obtener un paciente por su ID"""

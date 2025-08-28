@@ -1,39 +1,14 @@
 import { CASE_STATES, ATTENTION_TYPES, GENDER_OPTIONS } from '@/core/config/api.config'
 
-// ============================================================================
-// TIPOS BÁSICOS
-// ============================================================================
-
-/**
- * Tipos de estado de caso
- */
 export type CaseState = typeof CASE_STATES[keyof typeof CASE_STATES]
-
-/**
- * Tipos de atención médica
- */
 export type AttentionType = typeof ATTENTION_TYPES[keyof typeof ATTENTION_TYPES]
-
-/**
- * Opciones de género
- */
 export type Gender = typeof GENDER_OPTIONS[keyof typeof GENDER_OPTIONS]
 
-// ============================================================================
-// INTERFACES DE INFORMACIÓN
-// ============================================================================
-
-/**
- * Información de entidad de salud
- */
 export interface EntityInfo {
   codigo: string
   nombre: string
 }
 
-/**
- * Información del paciente dentro del caso
- */
 export interface PatientInfo {
   paciente_code: string
   nombre: string
@@ -45,44 +20,25 @@ export interface PatientInfo {
   fecha_actualizacion: string
 }
 
-/**
- * Información del médico solicitante
- */
 export interface DoctorInfo {
   nombre: string
 }
 
-/**
- * Información de una prueba médica
- */
 export interface TestInfo {
   id: string
   nombre: string
 }
 
-/**
- * Información de una muestra
- */
 export interface SampleInfo {
   region_cuerpo: string
   pruebas: TestInfo[]
 }
 
-/**
- * Información del patólogo asignado
- */
 export interface PathologistInfo {
   codigo: string
   nombre: string
 }
 
-// ============================================================================
-// INTERFACES DE RESULTADOS
-// ============================================================================
-
-/**
- * Resultado del caso médico
- */
 export interface CaseResult {
   tipo_resultado?: string
   resultado_macro?: string
@@ -91,25 +47,10 @@ export interface CaseResult {
   firmado?: boolean
   fecha_firma?: string
   patologo_firma?: string
-  diagnostico_cie10?: {
-    id: string
-    codigo: string
-    nombre: string
-  }
-  diagnostico_cieo?: {
-    id: string
-    codigo: string
-    nombre: string
-  }
+  diagnostico_cie10?: { id: string; codigo: string; nombre: string }
+  diagnostico_cieo?: { id: string; codigo: string; nombre: string }
 }
 
-// ============================================================================
-// INTERFACES PRINCIPALES
-// ============================================================================
-
-/**
- * Modelo completo del caso médico (según backend)
- */
 export interface CaseModel {
   _id?: string
   CasoCode: string
@@ -130,30 +71,15 @@ export interface CaseModel {
   activo?: boolean
 }
 
-/**
- * Información básica del caso para listas
- */
 export interface CaseListItem {
   _id: string
   CasoCode: string
-  paciente: {
-    nombre: string
-    cedula: string
-  }
+  paciente: { nombre: string; cedula: string }
   estado: CaseState
   fecha_ingreso: string
-  patologo_asignado?: {
-    nombre: string
-  }
+  patologo_asignado?: { nombre: string }
 }
 
-// ============================================================================
-// INTERFACES DE ESTADÍSTICAS
-// ============================================================================
-
-/**
- * Estadísticas del sistema de casos
- */
 export interface CaseStatistics {
   total_casos: number
   casos_pendientes: number

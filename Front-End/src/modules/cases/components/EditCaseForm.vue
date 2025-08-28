@@ -51,7 +51,6 @@
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-              <div><span class="font-medium text-green-700">Código del Caso:</span><p class="text-green-800 font-mono">{{ foundCaseInfo.CasoCode || 'N/A' }}</p></div>
               <div><span class="font-medium text-green-700">Nombre del Paciente:</span><p class="text-green-800 break-words">{{ foundCaseInfo.paciente?.nombre || 'N/A' }}</p></div>
               <div><span class="font-medium text-green-700">Cédula del Paciente:</span><p class="text-green-800 font-mono">{{ foundCaseInfo.paciente?.paciente_code || 'N/A' }}</p></div>
               <div><span class="font-medium text-green-700">Edad:</span><p class="text-green-800">{{ foundCaseInfo.paciente?.edad || 'N/A' }} años</p></div>

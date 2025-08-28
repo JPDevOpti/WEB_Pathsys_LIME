@@ -8,14 +8,12 @@ export interface BodyRegionItem {
 }
 
 class BodyRegionsApiService {
-  private readonly endpoint = API_CONFIG.ENDPOINTS.BODY_REGIONS
+  private readonly endpoint = API_CONFIG.ENDPOINTS.CASES
 
   async getAll(): Promise<BodyRegionItem[]> {
-    const response = await apiClient.get(`${this.endpoint}/`)
+    const response = await apiClient.get(`${this.endpoint}/body-regions`)
     const data = response.data
-    if (Array.isArray(data)) return data as BodyRegionItem[]
-    if (Array.isArray(data?.items)) return data.items as BodyRegionItem[]
-    return []
+    return Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : []
   }
 }
 

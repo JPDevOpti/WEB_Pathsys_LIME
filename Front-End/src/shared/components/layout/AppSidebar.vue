@@ -359,7 +359,7 @@ const filteredMenuItems = computed(() => {
       alwaysVisible: true
     },
     {
-      name: "Casos",
+      name: "Gestión de casos",
       icon: ListIcon,
       subItems: [
         { name: "Nuevo Caso", path: "/cases/new", pro: false, alwaysVisible: true },

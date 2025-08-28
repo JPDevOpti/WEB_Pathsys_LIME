@@ -18,7 +18,7 @@ from app.modules.pacientes.schemas import (
 )
 from ..services import get_paciente_service, PacienteService
 from app.config.database import get_database
-from app.core.exceptions import NotFoundError, BadRequestError
+from app.core.exceptions import NotFoundError, BadRequestError, ConflictError
 
 
 # Crear el router
@@ -41,6 +41,9 @@ async def create_paciente(
     try:
         logger.info(f"Creando nuevo paciente: {paciente.paciente_code}")
         return await service.create_paciente(paciente)
+    except ConflictError as e:
+        logger.warning(f"Conflicto al crear paciente: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except BadRequestError as e:
         logger.warning(f"Error de validación al crear paciente: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
