@@ -77,17 +77,19 @@ export class EntitiesApiService {
       
       // Transformar los datos al formato esperado
       const result: EntityDetails = {
-        entidad: {
-          codigo: entityCode,
-          nombre: detalles.entidad?.nombre || 'Entidad no especificada'
+        estadisticas_basicas: {
+          total_pacientes: detalles.total_casos || 0,
+          ambulatorios: detalles.ambulatorios || 0,
+          hospitalizados: detalles.hospitalizados || 0,
+          promedio_muestras_por_paciente: detalles.promedio_muestras_por_paciente || 0
         },
-        periodo: period,
-        totalCasos: detalles.total_casos || 0,
-        casosCompletados: detalles.casos_completados || 0,
-        casosPendientes: detalles.casos_pendientes || 0,
-        tiempoPromedio: detalles.tiempo_promedio || 0,
-        casosPorMes: detalles.casos_por_mes || [],
-        casosPorPatologo: detalles.casos_por_patologo || []
+        tiempos_procesamiento: {
+          promedio_dias: detalles.tiempo_promedio || 0,
+          minimo_dias: detalles.tiempo_minimo || 0,
+          maximo_dias: detalles.tiempo_maximo || 0,
+          muestras_completadas: detalles.casos_completados || 0
+        },
+        pruebas_mas_solicitadas: detalles.pruebas_mas_solicitadas || []
       }
       
       return result

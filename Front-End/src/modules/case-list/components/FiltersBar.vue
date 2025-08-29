@@ -38,8 +38,8 @@
         <PathologistList 
           v-model="pathologistCode" 
           label="Patólogo" 
-          :placeholder="isPatologo.value ? 'Patólogo fijo (usted)' : 'Buscar y seleccionar patólogo...'" 
-          :disabled="isPatologo.value"
+          :placeholder="isPatologo ? 'Patólogo fijo (usted)' : 'Buscar y seleccionar patólogo...'" 
+          :disabled="isPatologo"
           @pathologist-selected="onPathologistSelected" 
         />
       </div>

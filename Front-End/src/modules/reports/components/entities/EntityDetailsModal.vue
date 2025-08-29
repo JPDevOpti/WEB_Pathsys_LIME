@@ -252,9 +252,12 @@ watch(() => props.entity, async (newEntity) => {
 
 // Función para cargar detalles de la entidad
 const loadEntityDetails = async () => {
+  if (!props.entity) return
+  
   try {
     isLoadingTests.value = true
-    const response = await entitiesApiService.getEntityDetails(props.entity.codigo, props.period)
+    const periodString = `${props.period.year}-${props.period.month.toString().padStart(2, '0')}`
+    const response = await entitiesApiService.getEntityDetails(props.entity.codigo, periodString)
     entityDetails.value = response
   } catch (error) {
     console.error('Error al cargar detalles de la entidad:', error)
@@ -265,18 +268,20 @@ const loadEntityDetails = async () => {
 
 // Función para cargar patólogos de la entidad
 const loadPathologists = async () => {
+  if (!props.entity) return
+  
   try {
-    const response = await entitiesApiService.getPathologistsByEntity(
-      props.entity.codigo, // Usar código en lugar de nombre
-      props.period.month,
-      props.period.year
+    const periodString = `${props.period.year}-${props.period.month.toString().padStart(2, '0')}`
+    const response = await entitiesApiService.getEntityPathologists(
+      props.entity.codigo,
+      periodString
     )
     
-    pathologistsData.value = response.patologos?.map((patologo: any) => ({
-      name: patologo.name,
+    pathologistsData.value = response.map((patologo: any) => ({
+      name: patologo.nombre,
       codigo: patologo.codigo,
-      casesCount: patologo.casesCount
-    })) || []
+      casesCount: patologo.totalCasos
+    }))
   } catch (error) {
     console.error('Error al cargar patólogos de la entidad:', error)
   }

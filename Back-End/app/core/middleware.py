@@ -20,24 +20,11 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
         
-        # Log del request
-        logger.info(
-            f"Request: {request.method} {request.url.path} - "
-            f"Client: {request.client.host if request.client else 'unknown'}"
-        )
-        
         try:
             response = await call_next(request)
             
             # Calcular tiempo de procesamiento
             process_time = time.time() - start_time
-            
-            # Log del response
-            logger.info(
-                f"Response: {response.status_code} - "
-                f"Time: {process_time:.4f}s - "
-                f"Path: {request.url.path}"
-            )
             
             # Agregar header con tiempo de procesamiento
             response.headers["X-Process-Time"] = str(process_time)
@@ -101,5 +88,3 @@ def setup_middleware(app):
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(ExceptionHandlerMiddleware)
     app.add_middleware(LoggingMiddleware)
-    
-    logger.info("Middlewares configurados correctamente")
