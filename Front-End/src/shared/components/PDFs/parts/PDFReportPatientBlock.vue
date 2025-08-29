@@ -1,35 +1,40 @@
 <template>
-  <div class="patient-block">
-    <h3 class="section-title">INFORMACIÓN DEL PACIENTE</h3>
-    <div class="patient-info">
-      <div class="info-row">
-        <div class="info-item">
-          <span class="label">Nombre:</span>
-          <span class="value">{{ patientName }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Documento:</span>
-          <span class="value">{{ patientDocument }}</span>
-        </div>
-      </div>
-      <div class="info-row">
-        <div class="info-item">
-          <span class="label">Edad:</span>
-          <span class="value">{{ patientAge }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Sexo:</span>
-          <span class="value">{{ patientSex }}</span>
-        </div>
-      </div>
-      <div class="info-row">
-        <div class="info-item">
-          <span class="label">Entidad:</span>
-          <span class="value">{{ patientEntity }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Tipo de Atención:</span>
-          <span class="value">{{ patientAttentionType }}</span>
+  <div class="report-content text-xs space-y-3">
+    <div class="section-muestra">
+      <h3 class="font-semibold mb-1 text-sm">MUESTRA:</h3>
+      <div class="whitespace-pre-wrap">{{ buildSamplesDescription(caseItem?.caseDetails?.muestras) }}</div>
+    </div>
+
+    <div class="section-macro">
+      <h3 class="font-semibold mb-1 text-sm">DESCRIPCIÓN MACROSCÓPICA</h3>
+      <div class="whitespace-pre-wrap break-words overflow-hidden">{{ caseItem?.sections?.macro || '—' }}</div>
+    </div>
+
+    <div class="section-micro">
+      <h3 class="font-semibold mb-1 text-sm">DESCRIPCIÓN MICROSCÓPICA</h3>
+      <div class="whitespace-pre-wrap break-words overflow-hidden">{{ caseItem?.sections?.micro || '—' }}</div>
+    </div>
+
+    <div class="section-metodo">
+      <h3 class="font-semibold mb-1 text-sm">MÉTODO UTILIZADO</h3>
+      <div class="whitespace-pre-wrap break-words overflow-hidden">{{ caseItem?.sections?.method || '—' }}</div>
+    </div>
+
+    <div class="section-diagnostico">
+      <h3 class="font-semibold mb-1 text-sm">DIAGNÓSTICO</h3>
+      <div class="whitespace-pre-wrap mt-1 pt-1">
+        <div>{{ getDiagnosisText(caseItem?.sections, caseItem?.diagnosis) || '—' }}</div>
+        <div class="mt-2 text-xs text-gray-800">
+          <div class="mb-1">
+            <strong>CIE-10:</strong> {{ (caseItem?.diagnosis?.cie10?.primary?.codigo || caseItem?.diagnosis?.cie10?.codigo) ?? '—' }}
+            <template v-if="(caseItem?.diagnosis?.cie10?.primary?.nombre || caseItem?.diagnosis?.cie10?.nombre)">
+              - {{ caseItem?.diagnosis?.cie10?.primary?.nombre || caseItem?.diagnosis?.cie10?.nombre }}
+            </template>
+          </div>
+          <div class="mb-1">
+            <strong>CIE-O:</strong> {{ caseItem?.diagnosis?.cieo?.codigo ?? '—' }}
+            <template v-if="caseItem?.diagnosis?.cieo?.nombre"> - {{ caseItem.diagnosis.cieo.nombre }}</template>
+          </div>
         </div>
       </div>
     </div>
@@ -37,121 +42,68 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 interface CaseItem {
-  patient?: {
-    nombre?: string
-    paciente_code?: string
-    edad?: number
-    sexo?: string
-    entidad_info?: {
-      nombre?: string
-    }
-    tipo_atencion?: string
-  }
   caseDetails?: {
-    paciente?: {
-      nombre?: string
-      paciente_code?: string
-      edad?: number
-      sexo?: string
-      entidad_info?: {
-        nombre?: string
-      }
-      tipo_atencion?: string
-    }
+    muestras?: any[]
   }
-  recibidoNumero?: string
+  sections?: {
+    macro?: string
+    micro?: string
+    method?: string
+    diagnosis?: string
+  }
+  diagnosis?: {
+    cie10?: {
+      codigo?: string
+      nombre?: string
+      primary?: any
+    }
+    cieo?: {
+      codigo?: string
+      nombre?: string
+    }
+    formatted?: string
+  }
 }
 
-const props = defineProps<{
+defineProps<{
   caseItem?: CaseItem
   recibidoNumero?: string
 }>()
 
-const patientName = computed(() => {
-  return props.caseItem?.patient?.nombre || 
-         props.caseItem?.caseDetails?.paciente?.nombre || 
-         'N/A'
-})
+function buildSamplesDescription(list: any[] | undefined): string {
+  if (!list || list.length === 0) return '—'
+  return list.map(it => `${it.region_cuerpo}: ${it.pruebas?.map((p: any) => {
+    if (p.id === p.nombre) {
+      return p.id
+    }
+    return `${p.id} - ${p.nombre}`
+  }).join(', ')}`).join(' | ')
+}
 
-const patientDocument = computed(() => {
-  return props.caseItem?.patient?.paciente_code || 
-         props.caseItem?.caseDetails?.paciente?.paciente_code || 
-         'N/A'
-})
-
-const patientAge = computed(() => {
-  const age = props.caseItem?.patient?.edad || 
-              props.caseItem?.caseDetails?.paciente?.edad
-  return age ? `${age} años` : 'N/A'
-})
-
-const patientSex = computed(() => {
-  return props.caseItem?.patient?.sexo || 
-         props.caseItem?.caseDetails?.paciente?.sexo || 
-         'N/A'
-})
-
-const patientEntity = computed(() => {
-  return props.caseItem?.patient?.entidad_info?.nombre || 
-         props.caseItem?.caseDetails?.paciente?.entidad_info?.nombre || 
-         'N/A'
-})
-
-const patientAttentionType = computed(() => {
-  return props.caseItem?.patient?.tipo_atencion || 
-         props.caseItem?.caseDetails?.paciente?.tipo_atencion || 
-         'N/A'
-})
+function getDiagnosisText(
+  sec?: { diagnosis?: string } | null,
+  diag?: { formatted?: string } | null
+): string {
+  const formatted = (diag?.formatted ?? '').toString().trim()
+  if (formatted) return formatted
+  const free = (sec?.diagnosis ?? '').toString().trim()
+  return free
+}
 </script>
 
 <style scoped>
-.patient-block {
-  margin: 20px 0;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #fafafa;
+.report-content {
+  margin-bottom: 1rem;
 }
 
-.section-title {
-  font-size: 14px;
-  font-weight: bold;
-  margin: 0 0 15px 0;
-  color: #333;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 5px;
+.report-content > div {
+  margin-bottom: 0.75rem;
 }
 
-.patient-info {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.info-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.label {
-  font-weight: bold;
-  color: #333;
-  font-size: 12px;
-}
-
-.value {
-  color: #666;
-  font-size: 12px;
-  text-align: right;
+.report-content h3 {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 </style>

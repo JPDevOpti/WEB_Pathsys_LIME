@@ -1,104 +1,88 @@
 <template>
-  <div class="signature-block">
-    <div class="signature-content">
-      <div class="signature-line"></div>
-      <div class="signature-info">
-        <p class="signature-name">{{ signatureName }}</p>
-        <p class="signature-title">{{ signatureTitle }}</p>
-        <p class="signature-date">{{ signatureDate }}</p>
+  <div class="report-footer">
+    <div class="signature-section">
+      <div class="signature-container">
+        <div class="signature-line"></div>
+        <div class="signature-content">
+          <img 
+            v-if="caseItem?.caseDetails?.patologo_asignado?.firma" 
+            :src="caseItem.caseDetails.patologo_asignado.firma" 
+            alt="Firma del Patólogo" 
+            class="signature-image"
+          />
+          <div class="signature-text">Médico Patólogo: {{ caseItem?.caseDetails?.patologo_asignado?.nombre || '—' }}</div>
+        </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 interface CaseItem {
   caseDetails?: {
     patologo_asignado?: {
       nombre?: string
-    }
-    resultado?: {
-      patologo_firma?: string
-      fecha_firma?: string
+      firma?: string
     }
   }
 }
 
-const props = defineProps<{
+defineProps<{
   caseItem?: CaseItem
 }>()
-
-const signatureName = computed(() => {
-  return props.caseItem?.caseDetails?.resultado?.patologo_firma ||
-         props.caseItem?.caseDetails?.patologo_asignado?.nombre ||
-         'Dr. Patólogo'
-})
-
-const signatureTitle = computed(() => {
-  return 'Patólogo Anatomopatólogo'
-})
-
-const signatureDate = computed(() => {
-  const fechaFirma = props.caseItem?.caseDetails?.resultado?.fecha_firma
-  if (fechaFirma) {
-    try {
-      const date = new Date(fechaFirma)
-      return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
-    } catch {
-      return 'Fecha de firma'
-    }
-  }
-  return 'Fecha de firma'
-})
 </script>
 
 <style scoped>
-.signature-block {
-  margin: 30px 0;
-  display: flex;
-  justify-content: flex-end;
+.report-footer {
+  margin-top: 2rem;
 }
 
-.signature-content {
-  text-align: center;
-  min-width: 200px;
+.signature-section {
+  margin-bottom: 1rem;
+}
+
+.signature-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 300px;
+  margin: 0 auto;
 }
 
 .signature-line {
-  width: 150px;
-  height: 1px;
-  background-color: #333;
-  margin: 0 auto 10px auto;
+  border-top: 1px solid #000;
+  width: 100%;
+  margin-bottom: 8px;
 }
 
-.signature-info {
+.signature-content {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  align-items: center;
+  gap: 8px;
 }
 
-.signature-name {
-  font-weight: bold;
+.signature-image {
+  max-width: 120px;
+  max-height: 60px;
+  object-fit: contain;
+  background: transparent !important;
+  mix-blend-mode: multiply;
+}
+
+.signature-text {
   font-size: 12px;
-  margin: 0;
-  color: #333;
+  text-align: center;
+  font-weight: 500;
 }
 
-.signature-title {
-  font-size: 10px;
-  margin: 0;
-  color: #666;
-}
-
-.signature-date {
-  font-size: 10px;
-  margin: 0;
-  color: #666;
+@media print {
+  .signature-image {
+    background: transparent !important;
+    mix-blend-mode: multiply !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
 }
 </style>
