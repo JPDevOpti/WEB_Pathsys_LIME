@@ -24,12 +24,15 @@ from app.modules.casos.schemas.caso import (
     PatologoInfo as CasoPatologoInfo,
     MedicoInfo,
     ResultadoInfo,
+    DiagnosticoCIE10,
+    DiagnosticoCIEO,
 )
 from app.modules.pruebas.repositories.prueba_repository import PruebaRepository
 from app.modules.pruebas.models.prueba import PruebasItem
 from app.modules.patologos.repositories.patologo_repository import PatologoRepository
 from app.modules.entidades.repositories.entidad_repository import EntidadRepository
 from app.modules.entidades.models.entidad import EntidadSearch
+from app.modules.enfermedades.repositories.enfermedad_repository import EnfermedadRepository
 from app.shared.schemas.common import EstadoCasoEnum
 
 
@@ -226,6 +229,171 @@ async def load_pacientes(db, batch_size: int = 1000) -> List[Dict]:
     return pacientes
 
 
+async def load_enfermedades(db) -> Tuple[List[Dict], List[Dict]]:
+    """Carga enfermedades CIE10 y CIEO desde la base de datos"""
+    repo = EnfermedadRepository(db)
+    
+    # Cargar enfermedades CIE10
+    enfermedades_cie10 = []
+    skip = 0
+    limit = 1000
+    while True:
+        page = await repo.get_all(skip=skip, limit=limit, is_active=True)
+        if not page:
+            break
+        for enfermedad in page:
+            if enfermedad.tabla and "CIE10" in enfermedad.tabla.upper():
+                doc = enfermedad.model_dump()
+                enfermedades_cie10.append(doc)
+        if len(page) < limit:
+            break
+        skip += limit
+    
+    # Cargar enfermedades CIEO (cáncer)
+    enfermedades_cieo = []
+    skip = 0
+    while True:
+        page = await repo.get_all(skip=skip, limit=limit, is_active=True)
+        if not page:
+            break
+        for enfermedad in page:
+            if enfermedad.tabla and "CIEO" in enfermedad.tabla.upper():
+                doc = enfermedad.model_dump()
+                enfermedades_cieo.append(doc)
+        if len(page) < limit:
+            break
+        skip += limit
+    
+    print(f"Enfermedades cargadas: {len(enfermedades_cie10)} CIE10, {len(enfermedades_cieo)} CIEO")
+    return enfermedades_cie10, enfermedades_cieo
+
+def generar_diagnostico_realista(region_cuerpo: str, enfermedades_cie10: List[Dict], enfermedades_cieo: List[Dict]) -> Tuple[Optional[DiagnosticoCIE10], Optional[DiagnosticoCIEO], str]:
+    """Genera un diagnóstico realista basado en la región del cuerpo y las enfermedades disponibles"""
+    
+    # Diagnósticos comunes por región del cuerpo
+    diagnosticos_por_region = {
+        "Mama": {
+            "cie10": ["N60", "N61", "C50", "D05"],
+            "cieo": ["C50", "D05"],
+            "descripciones": [
+                "Fibroadenoma de mama",
+                "Mastopatía fibroquística",
+                "Carcinoma ductal infiltrante",
+                "Carcinoma lobulillar in situ"
+            ]
+        },
+        "Pulmón": {
+            "cie10": ["J44", "J45", "C34"],
+            "cieo": ["C34"],
+            "descripciones": [
+                "Neumonía crónica",
+                "Bronquitis crónica",
+                "Carcinoma broncogénico"
+            ]
+        },
+        "Colon": {
+            "cie10": ["K51", "K57", "C18"],
+            "cieo": ["C18"],
+            "descripciones": [
+                "Colitis ulcerosa",
+                "Diverticulosis",
+                "Adenocarcinoma de colon"
+            ]
+        },
+        "Estómago": {
+            "cie10": ["K29", "K31", "C16"],
+            "cieo": ["C16"],
+            "descripciones": [
+                "Gastritis crónica",
+                "Úlcera gástrica",
+                "Adenocarcinoma gástrico"
+            ]
+        },
+        "Hígado": {
+            "cie10": ["K70", "K73", "C22"],
+            "cieo": ["C22"],
+            "descripciones": [
+                "Hepatitis crónica",
+                "Cirrosis hepática",
+                "Carcinoma hepatocelular"
+            ]
+        },
+        "Piel": {
+            "cie10": ["L23", "L40", "C44"],
+            "cieo": ["C44"],
+            "descripciones": [
+                "Dermatitis alérgica",
+                "Psoriasis",
+                "Carcinoma de células basales"
+            ]
+        }
+    }
+    
+    # Buscar región específica
+    region_encontrada = None
+    for region_key in diagnosticos_por_region:
+        if region_key.lower() in region_cuerpo.lower():
+            region_encontrada = region_key
+            break
+    
+    # Si no se encuentra región específica, usar diagnósticos generales
+    if not region_encontrada:
+        diagnosticos_generales = {
+            "cie10": ["D48", "D49", "N87", "K63"],
+            "cieo": ["C80"],
+            "descripciones": [
+                "Neoplasia de comportamiento incierto",
+                "Neoplasia no especificada",
+                "Displasia cervical",
+                "Pólipo intestinal"
+            ]
+        }
+        region_encontrada = "General"
+        diagnosticos_por_region[region_encontrada] = diagnosticos_generales
+    
+    # Seleccionar diagnóstico CIE10
+    diagnostico_cie10 = None
+    if enfermedades_cie10:
+        codigos_cie10 = diagnosticos_por_region[region_encontrada]["cie10"]
+        enfermedades_filtradas = [e for e in enfermedades_cie10 if any(codigo in e.get("codigo", "") for codigo in codigos_cie10)]
+        
+        if enfermedades_filtradas:
+            enfermedad_seleccionada = random.choice(enfermedades_filtradas)
+            diagnostico_cie10 = DiagnosticoCIE10(
+                id=str(enfermedad_seleccionada.get("_id") or enfermedad_seleccionada.get("id")),
+                codigo=enfermedad_seleccionada["codigo"],
+                nombre=enfermedad_seleccionada["nombre"]
+            )
+        else:
+            # Si no hay enfermedades filtradas, seleccionar una aleatoria
+            enfermedad_seleccionada = random.choice(enfermedades_cie10)
+            diagnostico_cie10 = DiagnosticoCIE10(
+                id=str(enfermedad_seleccionada.get("_id") or enfermedad_seleccionada.get("id")),
+                codigo=enfermedad_seleccionada["codigo"],
+                nombre=enfermedad_seleccionada["nombre"]
+            )
+    
+    # Seleccionar diagnóstico CIEO (solo para casos con alta probabilidad de cáncer)
+    diagnostico_cieo = None
+    if enfermedades_cieo and random.random() < 0.3:  # 30% de probabilidad de tener CIEO
+        codigos_cieo = diagnosticos_por_region[region_encontrada]["cieo"]
+        enfermedades_filtradas = [e for e in enfermedades_cieo if any(codigo in e.get("codigo", "") for codigo in codigos_cieo)]
+        
+        if enfermedades_filtradas:
+            enfermedad_seleccionada = random.choice(enfermedades_filtradas)
+            diagnostico_cieo = DiagnosticoCIEO(
+                id=str(enfermedad_seleccionada.get("_id") or enfermedad_seleccionada.get("id")),
+                codigo=enfermedad_seleccionada["codigo"],
+                nombre=enfermedad_seleccionada["nombre"]
+            )
+    
+    # Generar descripción del diagnóstico
+    descripciones = diagnosticos_por_region[region_encontrada]["descripciones"]
+    diagnostico_texto = random.choice(descripciones)
+    
+    return diagnostico_cie10, diagnostico_cieo, diagnostico_texto
+
+
 def build_pruebas_items(pruebas_catalog: List[Dict]) -> List[PruebasItem]:
     if not pruebas_catalog:
         return []
@@ -252,7 +420,9 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
         "con_patologo": 0,
         "sin_patologo": 0,
         "con_medico": 0,
-        "sin_medico": 0
+        "sin_medico": 0,
+        "con_diagnostico_cie10": 0,
+        "con_diagnostico_cieo": 0
     }
 
     db = await connect_to_mongo()
@@ -262,6 +432,7 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
         patologos = await load_patologos(db)
         pruebas_catalog = await load_pruebas(db)
         pacientes = await load_pacientes(db)
+        enfermedades_cie10, enfermedades_cieo = await load_enfermedades(db)
 
         if not pacientes:
             print("[WARN] No hay pacientes en la base de datos. Aborto.")
@@ -271,6 +442,8 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
             return 0, count
         if not patologos:
             print("[WARN] No hay patólogos activos. Continuaré creando casos sin patólogo_asignado.")
+
+        print(f"Enfermedades disponibles: {len(enfermedades_cie10)} CIE10, {len(enfermedades_cieo)} CIEO")
 
         current_num = start_number
         base_start_date = datetime(year, 1, 1)
@@ -527,28 +700,32 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 resultado_data = None
                 if estado_final in [EstadoCasoEnum.POR_FIRMAR, EstadoCasoEnum.POR_ENTREGAR, EstadoCasoEnum.COMPLETADO]:
                     from app.modules.casos.models.caso import ResultadoInfo as ModelResultadoInfo
+                    
+                    # Generar diagnóstico realista con enfermedades de la BD
+                    region_principal = muestras[0].region_cuerpo if muestras else "región no especificada"
+                    diagnostico_cie10, diagnostico_cieo, diagnostico_texto = generar_diagnostico_realista(
+                        region_principal, enfermedades_cie10, enfermedades_cieo
+                    )
+                    
+                    # Actualizar estadísticas de diagnósticos
+                    if diagnostico_cie10:
+                        stats["con_diagnostico_cie10"] += 1
+                    if diagnostico_cieo:
+                        stats["con_diagnostico_cieo"] += 1
+                    
                     resultado_data = ModelResultadoInfo(
                         metodo="Histopatología",
-                        resultado_macro="Muestra procesada correctamente. Tejido de características normales.",
+                        resultado_macro=f"Muestra de {region_principal.lower()} procesada correctamente. Tejido de características normales.",
                         resultado_micro="Arquitectura conservada. Sin alteraciones significativas observadas.",
-                        diagnostico=random.choice([
-                            "Proceso inflamatorio crónico leve",
-                            "Hiperplasia benigna",
-                            "Cambios reactivos inespecíficos",
-                            "Tejido normal sin alteraciones",
-                            "Proceso inflamatorio agudo resuelto",
-                            "Fibrosis leve",
-                            "Hiperplasia epitelial benigna",
-                            "Infiltrado linfocitario moderado",
-                            "Cambios degenerativos leves",
-                            "Proceso cicatricial maduro",
-                            "Hiperqueratosis benigna",
-                            "Metaplasia escamosa",
-                            "Adenoma tubular",
-                            "Lipoma benigno",
-                            "Quiste sebáceo"
-                        ])
+                        diagnostico=diagnostico_texto,
+                        diagnostico_cie10=diagnostico_cie10.model_dump() if diagnostico_cie10 else None,
+                        diagnostico_cieo=diagnostico_cieo.model_dump() if diagnostico_cieo else None,
+                        observaciones="Estudio histopatológico completo realizado según protocolos establecidos.",
+                        fecha_resultado=fecha_firma_final or fecha_creacion,
+                        firmado=estado_final in [EstadoCasoEnum.POR_ENTREGAR, EstadoCasoEnum.COMPLETADO],
+                        fecha_firma=fecha_firma_final
                     )
+
                 # Los casos EN_PROCESO no tienen resultado
                 
                 # Crear el caso completo - convertir objetos Pydantic a diccionarios
@@ -603,6 +780,8 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
             print(f"Sin patólogo asignado: {stats['sin_patologo']}")
             print(f"Con médico solicitante: {stats['con_medico']}")
             print(f"Sin médico solicitante: {stats['sin_medico']}")
+            print(f"Con diagnóstico CIE10: {stats['con_diagnostico_cie10']}")
+            print(f"Con diagnóstico CIEO: {stats['con_diagnostico_cieo']}")
             
             # Información adicional sobre casos recientes
             if stats['casos_recientes'] > 0:
