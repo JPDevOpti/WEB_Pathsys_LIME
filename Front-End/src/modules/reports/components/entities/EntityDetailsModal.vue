@@ -251,47 +251,20 @@ watch(() => props.entity, async (newEntity) => {
 }, { immediate: true })
 
 // Función para cargar detalles de la entidad
-async function loadEntityDetails() {
-  if (!props.entity) return
-  
-  console.log('🔍 Cargando detalles para entidad:', props.entity.nombre, 'código:', props.entity.codigo)
-  console.log('📅 Período:', props.period)
-  
-  isLoadingTests.value = true
+const loadEntityDetails = async () => {
   try {
-    const response = await entitiesApiService.getEntityDetails(
-      props.entity.codigo, // Usar código en lugar de nombre
-      props.period.month,
-      props.period.year
-    )
-    
-    console.log('✅ Respuesta del backend (detalles):', response)
+    isLoadingTests.value = true
+    const response = await entitiesApiService.getEntityDetails(props.entity.codigo, props.period)
     entityDetails.value = response
-    
-    // Cargar patólogos después de cargar los detalles
-    await loadPathologists()
-  } catch (err: any) {
-    console.error('❌ Error al cargar detalles:', err)
-    console.error('❌ Detalles del error:', {
-      message: err.message,
-      stack: err.stack,
-      entity: props.entity.nombre,
-      codigo: props.entity.codigo,
-      period: props.period
-    })
-    entityDetails.value = null
+  } catch (error) {
+    console.error('Error al cargar detalles de la entidad:', error)
   } finally {
     isLoadingTests.value = false
   }
 }
 
 // Función para cargar patólogos de la entidad
-async function loadPathologists() {
-  if (!props.entity) return
-  
-  console.log('👨‍⚕️ Cargando patólogos para entidad:', props.entity.nombre, 'código:', props.entity.codigo)
-  
-  isLoadingPathologists.value = true
+const loadPathologists = async () => {
   try {
     const response = await entitiesApiService.getPathologistsByEntity(
       props.entity.codigo, // Usar código en lugar de nombre
@@ -299,27 +272,13 @@ async function loadPathologists() {
       props.period.year
     )
     
-    console.log('✅ Respuesta del backend (patólogos):', response)
-    
     pathologistsData.value = response.patologos?.map((patologo: any) => ({
       name: patologo.name,
       codigo: patologo.codigo,
       casesCount: patologo.casesCount
     })) || []
-    
-    console.log('📊 Patólogos procesados:', pathologistsData.value)
-  } catch (error: any) {
-    console.error('❌ Error cargando patólogos:', error)
-    console.error('❌ Detalles del error:', {
-      message: error.message,
-      stack: error.stack,
-      entity: props.entity.nombre,
-      codigo: props.entity.codigo,
-      period: props.period
-    })
-    pathologistsData.value = []
-  } finally {
-    isLoadingPathologists.value = false
+  } catch (error) {
+    console.error('Error al cargar patólogos de la entidad:', error)
   }
 }
 

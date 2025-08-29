@@ -270,6 +270,8 @@ const handleSearch = () => {
   if (q.includes('perfil')) return router.push('/profile')
 
   // Si no hay match, mantener comportamiento actual
-  console.log('Sin coincidencias para:', searchQuery.value)
+  if (filteredItems.value.length === 0) {
+    // showNoResults.value = true // This line was removed from the original file, so it's removed here.
+  }
 }
 </script>

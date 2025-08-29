@@ -455,7 +455,7 @@ const loadCaseData = async () => {
  */
 const onSubmit = async () => {
   // Validar que hay datos para actualizar (ya sea desde props o búsqueda)
-  const caseCode = props.caseCodeProp || foundCaseInfo.value?.CasoCode
+  const caseCode = props.caseCodeProp || foundCaseInfo.value?.caso_code
   if (!isFormValid.value) {
     if (suppressValidation.value) {
       // Consumir la supresión y no mostrar error
@@ -502,7 +502,7 @@ const onSubmit = async () => {
         'ambulatorio': 'Ambulatorio',
         'hospitalizado': 'Hospitalizado'
       }
-      return mapping[tipo] || tipo
+      return mapping[tipo] || 'Ambulatorio'
     }
 
     const updateData = {
@@ -547,10 +547,11 @@ const onSubmit = async () => {
     // Actualizar colección de pacientes para mantener coherencia
     const sexoForm = (() => {
       const s = String(patientInfo.value?.sexo || '').toLowerCase()
-      if (s.startsWith('m')) return 'masculino'
-      if (s.startsWith('f')) return 'femenino'
-      return ''
+      if (s.startsWith('m')) return 'Masculino'
+      if (s.startsWith('f')) return 'Femenino'
+      return 'Masculino'
     })()
+    
     const patientDataToUpdate: PatientData = {
       pacienteCode: cedulaToUse,
       nombrePaciente: String(patientInfo.value?.nombre || ''),
@@ -558,7 +559,7 @@ const onSubmit = async () => {
       edad: String(patientInfo.value?.edad || ''),
       entidad: String(selectedEntity.value?.nombre || foundCaseInfo.value?.entidad_info?.nombre || ''),
       entidadCodigo: form.entidadPaciente,
-      tipoAtencion: form.tipoAtencionPaciente as any,
+      tipoAtencion: mapTipoAtencionToBackend(form.tipoAtencionPaciente) as any,
       observaciones: ''
     }
     try {

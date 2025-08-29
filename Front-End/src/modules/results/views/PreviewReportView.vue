@@ -54,7 +54,6 @@ function goBack() { router.back() }
 
 function handleAllSignaturesLoaded() {
   signaturesReady.value = true
-  console.log('✅ Todas las firmas están listas para la impresión')
 }
 
 async function downloadPdf() {
@@ -110,9 +109,6 @@ async function downloadPdf() {
       pageElement.style.breakInside = 'avoid'
     })
     
-    console.log('📄 Encontrado contenido para exportar:', targetElement)
-    console.log('📄 Contenido HTML:', targetElement.innerHTML.substring(0, 200) + '...')
-    
     const filename = payload.value?.cases?.length
       ? `informes_${payload.value.cases.length}_casos.pdf`
       : `informe_${payload.value?.sampleId || 'caso'}.pdf`
@@ -146,9 +142,7 @@ async function downloadPdf() {
       }
     }
 
-    console.log('🔄 Generando PDF...')
     await html2pdf().from(targetElement).set(options).save()
-    console.log('✅ PDF generado exitosamente')
     
     // Restaurar estilos originales
     targetElement.style.margin = originalStyles.margin

@@ -80,10 +80,8 @@ export class PathologistsApiService {
       if (typeof month === 'number') params.month = month
       if (typeof year === 'number') params.year = year
       
-      console.log('Llamando API entidades con params:', params) // Debug temporal
       const resp: any = await apiClient.get(`${this.baseCases}/entidades-por-patologo`, { params })
       const data = resp?.data ?? resp
-      console.log('Respuesta API entidades:', data) // Debug temporal
       return data
     } catch (error) {
       console.error('Error obteniendo entidades del patólogo:', error)

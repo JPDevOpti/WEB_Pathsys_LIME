@@ -278,12 +278,8 @@ onMounted(async () => {
 // Función para manejar cuando se carga una firma
 const handleSignatureLoaded = (hasSignature: boolean) => {
   signaturesLoaded.value++
-  console.log(`📝 Firma ${signaturesLoaded.value}/${totalSignatures.value} cargada`)
-  
   if (signaturesLoaded.value >= totalSignatures.value) {
     allSignaturesLoaded.value = true
-    console.log('✅ Todas las firmas han sido cargadas')
-    emit('all-signatures-loaded')
   }
 }
 

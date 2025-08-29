@@ -432,8 +432,6 @@ export function useBatchDownload() {
         generatedAt: new Date().toISOString()
       }
       
-      console.log('Payload creado:', payload)
-      
       // Guardar en localStorage para que PreviewReportView lo consuma (compartido entre pestañas)
       localStorage.setItem('results_preview_payload', JSON.stringify(payload))
       

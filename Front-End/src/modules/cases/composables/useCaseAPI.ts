@@ -76,9 +76,11 @@ export function useCaseAPI() {
   }
 
   const buildCreatedCase = (apiResponse: any, verifiedPatient: any, caseData: CaseFormData): CreatedCase => {
+    const codigoCaso = (apiResponse as any).caso_code || (apiResponse as any).CasoCode || (apiResponse as any).codigo || (apiResponse as any).code
+    
     return {
-      id: apiResponse._id || apiResponse.CasoCode,
-      codigo: apiResponse.CasoCode,
+      id: apiResponse._id || apiResponse.id || codigoCaso,
+      codigo: codigoCaso,
       paciente: {
         cedula: apiResponse.paciente?.cedula || verifiedPatient.numeroCedula,
         nombre: apiResponse.paciente?.nombre || verifiedPatient.nombrePaciente,
@@ -131,7 +133,7 @@ export function useCaseAPI() {
       
       return {
         success: true,
-        codigo: apiResponse.CasoCode,
+        codigo: apiResponse.caso_code,
         message: 'Caso creado exitosamente',
         case: buildCreatedCase(apiResponse, verifiedPatient, caseData)
       }

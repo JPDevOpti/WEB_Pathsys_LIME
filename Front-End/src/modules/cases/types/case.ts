@@ -53,7 +53,7 @@ export interface CaseResult {
 
 export interface CaseModel {
   _id?: string
-  CasoCode: string
+  caso_code: string
   paciente: PatientInfo
   medico_solicitante?: DoctorInfo
   servicio?: string
@@ -73,7 +73,7 @@ export interface CaseModel {
 
 export interface CaseListItem {
   _id: string
-  CasoCode: string
+  caso_code: string
   paciente: { nombre: string; cedula: string }
   estado: CaseState
   fecha_ingreso: string
