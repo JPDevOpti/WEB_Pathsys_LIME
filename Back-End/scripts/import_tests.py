@@ -88,7 +88,7 @@ async def import_tests(dry_run: bool) -> Tuple[int, int]:
     created = 0
     skipped = 0
     errors = 0
-    tiempo_minutes = 360  # 6 horas en minutos
+    tiempo_dias = 6  # 6 días
 
     merged = coalesce_rows(RAW_TEST_ROWS)
 
@@ -97,14 +97,14 @@ async def import_tests(dry_run: bool) -> Tuple[int, int]:
     print(f"{'='*60}")
     print(f"Modo: {'DRY-RUN (sin cambios)' if dry_run else 'EJECUCIÓN REAL'}")
     print(f"Total pruebas a procesar: {len(merged)}")
-    print(f"Tiempo por defecto: {tiempo_minutes} minutos (6 horas)")
+    print(f"Tiempo por defecto: {tiempo_dias} días")
     print(f"{'='*60}")
 
     if dry_run:
         for i, (code, data) in enumerate(merged.items(), 1):
             print(f"\n[{i}/{len(merged)}] Procesando: {code}")
             print(f"  Nombre: {data['name']}")
-            print(f"  Tiempo: {tiempo_minutes} minutos")
+            print(f"  Tiempo: {tiempo_dias} días")
             print(f"  Descripción: {len(data.get('desc') or '')} caracteres")
             print(f"  [DRY-RUN] Se crearía la prueba: {code}")
             created += 1
@@ -118,7 +118,7 @@ async def import_tests(dry_run: bool) -> Tuple[int, int]:
         for i, (code, data) in enumerate(merged.items(), 1):
             print(f"\n[{i}/{len(merged)}] Procesando: {code}")
             print(f"  Nombre: {data['name']}")
-            print(f"  Tiempo: {tiempo_minutes} minutos")
+            print(f"  Tiempo: {tiempo_dias} días")
             
             try:
                 # Validaciones previas
@@ -155,7 +155,7 @@ async def import_tests(dry_run: bool) -> Tuple[int, int]:
                     prueba_name=data["name"],
                     prueba_code=code,
                     prueba_description=data.get("desc"),
-                    tiempo=tiempo_minutes,
+                    tiempo=tiempo_dias,
                     is_active=True,
                 )
                 
@@ -163,7 +163,7 @@ async def import_tests(dry_run: bool) -> Tuple[int, int]:
                 print(f"  [OK] Prueba creada exitosamente")
                 print(f"    - Código: {code}")
                 print(f"    - Nombre: {data['name']}")
-                print(f"    - Tiempo: {tiempo_minutes} minutos")
+                print(f"    - Tiempo: {tiempo_dias} días")
                 created += 1
                 
             except ValueError as e:

@@ -51,27 +51,67 @@ function setup() {
 function setup_atlas() {
   echo "🌐 Configurando MongoDB Atlas..."
   
-  # URL fija de MongoDB Atlas
-  MONGODB_ATLAS_URL="mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/"
+  # LIMPIAR TODOS los archivos de configuración previos
+  echo "🧹 Limpiando archivos de configuración previos..."
+  rm -f Back-End/.env Back-End/.env.example Back-End/.env.development Back-End/.env.production
+  rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
   
-  echo "  • URL configurada: $MONGODB_ATLAS_URL"
-  
-  # Crear archivo de configuración para Atlas
-  cat > Back-End/config.atlas.env << EOF
-MONGODB_URL=$MONGODB_ATLAS_URL
+  # Crear UN SOLO archivo .env para Back-End ATLAS
+  echo "🔧 Configurando Back-End ATLAS..."
+  cat > Back-End/.env << EOF
+MONGODB_URL=mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/
 DATABASE_NAME=lime_pathsys
 ENVIRONMENT=production
 DEBUG=False
 SECRET_KEY=your-production-secret-key-change-this
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 EOF
+  echo "✅ Back-End/.env creado para ATLAS"
+  
+  # Crear UN SOLO archivo .env para Front-End ATLAS
+  echo "🔧 Configurando Front-End ATLAS..."
+  cat > Front-End/.env << EOF
+VITE_API_BASE_URL=http://localhost:8000
+VITE_APP_TITLE=WEB-LIS PathSys (Atlas)
+VITE_APP_ENV=production
+VITE_DEV_MODE=false
+EOF
+  echo "✅ Front-End/.env creado para ATLAS"
   
   echo "✅ Configuración de MongoDB Atlas completada"
-  echo "📁 Archivo de configuración creado: Back-End/config.atlas.env"
+  echo "📁 Archivos .env creados para ATLAS"
+  echo "⚠️  Para usar Atlas, ejecuta: ./Run.sh docker-atlas"
 }
 
 function start_docker() {
   echo "🐳 Iniciando servicios con Docker..."
+  
+  # LIMPIAR TODOS los archivos de configuración previos
+  echo "🧹 Limpiando archivos de configuración previos..."
+  rm -f Back-End/.env Back-End/.env.example Back-End/.env.development Back-End/.env.production
+  rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
+  
+  # Crear UN SOLO archivo .env para Back-End DOCKER
+  echo "🔧 Configurando Back-End DOCKER..."
+  cat > Back-End/.env << EOF
+MONGODB_URL=mongodb://mongodb:27017
+DATABASE_NAME=lime_pathsys
+ENVIRONMENT=development
+DEBUG=True
+SECRET_KEY=dev-secret-key-please-change-in-prod-32-chars-min
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+EOF
+  echo "✅ Back-End/.env creado para DOCKER"
+  
+  # Crear UN SOLO archivo .env para Front-End DOCKER
+  echo "🔧 Configurando Front-End DOCKER..."
+  cat > Front-End/.env << EOF
+VITE_API_BASE_URL=http://localhost:8000
+VITE_APP_TITLE=WEB-LIS PathSys (Docker)
+VITE_APP_ENV=development
+VITE_DEV_MODE=true
+EOF
+  echo "✅ Front-End/.env creado para DOCKER"
   
   # Verificar que Docker esté corriendo
   if ! docker info >/dev/null 2>&1; then
@@ -107,6 +147,34 @@ function start_docker() {
 
 function start_docker_atlas() {
   echo "🐳 Iniciando servicios con Docker y MongoDB Atlas..."
+  
+  # LIMPIAR TODOS los archivos de configuración previos
+  echo "🧹 Limpiando archivos de configuración previos..."
+  rm -f Back-End/.env Back-End/.env.example Back-End/.env.development Back-End/.env.production
+  rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
+  
+  # Crear UN SOLO archivo .env para Back-End ATLAS
+  echo "🔧 Configurando Back-End ATLAS..."
+  cat > Back-End/.env << EOF
+MONGODB_URL=mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/
+DATABASE_NAME=lime_pathsys
+ENVIRONMENT=production
+DEBUG=False
+SECRET_KEY=your-production-secret-key-change-this
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+EOF
+  echo "✅ Back-End/.env creado para ATLAS"
+  
+  # Crear UN SOLO archivo .env para Front-End ATLAS
+  echo "🔧 Configurando Front-End ATLAS..."
+  cat > Front-End/.env << EOF
+VITE_API_BASE_URL=http://localhost:8000
+VITE_APP_TITLE=WEB-LIS PathSys (Atlas)
+VITE_APP_ENV=production
+VITE_DEV_MODE=false
+EOF
+  echo "✅ Front-End/.env creado para ATLAS"
+  
   echo "⚠️  Modo Docker + Atlas no está soportado actualmente porque no existe 'Back-End/docker-compose.atlas.yml'."
   echo "   Usa 'docker' (Mongo local) o 'local'. Si requieres Atlas, puedo habilitarlo ajustando el compose."
   return 1
@@ -114,6 +182,33 @@ function start_docker_atlas() {
 
 function start_local() {
   echo "🚀 Iniciando sistema completo en LOCAL (Frontend + Backend + MongoDB Local)..."
+  
+  # LIMPIAR TODOS los archivos de configuración previos
+  echo "🧹 Limpiando archivos de configuración previos..."
+  rm -f Back-End/.env Back-End/.env.example Back-End/.env.development Back-End/.env.production
+  rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
+  
+  # Crear UN SOLO archivo .env para Back-End LOCAL
+  echo "🔧 Configurando Back-End LOCAL..."
+  cat > Back-End/.env << EOF
+MONGODB_URL=mongodb://localhost:27017
+DATABASE_NAME=lime_pathsys
+ENVIRONMENT=development
+DEBUG=True
+SECRET_KEY=dev-secret-key-please-change-in-prod-32-chars-min
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+EOF
+  echo "✅ Back-End/.env creado para LOCAL"
+  
+  # Crear UN SOLO archivo .env para Front-End LOCAL
+  echo "🔧 Configurando Front-End LOCAL..."
+  cat > Front-End/.env << EOF
+VITE_API_BASE_URL=http://localhost:8000
+VITE_APP_TITLE=WEB-LIS PathSys (Local)
+VITE_APP_ENV=development
+VITE_DEV_MODE=true
+EOF
+  echo "✅ Front-End/.env creado para LOCAL"
   
   # Verificar que MongoDB esté instalado
   if ! command -v mongod &> /dev/null; then
@@ -179,6 +274,28 @@ function start_local() {
   echo "⏳ Esperando que los servicios estén listos..."
   sleep 5
   
+  # Verificar que el frontend esté respondiendo
+  echo "🔍 Verificando conexión frontend-backend..."
+  if curl -s http://localhost:5174 >/dev/null 2>&1; then
+    echo "✅ Frontend respondiendo en puerto 5174"
+  else
+    echo "⚠️  Frontend no responde en puerto 5174"
+  fi
+  
+  if curl -s http://localhost:8000/docs >/dev/null 2>&1; then
+    echo "✅ Backend respondiendo en puerto 8000"
+  else
+    echo "⚠️  Backend no responde en puerto 8000"
+  fi
+  
+  # Verificar configuración CORS
+  echo "🔍 Verificando configuración CORS..."
+  if curl -s -H "Origin: http://localhost:5174" http://localhost:8000/health >/dev/null 2>&1; then
+    echo "✅ CORS configurado correctamente para puerto 5174"
+  else
+    echo "⚠️  CORS no configurado correctamente para puerto 5174"
+  fi
+  
   echo ""
   echo "✅ Sistema completo iniciado en LOCAL."
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -228,11 +345,42 @@ function status() {
     echo "❌ Frontend: Detenido"
   fi
   
-  # Verificar MongoDB Atlas
-  if [ -f "Back-End/config.atlas.env" ]; then
-    echo "✅ MongoDB Atlas: Configurado"
+  # Verificar configuración de base de datos
+  if [ -f "Back-End/.env" ]; then
+    echo "✅ Base de datos: Configurada (.env)"
+    if grep -q "mongodb://localhost:27017" Back-End/.env; then
+      echo "   └─ Tipo: LOCAL (MongoDB local)"
+    elif grep -q "mongodb+srv://" Back-End/.env; then
+      echo "   └─ Tipo: ATLAS (MongoDB cloud)"
+    else
+      echo "   └─ Tipo: DESCONOCIDO"
+    fi
   else
-    echo "❌ MongoDB Atlas: No configurado"
+    echo "❌ Base de datos: Sin configuración (.env)"
+  fi
+  
+  # Verificar configuración del frontend
+  if [ -f "Front-End/.env" ]; then
+    echo "✅ Frontend: Configurado (.env)"
+    if grep -q "VITE_API_BASE_URL=http://localhost:8000" Front-End/.env; then
+      echo "   └─ API: http://localhost:8000"
+    else
+      echo "   └─ API: Configuración personalizada"
+    fi
+    if grep -q "VITE_APP_ENV=development" Front-End/.env; then
+      echo "   └─ Modo: Development"
+    elif grep -q "VITE_APP_ENV=production" Front-End/.env; then
+      echo "   └─ Modo: Production"
+    fi
+  else
+    echo "❌ Frontend: Sin configuración (.env)"
+  fi
+  
+  # Verificar archivos de configuración adicionales
+  if [ -f "Back-End/config.atlas.env" ]; then
+    echo "✅ MongoDB Atlas: Archivo de referencia disponible"
+  else
+    echo "❌ MongoDB Atlas: Archivo de referencia no disponible"
   fi
   
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -264,6 +412,11 @@ function stop() {
   pkill -f mongod >/dev/null 2>&1 || true
   lsof -ti:27017 | xargs kill -9 2>/dev/null || true
   
+  # Limpiar archivos de configuración
+  echo "  • Limpiando archivos de configuración..."
+  rm -f Back-End/.env Back-End/.env.example Back-End/.env.development Back-End/.env.production
+  rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
+  
   echo "✅ Todos los procesos detenidos."
 }
 
@@ -284,6 +437,9 @@ function help() {
   echo "🛠️  Utilidades:"
   echo "  status       - Muestra el estado del sistema"
   echo "  stop         - Detiene todos los procesos"
+  echo "  clean        - Limpia archivos de configuración"
+  echo "  restart-fe   - Reinicia solo el frontend"
+  echo "  debug        - Muestra configuración de archivos .env"
   echo "  help         - Muestra esta ayuda"
   echo ""
   echo "🌐 URLs del sistema:"
@@ -301,6 +457,16 @@ function help() {
   echo "  ./Run.sh docker-atlas # Iniciar con Docker + MongoDB Atlas"
   echo "  ./Run.sh status       # Ver estado actual"
   echo "  ./Run.sh stop         # Detener todo"
+  echo "  ./Run.sh clean        # Limpiar configuración"
+  echo "  ./Run.sh restart-fe   # Reiniciar solo frontend"
+  echo "  ./Run.sh debug        # Debuggear configuración"
+  echo ""
+  echo "🔍 Sistema de configuración:"
+  echo "  • LOCAL: MongoDB local (puerto 27017) + Frontend Development"
+  echo "  • DOCKER: MongoDB local en Docker + Frontend Development"
+  echo "  • ATLAS: MongoDB Atlas en la nube + Frontend Production"
+  echo "  • Cada comando crea UN SOLO archivo .env por directorio"
+  echo "  • Se eliminan automáticamente todos los archivos .env previos"
 }
 
 case "$1" in
@@ -324,6 +490,94 @@ case "$1" in
     ;;
   stop)
     stop
+    ;;
+  clean)
+    echo "🧹 Limpiando configuración..."
+    rm -f Back-End/.env Back-End/.env.example Back-End/.env.development Back-End/.env.production
+    rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
+    echo "✅ Todos los archivos .env eliminados"
+    ;;
+  debug)
+    echo "🔍 Debug: Mostrando configuración de archivos .env..."
+    echo ""
+    echo "📁 Back-End/.env:"
+    if [ -f "Back-End/.env" ]; then
+      cat Back-End/.env
+    else
+      echo "❌ No existe"
+    fi
+    echo ""
+    echo "📁 Front-End/.env:"
+    if [ -f "Front-End/.env" ]; then
+      cat Front-End/.env
+    else
+      echo "❌ No existe"
+    fi
+    echo ""
+    echo "🔍 Verificando variables de entorno del backend..."
+    if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+      echo "✅ Backend corriendo en puerto 8000"
+      echo "🔍 Probando endpoint de salud..."
+      if curl -s http://localhost:8000/health >/dev/null 2>&1; then
+        echo "✅ Endpoint /health responde"
+        echo "🔍 Probando CORS desde puerto 5174..."
+        if curl -s -H "Origin: http://localhost:5174" http://localhost:8000/health >/dev/null 2>&1; then
+          echo "✅ CORS funciona correctamente"
+        else
+          echo "❌ CORS no funciona - Revisar configuración"
+        fi
+      else
+        echo "❌ Endpoint /health no responde"
+      fi
+    else
+      echo "❌ Backend no está corriendo"
+    fi
+    ;;
+  restart-fe)
+    echo "🔄 Reiniciando solo el frontend..."
+    
+    # Detener frontend actual
+    echo "  • Deteniendo frontend actual..."
+    pkill -f "npm run dev" || true
+    pkill -f "vite" || true
+    lsof -ti:5174 | xargs kill -9 2>/dev/null || true
+    sleep 2
+    
+    # Verificar que el backend esté corriendo
+    if ! lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+      echo "❌ Backend no está corriendo. Ejecuta './Run.sh local' primero."
+      return 1
+    fi
+    
+    # LIMPIAR archivos de configuración previos del frontend
+    echo "🧹 Limpiando archivos de configuración previos del frontend..."
+    rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
+    
+    # Crear UN SOLO archivo .env para Front-End LOCAL
+    echo "🔧 Configurando Front-End LOCAL..."
+    cat > Front-End/.env << EOF
+VITE_API_BASE_URL=http://localhost:8000
+VITE_APP_TITLE=WEB-LIS PathSys (Local)
+VITE_APP_ENV=development
+VITE_DEV_MODE=true
+EOF
+    echo "✅ Front-End/.env creado para LOCAL"
+    
+    # Iniciar frontend
+    echo "🌐 Iniciando frontend..."
+    cd Front-End
+    npm run dev &
+    cd ..
+    
+    echo "⏳ Esperando que el frontend esté listo..."
+    sleep 5
+    
+    if curl -s http://localhost:5174 >/dev/null 2>&1; then
+      echo "✅ Frontend reiniciado exitosamente en puerto 5174"
+      echo "🌐 URL: http://localhost:5174"
+    else
+      echo "❌ Error al reiniciar frontend"
+    fi
     ;;
   help|*)
     help
