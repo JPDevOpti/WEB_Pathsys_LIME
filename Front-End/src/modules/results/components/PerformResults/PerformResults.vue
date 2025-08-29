@@ -4,8 +4,8 @@
       <ComponentCard class="lg:col-span-2 min-h-[640px] flex flex-col" :dense="false" :fullHeight="true">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-lg font-semibold">Realizar Resultados</h2>
-          <div v-if="caseDetails?.CasoCode" class="text-sm text-gray-500">
-            <span class="font-medium">Caso:</span> {{ caseDetails.CasoCode }}
+          <div v-if="caseDetails?.caso_code" class="text-sm text-gray-500">
+            <span class="font-medium">Caso:</span> {{ caseDetails.caso_code }}
             <span class="mx-2">-</span>
             <span v-if="caseDetails.patologo_asignado?.nombre" class="text-blue-600">
               {{ caseDetails.patologo_asignado.nombre }}
@@ -118,7 +118,7 @@
                   <div class="text-center pb-3 border-b border-gray-200">
                     <div class="inline-block">
                       <p class="font-semibold text-gray-900 text-base">Resumen de cortes guardados</p>
-                      <p class="text-gray-500 text-sm">Caso {{ caseDetails?.CasoCode || sampleId }}</p>
+                      <p class="text-gray-500 text-sm">Caso {{ caseDetails?.caso_code || sampleId }}</p>
                     </div>
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -395,7 +395,7 @@ const { notification, showSuccess, showError, closeNotification } = useNotificat
   function goToPreview() {
     // Guardar payload en sessionStorage para que la vista de previsualización lo consuma
     const payload = {
-      sampleId: caseDetails?.value?.CasoCode || props.sampleId,
+      sampleId: caseDetails?.value?.caso_code || props.sampleId,
       patient: patient?.value || null,
       caseDetails: caseDetails?.value || null,
       sections: sections?.value || null,
@@ -419,7 +419,7 @@ const { notification, showSuccess, showError, closeNotification } = useNotificat
 async function handleSaveDraft() {
   const ok = await onSaveDraft()
   if (ok) {
-    const code = caseDetails?.value?.CasoCode || ''
+    const code = caseDetails?.value?.caso_code || ''
     showSuccess('¡Resultado guardado!', code ? `Se guardó el resultado del caso ${code}.` : 'Se guardó el resultado correctamente.', 0)
     // NO cerrar la notificación - se mantiene visible
   } else {

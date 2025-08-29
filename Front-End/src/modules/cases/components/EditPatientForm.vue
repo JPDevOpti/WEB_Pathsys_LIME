@@ -12,7 +12,7 @@
         <!-- Campo de búsqueda por cédula -->
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
           <div class="flex-1">
-            <FormInputField v-model="searchPatientCedula" placeholder="Ingrese número de identificación" :required="true" :max-length="10" inputmode="numeric" :disabled="isSearching" @update:model-value="handleCedulaInput" @keydown.enter.prevent="searchPatient" />
+            <FormInputField v-model="searchPatientCedula" placeholder="Ingrese documento de identidad" :required="true" :max-length="10" inputmode="numeric" :disabled="isSearching" @update:model-value="handleCedulaInput" @keydown.enter.prevent="searchPatient" />
           </div>
           <div class="flex gap-2 sm:gap-3">
             <SearchButton text="Buscar" loading-text="Buscando..." :loading="isSearching" @click="searchPatient" size="md" variant="primary" />
@@ -54,7 +54,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           <h3 class="text-lg font-medium text-blue-800">Busque un paciente para editar</h3>
-          <p class="text-blue-600 text-sm">Ingrese el número de identificación del paciente en el campo de búsqueda arriba para comenzar a editar</p>
+          <p class="text-blue-600 text-sm">Ingrese el documento de identidad del paciente en el campo de búsqueda arriba para comenzar a editar</p>
         </div>
       </div>
 
@@ -304,11 +304,11 @@ const handleCedulaInput = (value: string) => {
 // Busca un paciente por su cédula
 const searchPatient = async () => {
   if (!searchPatientCedula.value.trim()) {
-    searchError.value = 'Por favor ingrese un número de identificación'
+    searchError.value = 'Por favor ingrese un documento de identidad'
     return
   }
   if (searchPatientCedula.value.length < 6) {
-    searchError.value = 'El número de identificación debe tener al menos 6 dígitos'
+    searchError.value = 'El documento de identidad debe tener al menos 6 dígitos'
     return
   }
 

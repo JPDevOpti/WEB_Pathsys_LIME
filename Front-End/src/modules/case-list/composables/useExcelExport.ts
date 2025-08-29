@@ -6,7 +6,7 @@ export function useExcelExport() {
       'ID Caso': c.id,
       'Tipo de Muestra': c.sampleType,
       'Paciente': c.patient.fullName,
-      'DNI': c.patient.dni,
+      'Cédula': c.patient.dni,
       'Entidad': c.entity,
       'Médico': c.requester,
       'Estado': c.status,

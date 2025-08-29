@@ -209,7 +209,7 @@ export function useBatchDownload() {
               <div class="info-value">${c.patient?.fullName || 'N/A'}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">DNI</div>
+              <div class="info-label">Cédula</div>
               <div class="info-value">${c.patient?.dni || 'N/A'}</div>
             </div>
             <div class="info-item">
@@ -321,7 +321,7 @@ export function useBatchDownload() {
         'ID Caso': c.id,
         'Tipo de Muestra': c.sampleType,
         'Paciente': c.patient?.fullName || 'N/A',
-        'DNI': c.patient?.dni || 'N/A',
+        'Cédula': c.patient?.dni || 'N/A',
         'Entidad': c.entity || 'N/A',
         'Médico': c.requester || 'N/A',
         'Estado': c.status || 'N/A',
@@ -366,8 +366,8 @@ export function useBatchDownload() {
             gender: c.patient?.sex || '',
             entity: c.entity || ''
           },
-          caseDetails: {
-            CasoCode: c.caseCode || c.id || '',
+                      caseDetails: {
+              caso_code: c.caseCode || c.id || '',
             fecha_creacion: c.receivedAt || '',
             fecha_entrega: c.deliveredAt || '',
             patologo_asignado: c.pathologist ? { nombre: c.pathologist } : undefined,
@@ -379,9 +379,8 @@ export function useBatchDownload() {
                 id: t.id,
                 nombre: t.name || t.id
               })) : []
-            })) : [],
-            // Agregar campos faltantes que espera PreviewReportView
-            paciente: {
+                          })) : [],
+              paciente: {
               codigo: c.patient?.id || '',
               nombre: c.patient?.fullName || '',
               edad: c.patient?.age || 0,

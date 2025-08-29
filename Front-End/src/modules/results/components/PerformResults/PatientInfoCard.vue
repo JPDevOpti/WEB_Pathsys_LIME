@@ -9,7 +9,7 @@
     <div v-else class="space-y-4">
       <div class="grid grid-cols-1 gap-2 text-sm text-gray-700">
         <div class="font-medium">{{ patient.fullName }}</div>
-        <div><span class="font-bold">Documento:</span> {{ patient.document }}</div>
+        <div><span class="font-bold">Documento:</span> {{ patient.id }}</div>
         <div><span class="font-bold">Edad:</span> {{ patient.age }} años</div>
         <div v-if="patient.sexo"><span class="font-bold">Sexo:</span> {{ patient.sexo }}</div>
         <div v-if="patient.tipoAtencion"><span class="font-bold">Tipo de atención:</span> {{ patient.tipoAtencion }}</div>
@@ -44,7 +44,7 @@
                 class="hover:bg-gray-50 cursor-pointer"
                 @click="$emit('caseClick', c)"
               >
-                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 font-medium">{{ c.CasoCode }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 font-medium">{{ c.caso_code }}</td>
                 <td class="px-3 py-2 text-xs text-gray-900">{{ c.estado }}</td>
                 <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ new Date(c.fecha_ingreso).toLocaleDateString() }}</td>
               </tr>

@@ -26,7 +26,7 @@
           <div class="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
               <p class="text-sm text-gray-500">Código del Caso</p>
-              <p class="text-base font-medium text-gray-900">{{ caseItem?.CasoCode || 'N/A' }}</p>
+              <p class="text-base font-medium text-gray-900">{{ caseItem?.caso_code || 'N/A' }}</p>
             </div>
             <div>
               <p class="text-sm text-gray-500">Estado</p>
@@ -37,8 +37,8 @@
               <p class="text-base font-medium text-gray-900">{{ caseItem?.paciente?.nombre || 'N/A' }}</p>
             </div>
             <div>
-              <p class="text-sm text-gray-500">Cédula</p>
-              <p class="text-base font-medium text-gray-900">{{ caseItem?.paciente?.cedula || 'N/A' }}</p>
+              <p class="text-sm text-gray-500">Código del Paciente</p>
+              <p class="text-base font-medium text-gray-900">{{ caseItem?.paciente?.paciente_code || 'N/A' }}</p>
             </div>
             <div v-if="caseItem?.paciente?.edad">
               <p class="text-sm text-gray-500">Edad</p>

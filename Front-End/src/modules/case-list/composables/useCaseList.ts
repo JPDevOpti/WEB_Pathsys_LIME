@@ -84,8 +84,7 @@ export function useCaseList() {
     
     const id = typeof bk._id === 'string' ? bk._id : 
                (bk._id as any)?.$oid || 
-               bk.CasoCode || 
-               (bk as any).caso_code || 
+               bk.caso_code || 
                `case-${Math.random().toString(36).substr(2, 9)}`
     const receivedAt = getDate(bk.fecha_creacion)
     const deliveredAt = getDate((bk as any).fecha_entrega) || getDate(bk.fecha_firma) || getDate(bk.resultado?.fecha_resultado)
@@ -116,16 +115,15 @@ export function useCaseList() {
       return s || 'En proceso'
     }
 
-    // Determinar estado final y ajustar fecha de entrega para casos "Por entregar"
     const finalStatus = mapStatus(bk.estado)
     const finalDeliveredAt = finalStatus === 'Por entregar' ? '' : deliveredAt
 
     return {
       id,
-      caseCode: bk.CasoCode || (bk as any).caso_code || id,
+      caseCode: bk.caso_code || id,
       sampleType: bk.muestras?.[0]?.region_cuerpo || (bk.paciente?.tipo_atencion || ''),
       patient: {
-        id: bk.paciente?.codigo || id,
+        id: bk.paciente?.paciente_code || '',
         dni: bk.paciente?.cedula || '',
         fullName: bk.paciente?.nombre || '',
         sex: bk.paciente?.sexo || '',
@@ -151,7 +149,6 @@ export function useCaseList() {
         micro: bk.resultado?.resultado_micro || '',
         diagnosis: bk.resultado?.diagnostico || '',
         resultDate: getDate(bk.resultado?.fecha_resultado),
-        // Agregar diagnósticos CIE-10 y CIE-O
         diagnostico_cie10: (bk.resultado as any)?.diagnostico_cie10 || null,
         diagnostico_cieo: (bk.resultado as any)?.diagnostico_cieo || null,
       },

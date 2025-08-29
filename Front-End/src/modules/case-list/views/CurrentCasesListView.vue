@@ -141,7 +141,7 @@ onUnmounted(() => {
 
 function previewCase(c: any) {
   const payload = {
-    sampleId: c.caseCode || c.CasoCode || c.id,
+    sampleId: c.caseCode || c.caso_code || c.id,
     patient: {
       document: c.patient?.dni || c.paciente?.cedula || '',
       fullName: c.patient?.fullName || c.paciente?.nombre || '',
@@ -150,7 +150,7 @@ function previewCase(c: any) {
       entity: c.patient?.entity || c.paciente?.entidad_info?.nombre || ''
     },
     caseDetails: {
-      CasoCode: c.caseCode || c.CasoCode || c.id || '',
+      caso_code: c.caseCode || c.caso_code || c.id || '',
       fecha_creacion: c.receivedAt || (c as any).fecha_creacion || '',
       fecha_entrega: c.deliveredAt || (c as any).fecha_entrega || '',
       patologo_asignado: c.pathologist ? { nombre: c.pathologist } : c.patologo_asignado || undefined,
@@ -195,7 +195,7 @@ function previewCase(c: any) {
     },
     generatedAt: new Date().toISOString()
   }
-  // Completar campos faltantes para la previsualización completa
+  
   const completePayload = {
     sampleId: payload.sampleId,
     patient: {
@@ -206,14 +206,13 @@ function previewCase(c: any) {
       entity: payload.patient.entity
     },
     caseDetails: {
-      CasoCode: payload.caseDetails.CasoCode,
+      caso_code: payload.caseDetails.caso_code,
       fecha_creacion: payload.caseDetails.fecha_creacion,
       fecha_entrega: payload.caseDetails.fecha_entrega,
       patologo_asignado: payload.caseDetails.patologo_asignado,
       medico_solicitante: payload.caseDetails.medico_solicitante,
       entidad_info: payload.caseDetails.entidad_info,
       muestras: payload.caseDetails.muestras,
-      // Campos adicionales requeridos por PreviewReportView
       paciente: {
         codigo: c.patient?.id || c.paciente?.codigo || '',
         nombre: c.patient?.fullName || c.paciente?.nombre || '',

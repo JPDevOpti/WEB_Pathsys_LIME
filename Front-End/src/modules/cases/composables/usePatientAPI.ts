@@ -29,8 +29,8 @@ export function usePatientAPI() {
     } catch (err: any) {
       const errorMessage = err.message || 'Error desconocido al crear el paciente'
       if (errorMessage.toLowerCase().includes('duplicad') || errorMessage.toLowerCase().includes('ya existe') || errorMessage.toLowerCase().includes('repetid')) {
-        error.value = 'Ya existe un paciente con este número de identificación'
-        return { success: false, patient: null, message: 'Ya existe un paciente con este número de identificación' }
+        error.value = 'Ya existe un paciente con este documento de identidad'
+        return { success: false, patient: null, message: 'Ya existe un paciente con este documento de identidad' }
       }
       error.value = errorMessage
       return { success: false, patient: null, message: errorMessage }

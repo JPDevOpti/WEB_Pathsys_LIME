@@ -4,9 +4,9 @@ import type { Patient, CaseDetails } from '../types/results.types'
 export function mapCaseToPatient(beCase: CaseModel): Patient {
   const p = beCase.paciente
   return {
-    id: p.codigo,
+    id: p.paciente_code,
     fullName: p.nombre,
-    document: p.cedula,
+    document: p.paciente_code,
     age: p.edad,
     entity: beCase.entidad_info?.nombre || p.entidad_info?.nombre,
     entityCode: beCase.entidad_info?.codigo || p.entidad_info?.codigo,
@@ -19,9 +19,9 @@ export function mapCaseToPatient(beCase: CaseModel): Patient {
 export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
   return {
     _id: beCase._id || '',
-    CasoCode: beCase.CasoCode,
+    caso_code: beCase.caso_code,
     paciente: {
-      codigo: beCase.paciente.codigo,
+      paciente_code: beCase.paciente.paciente_code,
       nombre: beCase.paciente.nombre,
       edad: beCase.paciente.edad,
       sexo: beCase.paciente.sexo,
@@ -30,7 +30,6 @@ export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
         nombre: beCase.paciente.entidad_info?.nombre
       },
       tipo_atencion: beCase.paciente.tipo_atencion,
-      cedula: beCase.paciente.cedula,
       observaciones: beCase.paciente.observaciones || '',
       fecha_actualizacion: beCase.paciente.fecha_actualizacion
     },
@@ -46,7 +45,6 @@ export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
     fecha_firma: beCase.fecha_firma || null,
     fecha_actualizacion: beCase.fecha_actualizacion,
     observaciones_generales: beCase.observaciones_generales || '',
-    fecha_creacion: (beCase as any).fecha_creacion || beCase.fecha_ingreso,
     is_active: beCase.activo ?? true,
     patologo_asignado: beCase.patologo_asignado
       ? { codigo: beCase.patologo_asignado.codigo, nombre: beCase.patologo_asignado.nombre }
@@ -61,11 +59,11 @@ export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
 
 export function mapCaseToListItem(beCase: CaseModel): CaseListItem {
   return {
-    _id: beCase._id || beCase.CasoCode,
-    CasoCode: beCase.CasoCode,
+    _id: beCase._id || beCase.caso_code,
+    caso_code: beCase.caso_code,
     paciente: {
       nombre: beCase.paciente?.nombre || '',
-      cedula: beCase.paciente?.cedula || ''
+      cedula: beCase.paciente?.paciente_code || ''
     },
     estado: beCase.estado as any,
     fecha_ingreso: (beCase as any).fecha_creacion || beCase.fecha_ingreso,

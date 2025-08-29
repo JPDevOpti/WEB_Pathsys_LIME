@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import type { Attachment, Patient, PreviewData, Sample, CaseDetails } from '../types/results.types'
 import type { CaseListItem } from '@/modules/cases/types/case'
-import { generatePreview } from '../services/mockResultsService'
+
 import casesApiService from '@/modules/cases/services/casesApi.service'
 import { mapCaseToPatient, mapCaseToCaseDetails } from '../services/results.mappers'
 import resultsApiService from '../services/resultsApiService'
@@ -112,22 +112,22 @@ export function usePerformResults(sampleId: string) {
       patient.value = mapCaseToPatient(beCase)
       caseDetails.value = mapCaseToCaseDetails(beCase)
       sample.value = {
-        id: beCase.CasoCode,
+        id: beCase.caso_code,
         type: 'Caso',
         collectedAt: (beCase as any).fecha_creacion || beCase.fecha_ingreso,
         status: beCase.estado as any,
-        patientId: beCase.paciente.codigo
+        patientId: beCase.paciente.paciente_code
       }
-      // Cargar casos anteriores del paciente por cédula
-      if (beCase.paciente?.cedula) {
+      // Cargar casos anteriores del paciente por paciente_code
+      if (beCase.paciente?.paciente_code) {
         try {
-          const list = await casesApiService.getCasesByPatient(beCase.paciente.cedula)
+          const list = await casesApiService.getCasesByPatient(beCase.paciente.paciente_code)
           previousCases.value = list
-            .filter(c => c.CasoCode !== beCase.CasoCode)
+            .filter(c => c.caso_code !== beCase.caso_code)
             .map(c => ({
-              _id: c._id || c.CasoCode,
-              CasoCode: c.CasoCode,
-              paciente: { nombre: c.paciente?.nombre || '', cedula: c.paciente?.cedula || '' },
+              _id: c._id || c.caso_code,
+              caso_code: c.caso_code,
+              paciente: { nombre: c.paciente?.nombre || '', cedula: c.paciente?.paciente_code || '' },
               estado: c.estado as any,
               fecha_ingreso: (c as any).fecha_creacion || c.fecha_ingreso,
               patologo_asignado: c.patologo_asignado ? { nombre: c.patologo_asignado.nombre } : undefined
@@ -261,7 +261,7 @@ export function usePerformResults(sampleId: string) {
     previewing.value = true
     try {
       const html = buildHtmlPreview()
-      previewData.value = await generatePreview(sampleId, html)
+      previewData.value = { html }
       isPreviewOpen.value = true
     } finally {
       previewing.value = false

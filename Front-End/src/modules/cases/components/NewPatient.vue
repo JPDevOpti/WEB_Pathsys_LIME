@@ -8,7 +8,7 @@
 
     <div class="space-y-6">
       <!-- Campos principales del formulario -->
-      <FormInputField v-model="formData.pacienteCode" label="Número de identificación" placeholder="Ejemplo: 12345678" :required="true" :max-length="10" :show-counter="true" :errors="errors.pacienteCode" :warnings="warnings.pacienteCode" :is-validating="false" inputmode="numeric" @input="handleCedulaInput" />
+      <FormInputField v-model="formData.pacienteCode" label="Documento de identidad" placeholder="Ejemplo: 12345678" :required="true" :max-length="10" :show-counter="true" :errors="errors.pacienteCode" :warnings="warnings.pacienteCode" :is-validating="false" inputmode="numeric" @input="handleCedulaInput" />
       <FormInputField v-model="formData.nombrePaciente" label="Nombre del Paciente" placeholder="Ingrese el nombre completo del paciente" :required="true" :max-length="100" :errors="errors.nombrePaciente" @input="handleNombreInput" />
       
       <!-- Campos de edad y sexo en grid responsivo -->

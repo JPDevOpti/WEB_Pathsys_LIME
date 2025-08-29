@@ -62,13 +62,12 @@ export interface CaseEntidadInfo {
 }
 
 export interface CasePaciente {
-  codigo: string
+  paciente_code: string
   nombre: string
   edad: number
   sexo: string
   entidad_info: CaseEntidadInfo
   tipo_atencion: string
-  cedula: string
   observaciones: string
   fecha_actualizacion: string
 }
@@ -90,7 +89,7 @@ export interface CasePatologoAsignado {
 
 export interface CaseDetails {
   _id: string
-  CasoCode: string
+  caso_code: string
   paciente: CasePaciente
   medico_solicitante?: { nombre: string }
   muestras: CaseMuestra[]

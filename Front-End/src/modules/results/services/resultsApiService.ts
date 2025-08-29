@@ -35,7 +35,7 @@ class ResultsApiService {
         diagnostico_cie10: data.diagnostico_cie10,
         diagnostico_cieo: data.diagnostico_cieo
       })
-      return response.data
+      return response
     } catch (error: any) {
       throw new Error(`Error al actualizar resultado: ${error}`)
     }
@@ -60,7 +60,7 @@ class ResultsApiService {
             patologo_codigo: patologoCodigo
           }
         })
-        return response.data
+        return response
       } catch (error: any) {
         if (error.response?.status === 404) {
           const alternativeEndpoint = `${this.endpoint}/caso-code/${casoCode}/resultado/firmar`
@@ -69,7 +69,7 @@ class ResultsApiService {
               patologo_codigo: patologoCodigo
             }
           })
-          return response.data
+          return response
         }
         throw error
       }

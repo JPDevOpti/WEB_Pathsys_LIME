@@ -51,11 +51,11 @@ export class PatientsApiService {
       } else if (error.response?.data?.message) {
         const message = String(error.response.data.message)
         if (message.toLowerCase().includes('duplicad') || message.toLowerCase().includes('ya existe') || message.toLowerCase().includes('repetid')) {
-          throw new Error('Ya existe un paciente con este número de identificación')
+          throw new Error('Ya existe un paciente con este documento de identidad')
         }
         throw new Error(message)
       } else if (error.response?.status === 409) {
-        throw new Error('Ya existe un paciente con este número de identificación')
+        throw new Error('Ya existe un paciente con este documento de identidad')
       } else if (error.response?.status === 400) {
         throw new Error('Datos del paciente inválidos')
       } else if (error.response?.status === 422) {
@@ -63,7 +63,7 @@ export class PatientsApiService {
       } else if (error.response?.status === 500) {
         const errorText = error.message || 'Error interno del servidor'
         if (errorText.toLowerCase().includes('duplicad') || errorText.toLowerCase().includes('ya existe') || errorText.toLowerCase().includes('repetid')) {
-          throw new Error('Ya existe un paciente con este número de identificación')
+          throw new Error('Ya existe un paciente con este documento de identidad')
         }
         throw new Error('Error interno del servidor al registrar el paciente')
       } else {

@@ -3,9 +3,9 @@ import { API_CONFIG } from '../../../core/config/api.config'
 
 export interface BackendCase {
   _id?: { $oid?: string } | string
-  CasoCode?: string
+  caso_code?: string
   paciente?: {
-    codigo?: string
+    paciente_code?: string
     nombre?: string
     edad?: number
     sexo?: string

@@ -8,7 +8,7 @@
     <div v-else-if="!details" class="text-gray-400 text-sm">Sin datos del caso</div>
     <div v-else class="space-y-4">
       <div class="grid grid-cols-1 gap-2 text-sm text-gray-700">
-        <div><span class="font-bold">Caso:</span> {{ details.CasoCode }}</div>
+        <div><span class="font-bold">Caso:</span> {{ details.caso_code }}</div>
         <div><span class="font-bold">Estado:</span> <span class="capitalize">{{ details.estado }}</span></div>
         <div><span class="font-bold">Creación:</span> {{ formatDate(details.fecha_creacion) }}</div>
         <div v-if="details.fecha_firma"><span class="font-bold">Firma:</span> {{ formatDate(details.fecha_firma) }}</div>

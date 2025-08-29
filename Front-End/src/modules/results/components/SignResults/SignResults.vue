@@ -4,8 +4,8 @@
       <ComponentCard class="lg:col-span-2 min-h-[640px] flex flex-col" :dense="false" :fullHeight="true">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-lg font-semibold">Firmar Resultados</h2>
-          <div v-if="caseDetails?.CasoCode" class="text-sm text-gray-500">
-            <span class="font-medium">Caso:</span> {{ caseDetails.CasoCode }}
+          <div v-if="caseDetails?.caso_code" class="text-sm text-gray-500">
+            <span class="font-medium">Caso:</span> {{ caseDetails.caso_code }}
             <span class="mx-2">-</span>
             <span v-if="caseDetails.patologo_asignado?.nombre" class="text-blue-600">
               {{ caseDetails.patologo_asignado.nombre }}
@@ -81,7 +81,7 @@
           <ErrorMessage v-if="errorMessage" class="mt-2" :message="errorMessage" />
 
           <!-- Alerta de patólogo no asignado -->
-          <div v-if="caseDetails?.CasoCode && !caseDetails.patologo_asignado?.nombre"
+          <div v-if="caseDetails?.caso_code && !caseDetails.patologo_asignado?.nombre"
             class="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <div class="flex items-center">
               <WarningIcon class="w-5 h-5 text-orange-500 mr-2 flex-shrink-0" />
@@ -94,7 +94,7 @@
           </div>
 
           <!-- Alerta de patólogo no autorizado -->
-          <div v-if="caseDetails?.CasoCode && caseDetails.patologo_asignado?.nombre && !isAssignedPathologist"
+          <div v-if="caseDetails?.caso_code && caseDetails.patologo_asignado?.nombre && !isAssignedPathologist"
             class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
             <div class="flex items-center">
               <ErrorIcon class="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
@@ -108,7 +108,7 @@
           </div>
 
           <!-- Alerta de estado no válido para firmar -->
-          <div v-if="caseDetails?.CasoCode && !canSignByStatus && !hasBeenSigned"
+          <div v-if="caseDetails?.caso_code && !canSignByStatus && !hasBeenSigned"
             class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div class="flex items-center">
               <WarningIcon class="w-5 h-5 text-yellow-500 mr-2 flex-shrink-0" />
@@ -507,7 +507,7 @@ function handleClearResults() {
 
 function goToPreview() {
   const payload = {
-    sampleId: caseDetails?.value?.CasoCode || props.sampleId,
+    sampleId: caseDetails?.value?.caso_code || props.sampleId,
     patient: patient?.value || null,
     caseDetails: caseDetails?.value || null,
     sections: sections?.value || null,
@@ -569,7 +569,7 @@ async function handleSign() {
     }
 
     // Preparar datos para la firma
-    const casoCode = caseDetails?.value?.CasoCode || props.sampleId
+    const casoCode = caseDetails?.value?.caso_code || props.sampleId
     const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
       id: primaryDisease.value.id,
       codigo: primaryDisease.value.codigo,
@@ -664,7 +664,7 @@ const updateSectionContent = (value: string) => {
 const handleCaseClick = async (caseItem: any) => {
   try {
     // Cargar el caso completo desde la base de datos
-    const fullCase = await casesApiService.getCaseByCode(caseItem.CasoCode)
+    const fullCase = await casesApiService.getCaseByCode(caseItem.caso_code)
     selectedPreviousCase.value = fullCase
   } catch (error) {
     // Si falla, usar el caso básico

@@ -31,8 +31,8 @@
               <p class="text-base font-medium text-gray-900">{{ caseItem?.patient?.fullName || 'N/A' }}</p>
             </div>
             <div>
-              <p class="text-sm text-gray-500">Cédula</p>
-              <p class="text-base font-medium text-gray-900">{{ caseItem?.patient?.dni || 'N/A' }}</p>
+              <p class="text-sm text-gray-500">Documento de Identidad</p>
+              <p class="text-base font-medium text-gray-900">{{ caseItem?.patient?.id || 'N/A' }}</p>
             </div>
             <div>
               <p class="text-sm text-gray-500">Edad</p>

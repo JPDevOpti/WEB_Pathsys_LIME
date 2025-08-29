@@ -12,7 +12,7 @@
     <!-- Fila de búsqueda principal -->
     <div class="flex flex-col md:flex-row gap-3">
       <div class="flex-1">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre o cédula o caso</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre, documento de identidad o caso</label>
         <FormInputField
           v-model="local.searchQuery"
           placeholder="Ej: 2025-00001, 123456789, Juan Pérez"
