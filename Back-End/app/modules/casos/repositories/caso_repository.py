@@ -200,7 +200,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         pipeline_pruebas = [
             {"$unwind": "$muestras"},
             {"$unwind": "$muestras.pruebas"},
-            {"$group": {"_id": "$muestras.pruebas.nombre", "count": {"$sum": 1}}}
+            {"$group": {"_id": "$muestras.pruebas.nombre", "count": {"$sum": {"$ifNull": ["$muestras.pruebas.cantidad", 1]}}}}
         ]
         result_pruebas = await self.collection.aggregate(pipeline_pruebas).to_list(length=None)
         stats.casos_por_tipo_prueba = {item["_id"]: item["count"] for item in result_pruebas}
@@ -547,7 +547,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             {"$match": {"fecha_creacion": {"$gte": inicio_12_meses}}},
             {"$unwind": "$muestras"},
             {"$unwind": "$muestras.pruebas"},
-            {"$group": {"_id": "$muestras.pruebas.nombre", "count": {"$sum": 1}}},
+            {"$group": {"_id": "$muestras.pruebas.nombre", "count": {"$sum": {"$ifNull": ["$muestras.pruebas.cantidad", 1]}}}},
             {"$sort": {"count": -1}},
             {"$limit": 10}
         ]
@@ -1033,7 +1033,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
                         "codigo": "$muestras.pruebas.codigo",
                         "nombre": "$muestras.pruebas.nombre"
                     },
-                    "total_solicitudes": {"$sum": 1}
+                    "total_solicitudes": {"$sum": {"$ifNull": ["$muestras.pruebas.cantidad", 1]}}
                 }
             },
             {
@@ -1183,7 +1183,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
                         "codigo": "$muestras.pruebas.id",
                         "nombre": "$muestras.pruebas.nombre"
                     },
-                    "total_solicitadas": {"$sum": 1},
+                    "total_solicitadas": {"$sum": {"$ifNull": ["$muestras.pruebas.cantidad", 1]}},
                     "casos_ids": {"$addToSet": "$_id"}
                 }
             },

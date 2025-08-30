@@ -169,11 +169,13 @@ class PruebasItem(BaseModel):
     """Esquema para items de pruebas en casos"""
     id: str = Field(..., description="ID único de la prueba")
     nombre: str = Field(..., description="Nombre de la prueba")
+    cantidad: int = Field(default=1, ge=1, le=10, description="Cantidad/multiplicador de la prueba")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "id": "64f8a1b2c3d4e5f6a7b8c9d0",
-                "nombre": "Hemoglobina"
+                "nombre": "Hemoglobina",
+                "cantidad": 1
             }
         }

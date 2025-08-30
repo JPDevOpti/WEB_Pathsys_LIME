@@ -1095,10 +1095,34 @@ const getObservaciones = (): string => {
 }
 
 /**
- * Obtiene las muestras del caso
+ * Obtiene las muestras del caso, combinando datos del backend y formulario
  */
 const getMuestras = () => {
-  return (updatedCase.value as any)?.muestras || form.muestras
+  const backendMuestras = (updatedCase.value as any)?.muestras || []
+  const formMuestras = form.muestras || []
+  
+  // Si no hay datos del backend, usar los del formulario
+  if (!backendMuestras.length) {
+    return formMuestras
+  }
+  
+  // Combinar datos del backend con información faltante del formulario
+  return backendMuestras.map((backendMuestra: any, index: number) => {
+    const formMuestra = formMuestras[index]
+    return {
+      ...backendMuestra,
+      // Preservar region_cuerpo del formulario si no viene del backend
+      regionCuerpo: backendMuestra.regionCuerpo || 
+                   backendMuestra.region_cuerpo || 
+                   formMuestra?.regionCuerpo || 
+                   'Sin especificar',
+      // Asegurar que las pruebas incluyan cantidad
+      pruebas: (backendMuestra.pruebas || []).map((prueba: any, pIndex: number) => ({
+        ...prueba,
+        cantidad: prueba.cantidad || formMuestra?.pruebas?.[pIndex]?.cantidad || 1
+      }))
+    }
+  })
 }
 
 /**
