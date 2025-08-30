@@ -1,18 +1,14 @@
 <template>
   <ComponentCard title="Crear nuevo caso" description="Complete la información del caso para ingresarlo al sistema.">
     <template #icon>
-      <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
+      <PlusIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
 
     <div class="space-y-6">
       <!-- Sección de verificación del paciente -->
       <div class="bg-gray-50 rounded-lg p-3 sm:p-4 lg:p-6 border border-gray-200">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-          <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
+          <UserCircleIcon class="w-4 h-4 mr-2 text-blue-600" />
         Buscar Paciente
         </h3>
         
@@ -75,9 +71,7 @@
         <!-- Sección de información de submuestras -->
         <div class="space-y-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
+            <TaskIcon class="w-5 h-5 mr-2 text-blue-600" />
             Información de Submuestras
           </h3>
           
@@ -215,6 +209,7 @@ import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/fo
 import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList, TestList, BodyRegionList } from '@/shared/components/List'
+import { PlusIcon, UserCircleIcon, TaskIcon } from '@/assets/icons'
 
 // Referencias del DOM y estado local
 const notificationContainer = ref<HTMLElement | null>(null)
@@ -311,13 +306,6 @@ const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any
       // Asignar correctamente el código y nombre de la prueba
       muestra.pruebas[pruebaIndex].code = test.pruebaCode || test.code || ''
       muestra.pruebas[pruebaIndex].nombre = test.pruebasName || test.nombre || test.label || ''
-      
-      // Debug temporal
-      console.log('Test seleccionado:', {
-        code: muestra.pruebas[pruebaIndex].code,
-        nombre: muestra.pruebas[pruebaIndex].nombre,
-        testObject: test
-      })
     }
   }
 }

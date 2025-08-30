@@ -983,13 +983,6 @@ const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any
       // Asignar correctamente el código y nombre de la prueba
       muestra.pruebas[pruebaIndex].code = test.pruebaCode || test.code || ''
       muestra.pruebas[pruebaIndex].nombre = test.pruebasName || test.nombre || test.label || ''
-      
-      // Debug temporal
-      console.log('Test seleccionado (EditForm):', {
-        code: muestra.pruebas[pruebaIndex].code,
-        nombre: muestra.pruebas[pruebaIndex].nombre,
-        testObject: test
-      })
     }
   }
 }

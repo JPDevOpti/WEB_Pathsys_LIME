@@ -123,7 +123,7 @@ const getRoleIcon = () => {
 
 const menuItems = [
   { href: '/profile', icon: UserCircleIcon, text: 'Editar Perfil' },
-  { href: '/profile', icon: InfoCircleIcon, text: 'Soporte' },
+  { href: '/support', icon: InfoCircleIcon, text: 'Soporte' },
 ]
 
 const toggleDropdown = () => {

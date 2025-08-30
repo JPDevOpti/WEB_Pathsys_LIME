@@ -312,6 +312,7 @@ const canAccessRoute = (path: string): boolean => {
     // Bloquear submenús específicos
     if (path.includes('/users')) return false; // Gestión de usuarios
     if (path.includes('/cases/new') || path.includes('/cases/edit')) return false; // Nuevo/Editar caso
+    if (path.includes('/cases/complementary-tests')) return false; // Pruebas complementarias
     if (path.startsWith('/statistics/')) return false; // Todos los submenús de estadísticas
     
     // Permitir solo ciertas rutas
@@ -338,6 +339,7 @@ const canAccessRoute = (path: string): boolean => {
     // Bloquear submenús específicos
     if (path.includes('/users')) return false; // Gestión de usuarios
     if (path.includes('/cases/new') || path.includes('/cases/edit')) return false; // Nuevo/Editar caso
+    if (path.includes('/cases/complementary-tests')) return false; // Pruebas complementarias
     if (path.startsWith('/statistics/')) return false; // Todos los submenús de estadísticas
     if (path.startsWith('/results/sign')) return false; // Firmar resultados
     
@@ -402,6 +404,7 @@ const filteredMenuItems = computed(() => {
       subItems: [
         { name: "Nuevo Caso", path: "/cases/new", pro: false, alwaysVisible: true },
         { name: "Editar Caso", path: "/cases/edit", pro: false, alwaysVisible: true },
+        { name: "Pruebas Complementarias", path: "/cases/complementary-tests", pro: false, alwaysVisible: false },
       ],
       alwaysVisible: true
     },

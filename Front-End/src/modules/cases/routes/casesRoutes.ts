@@ -31,6 +31,15 @@ export const casesRoutes: RouteRecordRaw[] = [
           title: 'Editar Caso',
           requiresAuth: true
         }
+      },
+      {
+        path: 'complementary-tests',
+        name: 'cases-complementary-tests',
+        component: () => import('../views/ComplementaryTestsView.vue'),
+        meta: {
+          title: 'Pruebas Complementarias',
+          requiresAuth: true
+        }
       }
     ]
   }
