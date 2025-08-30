@@ -34,13 +34,13 @@
       </div>
 
       <div v-else class="flex-1 flex flex-col justify-center">
-        <div class="relative flex-1 flex items-center justify-center min-h-[200px]">
+        <div class="relative flex-1 flex items-center justify-center min-h-[160px] sm:min-h-[180px] lg:min-h-[200px]">
           <div id="chartTwo" class="h-full w-full flex items-center justify-center">
             <div class="radial-bar-chart">
               <VueApexCharts 
                 v-if="!loading && !error && datosOportunidad"
                 type="radialBar" 
-                height="280" 
+                :height="chartHeight" 
                 :options="chartOptions" 
                 :series="series"
                 class="transition-all duration-500 hover:scale-105" 
@@ -60,15 +60,16 @@
             {{ (datosOportunidad?.cambio_porcentual || 0) > 0 ? '+' : '' }}{{ datosOportunidad?.cambio_porcentual || 0 }}%
           </span>
         </div>
-        <p class="mx-auto -mt-2 w-full max-w-[320px] text-center text-xs text-gray-500 transition-colors duration-300 flex-shrink-0">
-          Progreso en el cumplimiento de tiempos de oportunidad ({{ datosOportunidad?.mes_anterior?.nombre || 'Mes anterior' }})
+        <p class="mx-auto -mt-2 w-full max-w-[320px] text-center text-xs sm:text-sm text-gray-500 transition-colors duration-300 flex-shrink-0 px-2">
+          <span class="hidden sm:inline">Progreso en el cumplimiento de tiempos de oportunidad ({{ datosOportunidad?.mes_anterior?.nombre || 'Mes anterior' }})</span>
+          <span class="sm:hidden">Cumplimiento de oportunidad ({{ datosOportunidad?.mes_anterior?.nombre || 'Mes anterior' }})</span>
         </p>
       </div>
     </div>
 
-    <div v-if="!loading && !error" class="flex items-center justify-center gap-3 px-4 py-2.5 sm:gap-4 sm:px-5 bg-gray-50 rounded-b-2xl flex-shrink-0">
-      <div class="group transition-all duration-300 hover:scale-105">
-        <p class="mb-1 text-center text-gray-500 text-xs transition-colors duration-300 group-hover:text-gray-700">
+    <div v-if="!loading && !error" class="grid grid-cols-2 sm:flex sm:items-center sm:justify-center gap-2 sm:gap-4 px-3 py-2.5 sm:px-5 bg-gray-50 rounded-b-2xl flex-shrink-0">
+      <div class="group transition-all duration-300 hover:scale-105 text-center">
+        <p class="mb-1 text-gray-500 text-xs transition-colors duration-300 group-hover:text-gray-700">
           Total casos
         </p>
         <p class="flex items-center justify-center gap-1 text-sm font-semibold text-gray-800 transition-colors duration-300 group-hover:text-blue-600">
@@ -76,11 +77,12 @@
         </p>
       </div>
 
-      <div class="w-px bg-gray-200 h-6"></div>
+      <div class="hidden sm:block w-px bg-gray-200 h-6"></div>
 
-      <div class="group transition-all duration-300 hover:scale-105">
-        <p class="mb-1 text-center text-gray-500 text-xs transition-colors duration-300 group-hover:text-gray-700">
-          Tiempo promedio
+      <div class="group transition-all duration-300 hover:scale-105 text-center">
+        <p class="mb-1 text-gray-500 text-xs transition-colors duration-300 group-hover:text-gray-700">
+          <span class="hidden sm:inline">Tiempo promedio</span>
+          <span class="sm:hidden">Promedio</span>
         </p>
         <p class="flex items-center justify-center gap-1 text-sm font-semibold text-gray-800 transition-colors duration-300 group-hover:text-blue-600">
           {{ datosOportunidad?.tiempo_promedio || 0 }}
@@ -88,29 +90,31 @@
         </p>
       </div>
 
-      <div class="w-px bg-gray-200 h-6"></div>
+      <div class="hidden sm:block w-px bg-gray-200 h-6"></div>
 
-      <div class="group transition-all duration-300 hover:scale-105">
-        <p class="mb-1 text-center text-gray-500 text-xs transition-colors duration-300 group-hover:text-gray-700">
-          Dentro de oportunidad
+      <div class="group transition-all duration-300 hover:scale-105 text-center">
+        <p class="mb-1 text-gray-500 text-xs transition-colors duration-300 group-hover:text-gray-700">
+          <span class="hidden sm:inline">Dentro de oportunidad</span>
+          <span class="sm:hidden">Dentro</span>
         </p>
         <p class="flex items-center justify-center gap-1 text-sm font-semibold text-gray-800 transition-colors duration-300 group-hover:text-blue-600">
           {{ datosOportunidad?.casos_dentro_oportunidad || 0 }}
-          <svg class="transition-transform duration-300 group-hover:translate-y-[-2px]" width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="transition-transform duration-300 group-hover:translate-y-[-2px] w-3 h-3" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M7.60141 2.33683C7.73885 2.18084 7.9401 2.08243 8.16435 2.08243C8.16475 2.08243 8.16516 2.08243 8.16556 2.08243C8.35773 2.08219 8.54998 2.15535 8.69664 2.30191L12.6968 6.29924C12.9898 6.59203 12.9899 7.0669 12.6971 7.3599C12.4044 7.6529 11.9295 7.65306 11.6365 7.36027L8.91435 4.64004L8.91435 13.5C8.91435 13.9142 8.57856 14.25 8.16435 14.25C7.75013 14.25 7.41435 13.9142 7.41435 13.5L7.41435 4.64442L4.69679 7.36025C4.4038 7.65305 3.92893 7.6529 3.63613 7.35992C3.34333 7.06693 3.34348 6.59206 3.63646 6.29926L7.60141 2.33683Z" fill="#039855"/>
           </svg>
         </p>
       </div>
 
-      <div class="w-px bg-gray-200 h-6"></div>
+      <div class="hidden sm:block w-px bg-gray-200 h-6"></div>
 
-      <div class="group transition-all duration-300 hover:scale-105">
-        <p class="mb-1 text-center text-gray-500 text-xs transition-colors duration-300 group-hover:text-gray-700">
-          Fuera de oportunidad
+      <div class="group transition-all duration-300 hover:scale-105 text-center">
+        <p class="mb-1 text-gray-500 text-xs transition-colors duration-300 group-hover:text-gray-700">
+          <span class="hidden sm:inline">Fuera de oportunidad</span>
+          <span class="sm:hidden">Fuera</span>
         </p>
         <p class="flex items-center justify-center gap-1 text-sm font-semibold text-gray-800 transition-colors duration-300 group-hover:text-blue-600">
           {{ datosOportunidad?.casos_fuera_oportunidad || 0 }}
-          <svg class="transition-transform duration-300 group-hover:translate-y-[-2px]" width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="transition-transform duration-300 group-hover:translate-y-[-2px] w-3 h-3" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M7.26816 13.6632C7.4056 13.8192 7.60686 13.9176 7.8311 13.9176C7.83148 13.9176 7.83187 13.9176 7.83226 13.9176C8.02445 13.9178 8.21671 13.8447 8.36339 13.6981L12.3635 9.70076C12.6565 9.40797 12.6567 8.9331 12.3639 8.6401C12.0711 8.34711 11.5962 8.34694 11.3032 8.63973L8.5811 11.36L8.5811 2.5C8.5811 2.08579 8.24531 1.75 7.8311 1.75C7.41688 1.75 7.0811 1.46079 7.0811 1.75L7.0811 11.3556L4.36354 8.63975C4.07055 8.34695 3.59568 8.3471 3.30288 8.64009C3.01008 8.93307 3.01023 9.40794 3.30321 9.70075L7.26816 13.6632Z" fill="#D92D20"/>
           </svg>
         </p>
@@ -152,6 +156,10 @@ const cargarDatos = async () => {
   await nextTick()
   chartReady.value = true
 }
+
+const chartHeight = computed(() => {
+  return window.innerWidth < 640 ? 200 : window.innerWidth < 1024 ? 240 : 280
+})
 
 const series = computed(() => {
   if (!datosOportunidad.value) return [0]
