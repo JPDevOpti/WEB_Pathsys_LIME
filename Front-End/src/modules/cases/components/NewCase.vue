@@ -172,7 +172,7 @@
                       <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ createdCase.estado || 'Pendiente' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ createdCase.medicoSolicitante || formData.medicoSolicitante }}</p></div>
                       <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ createdCase.servicio || formData.servicio || 'No especificado' }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Número de Submuestras:</span><p class="text-gray-900 font-semibold">{{ createdCase.muestras?.length || formData.muestras.length }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Número de Submuestras:</span><p class="text-gray-900 font-semibold">{{ getMuestrasForNotification().length }}</p></div>
                       <div v-if="createdCase.observaciones || formData.observaciones"><span class="text-gray-500 font-medium">Observaciones:</span><p class="text-gray-900">{{ createdCase.observaciones || formData.observaciones }}</p></div>
                     </div>
                   </div>
@@ -182,14 +182,14 @@
                 <div>
                   <h4 class="font-semibold text-gray-800 mb-3 text-base">Submuestras Creadas</h4>
                   <div class="space-y-3">
-                    <div v-for="(muestra, index) in (createdCase.muestras || formData.muestras)" :key="index" class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <div v-for="(muestra, index) in getMuestrasForNotification()" :key="index" class="border border-gray-200 rounded-lg p-3 bg-gray-50">
                       <div class="flex items-center justify-between mb-2">
                         <span class="font-medium text-gray-900 text-sm">Submuestra {{ index + 1 }}</span>
                         <span class="text-sm text-gray-500">{{ (muestra.pruebas && muestra.pruebas.length) || 0 }} prueba{{ ((muestra.pruebas && muestra.pruebas.length) || 0) !== 1 ? 's' : '' }}</span>
                       </div>
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                         <div><span class="text-gray-500 font-medium">Región:</span><p class="text-gray-900">{{ muestra.regionCuerpo || 'Sin especificar' }}</p></div>
-                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="muestra.pruebas && muestra.pruebas.length > 0">{{ muestra.pruebas.map(p => `${p.code || p.nombre || 'Sin código'} (${p.cantidad || 1})`).join(', ') }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
+                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="muestra.pruebas && muestra.pruebas.length > 0">{{ muestra.pruebas.map((p: any) => `${p.code || p.nombre || 'Sin código'} (${p.cantidad || 1})`).join(', ') }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
                       </div>
                     </div>
                   </div>
@@ -269,6 +269,35 @@ const createdDateDisplay = computed(() => {
   return formatDateDisplay(raw)
 })
 
+// Función para obtener muestras combinando datos del backend y formulario
+const getMuestrasForNotification = () => {
+  const backendMuestras = createdCase.value?.muestras || []
+  const formMuestras = formData.muestras || []
+  
+  // Si no hay datos del backend, usar los del formulario
+  if (!backendMuestras.length) {
+    return formMuestras
+  }
+  
+  // Combinar datos del backend con información faltante del formulario
+  return backendMuestras.map((backendMuestra: any, index: number) => {
+    const formMuestra = formMuestras[index]
+    return {
+      ...backendMuestra,
+      // Preservar regionCuerpo del formulario si no viene del backend
+      regionCuerpo: backendMuestra.regionCuerpo || 
+                   backendMuestra.region_cuerpo || 
+                   formMuestra?.regionCuerpo || 
+                   'Sin especificar',
+      // Asegurar que las pruebas incluyan cantidad
+      pruebas: (backendMuestra.pruebas || []).map((prueba: any, pIndex: number) => ({
+        ...prueba,
+        cantidad: prueba.cantidad || formMuestra?.pruebas?.[pIndex]?.cantidad || 1
+      }))
+    }
+  })
+}
+
 // Handlers de eventos
 const handlePacienteCodeInput = (value: string) => {
   const numericValue = value.replace(/\D/g, '')
@@ -279,8 +308,16 @@ const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any
   if (test && muestraIndex >= 0 && muestraIndex < formData.muestras.length) {
     const muestra = formData.muestras[muestraIndex]
     if (pruebaIndex >= 0 && pruebaIndex < muestra.pruebas.length) {
-      muestra.pruebas[pruebaIndex].code = test.pruebaCode
-      muestra.pruebas[pruebaIndex].nombre = test.pruebasName
+      // Asignar correctamente el código y nombre de la prueba
+      muestra.pruebas[pruebaIndex].code = test.pruebaCode || test.code || ''
+      muestra.pruebas[pruebaIndex].nombre = test.pruebasName || test.nombre || test.label || ''
+      
+      // Debug temporal
+      console.log('Test seleccionado:', {
+        code: muestra.pruebas[pruebaIndex].code,
+        nombre: muestra.pruebas[pruebaIndex].nombre,
+        testObject: test
+      })
     }
   }
 }

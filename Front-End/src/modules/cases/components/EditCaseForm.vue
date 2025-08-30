@@ -980,8 +980,16 @@ const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any
   if (test && muestraIndex >= 0 && muestraIndex < form.muestras.length) {
     const muestra = form.muestras[muestraIndex]
     if (pruebaIndex >= 0 && pruebaIndex < muestra.pruebas.length) {
-      muestra.pruebas[pruebaIndex].code = test.pruebaCode || test.code
-      muestra.pruebas[pruebaIndex].nombre = test.pruebasName || test.nombre
+      // Asignar correctamente el código y nombre de la prueba
+      muestra.pruebas[pruebaIndex].code = test.pruebaCode || test.code || ''
+      muestra.pruebas[pruebaIndex].nombre = test.pruebasName || test.nombre || test.label || ''
+      
+      // Debug temporal
+      console.log('Test seleccionado (EditForm):', {
+        code: muestra.pruebas[pruebaIndex].code,
+        nombre: muestra.pruebas[pruebaIndex].nombre,
+        testObject: test
+      })
     }
   }
 }

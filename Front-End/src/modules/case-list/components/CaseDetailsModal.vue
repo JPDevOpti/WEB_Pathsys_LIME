@@ -159,13 +159,15 @@
             </div>
           </div>
         </div>
-        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row sm:justify-between gap-3">
-          <div class="flex gap-2">
-            <PreviewButton text="Previsualizar Informe" @click="$emit('preview', caseItem)" />
-          </div>
-          <div class="flex gap-2 justify-end">
-            <ActionButton variant="secondary" :text="'Cerrar'" @action="$emit('close')" />
-            <ActionButton :text="'Editar Caso'" @action="$emit('edit', caseItem)" />
+        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl">
+          <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <div class="flex justify-center sm:justify-start">
+              <PreviewButton text="Previsualizar Informe" @click="$emit('preview', caseItem)" />
+            </div>
+            <div class="flex gap-2 justify-center sm:justify-end">
+              <ActionButton variant="secondary" :text="'Cerrar'" @action="$emit('close')" />
+              <ActionButton :text="'Editar Caso'" @action="$emit('edit', caseItem)" />
+            </div>
           </div>
         </div>
       </div>

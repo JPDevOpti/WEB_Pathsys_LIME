@@ -66,7 +66,7 @@ export function useCaseAPI() {
         region_cuerpo: muestra.regionCuerpo,
         pruebas: muestra.pruebas.map(prueba => ({
           id: prueba.code,
-          nombre: prueba.code,
+          nombre: prueba.nombre || prueba.code,
           cantidad: prueba.cantidad || 1
         }))
       })),

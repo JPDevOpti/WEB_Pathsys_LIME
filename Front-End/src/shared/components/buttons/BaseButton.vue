@@ -21,6 +21,9 @@
       <span v-if="$slots.default">
         <slot />
       </span>
+      <span v-else-if="text">
+        {{ text }}
+      </span>
       <slot name="icon-right" />
     </div>
   </button>
@@ -36,6 +39,7 @@ interface Props {
   disabled?: boolean
   loading?: boolean
   loadingText?: string
+  text?: string
   fullWidth?: boolean
   customClass?: string
 }
@@ -47,6 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   loading: false,
   loadingText: '',
+  text: '',
   fullWidth: false,
   customClass: ''
 })

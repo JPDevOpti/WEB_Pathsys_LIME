@@ -54,7 +54,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           <h3 class="text-lg font-medium text-blue-800">Busque un paciente para editar</h3>
-          <p class="text-blue-600 text-sm">Ingrese el documento de identidad del paciente en el campo de búsqueda arriba para comenzar a editar</p>
+          <p class="text-blue-600 text-sm">Ingrese el documento de identidad del paciente para comenzar a editar</p>
         </div>
       </div>
 
