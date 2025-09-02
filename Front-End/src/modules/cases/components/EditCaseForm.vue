@@ -15,7 +15,7 @@
               <FormInputField
                 v-model="searchCaseCode"
                 type="text"
-                placeholder="Ej: 2025-00001"
+                placeholder="Ejemplo: 2025-00001"
                 maxlength="10"
                 autocomplete="off"
                 :disabled="isSearching"
@@ -290,7 +290,8 @@ const tipoAtencionOptions = [
 const estadoOptions = [
   { value: 'En proceso', label: 'En proceso' },
   { value: 'Por firmar', label: 'Por firmar' },
-  { value: 'Por entregar', label: 'Por entregar' },
+  // 'Por entregar' deprecado -> usar 'Requiere cambios'
+  { value: 'Requiere cambios', label: 'Requiere cambios' },
   { value: 'Completado', label: 'Completado' },
   { value: 'cancelado', label: 'Cancelado' }
 ]

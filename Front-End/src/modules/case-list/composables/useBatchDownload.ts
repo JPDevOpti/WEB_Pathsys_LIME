@@ -250,7 +250,8 @@ export function useBatchDownload() {
       case 'Completado': return '#10b981'
       case 'Por firmar': return '#f59e0b'
       case 'En proceso': return '#3b82f6'
-      case 'Por entregar': return '#f97316'
+  case 'Por entregar': return '#dc2626' // deprecado -> usar mismo color de 'Requiere cambios'
+  case 'Requiere cambios': return '#dc2626'
       case 'Requiere cambios': return '#ef4444'
       default: return '#6b7280'
     }

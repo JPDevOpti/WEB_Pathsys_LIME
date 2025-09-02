@@ -29,7 +29,7 @@
           <div class="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-end">
             <div class="flex-1">
               <FormInputField id="codigo-caso" :model-value="codigoCaso" @update:model-value="handleCodigoChange"
-                type="text" placeholder="Ej: 2025-00001" maxlength="10" autocomplete="off" :disabled="isLoadingSearch"
+                type="text" placeholder="Ejemplo: 2025-00001" maxlength="10" autocomplete="off" :disabled="isLoadingSearch"
                 @keydown.enter.prevent="buscarCaso" class="flex-1" />
 
               <div v-if="codigoCaso && !isValidCodigoFormat(codigoCaso)" class="mt-1 text-xs text-red-600">
@@ -305,7 +305,8 @@ const getReadableStatus = (status: string): string => {
   const normalizedStatus = normalizeStatus(status)
   const statusMap: Record<string, string> = {
     'EN_PROCESO': 'En Proceso',
-    'POR_ENTREGAR': 'Por Entregar',
+  // 'Por Entregar' deprecado -> usar 'Requiere cambios'
+  'POR_ENTREGAR': 'Requiere cambios',
     'POR_FIRMAR': 'Por Firmar',
     'COMPLETADO': 'Completado',
     'PENDIENTE': 'Pendiente',
@@ -610,20 +611,27 @@ async function handleSign() {
     const response = await resultsApiService.firmarResultado(casoCode, requestData, patologoCodigo)
 
     if (response) {
-      // Mostrar notificación de éxito
+      // Forzar estado a COMPLETADO (el backend antes dejaba 'Por entregar')
+      try {
+        await resultsApiService.cambiarEstadoResultado(casoCode, 'COMPLETADO')
+        if (caseDetails.value) caseDetails.value.estado = 'COMPLETADO'
+      } catch (e) {
+        // Si falla el cambio explícito, continuar si el backend ya devolvió estado correcto
+        if (caseDetails.value && caseDetails.value.estado !== 'COMPLETADO') {
+          // Último recurso: ajustar localmente
+          caseDetails.value.estado = 'COMPLETADO'
+        }
+      }
+
+      // Mostrar notificación de éxito con nuevo texto
       showSuccess(
-        '¡Resultado firmado exitosamente!',
-        `El resultado del caso ${casoCode} ha sido firmado y está listo para entrega.`,
+        '¡Resultado firmado!',
+        `El caso ${casoCode} ha sido firmado y marcado como Completado.`,
         0
       )
 
       // Limpiar mensajes de validación
       validationMessage.value = ''
-
-      // Actualizar los datos del caso localmente
-      if (caseDetails.value) {
-        caseDetails.value.estado = 'COMPLETADO'
-      }
 
       // Marcar que el caso ha sido firmado para ocultar alertas
       hasBeenSigned.value = true

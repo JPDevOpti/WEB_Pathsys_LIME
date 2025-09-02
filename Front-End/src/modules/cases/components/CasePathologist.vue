@@ -25,7 +25,7 @@
               id="codigo-caso"
               v-model="codigoCaso"
               type="text"
-              placeholder="Ej: 2025-00001"
+              placeholder="Ejemplo: 2025-00001"
               maxlength="10"
               autocomplete="off"
               :disabled="isLoadingSearch"

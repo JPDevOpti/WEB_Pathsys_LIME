@@ -603,7 +603,9 @@ function statusClass(c: Case): string {
   if (c.status === 'Requiere cambios') return 'bg-red-50 text-red-700 font-semibold'
   if (days > 6 && c.status !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
   if (c.status === 'Por firmar') return 'bg-yellow-50 text-yellow-700'
-  if (c.status === 'Por entregar') return 'bg-orange-50 text-orange-700'
+  // 'Por entregar' ha sido deprecado y reemplazado por 'Requiere cambios'.
+  // Mantenemos compatibilidad visual si aún llega el valor antiguo desde el backend.
+  if (c.status === 'Por entregar') return 'bg-red-50 text-red-700 font-semibold'
   if (c.status === 'En proceso') return 'bg-blue-50 text-blue-700'
   if (c.status === 'Completado') return 'bg-green-50 text-green-700'
   return ''

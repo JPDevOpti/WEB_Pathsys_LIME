@@ -54,7 +54,7 @@ const searchPlaceholder = computed(() => {
     patologo: 'Nombre del patólogo, código, registro médico o email...',
     residente: 'Nombre del residente, código, registro médico o email...',
     entidad: 'Nombre de la entidad, código o NIT...',
-    pruebas: 'Nombre de la prueba o código (ej: 80901-1, Biopsia)...'
+    pruebas: 'Nombre de la prueba o código (80901-1, Biopsia)...'
   }
   return placeholders[selectedTipo.value] || 'Buscar...'
 })

@@ -15,7 +15,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre, documento de identidad o caso</label>
         <FormInputField
           v-model="local.searchQuery"
-          placeholder="Ej: 2025-00001, 123456789, Juan Pérez"
+          placeholder="Ejemplo 2025-00001, 123456789, Juan Pérez"
           @keydown.enter.prevent
         />
       </div>
@@ -55,6 +55,7 @@
           label="Estado"
           :options="statusOptions"
           placeholder="Seleccione estado"
+          dense
         />
       </div>
     </div>
@@ -150,7 +151,8 @@ const statusOptions = [
   { value: '', label: 'Todos' },
   { value: 'En proceso', label: 'En proceso' },
   { value: 'Por firmar', label: 'Por firmar' },
-  { value: 'Por entregar', label: 'Por entregar' },
+  // Reemplazado 'Por entregar' por 'Requiere cambios'
+  { value: 'Requiere cambios', label: 'Requiere cambios' },
   { value: 'Completado', label: 'Completado' }
 ]
 

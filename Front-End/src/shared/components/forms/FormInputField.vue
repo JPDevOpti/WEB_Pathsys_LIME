@@ -1,6 +1,6 @@
 <template>
-  <div class="space-y-2">
-    <label v-if="label" class="block text-sm font-medium text-gray-700">
+  <div :class="dense ? 'space-y-1' : 'space-y-1'">
+    <label v-if="label" :class="['block font-medium text-gray-700', dense ? 'text-xs' : 'text-sm']">
       {{ label }}
       <span v-if="required" class="text-red-500">*</span>
     </label>
@@ -79,6 +79,7 @@ interface Props {
   inputmode?: 'text' | 'numeric' | 'email' | 'tel' | 'url' | 'search' | 'none' | 'decimal'
   isValidating?: boolean
   inputRef?: string
+  dense?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -91,7 +92,8 @@ const props = withDefaults(defineProps<Props>(), {
   warnings: () => [],
   autocomplete: 'off',
   inputmode: 'text',
-  isValidating: false
+  isValidating: false,
+  dense: false
 })
 
 const emit = defineEmits<{
@@ -114,7 +116,9 @@ const handleBlur = (event: Event) => {
 }
 
 const inputClasses = computed(() => {
-  const baseClasses = "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors"
+  const baseClasses = props.dense
+    ? "w-full px-2 py-1.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors text-sm"
+    : "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors"
   
   if (props.errors.length > 0) {
     return `${baseClasses} border-red-500`

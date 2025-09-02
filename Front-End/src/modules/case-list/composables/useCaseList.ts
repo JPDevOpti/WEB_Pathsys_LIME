@@ -108,7 +108,7 @@ export function useCaseList() {
     const mapStatus = (s?: string): string => {
       const v = String(s || '').toLowerCase()
       if (v.includes('firmar')) return 'Por firmar'
-      if (v.includes('entregar')) return 'Por entregar'
+  if (v.includes('entregar')) return 'Requiere cambios' // 'Por entregar' deprecado
       if (v.includes('complet')) return 'Completado'
       if (v.includes('cambio')) return 'Requiere cambios'
       if (v.includes('pend') || !v) return 'En proceso'
@@ -116,7 +116,7 @@ export function useCaseList() {
     }
 
     const finalStatus = mapStatus(bk.estado)
-    const finalDeliveredAt = finalStatus === 'Por entregar' ? '' : deliveredAt
+  const finalDeliveredAt = finalStatus === 'Requiere cambios' ? '' : deliveredAt
 
     return {
       id,
@@ -268,7 +268,7 @@ export function useCaseList() {
         let newStatus = action
         if (action === 'en-proceso') newStatus = 'En proceso'
         if (action === 'por-firmar') newStatus = 'Por firmar'
-        if (action === 'por-entregar') newStatus = 'Por entregar'
+  if (action === 'por-entregar') newStatus = 'Requiere cambios' // compatibilidad con acciones anteriores
         if (action === 'completado') newStatus = 'Completado'
         if (action === 'requiere-cambios') newStatus = 'Requiere cambios'
         return { ...c, status: newStatus }

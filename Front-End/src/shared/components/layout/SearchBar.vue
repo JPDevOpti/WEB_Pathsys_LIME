@@ -30,7 +30,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Buscar páginas... (Ej: crear caso, firmar resultados)"
+          placeholder="Buscar páginas... (Ejemplo: crear caso, firmar resultados)"
           class="h-11 w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-12 pr-3 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 transition-all duration-200"
           @focus="openDropdown()"
           @keydown.down.prevent="moveActive(1)"

@@ -116,9 +116,21 @@
               <span
                 v-for="(test, idx) in caseItem.newAssignedTests"
                 :key="idx"
-                class="relative inline-flex items-center justify-center bg-white text-blue-700 font-mono text-[11px] pl-2 pr-6 py-0.5 rounded border border-blue-200 text-nowrap shadow-sm"
+                class="relative inline-flex items-center justify-center bg-white text-blue-700 font-mono text-[11px] pl-1 pr-6 py-0.5 rounded border border-blue-200 text-nowrap shadow-sm group"
                 :title="test.name && test.name !== test.id ? test.name : ''"
               >
+                <!-- Botón eliminar -->
+                <button
+                  type="button"
+                  class="inline-flex items-center justify-center w-4 h-4 mr-1 rounded-sm text-red-500 hover:text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 transition-colors"
+                  aria-label="Eliminar prueba"
+                  title="Eliminar prueba"
+                  @click.stop="handleRemoveNewAssignedTest(idx, test)"
+                >
+                  <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 8.586l4.95-4.95 1.414 1.414L11.414 10l4.95 4.95-1.414 1.414L10 11.414l-4.95 4.95-1.414-1.414L8.586 10l-4.95-4.95L5.05 3.636 10 8.586z" clip-rule="evenodd" />
+                  </svg>
+                </button>
                 {{ test.id }} - {{ test.name || test.id }}
                 <span
                   v-if="test.quantity > 1"
@@ -192,10 +204,22 @@
       </div>
     </div>
   </transition>
+  <!-- Dialogo de confirmación eliminación prueba nueva (fuera del <transition> para evitar múltiples hijos) -->
+  <ConfirmDialog
+    v-model="showConfirm"
+    title="Eliminar prueba"
+    :subtitle="pendingRemoval ? pendingRemoval.test?.name || pendingRemoval.test?.id : ''"
+    message="Esta acción eliminará la prueba asignada. ¿Desea continuar?"
+    confirm-text="Eliminar"
+    cancel-text="Cancelar"
+    @confirm="confirmRemoval"
+    @cancel="cancelRemoval"
+  />
 </template>
 
 <script setup lang="ts">
 import { BaseButton } from '@/shared/components'
+import { ConfirmDialog } from '@/shared/components/feedback'
 import { computed } from 'vue'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import type { CaseApprovalDetails } from '../types/case-approval.types'
@@ -206,16 +230,17 @@ interface Props {
   loadingReject?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   loadingApprove: false,
   loadingReject: false
 })
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'close'): void
   (e: 'approve', c: CaseApprovalDetails): void
   (e: 'reject', c: CaseApprovalDetails): void
   (e: 'preview', c: CaseApprovalDetails): void
+  (e: 'remove-new-test', payload: { index: number; test: any; caseItem: CaseApprovalDetails }): void
 }>()
 
 function formatDate(dateString?: string) {
@@ -230,4 +255,27 @@ const overlayLeftClass = computed(() => {
   const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
   return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
 })
+
+function handleRemoveNewAssignedTest(index: number, test: any) {
+  pendingRemoval.value = { index, test }
+  showConfirm.value = true
+}
+
+// Estado para diálogo de confirmación
+import { ref } from 'vue'
+const showConfirm = ref(false)
+const pendingRemoval = ref<{ index: number; test: any } | null>(null)
+
+function confirmRemoval() {
+  if (pendingRemoval.value && props.caseItem) {
+    emit('remove-new-test', { index: pendingRemoval.value.index, test: pendingRemoval.value.test, caseItem: props.caseItem })
+  }
+  showConfirm.value = false
+  pendingRemoval.value = null
+}
+
+function cancelRemoval() {
+  showConfirm.value = false
+  pendingRemoval.value = null
+}
 </script>

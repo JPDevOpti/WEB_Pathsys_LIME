@@ -76,7 +76,8 @@ export const CASE_STATES = {
   PENDING: 'En proceso',
   IN_PROCESS: 'En proceso', 
   COMPLETED: 'Completado',
-  DELIVERED: 'Por entregar',
+  // DELIVERED antes era 'Por entregar' ahora se mapea a 'Requiere cambios'
+  DELIVERED: 'Requiere cambios',
   CANCELLED: 'cancelado',
   TO_SIGN: 'Por firmar'
 } as const
