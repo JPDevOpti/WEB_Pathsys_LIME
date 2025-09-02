@@ -98,18 +98,30 @@ import { useAuxiliaryEdition } from '../../composables/useAuxiliaryEdition'
 import type { AuxiliaryEditFormModel } from '../../types/auxiliary.types'
 import { RefreshIcon } from '@/shared/icons'
 
+// Ampliamos el tipo para contemplar posibles renombres del backend
 type UsuarioAux = {
-  id: string;
-  tipo: string;
-  nombre?: string;
-  codigo?: string;
-  email?: string;
-  activo?: boolean;
-  auxiliarName?: string;
-  auxiliarCode?: string;
-  AuxiliarEmail?: string;
-  observaciones?: string;
-  isActive?: boolean;
+  id: string
+  tipo: string
+  // Variantes antiguas
+  nombre?: string
+  codigo?: string
+  email?: string
+  activo?: boolean
+  auxiliarName?: string
+  auxiliarCode?: string
+  AuxiliarEmail?: string
+  // Variantes nuevas/alternativas (hipotéticas tras refactor backend)
+  name?: string
+  code?: string
+  auxiliar_email?: string
+  auxiliar_emailAddress?: string
+  auxiliarEmail?: string
+  auxiliar_code?: string
+  auxiliar_name?: string
+  observations?: string
+  observaciones?: string
+  is_active?: boolean
+  isActive?: boolean
 }
 
 const props = defineProps<{ usuario: UsuarioAux }>()
@@ -168,19 +180,57 @@ const validationErrors = computed(() => {
   return errs
 })
 
-watch(() => props.usuario, (u) => {
-  if (!u) return
-  const mapped: AuxiliaryEditFormModel = {
+// Normalizador robusto que intenta múltiples variantes de nombres de campo
+const normalizeAuxUser = (u: UsuarioAux | undefined | null): AuxiliaryEditFormModel | null => {
+  if (!u) return null
+  const auxiliarName =
+    u.auxiliarName ||
+    (u as any).auxiliar_name ||
+    u.nombre ||
+    u.name ||
+    ''
+  const auxiliarCode =
+    u.auxiliarCode ||
+    (u as any).auxiliar_code ||
+    u.codigo ||
+    u.code ||
+    ''
+  const auxiliarEmail =
+    u.AuxiliarEmail ||
+    (u as any).auxiliarEmail ||
+    (u as any).auxiliar_email ||
+    (u as any).auxiliar_emailAddress ||
+    u.email ||
+    ''
+  const observaciones =
+    u.observaciones ||
+    (u as any).observations ||
+    ''
+  const isActive =
+    (u as any).isActive !== undefined ? (u as any).isActive :
+    (u as any).is_active !== undefined ? (u as any).is_active :
+    (u as any).activo !== undefined ? (u as any).activo : true
+
+  return {
     id: u.id,
-    auxiliarName: u.auxiliarName || u.nombre || '',
-    auxiliarCode: u.auxiliarCode || u.codigo || '',
-    AuxiliarEmail: u.AuxiliarEmail || u.email || '',
-    observaciones: u.observaciones || '',
-    isActive: u.isActive !== undefined ? u.isActive : (u.activo ?? true)
+    auxiliarName: (auxiliarName || '').toString(),
+    auxiliarCode: (auxiliarCode || '').toString(),
+    AuxiliarEmail: (auxiliarEmail || '').toString(),
+    observaciones: (observaciones || '').toString(),
+    isActive: !!isActive
   }
-  Object.assign(localModel, mapped)
-  setInitialData(mapped)
-}, { immediate: true, deep: true })
+}
+
+watch(
+  () => props.usuario,
+  (u) => {
+    const mapped = normalizeAuxUser(u)
+    if (!mapped) return
+    Object.assign(localModel, mapped)
+    setInitialData(mapped)
+  },
+  { immediate: true, deep: true }
+)
 
 watch(() => localModel, () => { if (validationState.hasAttemptedSubmit) clearMessages() }, { deep: true })
 

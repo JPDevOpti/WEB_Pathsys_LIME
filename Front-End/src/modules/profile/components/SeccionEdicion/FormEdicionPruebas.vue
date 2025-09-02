@@ -291,39 +291,33 @@ onMounted(() => {
 })
 
 // Función para cargar datos iniciales
+// Normalizador de campos para pruebas (pruebas -> test, etc.)
+const normalizeTest = (raw: any): TestEditFormModel | null => {
+  if (!raw) return null
+  const code = raw.pruebaCode || raw.testCode || raw.codigo || raw.code || ''
+  const name = raw.pruebasName || raw.testName || raw.nombre || raw.name || ''
+  const desc = raw.pruebasDescription || raw.testDescription || raw.descripcion || raw.description || ''
+  const tiempo = raw.tiempo !== undefined ? Number(raw.tiempo) : 1
+  const active = raw.isActive !== undefined ? raw.isActive : (raw.is_active !== undefined ? raw.is_active : (raw.activo !== undefined ? raw.activo : true))
+  const id = raw.id || raw._id || code
+  return {
+    id: id,
+    pruebaCode: String(code),
+    pruebasName: String(name),
+    pruebasDescription: String(desc),
+    tiempo: tiempo > 0 ? tiempo : 1,
+    isActive: !!active
+  }
+}
+
 const loadInitialData = () => {
   try {
-    // Mapear datos del usuario a la estructura del formulario
-    if (props.usuario) {
-      // Validar que tenemos los datos mínimos necesarios (ID o código)
-      if (!props.usuario.id && !props.usuario.codigo && !props.usuario.pruebaCode) {
-        throw new Error('ID o código de la prueba es requerido')
-      }
-      
-      const mappedData: TestEditFormModel = {
-        id: props.usuario.id || props.usuario.codigo || props.usuario.pruebaCode, // Usar código como fallback del ID
-        pruebaCode: props.usuario.pruebaCode || props.usuario.codigo || '',
-        pruebasName: props.usuario.pruebasName || props.usuario.nombre || '',
-        pruebasDescription: props.usuario.pruebasDescription || props.usuario.descripcion || '',
-        tiempo: props.usuario.tiempo || 1,
-        isActive: props.usuario.isActive ?? props.usuario.activo ?? true
-      }
-      
-      // Validar que tenemos al menos código y nombre
-      if (!mappedData.pruebaCode || !mappedData.pruebasName) {
-        throw new Error('Código y nombre de la prueba son requeridos')
-      }
-      
-      // Establecer datos en el modelo local
-      Object.assign(localModel, mappedData)
-      
-      // Establecer datos originales en el composable para funcionalidades de edición
-      setInitialData(mappedData)
-    } else {
-      throw new Error('No se recibieron datos de la prueba')
-    }
+    const mappedData = normalizeTest(props.usuario)
+    if (!mappedData) throw new Error('No se recibieron datos de la prueba')
+    if (!mappedData.pruebaCode || !mappedData.pruebasName) throw new Error('Código y nombre de la prueba son requeridos')
+    Object.assign(localModel, mappedData)
+    setInitialData(mappedData)
   } catch (error: any) {
-
     showNotification('error', 'Error al cargar datos', error.message || 'No se pudieron cargar los datos de la prueba')
   }
 }

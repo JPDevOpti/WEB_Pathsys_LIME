@@ -62,7 +62,8 @@
         label="Nueva contraseña (opcional)" 
         type="password" 
         placeholder="••••••••" 
-        v-model="localModel.password"
+  :model-value="localModel.password || ''"
+  @update:model-value="val => (localModel.password = val)"
         autocomplete="new-password"
       />
 
@@ -233,7 +234,6 @@ const {
   updateResident,
   setInitialData,
   resetToOriginal,
-  clearState,
   clearMessages,
   createHasChanges
 } = useResidentEdition()
@@ -305,21 +305,32 @@ const validationErrors = computed(() => {
   return errors
 })
 
+// Normalizador robusto de campos (residente -> resident, etc.)
+const normalizeResident = (raw: any): ResidentEditFormModel | null => {
+  if (!raw) return null
+  const name = raw.residenteName || raw.residentName || raw.nombre || raw.name || ''
+  const code = raw.residenteCode || raw.residentCode || raw.codigo || raw.code || raw.documento || ''
+  const initials = raw.InicialesResidente || raw.inicialesResidente || raw.initials || ''
+  const email = raw.ResidenteEmail || raw.residentEmail || raw.email || ''
+  const registro = raw.registro_medico || raw.medicalLicense || raw.medical_license || ''
+  const obs = raw.observaciones || raw.observations || raw.notes || ''
+  const active = raw.isActive !== undefined ? raw.isActive : (raw.is_active !== undefined ? raw.is_active : (raw.activo !== undefined ? raw.activo : true))
+  return {
+    id: raw.id || raw._id || code,
+    residenteName: String(name),
+    InicialesResidente: String(initials),
+    residenteCode: String(code),
+    ResidenteEmail: String(email),
+    registro_medico: String(registro),
+    observaciones: String(obs),
+    isActive: !!active
+  }
+}
+
 // Función para cargar datos iniciales
 const loadInitialData = () => {
-  if (!props.usuario) return
-
-  const mappedData: ResidentEditFormModel = {
-    id: props.usuario.id,
-    residenteName: props.usuario.residenteName || props.usuario.nombre || '',
-    InicialesResidente: props.usuario.InicialesResidente || '',
-    residenteCode: props.usuario.residenteCode || props.usuario.codigo || '',
-    ResidenteEmail: props.usuario.ResidenteEmail || props.usuario.email || '',
-    registro_medico: props.usuario.registro_medico || '',
-    observaciones: props.usuario.observaciones || '',
-    isActive: props.usuario.isActive !== undefined ? props.usuario.isActive : (props.usuario.activo || false)
-  }
-
+  const mappedData = normalizeResident(props.usuario)
+  if (!mappedData) return
   Object.assign(localModel, mappedData)
   setInitialData(mappedData)
 }

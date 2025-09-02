@@ -10,7 +10,7 @@
     <FormInputField class="col-span-full md:col-span-6" label="Nombre de entidad" v-model="localModel.EntidadName" :error="formErrors.EntidadName" />
 
     <!-- Observaciones -->
-    <FormTextarea class="col-span-full" label="Observaciones" v-model="localModel.observaciones" rows="3" :error="formErrors.observaciones" />
+  <FormTextarea class="col-span-full" label="Observaciones" v-model="localModel.observaciones" :rows="3" :error="formErrors.observaciones" />
 
     <!-- Estado activo -->
     <div class="col-span-full md:col-span-6 flex items-center pt-3">
@@ -95,7 +95,7 @@ const emit = defineEmits<{ (e: 'usuario-actualizado', payload: any): void; (e: '
 
 const {
   state,
-  isLoadingEntity,
+  // isLoadingEntity, // eliminado: no se usa directamente
   codeValidationError,
   originalEntityData,
   canSubmit,
@@ -105,7 +105,7 @@ const {
   setInitialData,
   resetToOriginal,
   clearState,
-  clearMessages,
+  // clearMessages, // eliminado: no usado aquí
   hasChangesFactory
 } = useEntityEdition()
 
@@ -198,7 +198,8 @@ const submit = async () => {
   try {
     const result = await updateEntity(localModel)
     if (result.success && result.data) {
-      updatedEntity.value = result.data
+  // result.data viene del servicio de actualización (EntityUpdateResponse)
+  updatedEntity.value = result.data as EntityUpdateResponse
       showNotification('success', '¡Entidad Actualizada Exitosamente!', '')
       await scrollToNotification()
       emit('usuario-actualizado', { ...result.data, nombre: result.data.EntidadName, codigo: result.data.EntidadCode, tipo: 'entidad' })
@@ -217,21 +218,39 @@ const onReset = () => {
 
 
 
-watch(() => props.usuario, (u) => {
-  if (u) {
-    const mapped: EntityEditFormModel = {
-      id: u.id || u.codigo || u.EntidadCode,
-      EntidadName: u.EntidadName || u.nombre || '',
-      EntidadCode: u.EntidadCode || u.codigo || '',
-      observaciones: u.observaciones || '',
-      isActive: u.isActive ?? u.activo ?? true
-    }
-    Object.assign(localModel, mapped)
-    setInitialData(mapped)
-  } else {
-    clearState()
+// Normalizador para tolerar cambios de naming en backend
+const normalizeEntity = (raw: any): EntityEditFormModel | null => {
+  if (!raw) return null
+  const EntidadName = raw.EntidadName || raw.entidadName || raw.nombre || raw.name || ''
+  const EntidadCode = raw.EntidadCode || raw.entidadCode || raw.codigo || raw.code || ''
+  const observaciones = raw.observaciones || raw.observations || raw.notes || ''
+  const isActive =
+    raw.isActive !== undefined ? raw.isActive :
+    raw.is_active !== undefined ? raw.is_active :
+    raw.activo !== undefined ? raw.activo : true
+  const id = raw.id || raw._id || EntidadCode
+  return {
+    id: id,
+    EntidadName: String(EntidadName),
+    EntidadCode: String(EntidadCode),
+    observaciones: String(observaciones),
+    isActive: !!isActive
   }
-}, { immediate: true, deep: true })
+}
+
+watch(
+  () => props.usuario,
+  (u) => {
+    const mapped = normalizeEntity(u)
+    if (mapped) {
+      Object.assign(localModel, mapped)
+      setInitialData(mapped)
+    } else {
+      clearState()
+    }
+  },
+  { immediate: true, deep: true }
+)
 </script>
 
 

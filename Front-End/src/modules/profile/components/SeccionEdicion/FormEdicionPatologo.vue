@@ -188,18 +188,31 @@ const validationErrors = computed(() => {
   return errs
 })
 
-watch(() => props.usuario, (u) => {
-  if (!u) return
-  const mapped: PathologistEditFormModel = {
-    id: u.id,
-    patologoName: u.patologoName || u.nombre || '',
-    InicialesPatologo: u.InicialesPatologo || '',
-    patologoCode: u.patologoCode || u.codigo || '',
-    PatologoEmail: u.PatologoEmail || u.email || '',
-    registro_medico: u.registro_medico || '',
-    observaciones: u.observaciones || '',
-    isActive: u.isActive ?? u.activo ?? true
+// Normalizador para tolerar cambios de nombres en backend (patologo -> pathologist, etc.)
+const normalizePathologist = (raw: any): PathologistEditFormModel | null => {
+  if (!raw) return null
+  const name = raw.patologoName || raw.pathologistName || raw.nombre || raw.name || ''
+  const code = raw.patologoCode || raw.pathologistCode || raw.codigo || raw.code || ''
+  const email = raw.PatologoEmail || raw.pathologistEmail || raw.email || raw.Email || ''
+  const initials = raw.InicialesPatologo || raw.inicialesPatologo || raw.initials || raw.initialsPathologist || ''
+  const registro = raw.registro_medico || raw.medicalLicense || raw.medical_license || raw.licencia || ''
+  const obs = raw.observaciones || raw.observations || raw.notes || ''
+  const active = raw.isActive !== undefined ? raw.isActive : (raw.is_active !== undefined ? raw.is_active : (raw.activo !== undefined ? raw.activo : true))
+  return {
+    id: raw.id || raw._id || code,
+    patologoName: String(name),
+    InicialesPatologo: String(initials),
+    patologoCode: String(code),
+    PatologoEmail: String(email),
+    registro_medico: String(registro),
+    observaciones: String(obs),
+    isActive: !!active
   }
+}
+
+watch(() => props.usuario, (u) => {
+  const mapped = normalizePathologist(u)
+  if (!mapped) return
   Object.assign(localModel, mapped)
   setInitialData(mapped)
 }, { immediate: true, deep: true })
