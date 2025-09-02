@@ -1,49 +1,65 @@
 <template>
-  <ComponentCard title="Nueva Prueba Complementaria" description="Configure una nueva prueba complementaria para casos existentes.">
+  <ComponentCard title="Nueva Técnica Complementaria" description="Configure una nueva técnica complementaria para casos existentes.">
     <template #icon>
       <TaskIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
 
     <div class="space-y-6">
-      <!-- Información básica de la prueba -->
+      <!-- Información del solicitante -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         <FormInputField 
-          v-model="formData.nombrePrueba" 
-          label="Nombre de la Prueba" 
-          placeholder="Ej: Biopsia complementaria, Inmunohistoquímica..." 
+          v-model="formData.medicoSolicitante" 
+          label="Médico Solicitante" 
+          placeholder="Médico que solicita la técnica" 
           :required="true" 
           :max-length="100" 
         />
+        <FormInputField 
+          v-model="formData.departamento" 
+          label="Departamento/Servicio" 
+          placeholder="Procedencia de la solicitud" 
+          :required="false" 
+          :max-length="100" 
+        />
+      </div>
+
+      <!-- Información básica de la prueba -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         <FormSelect 
           v-model="formData.tipoPrueba" 
-          label="Tipo de Prueba" 
+          label="Tipo de Técnica" 
           placeholder="Seleccione el tipo" 
           :required="true" 
           :options="tipoPruebaOptions" 
         />
+        <FormInputField 
+          v-model="formData.fechaSolicitud" 
+          label="Fecha de Solicitud" 
+          type="date" 
+          :required="true" 
+        />
+        <FormSelect 
+          v-model="formData.prioridad" 
+          label="Prioridad" 
+          placeholder="Seleccione prioridad" 
+          :required="true" 
+          :options="prioridadOptions" 
+        />
       </div>
 
-      <!-- Descripción y observaciones -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+      <!-- Descripción de la prueba -->
+      <div>
         <FormTextarea 
           v-model="formData.descripcion" 
-          label="Descripción de la Prueba" 
-          placeholder="Describa el objetivo y metodología de la prueba..." 
-          :rows="3" 
-          :max-length="300" 
-          :show-counter="true" 
-        />
-        <FormTextarea 
-          v-model="formData.observaciones" 
-          label="Observaciones Técnicas" 
-          placeholder="Notas técnicas, requisitos especiales..." 
+          label="Descripción de la Técnica" 
+          placeholder="Describa el objetivo y metodología de la técnica..." 
           :rows="3" 
           :max-length="300" 
           :show-counter="true" 
         />
       </div>
 
-      <!-- Configuración de muestras y preparación -->
+      <!-- Configuración de muestras -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         <FormInputField 
           v-model="formData.numeroMuestras" 
@@ -54,20 +70,6 @@
           :required="true" 
           help-text="Cantidad de submuestras (máximo 10)" 
           @input="handleNumeroMuestrasChange" 
-        />
-        <FormInputField 
-          v-model="formData.fechaSolicitud" 
-          label="Fecha de Solicitud" 
-          type="date" 
-          :required="true" 
-          help-text="Fecha de solicitud de la prueba" 
-        />
-        <FormSelect 
-          v-model="formData.prioridad" 
-          label="Prioridad" 
-          placeholder="Seleccione prioridad" 
-          :required="true" 
-          :options="prioridadOptions" 
         />
       </div>
 
@@ -94,11 +96,11 @@
               />
             </div>
             
-            <!-- Configuración de pruebas técnicas -->
+            <!-- Configuración de técnicas -->
             <div class="space-y-3">
               <div class="flex items-center justify-between">
-                <label class="block text-sm font-medium text-gray-700">Pruebas Técnicas a Realizar <span class="text-red-500">*</span></label>
-                <AddButton text="Agregar Prueba" @click="addPruebaToMuestra(muestraIndex)" />
+                <label class="block text-sm font-medium text-gray-700">Técnicas a Realizar <span class="text-red-500">*</span></label>
+                <AddButton text="Agregar Técnica" @click="addPruebaToMuestra(muestraIndex)" />
               </div>
               
               <div class="space-y-2">
@@ -106,8 +108,8 @@
                   <div class="flex-1 min-w-0">
                     <TestList 
                       v-model="prueba.code" 
-                      :label="`Prueba ${pruebaIndex + 1}`" 
-                      :placeholder="`Buscar y seleccionar prueba ${pruebaIndex + 1}...`" 
+                      :label="`Técnica ${pruebaIndex + 1}`" 
+                      :placeholder="`Buscar y seleccionar técnica ${pruebaIndex + 1}...`" 
                       :required="true" 
                       :auto-load="true" 
                       @test-selected="(test) => handleTestSelected(muestraIndex, pruebaIndex, test)" 
@@ -134,49 +136,15 @@
               </div>
             </div>
 
-            <!-- Información adicional de la muestra -->
-            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormSelect 
-                v-model="muestra.metodoPreparacion" 
-                label="Método de Preparación" 
-                placeholder="Seleccione método" 
-                :options="metodoPreparacionOptions" 
-              />
-              <FormInputField 
-                v-model="muestra.tiempoEstimado" 
-                label="Tiempo Estimado (días)" 
-                type="number" 
-                :min="1" 
-                :max="30" 
-                placeholder="Días" 
-              />
-            </div>
+
           </div>
         </div>
-      </div>
-
-      <!-- Información del solicitante -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-        <FormInputField 
-          v-model="formData.medicoSolicitante" 
-          label="Médico Solicitante" 
-          placeholder="Médico que solicita la prueba" 
-          :required="true" 
-          :max-length="100" 
-        />
-        <FormInputField 
-          v-model="formData.departamento" 
-          label="Departamento/Servicio" 
-          placeholder="Procedencia de la solicitud" 
-          :required="false" 
-          :max-length="100" 
-        />
       </div>
 
       <!-- Botones de acción -->
       <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
         <ClearButton @click="clearForm" />
-        <SaveButton text="Guardar Prueba" @click="handleSaveClick" :disabled="!isFormValid" />
+        <SaveButton text="Guardar Técnica" @click="handleSaveClick" :disabled="!isFormValid" />
       </div>
 
       <!-- Mensaje de éxito -->
@@ -214,15 +182,11 @@ interface MuestraComplementaria {
   numero: number
   regionCuerpo: string
   pruebas: PruebaComplementaria[]
-  metodoPreparacion: string
-  tiempoEstimado: number
 }
 
 interface FormDataComplementaria {
-  nombrePrueba: string
   tipoPrueba: string
   descripcion: string
-  observaciones: string
   numeroMuestras: string
   fechaSolicitud: string
   prioridad: string
@@ -238,19 +202,15 @@ interface FormDataComplementaria {
 const showSuccessMessage = ref(false)
 
 const formData = reactive<FormDataComplementaria>({
-  nombrePrueba: '',
   tipoPrueba: '',
   descripcion: '',
-  observaciones: '',
   numeroMuestras: '1',
   fechaSolicitud: new Date().toISOString().split('T')[0],
   prioridad: '',
   muestras: [{ 
     numero: 1, 
     regionCuerpo: '', 
-    pruebas: [{ code: '', cantidad: 1, nombre: '' }],
-    metodoPreparacion: '',
-    tiempoEstimado: 1
+    pruebas: [{ code: '', cantidad: 1, nombre: '' }]
   }],
   medicoSolicitante: '',
   departamento: ''
@@ -277,14 +237,7 @@ const prioridadOptions = [
   { value: 'urgente', label: 'Urgente' }
 ]
 
-const metodoPreparacionOptions = [
-  { value: 'fijacion_formol', label: 'Fijación en Formol' },
-  { value: 'congelacion', label: 'Congelación' },
-  { value: 'parafina', label: 'Inclusión en Parafina' },
-  { value: 'criocorte', label: 'Criocorte' },
-  { value: 'citospin', label: 'Citospin' },
-  { value: 'smear', label: 'Frotis (Smear)' }
-]
+
 
 // ============================================================================
 // COMPUTED PROPERTIES
@@ -292,7 +245,6 @@ const metodoPreparacionOptions = [
 
 const isFormValid = computed(() => {
   return (
-    formData.nombrePrueba.trim() !== '' &&
     formData.tipoPrueba !== '' &&
     formData.fechaSolicitud !== '' &&
     formData.prioridad !== '' &&
@@ -313,9 +265,7 @@ const isFormValid = computed(() => {
 const createEmptySubSample = (numero: number): MuestraComplementaria => ({
   numero, 
   regionCuerpo: '', 
-  pruebas: [{ code: '', cantidad: 1, nombre: '' }],
-  metodoPreparacion: '',
-  tiempoEstimado: 1
+  pruebas: [{ code: '', cantidad: 1, nombre: '' }]
 })
 
 const createEmptyTest = (): PruebaComplementaria => ({ 
@@ -366,10 +316,8 @@ const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any
 
 const clearForm = () => {
   Object.assign(formData, {
-    nombrePrueba: '',
     tipoPrueba: '',
     descripcion: '',
-    observaciones: '',
     numeroMuestras: '1',
     fechaSolicitud: new Date().toISOString().split('T')[0],
     prioridad: '',

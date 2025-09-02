@@ -33,11 +33,20 @@ export const casesRoutes: RouteRecordRaw[] = [
         }
       },
       {
-        path: 'complementary-tests',
-        name: 'cases-complementary-tests',
-        component: () => import('../views/ComplementaryTestsView.vue'),
+        path: 'technique-complementary',
+        name: 'cases-technique-complementary',
+        component: () => import('../views/TechniqueComplementaryView.vue'),
         meta: {
-          title: 'Pruebas Complementarias',
+          title: 'Técnicas Complementarias',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'to-approve',
+        name: 'cases-to-approve',
+        component: () => import('../views/CasesToApproveView.vue'),
+        meta: {
+          title: 'Casos por Aprobar',
           requiresAuth: true
         }
       }

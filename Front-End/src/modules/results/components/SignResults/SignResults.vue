@@ -76,6 +76,15 @@
             </div>
           </div>
 
+          <!-- Sección de Pruebas Complementarias -->
+          <ComplementaryTestsSection
+            :initial-needs-tests="needsComplementaryTests"
+            :initial-details="complementaryTestsDetails"
+            @needs-tests-change="handleNeedsTestsChange"
+            @details-change="handleDetailsChange"
+            @sign-with-changes="handleSignWithChanges"
+          />
+
           <ValidationAlert :visible="!!validationMessage" class="mt-2"
             :errors="validationMessage ? [validationMessage] : []" />
           <ErrorMessage v-if="errorMessage" class="mt-2" :message="errorMessage" />
@@ -174,6 +183,7 @@ import ResultEditor from '../PerformResults/ResultEditor.vue'
 import PatientInfoCard from '../PerformResults/PatientInfoCard.vue'
 import CaseDetailsCard from '../PerformResults/CaseDetailsCard.vue'
 import PreviousCaseDetailsModal from '../PerformResults/PreviousCaseDetailsModal.vue'
+import ComplementaryTestsSection from './ComplementaryTestsSection.vue'
 import { usePerformResults } from '../../composables/usePerformResults'
 import casesApiService from '@/modules/cases/services/casesApi.service'
 import { useDiseaseDiagnosis } from '@/shared/composables/useDiseaseDiagnosis'
@@ -265,6 +275,10 @@ const ejecutarBusquedaAutomatica = async () => {
 // Estado local extra
 const signing = ref(false)
 const hasBeenSigned = ref(false)
+
+// Estado para pruebas complementarias
+const needsComplementaryTests = ref(false)
+const complementaryTestsDetails = ref('')
 
 // Computed para verificar si el usuario logueado es el patólogo asignado
 const isAssignedPathologist = computed(() => {
@@ -669,6 +683,40 @@ const handleCaseClick = async (caseItem: any) => {
   } catch (error) {
     // Si falla, usar el caso básico
     selectedPreviousCase.value = caseItem
+  }
+}
+
+// Handlers para pruebas complementarias
+const handleNeedsTestsChange = (value: boolean) => {
+  needsComplementaryTests.value = value
+  if (!value) {
+    complementaryTestsDetails.value = ''
+  }
+}
+
+const handleDetailsChange = (value: string) => {
+  complementaryTestsDetails.value = value
+}
+
+const handleSignWithChanges = async (details: string) => {
+  try {
+    // Por ahora solo mostrar una notificación (sin conexión al backend)
+    showSuccess(
+      'Pruebas complementarias solicitadas',
+      `Se han solicitado las siguientes pruebas: ${details}`,
+      5000
+    )
+    
+    // Limpiar el formulario después de "firmar"
+    needsComplementaryTests.value = false
+    complementaryTestsDetails.value = ''
+    
+  } catch (error: any) {
+    showError(
+      'Error al solicitar pruebas',
+      error.message || 'No se pudieron solicitar las pruebas complementarias.',
+      0
+    )
   }
 }
 

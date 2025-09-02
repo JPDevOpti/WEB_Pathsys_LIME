@@ -5,5 +5,6 @@ export { default as SampleInfoCard } from './PerformResults/SampleInfoCard.vue'
 export { default as AttachmentsPanel } from './PerformResults/AttachmentsPanel.vue'
 export { default as ActionsBar } from './PerformResults/ActionsBar.vue'
 export { default as PreviewModal } from './PerformResults/PreviewModal.vue'
+export { default as ComplementaryTestsSection } from './SignResults/ComplementaryTestsSection.vue'
 
 

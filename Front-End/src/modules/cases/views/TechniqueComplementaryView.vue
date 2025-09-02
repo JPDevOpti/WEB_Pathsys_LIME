@@ -3,8 +3,8 @@
     <PageBreadcrumb :pageTitle="currentPageTitle" />
     <div class="p-6">
       <div class="grid grid-cols-1 gap-6">
-        <!-- Componente principal de Nueva Prueba Complementaria -->
-        <NewComplementaryTest />
+        <!-- Componente principal de Nueva técnica complementaria -->
+        <NewTechniqueComplementary />
       </div>
     </div>
   </AdminLayout>
@@ -14,18 +14,18 @@
 import { ref } from 'vue'
 import { AdminLayout } from '@/shared'
 import { PageBreadcrumb } from '@/shared/components/navigation'
-import NewComplementaryTest from '../components/NewComplementaryTest.vue'
+import NewTechniqueComplementary from '../components/NewTechniqueComplementary.vue'
 
 // ============================================================================
 // ESTADO DEL COMPONENTE
 // ============================================================================
 
-const currentPageTitle = ref('Pruebas Complementarias')
+const currentPageTitle = ref('Técnicas Complementarias')
 
 // ============================================================================
 // FUNCIONES PRINCIPALES (para futuro desarrollo)
 // ============================================================================
 
-// Aquí se agregarán las funciones para gestionar pruebas complementarias
+// Aquí se agregarán las funciones para gestionar técnicas complementarias
 // cuando se desarrolle la funcionalidad completa
 </script>

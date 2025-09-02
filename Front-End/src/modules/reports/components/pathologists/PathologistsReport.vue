@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Card de selección de período y acciones -->
-    <ComponentCard title="Reporte de Patólogos" description="Seleccione mes y año para generar el informe.">
+    <ComponentCard title="Reporte de patólogos" description="Seleccione mes y año para generar el informe.">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <FormSelect v-model="selectedMonth" label="Mes" :options="monthOptions" placeholder="Seleccione mes" />
         <FormSelect v-model="selectedYear" label="Año" :options="yearOptions" placeholder="Seleccione año" />
