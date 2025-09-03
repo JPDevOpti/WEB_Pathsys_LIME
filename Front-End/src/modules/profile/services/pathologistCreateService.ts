@@ -2,9 +2,7 @@ import { apiClient } from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 import type { 
   PathologistCreateRequest, 
-  PathologistCreateResponse,
-  UserCreateRequest,
-  UserCreateResponse 
+  PathologistCreateResponse
 } from '../types/pathologist.types'
 
 /**
@@ -12,7 +10,6 @@ import type {
  */
 class PathologistCreateService {
   private readonly pathologistEndpoint = API_CONFIG.ENDPOINTS.PATHOLOGISTS
-  private readonly authEndpoint = API_CONFIG.ENDPOINTS.AUTH
 
   /**
    * Crear un nuevo patólogo (solo colección patólogos por ahora)
@@ -25,7 +22,7 @@ class PathologistCreateService {
         pathologistData
       )
 
-      return response  // ✅ CORREGIDO: El cliente axios ya retorna response.data
+      return response  // ✅ El apiClient ya devuelve response.data
     } catch (error: any) {
       // Manejo específico de errores del backend
       if (error.response?.status === 409) {
@@ -154,44 +151,36 @@ class PathologistCreateService {
     const errors: string[] = []
 
     // Validar nombre del patólogo
-    if (!data.patologoName?.trim()) {
+    if (!data.patologo_name?.trim()) {
       errors.push('El nombre del patólogo es requerido')
-    } else if (data.patologoName.length < 2) {
-      errors.push('El nombre debe tener al menos 2 caracteres')
-    } else if (data.patologoName.length > 200) {
+    } else if (data.patologo_name.length > 200) {
       errors.push('El nombre no puede tener más de 200 caracteres')
     }
 
     // Validar iniciales
-    if (!data.InicialesPatologo?.trim()) {
+    if (!data.iniciales_patologo?.trim()) {
       errors.push('Las iniciales son requeridas')
-    } else if (data.InicialesPatologo.length < 2) {
-      errors.push('Las iniciales deben tener al menos 2 caracteres')
-    } else if (data.InicialesPatologo.length > 10) {
+    } else if (data.iniciales_patologo.length > 10) {
       errors.push('Las iniciales no pueden tener más de 10 caracteres')
     }
 
     // Validar código del patólogo
-    if (!data.patologoCode?.trim()) {
+    if (!data.patologo_code?.trim()) {
       errors.push('El código del patólogo es requerido')
-    } else if (data.patologoCode.length < 6) {
-      errors.push('El código debe tener al menos 6 caracteres')
-    } else if (data.patologoCode.length > 10) {
+    } else if (data.patologo_code.length > 10) {
       errors.push('El código no puede tener más de 10 caracteres')
     }
 
     // Validar email
-    if (!data.PatologoEmail?.trim()) {
+    if (!data.patologo_email?.trim()) {
       errors.push('El email es requerido')
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.PatologoEmail)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.patologo_email)) {
       errors.push('El email debe tener un formato válido')
     }
 
     // Validar registro médico
     if (!data.registro_medico?.trim()) {
       errors.push('El registro médico es requerido')
-    } else if (data.registro_medico.length < 5) {
-      errors.push('El registro médico debe tener al menos 5 caracteres')
     } else if (data.registro_medico.length > 50) {
       errors.push('El registro médico no puede tener más de 50 caracteres')
     }

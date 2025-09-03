@@ -8,9 +8,9 @@ class AuxiliarEmail(BaseModel):
 
 class AuxiliarCreate(BaseCreateModel, AuxiliarEmail):
     """Esquema para crear un auxiliar"""
-    auxiliar_name: str = Field(..., min_length=2, max_length=200, description="Nombre del auxiliar")
-    auxiliar_code: str = Field(..., min_length=8, max_length=20, description="Código único del auxiliar")
-    password: str = Field(..., min_length=6, max_length=128, description="Contraseña para el usuario del auxiliar")
+    auxiliar_name: str = Field(..., max_length=200, description="Nombre del auxiliar")
+    auxiliar_code: str = Field(..., max_length=20, description="Código único del auxiliar")
+    password: str = Field(..., max_length=128, description="Contraseña para el usuario del auxiliar")
     is_active: bool = Field(default=True, description="Estado activo del auxiliar")
     observaciones: Optional[str] = Field(default="", max_length=500, description="Observaciones adicionales")
     
@@ -29,13 +29,13 @@ class AuxiliarCreate(BaseCreateModel, AuxiliarEmail):
 
 class AuxiliarUpdate(BaseUpdateModel):
     """Esquema para actualizar un auxiliar"""
-    auxiliar_name: Optional[str] = Field(None, min_length=2, max_length=200, description="Nombre del auxiliar")
-    auxiliar_code: Optional[str] = Field(None, min_length=8, max_length=20, description="Código único del auxiliar")
+    auxiliar_name: Optional[str] = Field(None, max_length=200, description="Nombre del auxiliar")
+    auxiliar_code: Optional[str] = Field(None, max_length=20, description="Código único del auxiliar")
     auxiliar_email: Optional[EmailStr] = Field(None, description="Email del auxiliar")
     is_active: Optional[bool] = Field(None, description="Estado activo del auxiliar")
     observaciones: Optional[str] = Field(None, max_length=500, description="Observaciones adicionales")
     # Campo opcional para cambio de contraseña del usuario vinculado (excluido de persistencia en auxiliares)
-    password: Optional[str] = Field(default=None, min_length=6, max_length=128, description="Nueva contraseña para el usuario del auxiliar", exclude=True)
+    password: Optional[str] = Field(default=None, max_length=128, description="Nueva contraseña para el usuario del auxiliar", exclude=True)
     
     class Config:
         populate_by_name = True

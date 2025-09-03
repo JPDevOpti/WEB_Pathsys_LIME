@@ -6,12 +6,12 @@ from datetime import datetime
 
 class PatologoCreate(BaseModel):
     """Esquema para crear un nuevo patólogo"""
-    patologo_name: str = Field(..., min_length=2, max_length=100, description="Nombre completo del patólogo")
-    iniciales_patologo: str = Field(..., min_length=2, max_length=10, description="Iniciales del patólogo")
-    patologo_code: str = Field(..., min_length=6, max_length=10, description="Código único de 6-10 caracteres")
+    patologo_name: str = Field(..., max_length=100, description="Nombre completo del patólogo")
+    iniciales_patologo: str = Field(..., max_length=10, description="Iniciales del patólogo")
+    patologo_code: str = Field(..., max_length=10, description="Código único del patólogo")
     patologo_email: EmailStr = Field(..., description="Email único del patólogo")
-    registro_medico: str = Field(..., min_length=5, max_length=50, description="Número de registro médico único")
-    password: str = Field(..., min_length=6, max_length=100, description="Contraseña para el usuario del patólogo")
+    registro_medico: str = Field(..., max_length=50, description="Número de registro médico único")
+    password: str = Field(..., max_length=100, description="Contraseña para el usuario del patólogo")
     is_active: bool = Field(default=True, description="Estado activo/inactivo del patólogo")
     firma: str = Field(default="", description="URL de firma digital, por defecto vacío")
     observaciones: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
@@ -21,18 +21,17 @@ class PatologoCreate(BaseModel):
 
 class PatologoUpdate(BaseModel):
     """Esquema para actualizar un patólogo existente"""
-    patologo_name: Optional[str] = Field(None, min_length=2, max_length=100, description="Nombre completo del patólogo")
-    iniciales_patologo: Optional[str] = Field(None, min_length=2, max_length=10, description="Iniciales del patólogo")
-    patologo_code: Optional[str] = Field(None, min_length=6, max_length=10, description="Código único de 6-10 caracteres")
+    patologo_name: Optional[str] = Field(None, max_length=100, description="Nombre completo del patólogo")
+    iniciales_patologo: Optional[str] = Field(None, max_length=10, description="Iniciales del patólogo")
+    patologo_code: Optional[str] = Field(None, max_length=10, description="Código único del patólogo")
     patologo_email: Optional[EmailStr] = Field(None, description="Email único del patólogo")
-    registro_medico: Optional[str] = Field(None, min_length=5, max_length=50, description="Número de registro médico único")
+    registro_medico: Optional[str] = Field(None, max_length=50, description="Número de registro médico único")
     is_active: Optional[bool] = Field(None, description="Estado activo/inactivo del patólogo")
     # firma removida de actualización por requerimiento
     observaciones: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
     # Cambio opcional de contraseña del usuario vinculado (no se persiste en colección patólogos)
     password: Optional[str] = Field(
         default=None,
-        min_length=6,
         max_length=100,
         description="Nueva contraseña para el usuario del patólogo",
         exclude=True

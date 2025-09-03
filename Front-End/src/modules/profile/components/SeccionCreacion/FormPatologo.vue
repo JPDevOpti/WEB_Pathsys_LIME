@@ -105,10 +105,10 @@
             <div class="space-y-4">
               <!-- Información principal del patólogo -->
               <div class="mb-4 pb-3 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdPathologist.patologoName }}</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdPathologist.patologo_name }}</h3>
                 <p class="text-gray-600">
                   <span class="font-medium">Código:</span> 
-                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdPathologist.patologoCode }}</span>
+                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdPathologist.patologo_code }}</span>
                 </p>
               </div>
               
@@ -116,11 +116,11 @@
               <div class="space-y-4 text-sm">
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Iniciales:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdPathologist.InicialesPatologo }}</p>
+                  <p class="text-gray-800 font-semibold">{{ createdPathologist.iniciales_patologo }}</p>
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Email:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdPathologist.PatologoEmail }}</p>
+                  <p class="text-gray-800 font-semibold">{{ createdPathologist.patologo_email }}</p>
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Registro médico:</span>
@@ -129,8 +129,8 @@
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Estado:</span>
                   <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                    :class="createdPathologist.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                    {{ createdPathologist.isActive ? 'Activo' : 'Inactivo' }}
+                    :class="createdPathologist.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ createdPathologist.is_active ? 'Activo' : 'Inactivo' }}
                   </span>
                 </div>
                 <div>
@@ -198,7 +198,6 @@ const {
   codeValidationError,
   emailValidationError,
   licenseValidationError,
-  canSubmit: canSubmitFromComposable,
   validateForm,
   checkCodeAvailability,
   checkEmailAvailability,
@@ -272,11 +271,6 @@ const validateCode = async () => {
     return
   }
   
-  if (localModel.patologoCode.length < 6) {
-    formErrors.patologoCode = 'Mínimo 6 caracteres'
-    return
-  }
-  
   if (localModel.patologoCode.length > 10) {
     formErrors.patologoCode = 'Máximo 10 caracteres'
     return
@@ -316,11 +310,6 @@ const validateMedicalLicense = async () => {
   
   if (!localModel.registro_medico?.trim()) {
     formErrors.registro_medico = 'El registro médico es requerido'
-    return
-  }
-  
-  if (localModel.registro_medico.length < 5) {
-    formErrors.registro_medico = 'Mínimo 5 caracteres'
     return
   }
   

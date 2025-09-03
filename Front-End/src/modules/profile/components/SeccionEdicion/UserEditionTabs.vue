@@ -119,6 +119,7 @@ const onSearch = async (params: { query: string; tipo: string; includeInactive: 
   searchError.value = ''
   
   try {
+    console.log('🔍 Iniciando búsqueda con parámetros:', params)
     let searchResults: any[] = []
 
     if (params.tipo === 'pruebas') {
@@ -135,6 +136,7 @@ const onSearch = async (params: { query: string; tipo: string; includeInactive: 
       searchResults = []
     }
 
+    console.log('🔍 Resultados de búsqueda obtenidos:', searchResults)
     results.value = searchResults
     
     if (searchResults.length === 0) {

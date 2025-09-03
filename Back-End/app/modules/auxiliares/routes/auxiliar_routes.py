@@ -63,6 +63,7 @@ async def get_auxiliares(
 
 @router.get("/search", response_model=Dict[str, Any])
 async def search_auxiliares(
+    query: str = Query(None, description="Término de búsqueda general"),
     auxiliar_name: str = Query(None, description="Nombre del auxiliar"),
     auxiliar_code: str = Query(None, description="Código del auxiliar"),
     auxiliar_email: str = Query(None, description="Email del auxiliar"),
@@ -71,12 +72,21 @@ async def search_auxiliares(
 ):
     """Buscar auxiliares con filtros avanzados"""
     try:
-        search_params = AuxiliarSearch(
-            auxiliar_name=auxiliar_name,
-            auxiliar_code=auxiliar_code,
-            auxiliar_email=auxiliar_email,
-            is_active=is_active
-        )
+        # Si se proporciona 'query', buscar en todos los campos
+        if query:
+            search_params = AuxiliarSearch(
+                auxiliar_name=query,
+                auxiliar_code=query,
+                auxiliar_email=query,
+                is_active=is_active
+            )
+        else:
+            search_params = AuxiliarSearch(
+                auxiliar_name=auxiliar_name,
+                auxiliar_code=auxiliar_code,
+                auxiliar_email=auxiliar_email,
+                is_active=is_active
+            )
         
         auxiliares = await service.search_auxiliares(search_params)
         

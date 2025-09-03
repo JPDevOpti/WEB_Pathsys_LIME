@@ -8,8 +8,8 @@ from app.shared.models.base import PyObjectId
 
 class PruebaCreate(BaseModel):
     """Esquema para crear una nueva prueba"""
-    prueba_name: str = Field(..., min_length=2, max_length=200, description="Nombre de la prueba")
-    prueba_code: str = Field(..., min_length=2, max_length=20, description="Código único de la prueba")
+    prueba_name: str = Field(..., max_length=200, description="Nombre de la prueba")
+    prueba_code: str = Field(..., max_length=20, description="Código único de la prueba")
     prueba_description: Optional[str] = Field(None, max_length=500, description="Descripción de la prueba")
     tiempo: Optional[int] = Field(None, gt=0, max_value=1440, description="Tiempo estimado en minutos")
     is_active: bool = Field(default=True, description="Estado activo de la prueba")
@@ -48,8 +48,8 @@ class PruebaCreate(BaseModel):
 
 class PruebaUpdate(BaseModel):
     """Esquema para actualizar una prueba"""
-    prueba_name: Optional[str] = Field(None, min_length=2, max_length=200, description="Nombre de la prueba")
-    prueba_code: Optional[str] = Field(None, min_length=2, max_length=20, description="Código único de la prueba")
+    prueba_name: Optional[str] = Field(None, max_length=200, description="Nombre de la prueba")
+    prueba_code: Optional[str] = Field(None, max_length=20, description="Código único de la prueba")
     prueba_description: Optional[str] = Field(None, max_length=500, description="Descripción de la prueba")
     tiempo: Optional[int] = Field(None, gt=0, max_value=1440, description="Tiempo estimado en minutos")
     is_active: Optional[bool] = Field(None, description="Estado activo de la prueba")

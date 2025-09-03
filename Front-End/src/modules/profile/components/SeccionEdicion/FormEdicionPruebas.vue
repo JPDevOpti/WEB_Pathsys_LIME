@@ -15,7 +15,14 @@
 
     <!-- Formulario de edición -->
     <template v-else-if="localModel.pruebaCode">
-      <!-- Código y Nombre -->
+      <!-- Nombre y Código -->
+      <FormInputField 
+        class="col-span-full md:col-span-6" 
+        label="Nombre de la prueba" 
+        placeholder="Ejemplo: Biopsia" 
+        v-model="localModel.pruebasName"
+        :error="formErrors.pruebasName"
+      />
       <FormInputField 
         class="col-span-full md:col-span-6" 
         label="Código de prueba" 
@@ -24,13 +31,6 @@
         :error="formErrors.pruebaCode"
         @blur="validateCode"
         :disabled="true"
-      />
-      <FormInputField 
-        class="col-span-full md:col-span-6" 
-        label="Nombre de la prueba" 
-        placeholder="Ejemplo: Biopsia" 
-        v-model="localModel.pruebasName"
-        :error="formErrors.pruebasName"
       />
 
       <!-- Descripción -->
@@ -96,10 +96,10 @@
               <div class="space-y-4">
                 <!-- Información principal de la prueba -->
                 <div class="mb-4 pb-3 border-b border-gray-100">
-                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedTest.pruebasName }}</h3>
+                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedTest.prueba_name }}</h3>
                   <p class="text-gray-600">
                     <span class="font-medium">Código:</span> 
-                    <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedTest.pruebaCode }}</span>
+                    <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedTest.prueba_code }}</span>
                   </p>
                 </div>
                 
@@ -112,8 +112,8 @@
                   <div>
                     <span class="text-gray-500 font-medium block mb-1">Estado:</span>
                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                      :class="updatedTest.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                      {{ updatedTest.isActive ? 'Activo' : 'Inactivo' }}
+                      :class="updatedTest.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                      {{ updatedTest.is_active ? 'Activo' : 'Inactivo' }}
                     </span>
                   </div>
                   <div>
@@ -123,9 +123,9 @@
                 </div>
                 
                 <!-- Descripción -->
-                <div v-if="updatedTest.pruebasDescription">
+                <div v-if="updatedTest.prueba_description">
                   <span class="text-gray-500 font-medium block mb-2">Descripción:</span>
-                  <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ updatedTest.pruebasDescription }}</p>
+                  <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ updatedTest.prueba_description }}</p>
                 </div>
               </div>
             </div>
@@ -340,11 +340,6 @@ const validateCode = async () => {
     return
   }
   
-  if (localModel.pruebaCode.length < 3) {
-    formErrors.pruebaCode = 'Mínimo 3 caracteres'
-    return
-  }
-  
   if (!/^[A-Z0-9_-]+$/i.test(localModel.pruebaCode)) {
     formErrors.pruebaCode = 'Solo letras, números, guiones y guiones bajos'
     return
@@ -451,8 +446,8 @@ const handleTestUpdated = async (updatedTestData: TestUpdateResponse) => {
   // Emitir evento para compatibilidad con la estructura existente
   emit('usuario-actualizado', {
     ...updatedTestData,
-    nombre: updatedTestData.pruebasName,
-    codigo: updatedTestData.pruebaCode,
+    nombre: updatedTestData.prueba_name,
+    codigo: updatedTestData.prueba_code,
     tipo: 'pruebas'
   })
   

@@ -16,7 +16,7 @@
     <FormInputField 
       class="col-span-full md:col-span-6" 
       label="Código del auxiliar" 
-      placeholder="Ejemplo: 123456" 
+      placeholder="Ejemplo: AUX001" 
       v-model="localModel.auxiliarCode"
       :error="formErrors.auxiliarCode"
       @blur="validateCode"
@@ -87,10 +87,10 @@
             <div class="space-y-4">
               <!-- Información principal del auxiliar -->
               <div class="mb-4 pb-3 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdAuxiliary.auxiliarName }}</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdAuxiliary.auxiliar_name }}</h3>
                 <p class="text-gray-600">
                   <span class="font-medium">Código:</span> 
-                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdAuxiliary.auxiliarCode }}</span>
+                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdAuxiliary.auxiliar_code }}</span>
                 </p>
               </div>
               
@@ -98,13 +98,13 @@
               <div class="space-y-4 text-sm">
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Email:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdAuxiliary.AuxiliarEmail }}</p>
+                  <p class="text-gray-800 font-semibold">{{ createdAuxiliary.auxiliar_email }}</p>
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Estado:</span>
                   <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                    :class="createdAuxiliary.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                    {{ createdAuxiliary.isActive ? 'Activo' : 'Inactivo' }}
+                    :class="createdAuxiliary.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ createdAuxiliary.is_active ? 'Activo' : 'Inactivo' }}
                   </span>
                 </div>
                 <div>

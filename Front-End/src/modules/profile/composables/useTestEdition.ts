@@ -2,7 +2,6 @@ import { ref, reactive, computed } from 'vue'
 import { testEditService } from '../services/testEditService'
 import type { 
   TestEditFormModel, 
-  TestUpdateRequest, 
   TestEditionState,
   TestEditFormValidation 
 } from '../types/test.types'
@@ -41,8 +40,6 @@ export function useTestEdition() {
     // Validar código
     if (!formData.pruebaCode?.trim()) {
       errors.pruebaCode = 'El código es requerido'
-    } else if (formData.pruebaCode.length < 3) {
-      errors.pruebaCode = 'El código debe tener al menos 3 caracteres'
     } else if (!/^[A-Z0-9_-]+$/i.test(formData.pruebaCode)) {
       errors.pruebaCode = 'Solo letras, números, guiones y guiones bajos'
     }
@@ -50,15 +47,11 @@ export function useTestEdition() {
     // Validar nombre
     if (!formData.pruebasName?.trim()) {
       errors.pruebasName = 'El nombre es requerido'
-    } else if (formData.pruebasName.length < 3) {
-      errors.pruebasName = 'El nombre debe tener al menos 3 caracteres'
     }
 
     // Validar descripción
     if (!formData.pruebasDescription?.trim()) {
       errors.pruebasDescription = 'La descripción es requerida'
-    } else if (formData.pruebasDescription.length < 10) {
-      errors.pruebasDescription = 'Mínimo 10 caracteres'
     }
 
     // Validar tiempo (en días)
@@ -140,6 +133,19 @@ export function useTestEdition() {
   }
 
   /**
+   * Normalizar datos del formulario para que sean compatibles con el backend (snake_case)
+   */
+  const normalizeTestData = (formData: TestEditFormModel) => {
+    return {
+      prueba_code: formData.pruebaCode?.trim().toUpperCase() || '',
+      prueba_name: formData.pruebasName?.trim() || '',
+      prueba_description: formData.pruebasDescription?.trim() || '',
+      tiempo: formData.tiempo || 1,
+      is_active: formData.isActive ?? true
+    }
+  }
+
+  /**
    * Actualizar una prueba existente
    */
   const updateTest = async (formData: TestEditFormModel): Promise<{ success: boolean; data?: any }> => {
@@ -174,31 +180,25 @@ export function useTestEdition() {
     state.isLoading = true
 
     try {
-      // Preparar datos para actualización (solo campos modificados)
-      const updateData = testEditService.prepareUpdateData(originalTestData.value, formData)
+      // Preparar datos para actualización normalizados al formato del backend
+      const updateData = normalizeTestData(formData)
       
-      // Si no hay cambios, no hacer nada
-      if (Object.keys(updateData).length === 0) {
-        state.successMessage = 'No hay cambios para actualizar'
-        return { success: true, data: formData }
-      }
-
-      // Enviar al backend
+      // Enviar al backend usando el código original
       const response = await testEditService.updateTest(originalTestData.value.pruebaCode, updateData)
 
       // Actualizar datos originales con los nuevos datos
       originalTestData.value = {
         id: response.id,
-        pruebaCode: response.pruebaCode,
-        pruebasName: response.pruebasName,
-        pruebasDescription: response.pruebasDescription,
+        pruebaCode: response.prueba_code,
+        pruebasName: response.prueba_name,
+        pruebasDescription: response.prueba_description,
         tiempo: response.tiempo,
-        isActive: response.isActive
+        isActive: response.is_active
       }
 
       // Manejar éxito
       state.isSuccess = true
-      state.successMessage = `Prueba "${response.pruebasName}" actualizada exitosamente`
+      state.successMessage = `Prueba "${response.prueba_name}" actualizada exitosamente`
 
       return { 
         success: true, 

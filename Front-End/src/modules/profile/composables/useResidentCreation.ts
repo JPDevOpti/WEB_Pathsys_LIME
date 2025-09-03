@@ -44,8 +44,6 @@ export function useResidentCreation() {
     // Validar nombre
     if (!formData.residenteName?.trim()) {
       errors.residenteName = 'El nombre es requerido'
-    } else if (formData.residenteName.length < 2) {
-      errors.residenteName = 'El nombre debe tener al menos 2 caracteres'
     } else if (formData.residenteName.length > 100) {
       errors.residenteName = 'El nombre no puede tener más de 100 caracteres'
     }
@@ -53,8 +51,6 @@ export function useResidentCreation() {
     // Validar iniciales
     if (!formData.InicialesResidente?.trim()) {
       errors.InicialesResidente = 'Las iniciales son requeridas'
-    } else if (formData.InicialesResidente.length < 2) {
-      errors.InicialesResidente = 'Las iniciales deben tener al menos 2 caracteres'
     } else if (formData.InicialesResidente.length > 10) {
       errors.InicialesResidente = 'Las iniciales no pueden tener más de 10 caracteres'
     }
@@ -62,8 +58,6 @@ export function useResidentCreation() {
     // Validar código
     if (!formData.residenteCode?.trim()) {
       errors.residenteCode = 'El código es requerido'
-    } else if (formData.residenteCode.length < 3) {
-      errors.residenteCode = 'El código debe tener al menos 3 caracteres'
     } else if (formData.residenteCode.length > 20) {
       errors.residenteCode = 'El código no puede tener más de 20 caracteres'
     }
@@ -78,8 +72,6 @@ export function useResidentCreation() {
     // Validar registro médico
     if (!formData.registro_medico?.trim()) {
       errors.registro_medico = 'El registro médico es requerido'
-    } else if (formData.registro_medico.length < 3) {
-      errors.registro_medico = 'El registro médico debe tener al menos 3 caracteres'
     } else if (formData.registro_medico.length > 50) {
       errors.registro_medico = 'El registro médico no puede tener más de 50 caracteres'
     }
@@ -87,8 +79,6 @@ export function useResidentCreation() {
     // Validar contraseña
     if (!formData.password?.trim()) {
       errors.password = 'La contraseña es requerida'
-    } else if (formData.password.length < 6) {
-      errors.password = 'La contraseña debe tener al menos 6 caracteres'
     }
 
     // Validar observaciones (opcional)
@@ -175,6 +165,22 @@ export function useResidentCreation() {
   }
 
   /**
+   * Normalizar datos del formulario para que sean compatibles con el backend (snake_case)
+   */
+  const normalizeResidentData = (formData: ResidentFormModel): ResidentCreateRequest => {
+    return {
+      residente_name: formData.residenteName?.trim() || '',
+      iniciales_residente: formData.InicialesResidente?.trim().toUpperCase() || '',
+      residente_code: formData.residenteCode?.trim().toUpperCase() || '',
+      residente_email: formData.ResidenteEmail?.trim() || '',
+      registro_medico: formData.registro_medico?.trim() || '',
+      password: formData.password?.trim() || '',
+      observaciones: formData.observaciones?.trim() || '',
+      is_active: formData.isActive ?? true
+    }
+  }
+
+  /**
    * Crear un nuevo residente
    */
   const createResident = async (formData: ResidentFormModel): Promise<{ success: boolean; data?: any }> => {
@@ -208,24 +214,15 @@ export function useResidentCreation() {
     state.isLoading = true
 
     try {
-      // Preparar datos para residente (incluyendo password)
-      const residentData: ResidentCreateRequest = {
-        residenteName: formData.residenteName.trim(),
-        InicialesResidente: formData.InicialesResidente.trim().toUpperCase(),
-        residenteCode: formData.residenteCode.trim().toUpperCase(),
-        ResidenteEmail: formData.ResidenteEmail.trim(),
-        registro_medico: formData.registro_medico.trim(),
-        password: formData.password.trim(), // Incluir contraseña para crear usuario
-        observaciones: formData.observaciones.trim(),
-        isActive: formData.isActive
-      }
+      // Preparar datos para residente normalizados al formato del backend
+      const residentData = normalizeResidentData(formData)
 
       // Enviar al backend
       const response = await residentCreateService.createResident(residentData)
 
       // Manejar éxito
       state.isSuccess = true
-      state.successMessage = `Residente "${response.residenteName}" creado exitosamente`
+      state.successMessage = `Residente "${response.residente_name}" (${response.residente_code}) creado exitosamente como ${response.is_active ? 'ACTIVO' : 'INACTIVO'}`
 
       return { 
         success: true, 

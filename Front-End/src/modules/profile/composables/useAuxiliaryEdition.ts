@@ -53,13 +53,14 @@ export const useAuxiliaryEdition = () => {
       const data = auxiliaryEditService.prepareUpdateData(form)
       const result = await auxiliaryEditService.updateByCode(form.auxiliarCode, data)
       if (result.success && result.data) {
+        // Los datos ya vienen normalizados del servicio
         originalData.value = {
           id: result.data.id,
-          auxiliarName: result.data.auxiliarName,
-          auxiliarCode: result.data.auxiliarCode,
-          AuxiliarEmail: result.data.AuxiliarEmail,
+          auxiliarName: result.data.auxiliar_name, // Convertir snake_case a camelCase para el frontend
+          auxiliarCode: result.data.auxiliar_code,
+          AuxiliarEmail: result.data.auxiliar_email,
           observaciones: result.data.observaciones,
-          isActive: result.data.isActive
+          isActive: result.data.is_active
         }
       }
       return result

@@ -42,17 +42,13 @@ export function useAuxiliaryCreation() {
     // Validar nombre
     if (!formData.auxiliarName?.trim()) {
       errors.auxiliarName = 'El nombre es requerido'
-    } else if (formData.auxiliarName.length < 2) {
-      errors.auxiliarName = 'El nombre debe tener al menos 2 caracteres'
-    } else if (formData.auxiliarName.length > 100) {
-      errors.auxiliarName = 'El nombre no puede tener más de 100 caracteres'
+    } else if (formData.auxiliarName.length > 200) {
+      errors.auxiliarName = 'El nombre no puede tener más de 200 caracteres'
     }
 
     // Validar código
     if (!formData.auxiliarCode?.trim()) {
       errors.auxiliarCode = 'El código es requerido'
-    } else if (formData.auxiliarCode.length < 3) {
-      errors.auxiliarCode = 'El código debe tener al menos 3 caracteres'
     } else if (formData.auxiliarCode.length > 20) {
       errors.auxiliarCode = 'El código no puede tener más de 20 caracteres'
     }
@@ -67,8 +63,6 @@ export function useAuxiliaryCreation() {
     // Validar contraseña
     if (!formData.password?.trim()) {
       errors.password = 'La contraseña es requerida'
-    } else if (formData.password.length < 6) {
-      errors.password = 'La contraseña debe tener al menos 6 caracteres'
     }
 
     // Validar observaciones (opcional)
@@ -131,6 +125,20 @@ export function useAuxiliaryCreation() {
   }
 
   /**
+   * Normalizar datos del formulario para que sean compatibles con el backend (snake_case)
+   */
+  const normalizeAuxiliaryData = (formData: AuxiliaryFormModel): AuxiliaryCreateRequest => {
+    return {
+      auxiliar_name: formData.auxiliarName?.trim() || '',
+      auxiliar_code: formData.auxiliarCode?.trim().toUpperCase() || '',
+      auxiliar_email: formData.AuxiliarEmail?.trim() || '',
+      password: formData.password?.trim() || '',
+      observaciones: formData.observaciones?.trim() || '',
+      is_active: formData.isActive ?? true
+    }
+  }
+
+  /**
    * Crear un nuevo auxiliar
    */
   const createAuxiliary = async (formData: AuxiliaryFormModel): Promise<{ success: boolean; data?: any }> => {
@@ -153,22 +161,15 @@ export function useAuxiliaryCreation() {
     state.isLoading = true
 
     try {
-      // Preparar datos para auxiliar (incluyendo password)
-      const auxiliaryData: AuxiliaryCreateRequest = {
-        auxiliarName: formData.auxiliarName.trim(),
-        auxiliarCode: formData.auxiliarCode.trim().toUpperCase(),
-        AuxiliarEmail: formData.AuxiliarEmail.trim(),
-        password: formData.password.trim(), // Incluir contraseña para crear usuario
-        observaciones: formData.observaciones.trim(),
-        isActive: formData.isActive
-      }
+      // Preparar datos para auxiliar normalizados al formato del backend
+      const auxiliaryData = normalizeAuxiliaryData(formData)
 
       // Enviar al backend
       const response = await auxiliaryCreateService.createAuxiliary(auxiliaryData)
 
       // Manejar éxito
       state.isSuccess = true
-      state.successMessage = `Auxiliar "${response.auxiliarName}" creado exitosamente`
+      state.successMessage = `Auxiliar "${response.auxiliar_name}" (${response.auxiliar_code}) creado exitosamente como ${response.is_active ? 'ACTIVO' : 'INACTIVO'}`
 
       return { 
         success: true, 

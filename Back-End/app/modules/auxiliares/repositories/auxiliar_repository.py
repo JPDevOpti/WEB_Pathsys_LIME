@@ -29,17 +29,30 @@ class AuxiliarRepository(BaseRepository[Auxiliar, AuxiliarCreate, AuxiliarUpdate
     
     async def search_auxiliares(self, search_params: AuxiliarSearch) -> List[Auxiliar]:
         """Buscar auxiliares con filtros avanzados"""
-        query: Dict[str, Any] = {"is_active": True}
+        query: Dict[str, Any] = {}
         
-        if search_params.auxiliar_name:
-            query["auxiliar_name"] = {"$regex": search_params.auxiliar_name, "$options": "i"}
+        # Si se proporcionan múltiples campos con el mismo valor, usar OR
+        if (search_params.auxiliar_name and search_params.auxiliar_code and 
+            search_params.auxiliar_email and search_params.auxiliar_name == search_params.auxiliar_code == search_params.auxiliar_email):
+            # Búsqueda general en todos los campos
+            search_term = search_params.auxiliar_name
+            query["$or"] = [
+                {"auxiliar_name": {"$regex": search_term, "$options": "i"}},
+                {"auxiliar_code": {"$regex": search_term, "$options": "i"}},
+                {"auxiliar_email": {"$regex": search_term, "$options": "i"}}
+            ]
+        else:
+            # Búsqueda específica por campos
+            if search_params.auxiliar_name:
+                query["auxiliar_name"] = {"$regex": search_params.auxiliar_name, "$options": "i"}
+            
+            if search_params.auxiliar_code:
+                query["auxiliar_code"] = {"$regex": search_params.auxiliar_code, "$options": "i"}
+            
+            if search_params.auxiliar_email:
+                query["auxiliar_email"] = {"$regex": search_params.auxiliar_email, "$options": "i"}
         
-        if search_params.auxiliar_code:
-            query["auxiliar_code"] = {"$regex": search_params.auxiliar_code, "$options": "i"}
-        
-        if search_params.auxiliar_email:
-            query["auxiliar_email"] = {"$regex": search_params.auxiliar_email, "$options": "i"}
-        
+        # Solo filtrar por estado si se proporciona el parámetro
         if search_params.is_active is not None:
             query["is_active"] = search_params.is_active
         

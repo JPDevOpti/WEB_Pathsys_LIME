@@ -18,7 +18,9 @@ class AuxiliaryEditService {
   async getByCode(code: string): Promise<AuxiliaryEditResult> {
     try {
       const response = await apiClient.get(`${this.endpoint}/${code}`)
-      return { success: true, data: response }
+      // Normalizar la respuesta del backend (snake_case) al frontend (camelCase)
+      const normalizedData = this.normalizeAuxiliaryData(response)
+      return { success: true, data: normalizedData }
     } catch (error: any) {
       return { success: false, error: error.response?.data?.detail || 'Error al obtener auxiliar' }
     }
@@ -27,7 +29,9 @@ class AuxiliaryEditService {
   async updateByCode(code: string, data: AuxiliaryUpdateRequest): Promise<AuxiliaryEditResult> {
     try {
       const response = await apiClient.put(`${this.endpoint}/${code}`, data)
-      return { success: true, data: response }
+      // Normalizar la respuesta del backend (snake_case) al frontend (camelCase)
+      const normalizedData = this.normalizeAuxiliaryData(response)
+      return { success: true, data: normalizedData }
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || error.message || 'Error al actualizar auxiliar'
       return { success: false, error: Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage }
@@ -36,11 +40,25 @@ class AuxiliaryEditService {
 
   prepareUpdateData(formModel: AuxiliaryEditFormModel): AuxiliaryUpdateRequest {
     return {
-      auxiliarName: formModel.auxiliarName.trim(),
-      AuxiliarEmail: formModel.AuxiliarEmail.trim(),
+      auxiliar_name: formModel.auxiliarName.trim(),
+      auxiliar_email: formModel.AuxiliarEmail.trim(),
       observaciones: (formModel.observaciones || '').trim(),
-      isActive: formModel.isActive,
+      is_active: formModel.isActive,
       ...(formModel.password && formModel.password.trim().length >= 6 ? { password: formModel.password } : {})
+    }
+  }
+
+  // Función para normalizar datos del backend (snake_case) al frontend (camelCase)
+  private normalizeAuxiliaryData(backendData: any): AuxiliaryUpdateResponse {
+    return {
+      id: backendData.id || backendData._id,
+      auxiliar_name: backendData.auxiliar_name,
+      auxiliar_code: backendData.auxiliar_code,
+      auxiliar_email: backendData.auxiliar_email,
+      observaciones: backendData.observaciones || '',
+      is_active: backendData.is_active,
+      fecha_creacion: backendData.fecha_creacion,
+      fecha_actualizacion: backendData.fecha_actualizacion
     }
   }
 }

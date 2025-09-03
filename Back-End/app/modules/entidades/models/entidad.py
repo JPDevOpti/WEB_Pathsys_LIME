@@ -6,8 +6,8 @@ from bson import ObjectId
 
 class EntidadBase(BaseModel):
     """Modelo base para entidades"""
-    entidad_name: str = Field(..., min_length=2, max_length=200, description="Nombre de la entidad")
-    entidad_code: str = Field(..., min_length=2, max_length=20, description="Código único de la entidad")
+    entidad_name: str = Field(..., max_length=200, description="Nombre de la entidad")
+    entidad_code: str = Field(..., max_length=20, description="Código único de la entidad")
     observaciones: Optional[str] = Field(None, max_length=500, description="Observaciones o comentarios")
     is_active: bool = Field(True, description="Estado activo de la entidad")
 
@@ -31,8 +31,8 @@ class EntidadCreate(EntidadBase):
 
 class EntidadUpdate(BaseModel):
     """Modelo para actualizar una entidad"""
-    entidad_name: Optional[str] = Field(None, min_length=2, max_length=200)
-    entidad_code: Optional[str] = Field(None, min_length=2, max_length=20)
+    entidad_name: Optional[str] = Field(None, max_length=200)
+    entidad_code: Optional[str] = Field(None, max_length=20)
     observaciones: Optional[str] = Field(None, max_length=500)
     is_active: Optional[bool] = None
 

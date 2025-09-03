@@ -20,14 +20,14 @@ export interface ResidentFormModel {
  * Request para crear un nuevo residente (colección residentes)
  */
 export interface ResidentCreateRequest {
-  residenteName: string
-  InicialesResidente: string
-  residenteCode: string
-  ResidenteEmail: string
+  residente_name: string
+  iniciales_residente: string
+  residente_code: string
+  residente_email: string
   registro_medico: string
   password: string // Contraseña para crear el usuario asociado
   observaciones: string
-  isActive: boolean
+  is_active: boolean
 }
 
 /**
@@ -35,13 +35,13 @@ export interface ResidentCreateRequest {
  */
 export interface ResidentCreateResponse {
   id: string
-  residenteName: string
-  InicialesResidente: string
-  residenteCode: string
-  ResidenteEmail: string
+  residente_name: string
+  iniciales_residente: string
+  residente_code: string
+  residente_email: string
   registro_medico: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   fecha_creacion: string
   fecha_actualizacion?: string
 }

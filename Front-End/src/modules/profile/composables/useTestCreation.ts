@@ -40,8 +40,6 @@ export function useTestCreation() {
     // Validar código
     if (!formData.pruebaCode?.trim()) {
       errors.pruebaCode = 'El código es requerido'
-    } else if (formData.pruebaCode.length < 3) {
-      errors.pruebaCode = 'El código debe tener al menos 3 caracteres'
     } else if (!/^[A-Z0-9_-]+$/i.test(formData.pruebaCode)) {
       errors.pruebaCode = 'Solo letras, números, guiones y guiones bajos'
     }
@@ -49,15 +47,11 @@ export function useTestCreation() {
     // Validar nombre
     if (!formData.pruebasName?.trim()) {
       errors.pruebasName = 'El nombre es requerido'
-    } else if (formData.pruebasName.length < 3) {
-      errors.pruebasName = 'El nombre debe tener al menos 3 caracteres'
     }
 
     // Validar descripción
     if (!formData.pruebasDescription?.trim()) {
       errors.pruebasDescription = 'La descripción es requerida'
-    } else if (formData.pruebasDescription.length < 10) {
-      errors.pruebasDescription = 'Mínimo 10 caracteres'
     }
 
     // Validar tiempo (en días)
@@ -77,7 +71,7 @@ export function useTestCreation() {
    * Verificar si un código ya existe
    */
   const checkCodeAvailability = async (code: string): Promise<boolean> => {
-    if (!code?.trim() || code.length < 3) return true
+    if (!code?.trim()) return true
 
     isCheckingCode.value = true
     codeValidationError.value = ''
@@ -94,6 +88,19 @@ export function useTestCreation() {
       return false
     } finally {
       isCheckingCode.value = false
+    }
+  }
+
+  /**
+   * Normalizar datos del formulario para que sean compatibles con el backend (snake_case)
+   */
+  const normalizeTestData = (formData: TestFormModel): TestCreateRequest => {
+    return {
+      prueba_code: formData.pruebaCode?.trim().toUpperCase() || '',
+      prueba_name: formData.pruebasName?.trim() || '',
+      prueba_description: formData.pruebasDescription?.trim() || '',
+      tiempo: formData.tiempo || 1,
+      is_active: formData.isActive ?? true
     }
   }
 
@@ -120,21 +127,15 @@ export function useTestCreation() {
     state.isLoading = true
 
     try {
-      // Preparar datos para envío
-      const requestData: TestCreateRequest = {
-        pruebaCode: formData.pruebaCode.trim(),
-        pruebasName: formData.pruebasName.trim(),
-        pruebasDescription: formData.pruebasDescription.trim(),
-        tiempo: formData.tiempo || 1, // días
-        isActive: formData.isActive
-      }
+      // Preparar datos para envío normalizados al formato del backend
+      const requestData = normalizeTestData(formData)
 
       // Enviar al backend
       const response = await testCreateService.createTest(requestData)
 
       // Manejar éxito
       state.isSuccess = true
-      state.successMessage = `Prueba "${response.pruebasName}" creada exitosamente`
+      state.successMessage = `Prueba "${response.prueba_name}" (${response.prueba_code}) creada exitosamente como ${response.is_active ? 'ACTIVA' : 'INACTIVA'}`
 
       return { 
         success: true, 

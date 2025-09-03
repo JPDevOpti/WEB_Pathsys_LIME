@@ -4,8 +4,7 @@ import type {
   PathologistFormModel, 
   PathologistCreateRequest, 
   PathologistCreationState,
-  PathologistFormValidation,
-  UserCreateRequest 
+  PathologistFormValidation
 } from '../types/pathologist.types'
 
 /**
@@ -45,8 +44,6 @@ export function usePathologistCreation() {
     // Validar nombre
     if (!formData.patologoName?.trim()) {
       errors.patologoName = 'El nombre es requerido'
-    } else if (formData.patologoName.length < 2) {
-      errors.patologoName = 'El nombre debe tener al menos 2 caracteres'
     } else if (formData.patologoName.length > 200) {
       errors.patologoName = 'El nombre no puede tener más de 200 caracteres'
     }
@@ -54,8 +51,6 @@ export function usePathologistCreation() {
     // Validar iniciales
     if (!formData.InicialesPatologo?.trim()) {
       errors.InicialesPatologo = 'Las iniciales son requeridas'
-    } else if (formData.InicialesPatologo.length < 2) {
-      errors.InicialesPatologo = 'Las iniciales deben tener al menos 2 caracteres'
     } else if (formData.InicialesPatologo.length > 10) {
       errors.InicialesPatologo = 'Las iniciales no pueden tener más de 10 caracteres'
     }
@@ -63,8 +58,6 @@ export function usePathologistCreation() {
     // Validar código
     if (!formData.patologoCode?.trim()) {
       errors.patologoCode = 'El código es requerido'
-    } else if (formData.patologoCode.length < 6) {
-      errors.patologoCode = 'El código debe tener al menos 6 caracteres'
     } else if (formData.patologoCode.length > 10) {
       errors.patologoCode = 'El código no puede tener más de 10 caracteres'
     }
@@ -79,8 +72,6 @@ export function usePathologistCreation() {
     // Validar registro médico
     if (!formData.registro_medico?.trim()) {
       errors.registro_medico = 'El registro médico es requerido'
-    } else if (formData.registro_medico.length < 5) {
-      errors.registro_medico = 'El registro médico debe tener al menos 5 caracteres'
     } else if (formData.registro_medico.length > 50) {
       errors.registro_medico = 'El registro médico no puede tener más de 50 caracteres'
     }
@@ -88,8 +79,6 @@ export function usePathologistCreation() {
     // Validar contraseña
     if (!formData.password?.trim()) {
       errors.password = 'La contraseña es requerida'
-    } else if (formData.password.length < 6) {
-      errors.password = 'La contraseña debe tener al menos 6 caracteres'
     }
 
     // Validar observaciones (opcional)
@@ -107,7 +96,7 @@ export function usePathologistCreation() {
    * Verificar si un código ya existe
    */
   const checkCodeAvailability = async (code: string): Promise<boolean> => {
-    if (!code?.trim() || code.length < 6 || code.length > 10) return true
+    if (!code?.trim() || code.length > 10) return true
 
     isCheckingCode.value = true
     codeValidationError.value = ''
@@ -155,7 +144,7 @@ export function usePathologistCreation() {
    * Verificar si un registro médico ya existe
    */
   const checkMedicalLicenseAvailability = async (license: string): Promise<boolean> => {
-    if (!license?.trim() || license.length < 5) return true
+    if (!license?.trim() || license.length > 50) return true
 
     isCheckingLicense.value = true
     licenseValidationError.value = ''
@@ -172,6 +161,23 @@ export function usePathologistCreation() {
       return false
     } finally {
       isCheckingLicense.value = false
+    }
+  }
+
+  /**
+   * Normalizar datos del formulario para que sean compatibles con el backend (snake_case)
+   */
+  const normalizePathologistData = (formData: PathologistFormModel): PathologistCreateRequest => {
+    return {
+      patologo_name: formData.patologoName?.trim() || '',
+      iniciales_patologo: formData.InicialesPatologo?.trim().toUpperCase() || '',
+      patologo_code: formData.patologoCode?.trim().toUpperCase() || '',
+      patologo_email: formData.PatologoEmail?.trim() || '',
+      registro_medico: formData.registro_medico?.trim() || '',
+      password: formData.password?.trim() || '',
+      firma: formData.firma?.trim() || '',
+      observaciones: formData.observaciones?.trim() || '',
+      is_active: formData.isActive ?? true
     }
   }
 
@@ -209,25 +215,15 @@ export function usePathologistCreation() {
     state.isLoading = true
 
     try {
-      // Preparar datos para patólogo (incluyendo password)
-      const pathologistData: PathologistCreateRequest = {
-        patologoName: formData.patologoName.trim(),
-        InicialesPatologo: formData.InicialesPatologo.trim().toUpperCase(),
-        patologoCode: formData.patologoCode.trim(),
-        PatologoEmail: formData.PatologoEmail.trim(),
-        registro_medico: formData.registro_medico.trim(),
-        password: formData.password.trim(), // Incluir contraseña para crear usuario
-        firma: formData.firma || '', // Por defecto vacío
-        observaciones: formData.observaciones.trim(),
-        isActive: formData.isActive
-      }
+      // Preparar datos para patólogo normalizados al formato del backend
+      const pathologistData = normalizePathologistData(formData)
 
       // Enviar al backend
       const response = await pathologistCreateService.createPathologist(pathologistData)
 
       // Manejar éxito
       state.isSuccess = true
-      state.successMessage = `Patólogo "${response.patologoName}" creado exitosamente`
+      state.successMessage = `Patólogo "${response.patologo_name}" (${response.patologo_code}) creado exitosamente como ${response.is_active ? 'ACTIVO' : 'INACTIVO'}`
 
       return { 
         success: true, 

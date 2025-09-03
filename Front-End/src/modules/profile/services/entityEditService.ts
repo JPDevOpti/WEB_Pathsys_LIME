@@ -9,10 +9,10 @@ class EntityEditService {
     const response = await apiClient.get<EntityUpdateResponse>(`${this.endpoint}/code/${code}`)
     return {
       id: response.id,
-      EntidadName: response.EntidadName,
-      EntidadCode: response.EntidadCode,
+      EntidadName: response.entidad_name,
+      EntidadCode: response.entidad_code,
       observaciones: response.observaciones,
-      isActive: response.isActive
+      isActive: response.is_active
     }
   }
 
@@ -29,15 +29,6 @@ class EntityEditService {
       if (error.response?.status === 404) return false
       return true
     }
-  }
-
-  prepareUpdateData(original: EntityEditFormModel, current: EntityEditFormModel): EntityUpdateRequest {
-    const update: EntityUpdateRequest = {}
-    if (original.EntidadName !== current.EntidadName) update.EntidadName = current.EntidadName
-    if (original.EntidadCode !== current.EntidadCode) update.EntidadCode = current.EntidadCode
-    if (original.observaciones !== current.observaciones) update.observaciones = current.observaciones
-    if (original.isActive !== current.isActive) update.isActive = current.isActive
-    return update
   }
 }
 

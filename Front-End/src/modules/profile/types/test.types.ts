@@ -17,11 +17,11 @@ export interface TestFormModel {
  * Request para crear una nueva prueba
  */
 export interface TestCreateRequest {
-  pruebaCode: string
-  pruebasName: string
-  pruebasDescription: string
+  prueba_code: string
+  prueba_name: string
+  prueba_description: string
   tiempo: number // Tiempo en días
-  isActive: boolean
+  is_active: boolean
 }
 
 /**
@@ -29,11 +29,11 @@ export interface TestCreateRequest {
  */
 export interface TestCreateResponse {
   id: string
-  pruebaCode: string
-  pruebasName: string
-  pruebasDescription: string
+  prueba_code: string
+  prueba_name: string
+  prueba_description: string
   tiempo: number // Tiempo en días
-  isActive: boolean
+  is_active: boolean
   fecha_creacion: string
   fecha_actualizacion?: string
 }
@@ -77,11 +77,11 @@ export interface TestEditFormModel {
  * Request para actualizar una prueba existente
  */
 export interface TestUpdateRequest {
-  pruebaCode?: string
-  pruebasName?: string
-  pruebasDescription?: string
+  prueba_code?: string
+  prueba_name?: string
+  prueba_description?: string
   tiempo?: number // Tiempo en días
-  isActive?: boolean
+  is_active?: boolean
 }
 
 /**
@@ -89,11 +89,11 @@ export interface TestUpdateRequest {
  */
 export interface TestUpdateResponse {
   id: string
-  pruebaCode: string
-  pruebasName: string
-  pruebasDescription: string
+  prueba_code: string
+  prueba_name: string
+  prueba_description: string
   tiempo: number // Tiempo en días
-  isActive: boolean
+  is_active: boolean
   fecha_creacion: string
   fecha_actualizacion: string
 }

@@ -6,13 +6,25 @@ class EntitySearchService {
 
   async searchEntities(query: string, includeInactive: boolean = false): Promise<any[]> {
     if (!query?.trim()) return []
-    const response = await apiClient.get(`${this.endpoint}/`, {
-      params: { 
-        query: query.trim(), 
-        activo: includeInactive ? undefined : true, // Usar 'activo' según el schema EntidadSearch
-        limit: 50 
-      }
-    })
+    
+    // Construir parámetros de búsqueda
+    const params: any = { 
+      query: query.trim(),
+      limit: 50 
+    }
+    
+    // Agregar filtro de estado según la necesidad
+    if (includeInactive) {
+      // Para incluir inactivos, no enviar filtro de estado
+      // El backend devuelve todos cuando no se especifica 'activo'
+    } else {
+      // Solo activos
+      params.activo = true  // El backend espera 'activo', no 'is_active'
+    }
+    
+    console.log('🔍 Parámetros de búsqueda entidades:', params)
+    
+    const response = await apiClient.get(`${this.endpoint}/`, { params })
     if (response.entidades && Array.isArray(response.entidades)) {
       return response.entidades.map((entidad: any) => {
         // Mapeo correcto según documentación del backend
@@ -40,13 +52,21 @@ class EntitySearchService {
 
   async searchResidents(query: string, includeInactive: boolean = false): Promise<any[]> {
     if (!query?.trim()) return []
-    const response = await apiClient.get('/residentes/search', {
-      params: { 
-        residente_name: query.trim(), // Cambiar de 'q' a 'residente_name' según el backend
-        is_active: includeInactive ? undefined : true, // Usar 'is_active' con underscore
-        limit: 50 
-      }
-    })
+    
+    // Construir parámetros de búsqueda
+    const params: any = { 
+      residente_name: query.trim(),
+      limit: 50 
+    }
+    
+    // Agregar filtro de estado según la necesidad (residentes usa 'is_active')
+    if (!includeInactive) {
+      params.is_active = true
+    }
+    
+    console.log('🔍 Parámetros de búsqueda residentes:', params)
+    
+    const response = await apiClient.get('/residentes/search', { params })
     // console.log('🔍 Respuesta búsqueda residentes:', response)
     if (response && response.residentes && Array.isArray(response.residentes)) {
       return response.residentes.map((residente: any) => {
@@ -82,13 +102,20 @@ class EntitySearchService {
 
   async searchPathologists(query: string, includeInactive: boolean = false): Promise<any[]> {
     if (!query?.trim()) return []
-    const response = await apiClient.get('/patologos/search', {
-      params: { 
-        q: query.trim(), 
-        is_active: includeInactive ? undefined : true, // Corregir a 'is_active' con underscore
-        limit: 50 
-      }
-    })
+    
+    // Construir parámetros de búsqueda
+    const params: any = { 
+      q: query.trim(),
+      limit: 50 
+    }
+    
+    // NOTA: El backend de patólogos NO acepta filtro de estado desde la URL
+    // Siempre devuelve todos los patólogos (activos e inactivos)
+    // Por eso no agregamos ningún parámetro de estado
+    
+    console.log('🔍 Parámetros de búsqueda patólogos:', params)
+    
+    const response = await apiClient.get('/patologos/search', { params })
     if (Array.isArray(response)) {
       return response.map((p: any) => {
         // Mapeo correcto según documentación del backend
@@ -124,15 +151,17 @@ class EntitySearchService {
   async searchAuxiliaries(query: string, includeInactive: boolean = false): Promise<any[]> {
     if (!query?.trim()) return []
     
-    // Usar 'auxiliar_name' según el backend
+    // Usar el nuevo parámetro 'query' para búsqueda general
     const params: Record<string, any> = {
-      auxiliar_name: query.trim()
+      query: query.trim()
     }
 
     // Solo agregar filtro de estado activo si no se incluyen inactivos
     if (!includeInactive) {
-      params.is_active = true // Corregir a 'is_active' con underscore
+      params.is_active = true
     }
+
+    console.log('🔍 Parámetros de búsqueda auxiliares:', params)
 
     const response = await apiClient.get('/auxiliares/search', { params })
     if (response && response.auxiliares && Array.isArray(response.auxiliares)) {

@@ -259,10 +259,23 @@ const submit = async () => {
   const result = await update(localModel)
   if ((result as any).success && (result as any).data) {
     const data = (result as any).data
-    updatedAuxiliary.value = data
+    // Normalizar datos del backend (snake_case) para mostrar en la interfaz
+    updatedAuxiliary.value = {
+      auxiliarName: data.auxiliar_name,
+      auxiliarCode: data.auxiliar_code,
+      AuxiliarEmail: data.auxiliar_email,
+      observaciones: data.observaciones,
+      isActive: data.is_active,
+      fecha_actualizacion: data.fecha_actualizacion
+    }
     showNotification('success', '¡Auxiliar Actualizado Exitosamente!', '')
     await scrollToNotification()
-    emit('usuario-actualizado', { ...data, nombre: data.auxiliarName, codigo: data.auxiliarCode, tipo: 'auxiliar' })
+    emit('usuario-actualizado', { 
+      ...data, 
+      nombre: data.auxiliar_name, 
+      codigo: data.auxiliar_code, 
+      tipo: 'auxiliar' 
+    })
   } else {
     showNotification('error', 'Error al Actualizar Auxiliar', (result as any).error || 'No se pudo actualizar el auxiliar')
     await scrollToNotification()

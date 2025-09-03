@@ -8,7 +8,7 @@ from app.shared.schemas.common import RolEnum
 class LoginRequest(BaseModel):
     """Esquema para solicitud de login"""
     email: EmailStr = Field(..., description="Email del usuario")
-    password: str = Field(..., min_length=6, max_length=128, description="Contraseña del usuario")
+    password: str = Field(..., max_length=128, description="Contraseña del usuario")
     
     class Config:
         json_schema_extra = {

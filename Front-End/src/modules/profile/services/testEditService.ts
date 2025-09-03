@@ -17,14 +17,14 @@ class TestEditService {
         `${this.endpoint}/code/${pruebaCode}`
       )
       
-      // Convertir la respuesta al modelo del formulario
+      // Convertir la respuesta del backend (snake_case) al modelo del formulario (camelCase)
       return {
         id: response.id,
-        pruebaCode: response.pruebaCode,
-        pruebasName: response.pruebasName,
-        pruebasDescription: response.pruebasDescription,
+        pruebaCode: response.prueba_code,
+        pruebasName: response.prueba_name,
+        pruebasDescription: response.prueba_description,
         tiempo: response.tiempo,
-        isActive: response.isActive
+        isActive: response.is_active
       }
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -100,8 +100,6 @@ class TestEditService {
     // Validar código de prueba
     if (!data.pruebaCode?.trim()) {
       errors.push('El código de prueba es requerido')
-    } else if (data.pruebaCode.length < 3) {
-      errors.push('El código debe tener al menos 3 caracteres')
     } else if (!/^[A-Z0-9_-]+$/i.test(data.pruebaCode)) {
       errors.push('El código solo puede contener letras, números, guiones y guiones bajos')
     }
@@ -109,15 +107,11 @@ class TestEditService {
     // Validar nombre
     if (!data.pruebasName?.trim()) {
       errors.push('El nombre de la prueba es requerido')
-    } else if (data.pruebasName.length < 3) {
-      errors.push('El nombre debe tener al menos 3 caracteres')
     }
 
     // Validar descripción
     if (!data.pruebasDescription?.trim()) {
       errors.push('La descripción es requerida')
-    } else if (data.pruebasDescription.length < 10) {
-      errors.push('La descripción debe tener al menos 10 caracteres')
     }
 
     // Validar tiempo (en días)
@@ -131,32 +125,6 @@ class TestEditService {
       isValid: errors.length === 0,
       errors
     }
-  }
-
-  /**
-   * Preparar datos para actualización (solo campos modificados)
-   */
-  prepareUpdateData(originalData: TestEditFormModel, updatedData: TestEditFormModel): TestUpdateRequest {
-    const updateData: TestUpdateRequest = {}
-
-    // Comparar y agregar solo los campos que cambiaron
-    if (originalData.pruebaCode !== updatedData.pruebaCode) {
-      updateData.pruebaCode = updatedData.pruebaCode
-    }
-    if (originalData.pruebasName !== updatedData.pruebasName) {
-      updateData.pruebasName = updatedData.pruebasName
-    }
-    if (originalData.pruebasDescription !== updatedData.pruebasDescription) {
-      updateData.pruebasDescription = updatedData.pruebasDescription
-    }
-    if (originalData.tiempo !== updatedData.tiempo) {
-      updateData.tiempo = updatedData.tiempo
-    }
-    if (originalData.isActive !== updatedData.isActive) {
-      updateData.isActive = updatedData.isActive
-    }
-
-    return updateData
   }
 }
 

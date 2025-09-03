@@ -16,10 +16,10 @@ export interface EntityFormModel {
  * Request para crear una nueva entidad
  */
 export interface EntityCreateRequest {
-  EntidadName: string
-  EntidadCode: string
+  entidad_name: string
+  entidad_code: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
 }
 
 /**
@@ -27,10 +27,10 @@ export interface EntityCreateRequest {
  */
 export interface EntityCreateResponse {
   id: string
-  EntidadName: string
-  EntidadCode: string
+  entidad_name: string
+  entidad_code: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   fecha_creacion: string
   fecha_actualizacion?: string
 }
@@ -72,10 +72,10 @@ export interface EntityEditFormModel {
  * Request para actualizar una entidad
  */
 export interface EntityUpdateRequest {
-  EntidadName?: string
-  EntidadCode?: string
+  entidad_name?: string
+  entidad_code?: string
   observaciones?: string
-  isActive?: boolean
+  is_active?: boolean
 }
 
 /**
@@ -83,10 +83,10 @@ export interface EntityUpdateRequest {
  */
 export interface EntityUpdateResponse {
   id: string
-  EntidadName: string
-  EntidadCode: string
+  entidad_name: string
+  entidad_code: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   fecha_creacion: string
   fecha_actualizacion: string
 }

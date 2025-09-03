@@ -21,15 +21,15 @@ export interface PathologistFormModel {
  * Request para crear un nuevo patólogo (colección patólogos)
  */
 export interface PathologistCreateRequest {
-  patologoName: string
-  InicialesPatologo: string
-  patologoCode: string
-  PatologoEmail: string
+  patologo_name: string
+  iniciales_patologo: string
+  patologo_code: string
+  patologo_email: string
   registro_medico: string
   password: string // Contraseña para crear el usuario asociado
   firma: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
 }
 
 /**
@@ -48,14 +48,14 @@ export interface UserCreateRequest {
  */
 export interface PathologistCreateResponse {
   id: string
-  patologoName: string
-  InicialesPatologo: string
-  patologoCode: string
-  PatologoEmail: string
+  patologo_name: string
+  iniciales_patologo: string
+  patologo_code: string
+  patologo_email: string
   registro_medico: string
   firma: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   fecha_creacion: string
   fecha_actualizacion?: string
 }

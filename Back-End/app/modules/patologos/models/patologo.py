@@ -10,11 +10,11 @@ from app.shared.models.base import BaseDocument
 
 class Patologo(BaseDocument):
     """Modelo de Patólogo para MongoDB"""
-    patologo_name: str = Field(..., min_length=2, max_length=100, description="Nombre completo del patólogo")
-    iniciales_patologo: Optional[str] = Field(None, min_length=2, max_length=10, description="Iniciales del patólogo")
-    patologo_code: str = Field(..., min_length=6, max_length=10, description="Código único del patólogo (identificador principal)")
+    patologo_name: str = Field(..., max_length=100, description="Nombre completo del patólogo")
+    iniciales_patologo: Optional[str] = Field(None, max_length=10, description="Iniciales del patólogo")
+    patologo_code: str = Field(..., max_length=10, description="Código único del patólogo (identificador principal)")
     patologo_email: str = Field(..., description="Email único del patólogo")
-    registro_medico: str = Field(..., min_length=5, max_length=50, description="Número de registro médico único")
+    registro_medico: str = Field(..., max_length=50, description="Número de registro médico único")
     is_active: bool = Field(default=True, description="Estado activo/inactivo del patólogo")
     firma: str = Field(default="", description="URL de firma digital, por defecto vacío")
     observaciones: Optional[str] = Field(None, max_length=500, description="Notas adicionales")

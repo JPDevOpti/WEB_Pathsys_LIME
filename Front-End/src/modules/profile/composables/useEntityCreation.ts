@@ -40,8 +40,6 @@ export function useEntityCreation() {
     // Validar nombre
     if (!formData.EntidadName?.trim()) {
       errors.EntidadName = 'El nombre es requerido'
-    } else if (formData.EntidadName.length < 2) {
-      errors.EntidadName = 'El nombre debe tener al menos 2 caracteres'
     } else if (formData.EntidadName.length > 200) {
       errors.EntidadName = 'El nombre no puede tener más de 200 caracteres'
     }
@@ -49,8 +47,6 @@ export function useEntityCreation() {
     // Validar código
     if (!formData.EntidadCode?.trim()) {
       errors.EntidadCode = 'El código es requerido'
-    } else if (formData.EntidadCode.length < 2) {
-      errors.EntidadCode = 'El código debe tener al menos 2 caracteres'
     } else if (formData.EntidadCode.length > 20) {
       errors.EntidadCode = 'El código no puede tener más de 20 caracteres'
     } else if (!/^[A-Z0-9_-]+$/i.test(formData.EntidadCode)) {
@@ -72,7 +68,7 @@ export function useEntityCreation() {
    * Verificar si un código ya existe
    */
   const checkCodeAvailability = async (code: string): Promise<boolean> => {
-    if (!code?.trim() || code.length < 2) return true
+    if (!code?.trim()) return true
 
     isCheckingCode.value = true
     codeValidationError.value = ''
@@ -89,6 +85,18 @@ export function useEntityCreation() {
       return false
     } finally {
       isCheckingCode.value = false
+    }
+  }
+
+  /**
+   * Normalizar datos del formulario para que sean compatibles con el backend (snake_case)
+   */
+  const normalizeEntityData = (formData: EntityFormModel): EntityCreateRequest => {
+    return {
+      entidad_name: formData.EntidadName?.trim() || '',
+      entidad_code: formData.EntidadCode?.trim().toUpperCase() || '',
+      observaciones: formData.observaciones?.trim() || '',
+      is_active: formData.isActive ?? true
     }
   }
 
@@ -115,20 +123,15 @@ export function useEntityCreation() {
     state.isLoading = true
 
     try {
-      // Preparar datos para envío
-      const requestData: EntityCreateRequest = {
-        EntidadName: formData.EntidadName.trim(),
-        EntidadCode: formData.EntidadCode.trim().toUpperCase(),
-        observaciones: formData.observaciones.trim(),
-        isActive: formData.isActive
-      }
+      // Preparar datos para envío normalizados al formato del backend
+      const requestData = normalizeEntityData(formData)
 
       // Enviar al backend
       const response = await entityCreateService.createEntity(requestData)
 
       // Manejar éxito
       state.isSuccess = true
-      state.successMessage = `Entidad "${response.EntidadName}" creada exitosamente`
+      state.successMessage = `Entidad "${response.entidad_name}" (${response.entidad_code}) creada exitosamente como ${response.is_active ? 'ACTIVA' : 'INACTIVA'}`
 
       return { 
         success: true, 

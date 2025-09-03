@@ -43,10 +43,10 @@
             <div class="space-y-4">
               <!-- Información principal de la entidad -->
               <div class="mb-4 pb-3 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedEntity.EntidadName }}</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedEntity.entidad_name }}</h3>
                 <p class="text-gray-600">
                   <span class="font-medium">Código:</span>
-                  <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedEntity.EntidadCode }}</span>
+                  <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedEntity.entidad_code }}</span>
                 </p>
               </div>
 
@@ -55,8 +55,8 @@
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Estado:</span>
                   <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                    :class="updatedEntity.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                    {{ updatedEntity.isActive ? 'Activo' : 'Inactivo' }}
+                    :class="updatedEntity.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ updatedEntity.is_active ? 'Activo' : 'Inactivo' }}
                   </span>
                 </div>
                 <div>
@@ -179,7 +179,6 @@ const hasChanges = computed(() => hasChangesFactory(localModel))
 const validateCode = async () => {
   formErrors.EntidadCode = ''
   if (!localModel.EntidadCode?.trim()) { formErrors.EntidadCode = 'El código es requerido'; return }
-  if (localModel.EntidadCode.length < 2) { formErrors.EntidadCode = 'Mínimo 2 caracteres'; return }
   if (localModel.EntidadCode.length > 20) { formErrors.EntidadCode = 'Máximo 20 caracteres'; return }
   if (!/^[A-Z0-9_-]+$/i.test(localModel.EntidadCode)) { formErrors.EntidadCode = 'Solo letras, números, guiones y guiones bajos'; return }
   const originalCode = originalEntityData.value?.EntidadCode
@@ -202,7 +201,7 @@ const submit = async () => {
   updatedEntity.value = result.data as EntityUpdateResponse
       showNotification('success', '¡Entidad Actualizada Exitosamente!', '')
       await scrollToNotification()
-      emit('usuario-actualizado', { ...result.data, nombre: result.data.EntidadName, codigo: result.data.EntidadCode, tipo: 'entidad' })
+      emit('usuario-actualizado', { ...result.data, nombre: result.data.entidad_name, codigo: result.data.entidad_code, tipo: 'entidad' })
     } else {
       showNotification('error', 'Error al Actualizar Entidad', 'No se pudo actualizar la entidad')
     }

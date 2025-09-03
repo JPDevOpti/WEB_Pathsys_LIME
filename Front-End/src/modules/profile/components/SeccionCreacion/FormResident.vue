@@ -106,10 +106,10 @@
             <div class="space-y-4">
               <!-- Información principal del residente -->
               <div class="mb-4 pb-3 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdResident.residenteName }}</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdResident.residente_name }}</h3>
                 <p class="text-gray-600">
                   <span class="font-medium">Código:</span> 
-                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdResident.residenteCode }}</span>
+                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdResident.residente_code }}</span>
                 </p>
               </div>
               
@@ -117,7 +117,7 @@
               <div class="space-y-4 text-sm">
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Email:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdResident.ResidenteEmail }}</p>
+                  <p class="text-gray-800 font-semibold">{{ createdResident.residente_email }}</p>
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Registro médico:</span>
@@ -126,8 +126,8 @@
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Estado:</span>
                   <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                    :class="createdResident.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                    {{ createdResident.isActive ? 'Activo' : 'Inactivo' }}
+                    :class="createdResident.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ createdResident.is_active ? 'Activo' : 'Inactivo' }}
                   </span>
                 </div>
                 <div>

@@ -7,9 +7,9 @@ from datetime import datetime
 
 class AdministratorCreate(BaseModel):
     """Esquema para crear un nuevo administrador"""
-    nombre: str = Field(..., min_length=2, max_length=200, description="Nombre completo del administrador")
+    nombre: str = Field(..., max_length=200, description="Nombre completo del administrador")
     email: EmailStr = Field(..., description="Email único del administrador")
-    password: str = Field(..., min_length=6, max_length=128, description="Contraseña del administrador")
+    password: str = Field(..., max_length=128, description="Contraseña del administrador")
     is_active: bool = Field(default=True, description="Estado activo del administrador")
     
     @validator('nombre')
@@ -20,8 +20,8 @@ class AdministratorCreate(BaseModel):
     
     @validator('password')
     def validate_password(cls, v):
-        if not v or len(v) < 6:
-            raise ValueError('La contraseña debe tener al menos 6 caracteres')
+        if not v:
+            raise ValueError('La contraseña es requerida')
         if len(v) > 128:
             raise ValueError('La contraseña no puede tener más de 128 caracteres')
         return v
@@ -39,12 +39,11 @@ class AdministratorCreate(BaseModel):
 
 class AdministratorUpdate(BaseModel):
     """Esquema para actualizar un administrador existente"""
-    nombre: Optional[str] = Field(None, min_length=2, max_length=200, description="Nombre completo del administrador")
+    nombre: Optional[str] = Field(None, max_length=200, description="Nombre completo del administrador")
     email: Optional[EmailStr] = Field(None, description="Email único del administrador")
     is_active: Optional[bool] = Field(None, description="Estado activo del administrador")
     password: Optional[str] = Field(
         None, 
-        min_length=6, 
         max_length=128, 
         description="Nueva contraseña (opcional)",
         exclude=True
@@ -61,8 +60,6 @@ class AdministratorUpdate(BaseModel):
     @validator('password')
     def validate_password(cls, v):
         if v is not None:
-            if len(v) < 6:
-                raise ValueError('La contraseña debe tener al menos 6 caracteres')
             if len(v) > 128:
                 raise ValueError('La contraseña no puede tener más de 128 caracteres')
         return v

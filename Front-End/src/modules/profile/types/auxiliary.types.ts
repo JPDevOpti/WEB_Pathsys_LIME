@@ -18,12 +18,12 @@ export interface AuxiliaryFormModel {
  * Request para crear un nuevo auxiliar (colección auxiliares)
  */
 export interface AuxiliaryCreateRequest {
-  auxiliarName: string
-  auxiliarCode: string
-  AuxiliarEmail: string
+  auxiliar_name: string
+  auxiliar_code: string
+  auxiliar_email: string
   password: string // Contraseña para crear el usuario asociado
   observaciones: string
-  isActive: boolean
+  is_active: boolean
 }
 
 /**
@@ -31,11 +31,11 @@ export interface AuxiliaryCreateRequest {
  */
 export interface AuxiliaryCreateResponse {
   id: string
-  auxiliarName: string
-  auxiliarCode: string
-  AuxiliarEmail: string
+  auxiliar_name: string
+  auxiliar_code: string
+  auxiliar_email: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   fecha_creacion: string
   fecha_actualizacion?: string
 }
@@ -78,26 +78,26 @@ export interface AuxiliaryEditFormModel {
 }
 
 /**
- * Request para actualizar un auxiliar
+ * Request para actualizar un auxiliar (backend snake_case)
  */
 export interface AuxiliaryUpdateRequest {
-  auxiliarName: string
-  AuxiliarEmail: string
+  auxiliar_name: string
+  auxiliar_email: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   password?: string
 }
 
 /**
- * Response de actualización de auxiliar
+ * Response de actualización de auxiliar (backend snake_case)
  */
 export interface AuxiliaryUpdateResponse {
   id: string
-  auxiliarName: string
-  auxiliarCode: string
-  AuxiliarEmail: string
+  auxiliar_name: string
+  auxiliar_code: string
+  auxiliar_email: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   fecha_creacion: string
   fecha_actualizacion: string
 }

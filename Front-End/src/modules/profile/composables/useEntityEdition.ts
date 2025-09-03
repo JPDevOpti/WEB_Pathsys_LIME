@@ -17,8 +17,8 @@ export function useEntityEdition() {
 
   const validateForm = (formData: EntityEditFormModel): EntityEditFormValidation => {
     const errors: EntityEditFormValidation['errors'] = {}
-    if (!formData.EntidadName?.trim() || formData.EntidadName.length < 2) errors.EntidadName = 'Nombre inválido'
-    if (!formData.EntidadCode?.trim() || formData.EntidadCode.length < 2) errors.EntidadCode = 'Código inválido'
+    if (!formData.EntidadName?.trim()) errors.EntidadName = 'El nombre es requerido'
+    if (!formData.EntidadCode?.trim()) errors.EntidadCode = 'El código es requerido'
     if (formData.observaciones && formData.observaciones.length > 500) errors.observaciones = 'Máximo 500 caracteres'
     return { isValid: Object.keys(errors).length === 0, errors }
   }
@@ -39,7 +39,7 @@ export function useEntityEdition() {
   }
 
   const checkCodeAvailability = async (code: string, originalCode?: string) => {
-    if (!code?.trim() || code.length < 2) return true
+    if (!code?.trim()) return true
     isCheckingCode.value = true
     codeValidationError.value = ''
     try {
@@ -67,6 +67,18 @@ export function useEntityEdition() {
     )
   }
 
+  /**
+   * Normalizar datos del formulario para que sean compatibles con el backend (snake_case)
+   */
+  const normalizeEntityData = (formData: EntityEditFormModel) => {
+    return {
+      entidad_name: formData.EntidadName?.trim() || '',
+      entidad_code: formData.EntidadCode?.trim().toUpperCase() || '',
+      observaciones: formData.observaciones?.trim() || '',
+      is_active: formData.isActive ?? true
+    }
+  }
+
   const updateEntity = async (formData: EntityEditFormModel) => {
     if (!originalEntityData.value) {
       state.error = 'No se han cargado los datos originales'
@@ -92,21 +104,21 @@ export function useEntityEdition() {
 
     state.isLoading = true
     try {
-      const updateData = entityEditService.prepareUpdateData(originalEntityData.value, formData)
-      if (Object.keys(updateData).length === 0) {
-        state.successMessage = 'No hay cambios para actualizar'
-        return { success: true, data: formData }
-      }
+      // Preparar datos para actualización normalizados al formato del backend
+      const updateData = normalizeEntityData(formData)
+      
+      // Enviar al backend usando el código original
       const response = await entityEditService.updateByCode(originalEntityData.value.EntidadCode, updateData)
+      
       originalEntityData.value = {
         id: response.id,
-        EntidadName: response.EntidadName,
-        EntidadCode: response.EntidadCode,
+        EntidadName: response.entidad_name,
+        EntidadCode: response.entidad_code,
         observaciones: response.observaciones,
-        isActive: response.isActive
+        isActive: response.is_active
       }
       state.isSuccess = true
-      state.successMessage = `Entidad "${response.EntidadName}" actualizada exitosamente`
+      state.successMessage = `Entidad "${response.entidad_name}" actualizada exitosamente`
       return { success: true, data: response }
     } catch (e: any) {
       state.error = e.message || 'Error al actualizar la entidad'
