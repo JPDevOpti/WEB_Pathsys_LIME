@@ -66,6 +66,7 @@ class ResidenteResponse(BaseResponseModel):
 
 class ResidenteSearch(BaseModel):
     """Esquema para búsqueda avanzada de residentes"""
+    q: Optional[str] = Field(None, description="Búsqueda general")
     residente_name: Optional[str] = Field(None, description="Nombre del residente")
     iniciales_residente: Optional[str] = Field(None, description="Iniciales del residente")
     residente_code: Optional[str] = Field(None, description="Código del residente")
@@ -76,6 +77,7 @@ class ResidenteSearch(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
+                "q": "Juan",
                 "residente_name": "Juan",
                 "iniciales_residente": "JP",
                 "residente_code": "12345678",

@@ -38,44 +38,51 @@ class ResidenteRepository(BaseRepository[Residente, ResidenteCreate, ResidenteUp
         """Buscar residentes con filtros avanzados"""
         query = {}
         
-        # Construir query OR para búsqueda por múltiples campos si solo se proporciona residente_name
-        if search_params.residente_name and not any([
-            search_params.iniciales_residente, 
-            search_params.residente_code, 
-            search_params.residente_email, 
-            search_params.registro_medico
-        ]):
-            # Si solo se proporciona nombre, buscar en múltiples campos
-            search_term = search_params.residente_name
+        # Búsqueda general con parámetro 'q'
+        if search_params.q:
             query["$or"] = [
-                {"residente_name": {"$regex": search_term, "$options": "i"}},
-                {"residente_code": {"$regex": search_term, "$options": "i"}},
-                {"residente_email": {"$regex": search_term, "$options": "i"}},
-                {"registro_medico": {"$regex": search_term, "$options": "i"}}
+                {"residente_name": {"$regex": search_params.q, "$options": "i"}},
+                {"residente_code": {"$regex": search_params.q, "$options": "i"}},
+                {"residente_email": {"$regex": search_params.q, "$options": "i"}},
+                {"registro_medico": {"$regex": search_params.q, "$options": "i"}},
+                {"iniciales_residente": {"$regex": search_params.q, "$options": "i"}}
             ]
         else:
-            # Búsqueda específica por campos individuales
-            if search_params.residente_name:
-                query["residente_name"] = {"$regex": search_params.residente_name, "$options": "i"}
-            
-            if search_params.iniciales_residente:
-                query["iniciales_residente"] = {"$regex": search_params.iniciales_residente, "$options": "i"}
-            
-            if search_params.residente_code:
-                query["residente_code"] = {"$regex": search_params.residente_code, "$options": "i"}
-            
-            if search_params.residente_email:
-                query["residente_email"] = {"$regex": search_params.residente_email, "$options": "i"}
-            
-            if search_params.registro_medico:
-                query["registro_medico"] = {"$regex": search_params.registro_medico, "$options": "i"}
+            # Construir query OR para búsqueda por múltiples campos si solo se proporciona residente_name
+            if search_params.residente_name and not any([
+                search_params.iniciales_residente, 
+                search_params.residente_code, 
+                search_params.residente_email, 
+                search_params.registro_medico
+            ]):
+                # Si solo se proporciona nombre, buscar en múltiples campos
+                search_term = search_params.residente_name
+                query["$or"] = [
+                    {"residente_name": {"$regex": search_term, "$options": "i"}},
+                    {"residente_code": {"$regex": search_term, "$options": "i"}},
+                    {"residente_email": {"$regex": search_term, "$options": "i"}},
+                    {"registro_medico": {"$regex": search_term, "$options": "i"}}
+                ]
+            else:
+                # Búsqueda específica por campos individuales
+                if search_params.residente_name:
+                    query["residente_name"] = {"$regex": search_params.residente_name, "$options": "i"}
+                
+                if search_params.iniciales_residente:
+                    query["iniciales_residente"] = {"$regex": search_params.iniciales_residente, "$options": "i"}
+                
+                if search_params.residente_code:
+                    query["residente_code"] = {"$regex": search_params.residente_code, "$options": "i"}
+                
+                if search_params.residente_email:
+                    query["residente_email"] = {"$regex": search_params.residente_email, "$options": "i"}
+                
+                if search_params.registro_medico:
+                    query["registro_medico"] = {"$regex": search_params.registro_medico, "$options": "i"}
         
         # Aplicar filtro de estado activo
         if search_params.is_active is not None:
             query["is_active"] = search_params.is_active
-        else:
-            # Por defecto, solo mostrar activos en búsquedas generales
-            query["is_active"] = True
         
         cursor = self.collection.find(query).skip(skip).limit(limit)
         documents = await cursor.to_list(length=limit)

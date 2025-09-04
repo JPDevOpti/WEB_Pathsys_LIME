@@ -59,9 +59,8 @@ class EntidadService:
     async def get_all_entidades(self, search_params: EntidadSearch) -> Dict[str, Any]:
         """Obtener todas las entidades con filtros y paginación"""
         try:
-            # Si no se especifica activo, filtrar solo activos por defecto
-            if search_params.activo is None:
-                search_params.activo = True
+            # No forzar activo=True por defecto para permitir búsqueda de inactivos
+            # El filtro se aplicará solo si se especifica explícitamente en search_params.is_active
                 
             entidades = await self.repository.get_all(search_params)
             total = await self.repository.count(search_params)
@@ -79,6 +78,48 @@ class EntidadService:
             
         except Exception as e:
             logger.error(f"Error obteniendo entidades: {str(e)}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
+
+    async def get_active_entidades(self, search_params: EntidadSearch) -> Dict[str, Any]:
+        """Obtener solo entidades activas con filtros y paginación"""
+        try:
+            entidades = await self.repository.get_all_active(search_params)
+            total = await self.repository.count_active(search_params)
+            
+            entidades_response = [EntidadResponse(**entidad.model_dump()) for entidad in entidades]
+            
+            return {
+                "entidades": entidades_response,
+                "total": total,
+                "skip": search_params.skip,
+                "limit": search_params.limit,
+                "has_next": search_params.skip + len(entidades_response) < total,
+                "has_prev": search_params.skip > 0
+            }
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo entidades activas: {str(e)}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
+
+    async def get_all_entidades_including_inactive(self, search_params: EntidadSearch) -> Dict[str, Any]:
+        """Obtener todas las entidades incluyendo inactivas con filtros y paginación"""
+        try:
+            entidades = await self.repository.get_all_including_inactive(search_params)
+            total = await self.repository.count_including_inactive(search_params)
+            
+            entidades_response = [EntidadResponse(**entidad.model_dump()) for entidad in entidades]
+            
+            return {
+                "entidades": entidades_response,
+                "total": total,
+                "skip": search_params.skip,
+                "limit": search_params.limit,
+                "has_next": search_params.skip + len(entidades_response) < total,
+                "has_prev": search_params.skip > 0
+            }
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo todas las entidades: {str(e)}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
     async def update_entidad_by_code(self, code: str, entidad_update: EntidadUpdate) -> Optional[EntidadResponse]:

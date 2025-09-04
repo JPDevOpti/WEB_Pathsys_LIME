@@ -59,6 +59,64 @@ class AuxiliarRepository(BaseRepository[Auxiliar, AuxiliarCreate, AuxiliarUpdate
         cursor = self.collection.find(query)
         documents = await cursor.to_list(length=None)
         return [self.model_class(**doc) for doc in documents]
+
+    async def search_active_auxiliares(self, search_params: AuxiliarSearch) -> List[Auxiliar]:
+        """Buscar solo auxiliares activos con filtros"""
+        query: Dict[str, Any] = {"is_active": True}
+        
+        # Si se proporcionan múltiples campos con el mismo valor, usar OR
+        if (search_params.auxiliar_name and search_params.auxiliar_code and 
+            search_params.auxiliar_email and search_params.auxiliar_name == search_params.auxiliar_code == search_params.auxiliar_email):
+            # Búsqueda general en todos los campos
+            search_term = search_params.auxiliar_name
+            query["$or"] = [
+                {"auxiliar_name": {"$regex": search_term, "$options": "i"}},
+                {"auxiliar_code": {"$regex": search_term, "$options": "i"}},
+                {"auxiliar_email": {"$regex": search_term, "$options": "i"}}
+            ]
+        else:
+            # Búsqueda específica por campos
+            if search_params.auxiliar_name:
+                query["auxiliar_name"] = {"$regex": search_params.auxiliar_name, "$options": "i"}
+            
+            if search_params.auxiliar_code:
+                query["auxiliar_code"] = {"$regex": search_params.auxiliar_code, "$options": "i"}
+            
+            if search_params.auxiliar_email:
+                query["auxiliar_email"] = {"$regex": search_params.auxiliar_email, "$options": "i"}
+        
+        cursor = self.collection.find(query)
+        documents = await cursor.to_list(length=None)
+        return [self.model_class(**doc) for doc in documents]
+
+    async def search_all_auxiliares_including_inactive(self, search_params: AuxiliarSearch) -> List[Auxiliar]:
+        """Buscar todos los auxiliares incluyendo inactivos"""
+        query: Dict[str, Any] = {}
+        
+        # Si se proporcionan múltiples campos con el mismo valor, usar OR
+        if (search_params.auxiliar_name and search_params.auxiliar_code and 
+            search_params.auxiliar_email and search_params.auxiliar_name == search_params.auxiliar_code == search_params.auxiliar_email):
+            # Búsqueda general en todos los campos
+            search_term = search_params.auxiliar_name
+            query["$or"] = [
+                {"auxiliar_name": {"$regex": search_term, "$options": "i"}},
+                {"auxiliar_code": {"$regex": search_term, "$options": "i"}},
+                {"auxiliar_email": {"$regex": search_term, "$options": "i"}}
+            ]
+        else:
+            # Búsqueda específica por campos
+            if search_params.auxiliar_name:
+                query["auxiliar_name"] = {"$regex": search_params.auxiliar_name, "$options": "i"}
+            
+            if search_params.auxiliar_code:
+                query["auxiliar_code"] = {"$regex": search_params.auxiliar_code, "$options": "i"}
+            
+            if search_params.auxiliar_email:
+                query["auxiliar_email"] = {"$regex": search_params.auxiliar_email, "$options": "i"}
+        
+        cursor = self.collection.find(query)
+        documents = await cursor.to_list(length=None)
+        return [self.model_class(**doc) for doc in documents]
     
     async def get_activos(self) -> List[Auxiliar]:
         """Obtener todos los auxiliares activos"""

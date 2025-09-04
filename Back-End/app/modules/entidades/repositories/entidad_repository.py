@@ -62,8 +62,52 @@ class EntidadRepository:
                 {"observaciones": {"$regex": search_params.query, "$options": "i"}}
             ]
         
-        if search_params.activo is not None:
-            filter_dict["is_active"] = search_params.activo
+        if search_params.is_active is not None:
+            filter_dict["is_active"] = search_params.is_active
+        
+        cursor = self.collection.find(filter_dict)
+        cursor = cursor.skip(search_params.skip).limit(search_params.limit)
+        
+        entidades = []
+        async for doc in cursor:
+            doc = self._convert_objectid_to_string(doc)
+            entidades.append(Entidad(**doc))
+        
+        return entidades
+
+    async def get_all_active(self, search_params: EntidadSearch) -> List[Entidad]:
+        """Obtener solo entidades activas con filtros"""
+        filter_dict = {"is_active": True}
+        
+        # Aplicar filtros de búsqueda
+        if search_params.query:
+            filter_dict["$or"] = [
+                {"entidad_name": {"$regex": search_params.query, "$options": "i"}},
+                {"entidad_code": {"$regex": search_params.query, "$options": "i"}},
+                {"observaciones": {"$regex": search_params.query, "$options": "i"}}
+            ]
+        
+        cursor = self.collection.find(filter_dict)
+        cursor = cursor.skip(search_params.skip).limit(search_params.limit)
+        
+        entidades = []
+        async for doc in cursor:
+            doc = self._convert_objectid_to_string(doc)
+            entidades.append(Entidad(**doc))
+        
+        return entidades
+
+    async def get_all_including_inactive(self, search_params: EntidadSearch) -> List[Entidad]:
+        """Obtener todas las entidades incluyendo inactivas"""
+        filter_dict = {}
+        
+        # Aplicar filtros de búsqueda
+        if search_params.query:
+            filter_dict["$or"] = [
+                {"entidad_name": {"$regex": search_params.query, "$options": "i"}},
+                {"entidad_code": {"$regex": search_params.query, "$options": "i"}},
+                {"observaciones": {"$regex": search_params.query, "$options": "i"}}
+            ]
         
         cursor = self.collection.find(filter_dict)
         cursor = cursor.skip(search_params.skip).limit(search_params.limit)
@@ -122,7 +166,33 @@ class EntidadRepository:
                 {"observaciones": {"$regex": search_params.query, "$options": "i"}}
             ]
         
-        if search_params.activo is not None:
-            filter_dict["is_active"] = search_params.activo
+        if search_params.is_active is not None:
+            filter_dict["is_active"] = search_params.is_active
+        
+        return await self.collection.count_documents(filter_dict)
+
+    async def count_active(self, search_params: EntidadSearch) -> int:
+        """Contar solo entidades activas con filtros"""
+        filter_dict = {"is_active": True}
+        
+        if search_params.query:
+            filter_dict["$or"] = [
+                {"entidad_name": {"$regex": search_params.query, "$options": "i"}},
+                {"entidad_code": {"$regex": search_params.query, "$options": "i"}},
+                {"observaciones": {"$regex": search_params.query, "$options": "i"}}
+            ]
+        
+        return await self.collection.count_documents(filter_dict)
+
+    async def count_including_inactive(self, search_params: EntidadSearch) -> int:
+        """Contar todas las entidades incluyendo inactivas"""
+        filter_dict = {}
+        
+        if search_params.query:
+            filter_dict["$or"] = [
+                {"entidad_name": {"$regex": search_params.query, "$options": "i"}},
+                {"entidad_code": {"$regex": search_params.query, "$options": "i"}},
+                {"observaciones": {"$regex": search_params.query, "$options": "i"}}
+            ]
         
         return await self.collection.count_documents(filter_dict)

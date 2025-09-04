@@ -186,6 +186,16 @@ class AuxiliarService:
         """Buscar auxiliares con filtros"""
         auxiliares = await self.auxiliar_repository.search_auxiliares(search_params)
         return [self._to_response(auxiliar) for auxiliar in auxiliares]
+
+    async def search_active_auxiliares(self, search_params: AuxiliarSearch) -> List[AuxiliarResponse]:
+        """Buscar solo auxiliares activos con filtros"""
+        auxiliares = await self.auxiliar_repository.search_active_auxiliares(search_params)
+        return [self._to_response(auxiliar) for auxiliar in auxiliares]
+
+    async def search_all_auxiliares_including_inactive(self, search_params: AuxiliarSearch) -> List[AuxiliarResponse]:
+        """Buscar todos los auxiliares incluyendo inactivos"""
+        auxiliares = await self.auxiliar_repository.search_all_auxiliares_including_inactive(search_params)
+        return [self._to_response(auxiliar) for auxiliar in auxiliares]
     
     async def get_auxiliares_activos(self) -> List[AuxiliarResponse]:
         """Obtener todos los auxiliares activos"""

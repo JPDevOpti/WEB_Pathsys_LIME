@@ -70,6 +70,7 @@ async def get_patologos(
 @router.get("/search", response_model=List[PatologoResponse])
 async def search_patologos(
     q: Optional[str] = Query(None, description="Término de búsqueda general (nombre, código, email, registro médico)"),
+    is_active: Optional[bool] = Query(None, description="Estado del patólogo (activo/inactivo)"),
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a devolver"),
     patologo_service: PatologoService = Depends(get_patologo_service)
@@ -84,13 +85,65 @@ async def search_patologos(
             patologo_code=None,
             patologo_email=None,
             registro_medico=None,
-            is_active=None,
+            is_active=is_active,
             observaciones=None
         )
-        logger.info(f"Buscando patólogos - skip: {skip}, limit: {limit}")
+        logger.info(f"Buscando patólogos - skip: {skip}, limit: {limit}, is_active: {is_active}")
         return await patologo_service.search_patologos(search_params=search_params, skip=skip, limit=limit)
     except Exception as e:
         logger.error(f"Error inesperado buscando patólogos: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
+
+@router.get("/search/active", response_model=List[PatologoResponse])
+async def search_active_patologos(
+    q: Optional[str] = Query(None, description="Término de búsqueda general (nombre, código, email, registro médico)"),
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a devolver"),
+    patologo_service: PatologoService = Depends(get_patologo_service)
+):
+    """
+    Búsqueda de solo patólogos activos
+    """
+    try:
+        search_params = PatologoSearch(
+            q=q,
+            patologo_name=None,
+            patologo_code=None,
+            patologo_email=None,
+            registro_medico=None,
+            is_active=None,
+            observaciones=None
+        )
+        logger.info(f"Buscando patólogos activos - skip: {skip}, limit: {limit}")
+        return await patologo_service.search_active_patologos(search_params=search_params, skip=skip, limit=limit)
+    except Exception as e:
+        logger.error(f"Error inesperado buscando patólogos activos: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
+
+@router.get("/search/all-including-inactive", response_model=List[PatologoResponse])
+async def search_all_patologos_including_inactive(
+    q: Optional[str] = Query(None, description="Término de búsqueda general (nombre, código, email, registro médico)"),
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a devolver"),
+    patologo_service: PatologoService = Depends(get_patologo_service)
+):
+    """
+    Búsqueda de todos los patólogos incluyendo inactivos
+    """
+    try:
+        search_params = PatologoSearch(
+            q=q,
+            patologo_name=None,
+            patologo_code=None,
+            patologo_email=None,
+            registro_medico=None,
+            is_active=None,
+            observaciones=None
+        )
+        logger.info(f"Buscando todos los patólogos incluyendo inactivos - skip: {skip}, limit: {limit}")
+        return await patologo_service.search_all_patologos_including_inactive(search_params=search_params, skip=skip, limit=limit)
+    except Exception as e:
+        logger.error(f"Error inesperado buscando todos los patólogos: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 

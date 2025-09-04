@@ -112,24 +112,24 @@ export interface PathologistEditFormModel {
 }
 
 export interface PathologistUpdateRequest {
-  patologoName: string
-  InicialesPatologo: string
-  PatologoEmail: string
+  patologo_name: string
+  iniciales_patologo: string
+  patologo_email: string
   registro_medico: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   password?: string
 }
 
 export interface PathologistUpdateResponse {
   id: string
-  patologoName: string
-  InicialesPatologo: string
-  patologoCode: string
-  PatologoEmail: string
+  patologo_name: string
+  iniciales_patologo: string
+  patologo_code: string
+  patologo_email: string
   registro_medico: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   fecha_creacion: string
   fecha_actualizacion: string
 }

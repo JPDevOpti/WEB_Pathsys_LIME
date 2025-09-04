@@ -91,12 +91,12 @@ export interface ResidentEditFormModel {
  * Request para actualizar un residente
  */
 export interface ResidentUpdateRequest {
-  residenteName: string
-  InicialesResidente: string
-  ResidenteEmail: string
+  residente_name: string
+  iniciales_residente: string
+  residente_email: string
   registro_medico: string
   observaciones: string
-  isActive: boolean
+  is_active: boolean
   password?: string
 }
 

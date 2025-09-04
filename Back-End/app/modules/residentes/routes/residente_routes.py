@@ -64,6 +64,7 @@ async def get_residentes(
 
 @router.get("/search", response_model=Dict[str, Any])
 async def search_residentes(
+    q: str = Query(None, description="Término de búsqueda general (nombre, código, email, registro médico)"),
     residente_name: str = Query(None, description="Nombre del residente"),
     iniciales_residente: str = Query(None, description="Iniciales del residente"),
     residente_code: str = Query(None, description="Código del residente"),
@@ -77,6 +78,7 @@ async def search_residentes(
     """Búsqueda avanzada de residentes"""
     try:
         search_params = ResidenteSearch(
+            q=q,
             residente_name=residente_name,
             iniciales_residente=iniciales_residente,
             residente_code=residente_code,

@@ -16,7 +16,7 @@
     <FormInputField 
       class="col-span-full md:col-span-6" 
       label="Código del auxiliar" 
-      placeholder="Ejemplo: AUX001" 
+      placeholder="Ejemplo: 1234567890" 
       v-model="localModel.auxiliarCode"
       :error="formErrors.auxiliarCode"
       @blur="validateCode"

@@ -43,7 +43,7 @@ async def create_entidad(
 @router.get("/", response_model=Dict[str, Any])
 async def get_entidades(
     query: str = Query(None, description="Término de búsqueda"),
-    activo: bool = Query(None, description="Filtrar por estado activo"),
+    is_active: bool = Query(None, description="Filtrar por estado activo"),
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(10, ge=1, le=100, description="Número máximo de registros"),
     service: EntidadService = Depends(get_entidad_service)
@@ -51,11 +51,43 @@ async def get_entidades(
     """Obtener lista de entidades con filtros y paginación"""
     search_params = EntidadSearch(
         query=query,
-        activo=activo,
+        is_active=is_active,
         skip=skip,
         limit=limit
     )
     return await service.get_all_entidades(search_params)
+
+
+@router.get("/active", response_model=Dict[str, Any])
+async def get_active_entidades(
+    query: str = Query(None, description="Término de búsqueda"),
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(10, ge=1, le=100, description="Número máximo de registros"),
+    service: EntidadService = Depends(get_entidad_service)
+):
+    """Obtener solo entidades activas con filtros y paginación"""
+    search_params = EntidadSearch(
+        query=query,
+        skip=skip,
+        limit=limit
+    )
+    return await service.get_active_entidades(search_params)
+
+
+@router.get("/all-including-inactive", response_model=Dict[str, Any])
+async def get_all_entidades_including_inactive(
+    query: str = Query(None, description="Término de búsqueda"),
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(10, ge=1, le=100, description="Número máximo de registros"),
+    service: EntidadService = Depends(get_entidad_service)
+):
+    """Obtener todas las entidades incluyendo inactivas con filtros y paginación"""
+    search_params = EntidadSearch(
+        query=query,
+        skip=skip,
+        limit=limit
+    )
+    return await service.get_all_entidades_including_inactive(search_params)
 
 
 @router.get("/code/{code}", response_model=EntidadResponse)

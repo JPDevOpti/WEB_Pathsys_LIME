@@ -70,7 +70,7 @@ class EntidadResponse(EntidadBase):
 class EntidadSearch(BaseModel):
     """Modelo para búsqueda de entidades"""
     query: Optional[str] = None
-    activo: Optional[bool] = None
+    is_active: Optional[bool] = None
     skip: int = Field(0, ge=0)
     limit: int = Field(10, ge=1, le=100)
 

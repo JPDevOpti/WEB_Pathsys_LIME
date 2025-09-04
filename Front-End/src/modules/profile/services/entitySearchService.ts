@@ -7,24 +7,23 @@ class EntitySearchService {
   async searchEntities(query: string, includeInactive: boolean = false): Promise<any[]> {
     if (!query?.trim()) return []
     
+    let endpoint: string
+    
+    if (includeInactive) {
+      endpoint = `${this.endpoint}/all-including-inactive`
+    } else {
+      endpoint = `${this.endpoint}/active`
+    }
+    
     // Construir parámetros de búsqueda
     const params: any = { 
       query: query.trim(),
       limit: 50 
     }
     
-    // Agregar filtro de estado según la necesidad
-    if (includeInactive) {
-      // Para incluir inactivos, no enviar filtro de estado
-      // El backend devuelve todos cuando no se especifica 'activo'
-    } else {
-      // Solo activos
-      params.activo = true  // El backend espera 'activo', no 'is_active'
-    }
+    console.log('🔍 Parámetros de búsqueda entidades:', params, 'Endpoint:', endpoint)
     
-    console.log('🔍 Parámetros de búsqueda entidades:', params)
-    
-    const response = await apiClient.get(`${this.endpoint}/`, { params })
+    const response = await apiClient.get(endpoint, { params })
     if (response.entidades && Array.isArray(response.entidades)) {
       return response.entidades.map((entidad: any) => {
         // Mapeo correcto según documentación del backend
@@ -55,7 +54,7 @@ class EntitySearchService {
     
     // Construir parámetros de búsqueda
     const params: any = { 
-      residente_name: query.trim(),
+      q: query.trim(),
       limit: 50 
     }
     
@@ -103,19 +102,23 @@ class EntitySearchService {
   async searchPathologists(query: string, includeInactive: boolean = false): Promise<any[]> {
     if (!query?.trim()) return []
     
+    let endpoint: string
+    
+    if (includeInactive) {
+      endpoint = '/patologos/search/all-including-inactive'
+    } else {
+      endpoint = '/patologos/search/active'
+    }
+    
     // Construir parámetros de búsqueda
     const params: any = { 
       q: query.trim(),
       limit: 50 
     }
     
-    // NOTA: El backend de patólogos NO acepta filtro de estado desde la URL
-    // Siempre devuelve todos los patólogos (activos e inactivos)
-    // Por eso no agregamos ningún parámetro de estado
+    console.log('🔍 Parámetros de búsqueda patólogos:', params, 'Endpoint:', endpoint)
     
-    console.log('🔍 Parámetros de búsqueda patólogos:', params)
-    
-    const response = await apiClient.get('/patologos/search', { params })
+    const response = await apiClient.get(endpoint, { params })
     if (Array.isArray(response)) {
       return response.map((p: any) => {
         // Mapeo correcto según documentación del backend
@@ -139,9 +142,7 @@ class EntitySearchService {
           registro_medico: p.registro_medico || p.medicalLicense || '',
           firma: p.firma || p.signature || '',
           observaciones: p.observaciones || p.observations || '',
-          isActive: activo,
-          fecha_creacion: p.fecha_creacion,
-          fecha_actualizacion: p.fecha_actualizacion
+          isActive: activo
         }
       })
     }

@@ -22,11 +22,27 @@ export class EntitiesApiService {
 
   async getEntities(): Promise<EntityInfo[]> {
     try {
-      const response = await this.makeRequest<any>(API_CONFIG.ENDPOINTS.ENTITIES)
+      const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}/active`)
       
       if (response.entidades && Array.isArray(response.entidades)) {
         return response.entidades.map((entity: any) => ({
           codigo: entity.entidad_code || '', nombre: entity.entidad_name || ''
+        }))
+      }
+      
+      return []
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async getAllEntitiesIncludingInactive(): Promise<EntityInfo[]> {
+    try {
+      const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}/all-including-inactive`)
+      
+      if (response.entidades && Array.isArray(response.entidades)) {
+        return response.entidades.map((entity: any) => ({
+          codigo: entity.entidad_code || '', nombre: entity.entidad_name || '', activo: entity.is_active
         }))
       }
       
@@ -52,13 +68,23 @@ export class EntitiesApiService {
     }
   }
 
-  async searchEntities(query: string): Promise<EntityInfo[]> {
+  async searchEntities(query: string, includeInactive: boolean = false): Promise<EntityInfo[]> {
     try {
-      const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}?query=${encodeURIComponent(query)}`)
+      let endpoint: string
+      
+      if (includeInactive) {
+        endpoint = `${API_CONFIG.ENDPOINTS.ENTITIES}/all-including-inactive?query=${encodeURIComponent(query)}`
+      } else {
+        endpoint = `${API_CONFIG.ENDPOINTS.ENTITIES}/active?query=${encodeURIComponent(query)}`
+      }
+      
+      const response = await this.makeRequest<any>(endpoint)
       
       if (response.entidades && Array.isArray(response.entidades)) {
         return response.entidades.map((entity: any) => ({
-          codigo: entity.entidad_code || '', nombre: entity.entidad_name || ''
+          codigo: entity.entidad_code || '', 
+          nombre: entity.entidad_name || '',
+          activo: entity.is_active
         }))
       }
       

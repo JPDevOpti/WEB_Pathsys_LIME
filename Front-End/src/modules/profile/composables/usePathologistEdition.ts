@@ -25,16 +25,16 @@ export const usePathologistEdition = () => {
       const data = pathologistEditService.prepareUpdateData(form)
       const res = await pathologistEditService.update(form.patologoCode, data)
       if (res.success && res.data) {
+        // Los datos ya vienen normalizados del servicio, convertir snake_case a camelCase para el frontend
         original.value = {
           id: res.data.id,
-          patologoName: res.data.patologoName,
-          InicialesPatologo: res.data.InicialesPatologo || '',
-          patologoCode: res.data.patologoCode,
-          PatologoEmail: res.data.PatologoEmail,
+          patologoName: res.data.patologo_name,
+          InicialesPatologo: res.data.iniciales_patologo || '',
+          patologoCode: res.data.patologo_code,
+          PatologoEmail: res.data.patologo_email,
           registro_medico: res.data.registro_medico,
-          firma: res.data.firma || '',
           observaciones: res.data.observaciones || '',
-          isActive: res.data.isActive
+          isActive: res.data.is_active
         }
       }
       return res

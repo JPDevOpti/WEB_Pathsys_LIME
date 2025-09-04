@@ -22,13 +22,25 @@ export class PathologistApiService {
 
   async getPathologists(): Promise<FormPathologistInfo[]> {
     try {
-      const response = await apiClient.get<PathologistBackendResponse[]>(this.endpoint, {
+      const response = await apiClient.get<PathologistBackendResponse[]>(`${this.endpoint}/search/active`, {
         params: { skip: 0, limit: 100 }
       })
       
       return this.transformPathologistsResponse(response)
     } catch (error: any) {
       throw new Error(`Error al obtener patólogos: ${error.message}`)
+    }
+  }
+
+  async getAllPathologistsIncludingInactive(): Promise<FormPathologistInfo[]> {
+    try {
+      const response = await apiClient.get<PathologistBackendResponse[]>(`${this.endpoint}/search/all-including-inactive`, {
+        params: { skip: 0, limit: 100 }
+      })
+      
+      return this.transformPathologistsResponse(response)
+    } catch (error: any) {
+      throw new Error(`Error al obtener todos los patólogos: ${error.message}`)
     }
   }
 
@@ -41,10 +53,18 @@ export class PathologistApiService {
     }
   }
 
-  async searchPathologists(query: string): Promise<FormPathologistInfo[]> {
+  async searchPathologists(query: string, includeInactive: boolean = false): Promise<FormPathologistInfo[]> {
     try {
-      const response = await apiClient.get<PathologistBackendResponse[]>(`${this.endpoint}/buscar`, {
-        params: { query }
+      let endpoint: string
+      
+      if (includeInactive) {
+        endpoint = `${this.endpoint}/search/all-including-inactive`
+      } else {
+        endpoint = `${this.endpoint}/search/active`
+      }
+      
+      const response = await apiClient.get<PathologistBackendResponse[]>(endpoint, {
+        params: { q: query }
       })
       
       return this.transformPathologistsResponse(response)

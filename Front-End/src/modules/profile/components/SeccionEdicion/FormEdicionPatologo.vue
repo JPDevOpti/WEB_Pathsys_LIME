@@ -230,7 +230,18 @@ const submit = async () => {
 
   const result = await update(localModel)
   if ((result as any).success && (result as any).data) {
-    updatedPathologist.value = (result as any).data
+    const data = (result as any).data
+    // Normalizar datos del backend (snake_case) para mostrar en la interfaz
+    updatedPathologist.value = {
+      patologoName: data.patologo_name,
+      InicialesPatologo: data.iniciales_patologo,
+      patologoCode: data.patologo_code,
+      PatologoEmail: data.patologo_email,
+      registro_medico: data.registro_medico,
+      observaciones: data.observaciones,
+      isActive: data.is_active,
+      fecha_actualizacion: data.fecha_actualizacion
+    }
     showNotification('success', '¡Patólogo Actualizado Exitosamente!', '')
     await scrollToNotification()
   } else {

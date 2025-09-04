@@ -28,14 +28,14 @@ export function usePathologistAPI() {
     }
   }
 
-  const searchPathologists = async (searchTerm: string) => {
+  const searchPathologists = async (searchTerm: string, includeInactive: boolean = false) => {
     if (!searchTerm.trim()) return await loadPathologists()
 
     isLoading.value = true
     error.value = ''
 
     try {
-      const results = await pathologistApi.searchPathologists(searchTerm)
+      const results = await pathologistApi.searchPathologists(searchTerm, includeInactive)
       pathologists.value = results
       return { success: true, pathologists: results }
     } catch (err: any) {

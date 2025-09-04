@@ -51,13 +51,13 @@ class ResidentCreateService {
             
             // Traducir nombres de campos
             switch (field) {
-              case 'residenteCode':
+              case 'residente_code':
                 fieldName = 'Código del residente'
                 break
-              case 'residenteName':
+              case 'residente_name':
                 fieldName = 'Nombre del residente'
                 break
-              case 'ResidenteEmail':
+              case 'residente_email':
                 fieldName = 'Email'
                 break
               case 'registro_medico':
@@ -118,7 +118,7 @@ class ResidentCreateService {
    */
   async checkEmailExists(email: string): Promise<boolean> {
     try {
-      const response = await apiClient.get(`${this.residentEndpoint}/search?ResidenteEmail=${email}`)
+      const response = await apiClient.get(`${this.residentEndpoint}/search?residente_email=${email}`)
       // Si encuentra resultados, el email existe
       return response.residentes && response.residentes.length > 0
     } catch (error: any) {
@@ -154,27 +154,27 @@ class ResidentCreateService {
     const errors: string[] = []
 
     // Validar nombre del residente
-    if (!data.residenteName?.trim()) {
+    if (!data.residente_name?.trim()) {
       errors.push('El nombre del residente es requerido')
-    } else if (data.residenteName.length < 2) {
+    } else if (data.residente_name.length < 2) {
       errors.push('El nombre debe tener al menos 2 caracteres')
-    } else if (data.residenteName.length > 100) {
+    } else if (data.residente_name.length > 100) {
       errors.push('El nombre no puede tener más de 100 caracteres')
     }
 
     // Validar código del residente
-    if (!data.residenteCode?.trim()) {
+    if (!data.residente_code?.trim()) {
       errors.push('El código del residente es requerido')
-    } else if (data.residenteCode.length < 3) {
+    } else if (data.residente_code.length < 3) {
       errors.push('El código debe tener al menos 3 caracteres')
-    } else if (data.residenteCode.length > 20) {
+    } else if (data.residente_code.length > 20) {
       errors.push('El código no puede tener más de 20 caracteres')
     }
 
     // Validar email
-    if (!data.ResidenteEmail?.trim()) {
+    if (!data.residente_email?.trim()) {
       errors.push('El email es requerido')
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.ResidenteEmail)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.residente_email)) {
       errors.push('El email debe tener un formato válido')
     }
 

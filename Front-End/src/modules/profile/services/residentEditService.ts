@@ -80,7 +80,7 @@ export const residentEditService = {
     }
 
     try {
-      const response = await apiClient.get(`/residentes/${code}`)
+      await apiClient.get(`/residentes/${code}`)
       // Si encuentra el residente, el código no está disponible
       return {
         available: false,
@@ -110,7 +110,7 @@ export const residentEditService = {
 
     try {
       const response = await apiClient.get('/residentes/search', {
-        params: { ResidenteEmail: email, limit: 1 }
+        params: { residente_email: email, limit: 1 }
       })
       
       // Si hay resultados, el email no está disponible
@@ -166,16 +166,32 @@ export const residentEditService = {
    */
   prepareUpdateData(formModel: ResidentEditFormModel): ResidentUpdateRequest {
     const data = {
-      residenteName: formModel.residenteName.trim(),
-      InicialesResidente: formModel.InicialesResidente.trim(),
-      ResidenteEmail: formModel.ResidenteEmail.trim(),
+      residente_name: formModel.residenteName.trim(),
+      iniciales_residente: formModel.InicialesResidente.trim(),
+      residente_email: formModel.ResidenteEmail.trim(),
       registro_medico: formModel.registro_medico.trim(),
       observaciones: formModel.observaciones.trim(),
-      isActive: formModel.isActive,
+      is_active: formModel.isActive,
       // Incluir password solo si el usuario ingresó un valor
       ...(formModel.password && formModel.password.trim().length >= 6 ? { password: formModel.password } : {})
     }
     // console.log('📋 Datos preparados para actualización:', data)
     return data
+  },
+
+  // Función para normalizar datos del backend (snake_case) al frontend (camelCase)
+  normalizeResidentData(backendData: any): ResidentUpdateResponse {
+    return {
+      id: backendData.id || backendData._id,
+      residenteName: backendData.residente_name,
+      InicialesResidente: backendData.iniciales_residente,
+      residenteCode: backendData.residente_code,
+      ResidenteEmail: backendData.residente_email,
+      registro_medico: backendData.registro_medico,
+      observaciones: backendData.observaciones || '',
+      isActive: backendData.is_active,
+      fecha_creacion: backendData.fecha_creacion,
+      fecha_actualizacion: backendData.fecha_actualizacion
+    }
   }
 }

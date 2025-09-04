@@ -66,6 +66,56 @@ class PatologoRepository(BaseRepository[Patologo, PatologoCreate, PatologoUpdate
             filter_dict["is_active"] = search_params.is_active
         
         return await self.get_multi(skip=skip, limit=limit, filters=filter_dict)
+
+    async def search_active(self, search_params: PatologoSearch, skip: int = 0, limit: int = 100) -> List[Patologo]:
+        """Búsqueda de solo patólogos activos"""
+        filter_dict: Dict[str, Any] = {"is_active": True}
+        
+        # Búsqueda general con parámetro 'q'
+        if search_params.q:
+            filter_dict["$or"] = [
+                {"patologo_name": {"$regex": search_params.q, "$options": "i"}},
+                {"patologo_code": {"$regex": search_params.q, "$options": "i"}},
+                {"patologo_email": {"$regex": search_params.q, "$options": "i"}},
+                {"registro_medico": {"$regex": search_params.q, "$options": "i"}}
+            ]
+        else:
+            # Filtros específicos de texto (búsqueda parcial)
+            if search_params.patologo_name:
+                filter_dict["patologo_name"] = {"$regex": search_params.patologo_name, "$options": "i"}
+            if search_params.patologo_email:
+                filter_dict["patologo_email"] = {"$regex": search_params.patologo_email, "$options": "i"}
+            if search_params.patologo_code:
+                filter_dict["patologo_code"] = search_params.patologo_code
+            if search_params.registro_medico:
+                filter_dict["registro_medico"] = {"$regex": search_params.registro_medico, "$options": "i"}
+        
+        return await self.get_multi(skip=skip, limit=limit, filters=filter_dict)
+
+    async def search_all_including_inactive(self, search_params: PatologoSearch, skip: int = 0, limit: int = 100) -> List[Patologo]:
+        """Búsqueda de todos los patólogos incluyendo inactivos"""
+        filter_dict: Dict[str, Any] = {}
+        
+        # Búsqueda general con parámetro 'q'
+        if search_params.q:
+            filter_dict["$or"] = [
+                {"patologo_name": {"$regex": search_params.q, "$options": "i"}},
+                {"patologo_code": {"$regex": search_params.q, "$options": "i"}},
+                {"patologo_email": {"$regex": search_params.q, "$options": "i"}},
+                {"registro_medico": {"$regex": search_params.q, "$options": "i"}}
+            ]
+        else:
+            # Filtros específicos de texto (búsqueda parcial)
+            if search_params.patologo_name:
+                filter_dict["patologo_name"] = {"$regex": search_params.patologo_name, "$options": "i"}
+            if search_params.patologo_email:
+                filter_dict["patologo_email"] = {"$regex": search_params.patologo_email, "$options": "i"}
+            if search_params.patologo_code:
+                filter_dict["patologo_code"] = search_params.patologo_code
+            if search_params.registro_medico:
+                filter_dict["registro_medico"] = {"$regex": search_params.registro_medico, "$options": "i"}
+        
+        return await self.get_multi(skip=skip, limit=limit, filters=filter_dict)
     
 
     

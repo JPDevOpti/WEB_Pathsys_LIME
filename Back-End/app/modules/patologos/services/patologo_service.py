@@ -190,6 +190,26 @@ class PatologoService:
         """Búsqueda avanzada de patólogos"""
         patologos = await self.patologo_repository.search(search_params, skip=skip, limit=limit)
         return [self._to_response(patologo) for patologo in patologos]
+
+    async def search_active_patologos(
+        self, 
+        search_params: PatologoSearch, 
+        skip: int = 0, 
+        limit: int = 100
+    ) -> List[PatologoResponse]:
+        """Búsqueda de solo patólogos activos"""
+        patologos = await self.patologo_repository.search_active(search_params, skip=skip, limit=limit)
+        return [self._to_response(patologo) for patologo in patologos]
+
+    async def search_all_patologos_including_inactive(
+        self, 
+        search_params: PatologoSearch, 
+        skip: int = 0, 
+        limit: int = 100
+    ) -> List[PatologoResponse]:
+        """Búsqueda de todos los patólogos incluyendo inactivos"""
+        patologos = await self.patologo_repository.search_all_including_inactive(search_params, skip=skip, limit=limit)
+        return [self._to_response(patologo) for patologo in patologos]
     
 
     

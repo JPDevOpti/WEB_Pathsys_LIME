@@ -207,6 +207,30 @@ class ResidenteService:
             "skip": skip,
             "limit": limit
         }
+
+    async def search_active_residentes(self, search_params: ResidenteSearch, skip: int = 0, limit: int = 10) -> Dict[str, Any]:
+        """Búsqueda de solo residentes activos"""
+        residentes = await self.residente_repository.search_active_residentes(search_params, skip, limit)
+        total = await self.residente_repository.count_active_search_results(search_params)
+        
+        return {
+            "residentes": [self._to_response(residente) for residente in residentes if residente],
+            "total": total,
+            "skip": skip,
+            "limit": limit
+        }
+
+    async def search_all_residentes_including_inactive(self, search_params: ResidenteSearch, skip: int = 0, limit: int = 10) -> Dict[str, Any]:
+        """Búsqueda de todos los residentes incluyendo inactivos"""
+        residentes = await self.residente_repository.search_all_residentes_including_inactive(search_params, skip, limit)
+        total = await self.residente_repository.count_all_search_results(search_params)
+        
+        return {
+            "residentes": [self._to_response(residente) for residente in residentes if residente],
+            "total": total,
+            "skip": skip,
+            "limit": limit
+        }
     
     def _to_response(self, residente: Residente) -> ResidenteResponse:
         """Convertir modelo Residente a ResidenteResponse"""

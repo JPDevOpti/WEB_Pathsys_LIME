@@ -103,6 +103,84 @@ async def search_auxiliares(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
+@router.get("/search/active", response_model=Dict[str, Any])
+async def search_active_auxiliares(
+    query: str = Query(None, description="Término de búsqueda general"),
+    auxiliar_name: str = Query(None, description="Nombre del auxiliar"),
+    auxiliar_code: str = Query(None, description="Código del auxiliar"),
+    auxiliar_email: str = Query(None, description="Email del auxiliar"),
+    service: AuxiliarService = Depends(get_auxiliar_service)
+):
+    """Buscar solo auxiliares activos con filtros avanzados"""
+    try:
+        # Si se proporciona 'query', buscar en todos los campos
+        if query:
+            search_params = AuxiliarSearch(
+                auxiliar_name=query,
+                auxiliar_code=query,
+                auxiliar_email=query
+            )
+        else:
+            search_params = AuxiliarSearch(
+                auxiliar_name=auxiliar_name,
+                auxiliar_code=auxiliar_code,
+                auxiliar_email=auxiliar_email
+            )
+        
+        auxiliares = await service.search_active_auxiliares(search_params)
+        
+        return {
+            "auxiliares": auxiliares,
+            "total": len(auxiliares),
+            "filtros_aplicados": {
+                "auxiliar_name": auxiliar_name,
+                "auxiliar_code": auxiliar_code,
+                "auxiliar_email": auxiliar_email,
+                "is_active": True
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
+@router.get("/search/all-including-inactive", response_model=Dict[str, Any])
+async def search_all_auxiliares_including_inactive(
+    query: str = Query(None, description="Término de búsqueda general"),
+    auxiliar_name: str = Query(None, description="Nombre del auxiliar"),
+    auxiliar_code: str = Query(None, description="Código del auxiliar"),
+    auxiliar_email: str = Query(None, description="Email del auxiliar"),
+    service: AuxiliarService = Depends(get_auxiliar_service)
+):
+    """Buscar todos los auxiliares incluyendo inactivos con filtros avanzados"""
+    try:
+        # Si se proporciona 'query', buscar en todos los campos
+        if query:
+            search_params = AuxiliarSearch(
+                auxiliar_name=query,
+                auxiliar_code=query,
+                auxiliar_email=query
+            )
+        else:
+            search_params = AuxiliarSearch(
+                auxiliar_name=auxiliar_name,
+                auxiliar_code=auxiliar_code,
+                auxiliar_email=auxiliar_email
+            )
+        
+        auxiliares = await service.search_all_auxiliares_including_inactive(search_params)
+        
+        return {
+            "auxiliares": auxiliares,
+            "total": len(auxiliares),
+            "filtros_aplicados": {
+                "auxiliar_name": auxiliar_name,
+                "auxiliar_code": auxiliar_code,
+                "auxiliar_email": auxiliar_email,
+                "is_active": "all"
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
 @router.get("/activos", response_model=List[AuxiliarResponse])
 async def get_auxiliares_activos(
     service: AuxiliarService = Depends(get_auxiliar_service)

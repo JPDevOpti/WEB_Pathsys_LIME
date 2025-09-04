@@ -5,8 +5,7 @@ import { ref, computed } from 'vue'
 import { residentEditService } from '../services/residentEditService'
 import type { 
   ResidentEditFormModel, 
-  ResidentEditFormValidation,
-  ResidentUpdateResponse 
+  ResidentEditFormValidation
 } from '../types/resident.types'
 
 export const useResidentEdition = () => {
@@ -189,16 +188,24 @@ export const useResidentEdition = () => {
       const result = await residentEditService.updateResident(formData.residenteCode, updateData)
       
       if (result.success && result.data) {
+        // Normalizar datos del backend antes de usarlos
+        const normalizedData = residentEditService.normalizeResidentData(result.data)
+        
         // Actualizar datos originales para futuras comparaciones
         originalResidentData.value = {
-          id: result.data.id,
-          residenteName: result.data.residenteName,
-          InicialesResidente: result.data.InicialesResidente,
-          residenteCode: result.data.residenteCode,
-          ResidenteEmail: result.data.ResidenteEmail,
-          registro_medico: result.data.registro_medico,
-          observaciones: result.data.observaciones,
-          isActive: result.data.isActive
+          id: normalizedData.id,
+          residenteName: normalizedData.residenteName,
+          InicialesResidente: normalizedData.InicialesResidente,
+          residenteCode: normalizedData.residenteCode,
+          ResidenteEmail: normalizedData.ResidenteEmail,
+          registro_medico: normalizedData.registro_medico,
+          observaciones: normalizedData.observaciones,
+          isActive: normalizedData.isActive
+        }
+        
+        return {
+          success: true,
+          data: normalizedData
         }
       }
       

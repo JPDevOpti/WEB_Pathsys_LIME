@@ -64,9 +64,8 @@ class PruebaService:
     async def get_all_pruebas(self, search_params: PruebaSearch) -> PruebasListResponse:
         """Obtener todas las pruebas con filtros y paginación"""
         try:
-            # Si no se especifica activo, filtrar solo activos por defecto
-            if search_params.activo is None:
-                search_params.activo = True
+            # No forzar activo=True por defecto para permitir búsqueda de inactivos
+            # El filtro se aplicará solo si se especifica explícitamente en search_params.is_active
                 
             pruebas = await self.repository.get_all(search_params)
             total = await self.repository.count(search_params)
@@ -81,13 +80,57 @@ class PruebaService:
                 pruebas=pruebas_response,
                 total=total,
                 skip=search_params.skip,
-                limit=search_params.limit,
-                has_next=search_params.skip + len(pruebas_response) < total,
-                has_prev=search_params.skip > 0
+                limit=search_params.limit
             )
             
         except Exception as e:
             logger.error(f"Error obteniendo pruebas: {str(e)}")
+            raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+    async def get_active_pruebas(self, search_params: PruebaSearch) -> PruebasListResponse:
+        """Obtener solo pruebas activas con filtros y paginación"""
+        try:
+            pruebas = await self.repository.get_active_pruebas(search_params)
+            total = await self.repository.count_active_pruebas(search_params)
+            
+            pruebas_response = []
+            for prueba in pruebas:
+                prueba_dict = prueba.model_dump()
+                prueba_dict["id"] = str(prueba_dict.get("_id", prueba_dict.get("id", "")))
+                pruebas_response.append(PruebaResponse(**prueba_dict))
+            
+            return PruebasListResponse(
+                pruebas=pruebas_response,
+                total=total,
+                skip=search_params.skip,
+                limit=search_params.limit
+            )
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo pruebas activas: {str(e)}")
+            raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+    async def get_all_pruebas_including_inactive(self, search_params: PruebaSearch) -> PruebasListResponse:
+        """Obtener todas las pruebas incluyendo inactivas con filtros y paginación"""
+        try:
+            pruebas = await self.repository.get_all_pruebas_including_inactive(search_params)
+            total = await self.repository.count_all_pruebas_including_inactive(search_params)
+            
+            pruebas_response = []
+            for prueba in pruebas:
+                prueba_dict = prueba.model_dump()
+                prueba_dict["id"] = str(prueba_dict.get("_id", prueba_dict.get("id", "")))
+                pruebas_response.append(PruebaResponse(**prueba_dict))
+            
+            return PruebasListResponse(
+                pruebas=pruebas_response,
+                total=total,
+                skip=search_params.skip,
+                limit=search_params.limit
+            )
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo todas las pruebas: {str(e)}")
             raise HTTPException(status_code=500, detail="Error interno del servidor")
 
     async def update_prueba_by_code(self, code: str, prueba_update: PruebaUpdate) -> Optional[PruebaResponse]:
