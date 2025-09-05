@@ -18,8 +18,7 @@ from app.shared.schemas.common import EstadoCasoEnum
 
 class CasoAprobacionCreate(BaseModel):
     """Modelo para crear un nuevo caso de aprobación"""
-    caso_original_id: str = Field(..., description="ID del caso original")
-    caso_code: str = Field(..., description="Código del caso original")
+    caso_original: str = Field(..., description="Código del caso original")
     pruebas_complementarias: List[PruebaComplementariaInfo] = Field(..., description="Pruebas complementarias solicitadas")
     motivo: str = Field(..., max_length=1000, description="Motivo de la solicitud")
     solicitado_por: str = Field(..., description="Usuario que solicita")
@@ -48,8 +47,8 @@ class CasoAprobacionUpdate(BaseModel):
 class CasoAprobacionResponse(BaseModel):
     """Modelo de respuesta para casos de aprobación"""
     id: str = Field(..., description="ID único del caso de aprobación")
-    caso_original_id: str = Field(..., description="ID del caso original")
-    caso_code: str = Field(..., description="Código del caso original")
+    caso_aprobacion: str = Field(..., description="Código único del caso de aprobación")
+    caso_original: str = Field(..., description="Código del caso original")
     
     # Información del caso
     paciente: PacienteInfo = Field(..., description="Información del paciente")
@@ -79,7 +78,8 @@ class CasoAprobacionResponse(BaseModel):
 class CasoAprobacionSearch(BaseModel):
     """Modelo para búsqueda de casos de aprobación"""
     query: Optional[str] = Field(None, description="Búsqueda general")
-    caso_code: Optional[str] = Field(None, description="Código específico del caso")
+    caso_code: Optional[str] = Field(None, description="Código del caso original")
+    caso_aprobacion: Optional[str] = Field(None, description="Código del caso de aprobación")
     paciente_code: Optional[str] = Field(None, description="Código del paciente")
     paciente_nombre: Optional[str] = Field(None, description="Nombre del paciente")
     estado_aprobacion: Optional[EstadoAprobacionEnum] = None

@@ -59,17 +59,17 @@ async def get_caso_aprobacion(
     return create_response(data=caso)
 
 
-@router.get("/codigo/{caso_code}", response_model=ResponseModel[CasoAprobacionResponse])
+@router.get("/codigo/{caso_aprobacion}", response_model=ResponseModel[CasoAprobacionResponse])
 async def get_caso_aprobacion_by_codigo(
-    caso_code: str,
+    caso_aprobacion: str,
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
-    """Obtener caso de aprobación por código del caso original"""
-    caso = await service.get_caso_by_codigo(caso_code)
+    """Obtener caso de aprobación por código de aprobación"""
+    caso = await service.get_caso_by_codigo(caso_aprobacion)
     if not caso:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Caso de aprobación para el código {caso_code} no encontrado"
+            detail=f"Caso de aprobación {caso_aprobacion} no encontrado"
         )
     return create_response(data=caso)
 

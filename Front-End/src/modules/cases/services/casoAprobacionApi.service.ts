@@ -10,8 +10,7 @@ export interface PruebaComplementaria {
 }
 
 export interface CasoAprobacionCreate {
-  caso_original_id: string
-  caso_code: string
+  caso_original: string
   pruebas_complementarias: PruebaComplementaria[]
   motivo: string
   solicitado_por: string
@@ -19,8 +18,8 @@ export interface CasoAprobacionCreate {
 
 export interface CasoAprobacionResponse {
   id: string
-  caso_original_id: string
-  caso_code: string
+  caso_aprobacion: string
+  caso_original: string
   paciente: any
   estado_aprobacion: 'pendiente' | 'gestionando' | 'aprobado' | 'rechazado'
   pruebas_complementarias: PruebaComplementaria[]
@@ -247,15 +246,13 @@ class CasoAprobacionService {
    * Crear solicitud de aprobación desde firma de caso
    */
   async createFromSignature(
-    casoId: string,
     casoCode: string,
     pruebasComplementarias: PruebaComplementaria[],
     motivo: string,
     solicitadoPor?: string
   ): Promise<CasoAprobacionResponse> {
     const data: CasoAprobacionCreate = {
-      caso_original_id: casoId,
-      caso_code: casoCode,
+      caso_original: casoCode,
       pruebas_complementarias: pruebasComplementarias,
       motivo,
       solicitado_por: solicitadoPor || 'current_user' // Se puede pasar o se tomará del backend

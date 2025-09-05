@@ -24,14 +24,14 @@ class CasoAprobacionService:
         """Crear un nuevo caso de aprobación"""
         
         # Verificar que el caso original existe
-        caso_original = await self.caso_repository.get_by_codigo(caso_data.caso_code)
+        caso_original = await self.caso_repository.get_by_codigo(caso_data.caso_original)
         if not caso_original:
-            raise NotFoundError(f"Caso {caso_data.caso_code} no encontrado")
+            raise NotFoundError(f"Caso {caso_data.caso_original} no encontrado")
         
         # Verificar si ya existe un caso de aprobación para este caso
-        caso_existente = await self.repository.find_by_caso_original_id(caso_data.caso_original_id)
+        caso_existente = await self.repository.find_by_caso_original(caso_data.caso_original)
         if caso_existente and caso_existente.is_active:
-            raise ConflictError(f"Ya existe un caso de aprobación activo para el caso {caso_data.caso_code}")
+            raise ConflictError(f"Ya existe un caso de aprobación activo para el caso {caso_data.caso_original}")
         
         # Crear la información de aprobación
         aprobacion_info = AprobacionInfo(
@@ -97,9 +97,12 @@ class CasoAprobacionService:
             else:
                 resultado_data = caso_original.resultado
 
+        # Generar código de aprobación con prefijo A-
+        caso_aprobacion_code = f"A-{caso_data.caso_original}"
+
         nuevo_caso = CasoAprobacion(
-            caso_original_id=caso_data.caso_original_id,
-            caso_code=caso_original.caso_code,
+            caso_original=caso_data.caso_original,
+            caso_aprobacion=caso_aprobacion_code,
             paciente=paciente_data,
             medico_solicitante=medico_data,
             servicio=caso_original.servicio,
@@ -122,9 +125,9 @@ class CasoAprobacionService:
             return CasoAprobacionResponse.model_validate(caso)
         return None
 
-    async def get_caso_by_codigo(self, caso_code: str) -> Optional[CasoAprobacionResponse]:
-        """Obtener caso de aprobación por código del caso original"""
-        caso = await self.repository.find_by_caso_code(caso_code)
+    async def get_caso_by_codigo(self, caso_aprobacion: str) -> Optional[CasoAprobacionResponse]:
+        """Obtener caso de aprobación por código de aprobación"""
+        caso = await self.repository.find_by_caso_aprobacion(caso_aprobacion)
         if caso:
             return CasoAprobacionResponse.model_validate(caso)
         return None

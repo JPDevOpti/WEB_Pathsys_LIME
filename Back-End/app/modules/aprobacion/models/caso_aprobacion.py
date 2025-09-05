@@ -107,8 +107,8 @@ class CasoAprobacion(BaseModel):
     """Modelo principal de Caso de Aprobación para MongoDB."""
     
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
-    caso_original_id: str = Field(..., description="ID del caso original")
-    caso_code: str = Field(..., max_length=50, description="Código único del caso original")
+    caso_original: str = Field(..., description="Código del caso original")
+    caso_aprobacion: str = Field(..., max_length=50, description="Código único del caso de aprobación")
     
     # Información copiada del caso original
     paciente: PacienteInfo = Field(..., description="Información del paciente")
@@ -137,10 +137,25 @@ class CasoAprobacion(BaseModel):
             raise ValueError('Debe especificar al menos una prueba complementaria')
         return v
     
-    @validator('caso_code')
-    def validate_caso_code(cls, v):
+    @validator('caso_aprobacion')
+    def validate_caso_aprobacion(cls, v):
         if not v or not v.strip():
-            raise ValueError('El código del caso es requerido')
+            raise ValueError('El código del caso de aprobación es requerido')
+        
+        caso_code = v.strip()
+        
+        # Validar formato A-YYYY-NNNNN
+        import re
+        pattern = r'^A-20\d{2}-\d{5}$'
+        if not re.match(pattern, caso_code):
+            raise ValueError('El código del caso de aprobación debe tener el formato A-YYYY-NNNNN (ejemplo: A-2025-00001)')
+        
+        return caso_code
+    
+    @validator('caso_original')
+    def validate_caso_original(cls, v):
+        if not v or not v.strip():
+            raise ValueError('El código del caso original es requerido')
         
         caso_code = v.strip()
         
@@ -148,7 +163,7 @@ class CasoAprobacion(BaseModel):
         import re
         pattern = r'^20\d{2}-\d{5}$'
         if not re.match(pattern, caso_code):
-            raise ValueError('El código del caso debe tener el formato YYYY-NNNNN (ejemplo: 2025-00001)')
+            raise ValueError('El código del caso original debe tener el formato YYYY-NNNNN (ejemplo: 2025-00001)')
         
         return caso_code
 

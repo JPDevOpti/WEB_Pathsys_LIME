@@ -13,18 +13,18 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
     def __init__(self, database: AsyncIOMotorDatabase):
         super().__init__(database, "casos_aprobacion", CasoAprobacion)
 
-    async def find_by_caso_original_id(self, caso_original_id: str) -> Optional[CasoAprobacion]:
-        """Buscar caso de aprobación por ID del caso original"""
+    async def find_by_caso_original(self, caso_original: str) -> Optional[CasoAprobacion]:
+        """Buscar caso de aprobación por código del caso original"""
         document = await self.collection.find_one({
-            "caso_original_id": caso_original_id,
+            "caso_original": caso_original,
             "is_active": True
         })
         return CasoAprobacion(**document) if document else None
 
-    async def find_by_caso_code(self, caso_code: str) -> Optional[CasoAprobacion]:
-        """Buscar caso de aprobación por código del caso"""
+    async def find_by_caso_aprobacion(self, caso_aprobacion: str) -> Optional[CasoAprobacion]:
+        """Buscar caso de aprobación por código de aprobación"""
         document = await self.collection.find_one({
-            "caso_code": caso_code,
+            "caso_aprobacion": caso_aprobacion,
             "is_active": True
         })
         return CasoAprobacion(**document) if document else None
@@ -70,7 +70,8 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
         # Búsqueda general
         if search_params.query:
             query["$or"] = [
-                {"caso_code": {"$regex": search_params.query, "$options": "i"}},
+                {"caso_aprobacion": {"$regex": search_params.query, "$options": "i"}},
+                {"caso_original": {"$regex": search_params.query, "$options": "i"}},
                 {"paciente.nombre": {"$regex": search_params.query, "$options": "i"}},
                 {"paciente.paciente_code": {"$regex": search_params.query, "$options": "i"}},
                 {"aprobacion_info.motivo": {"$regex": search_params.query, "$options": "i"}}
@@ -78,7 +79,10 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
 
         # Filtros específicos
         if search_params.caso_code:
-            query["caso_code"] = {"$regex": search_params.caso_code, "$options": "i"}
+            query["caso_original"] = {"$regex": search_params.caso_code, "$options": "i"}
+        
+        if search_params.caso_aprobacion:
+            query["caso_aprobacion"] = {"$regex": search_params.caso_aprobacion, "$options": "i"}
         
         if search_params.paciente_code:
             query["paciente.paciente_code"] = {"$regex": search_params.paciente_code, "$options": "i"}

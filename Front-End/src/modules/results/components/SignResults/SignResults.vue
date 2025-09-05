@@ -856,7 +856,6 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
 
     // Crear el caso de aprobación usando los datos del caso completado
     const response = await casoAprobacionService.createFromSignature(
-      casoCompletado._id || casoCompletado.caso_code, // ID del caso completado
       casoCompletado.caso_code, // Código del caso
       pruebasComplementarias,
       data.details, // Motivo/descripción
