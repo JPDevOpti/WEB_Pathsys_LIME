@@ -99,7 +99,13 @@
           <div class="mt-3 flex flex-wrap items-center gap-3 justify-end">
             <ClearButton :disabled="loading" @click="handleClearResults" />
             <PreviewButton :disabled="loading" @click="goToPreview" />
-            <SaveButton :disabled="saving || loading || !canSave" :loading="saving" :text="'Guardar'" :loading-text="'Guardando...'" @click="handleSaveDraft" />
+            <SaveButton 
+              :disabled="saving || loading || !canSaveProgress" 
+              :loading="saving" 
+              :text="canComplete ? 'Completar para Firma' : 'Guardar Progreso'" 
+              :loading-text="canComplete ? 'Completando...' : 'Guardando...'" 
+              @click="handleSaveAction"
+            />
           </div>
           <Notification
             class="mt-3"
@@ -206,13 +212,13 @@ const props = defineProps<Props>()
 const {
   loading, saving,
   patient, caseDetails,
-  activeSection, sectionContent,
+  activeSection,
   errorMessage, validationMessage,
   previewData, isPreviewOpen, isDirty,
   initialize, previousCases, sections,
-  missingFields, canSave,
+  canSaveProgress, canComplete,
   // addAttachment, removeAttachment,
-  onSaveDraft, closePreview, onClear,
+  onSaveDraft, onCompleteForSigning, closePreview, onClear,
   clearAfterSuccess,
   loadCaseByCode,
   getDiagnosisData,
@@ -425,7 +431,7 @@ const { notification, showSuccess, showError, closeNotification } = useNotificat
     router.push({ name: 'results-preview' })
   }
 
-async function handleSaveDraft() {
+async function handleSaveAction() {
   // Capturar el contenido antes de que se limpie
   savedContent.value = {
     method: sections.value?.method || '',
@@ -434,31 +440,37 @@ async function handleSaveDraft() {
     diagnosis: sections.value?.diagnosis || ''
   }
   
-  const ok = await onSaveDraft()
+  // Decidir qué acción tomar según si está completo o no
+  const ok = canComplete.value ? await onCompleteForSigning() : await onSaveDraft()
+  
   if (ok) {
     const code = caseDetails?.value?.caso_code || ''
     
-    // Crear mensaje detallado con el contenido guardado
-    const contentSummary = []
-    if (savedContent.value.method.trim()) contentSummary.push(`Método: ${savedContent.value.method.trim().substring(0, 50)}${savedContent.value.method.length > 50 ? '...' : ''}`)
-    if (savedContent.value.macro.trim()) contentSummary.push(`Macro: ${savedContent.value.macro.trim().substring(0, 50)}${savedContent.value.macro.length > 50 ? '...' : ''}`)
-    if (savedContent.value.micro.trim()) contentSummary.push(`Micro: ${savedContent.value.micro.trim().substring(0, 50)}${savedContent.value.micro.length > 50 ? '...' : ''}`)
-    if (savedContent.value.diagnosis.trim()) contentSummary.push(`Diagnóstico: ${savedContent.value.diagnosis.trim().substring(0, 50)}${savedContent.value.diagnosis.length > 50 ? '...' : ''}`)
+    if (canComplete.value) {
+      // Acción de completar para firma
+      showSuccess('¡Caso completado!', `El caso ${code} ha sido completado y está listo para firma.`, 0)
+    } else {
+      // Acción de guardar progreso
+      const contentSummary = []
+      if (savedContent.value.method.trim()) contentSummary.push(`Método: ${savedContent.value.method.trim().substring(0, 50)}${savedContent.value.method.length > 50 ? '...' : ''}`)
+      if (savedContent.value.macro.trim()) contentSummary.push(`Macro: ${savedContent.value.macro.trim().substring(0, 50)}${savedContent.value.macro.length > 50 ? '...' : ''}`)
+      if (savedContent.value.micro.trim()) contentSummary.push(`Micro: ${savedContent.value.micro.trim().substring(0, 50)}${savedContent.value.micro.length > 50 ? '...' : ''}`)
+      if (savedContent.value.diagnosis.trim()) contentSummary.push(`Diagnóstico: ${savedContent.value.diagnosis.trim().substring(0, 50)}${savedContent.value.diagnosis.length > 50 ? '...' : ''}`)
+      
+      const detailMessage = contentSummary.length > 0 
+        ? `Se guardó el progreso del caso ${code}:\n\n${contentSummary.join('\n')}`
+        : `Se guardó el progreso del caso ${code} correctamente.`
+      
+      showSuccess('¡Progreso guardado!', detailMessage, 0)
+    }
     
-    const detailMessage = contentSummary.length > 0 
-      ? `Se guardó el resultado del caso ${code}:\n\n${contentSummary.join('\n')}`
-      : `Se guardó el resultado del caso ${code} correctamente.`
-    
-    showSuccess('¡Resultado guardado!', detailMessage, 0)
-    
-    // Limpiar el formulario después de un pequeño delay para que el usuario vea la notificación
+    // Limpiar el formulario después de un pequeño delay
     setTimeout(() => {
       clearAfterSuccess()
     }, 100)
-    
-    // NO cerrar la notificación - se mantiene visible
   } else {
-    showError('Error al guardar', errorMessage?.value || 'No se pudo guardar el resultado.', 0)
+    const action = canComplete.value ? 'completar el caso para firma' : 'guardar el progreso'
+    showError('Error al procesar', errorMessage?.value || `No se pudo ${action}.`, 0)
   }
 }
 

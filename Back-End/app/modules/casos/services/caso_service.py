@@ -175,8 +175,8 @@ class CasoService:
         if caso.patologo_asignado:
             raise ConflictError("El caso ya tiene un patólogo asignado")
         
-        if caso.estado != EstadoCasoEnum.EN_PROCESO:
-            raise BadRequestError("Solo se pueden asignar patólogos a casos en proceso")
+        if caso.estado == EstadoCasoEnum.COMPLETADO:
+            raise BadRequestError("No se pueden asignar patólogos a casos completados")
         
         patologo_dict = patologo_info.model_dump()
         caso_actualizado = await self.repository.asignar_patologo_por_caso_code(CasoCode, patologo_dict)

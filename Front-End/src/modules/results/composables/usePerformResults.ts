@@ -56,7 +56,7 @@ export function usePerformResults(sampleId: string) {
 
   const selectedTemplate = computed(() => undefined)
 
-  // Validaciones de campos requeridos
+  // Validaciones de campos requeridos para completar (marcar como "Por firmar")
   const missingFields = computed<string[]>(() => {
     const faltantes: string[] = []
     if (!sections.value.method.trim()) faltantes.push('Método')
@@ -65,7 +65,22 @@ export function usePerformResults(sampleId: string) {
     if (!sections.value.diagnosis.trim()) faltantes.push('Diagnóstico')
     return faltantes
   })
-  const canSave = computed<boolean>(() => missingFields.value.length === 0)
+  
+  // Para guardar progreso - siempre se puede guardar si hay algún contenido
+  const canSaveProgress = computed<boolean>(() => {
+    return !!(
+      sections.value.method.trim() ||
+      sections.value.macro.trim() ||
+      sections.value.micro.trim() ||
+      sections.value.diagnosis.trim()
+    )
+  })
+  
+  // Para marcar como completo - requiere todos los campos
+  const canComplete = computed<boolean>(() => missingFields.value.length === 0)
+  
+  // Mantener canSave para compatibilidad, pero ahora permite guardar progreso
+  const canSave = computed<boolean>(() => canSaveProgress.value)
 
   // Snapshots para detectar cambios no guardados
   const savedSectionsSnapshot = ref<string>('')
@@ -197,8 +212,8 @@ export function usePerformResults(sampleId: string) {
     validationMessage.value = null
     saving.value = true
     try {
-      if (!canSave.value) {
-        validationMessage.value = `Debe completar: ${missingFields.value.join(', ')}`
+      if (!canSaveProgress.value) {
+        validationMessage.value = 'Debe escribir al menos algo en uno de los campos para guardar'
         return false
       }
       if (!sample.value?.id) throw new Error('No hay caso cargado')
@@ -236,6 +251,56 @@ export function usePerformResults(sampleId: string) {
       return true
     } catch (err) {
       errorMessage.value = 'No se pudo guardar el borrador.'
+      return false
+    } finally {
+      saving.value = false
+    }
+  }
+
+  async function onCompleteForSigning() {
+    validationMessage.value = null
+    saving.value = true
+    try {
+      if (!canComplete.value) {
+        validationMessage.value = `Para marcar como "Por firmar" debe completar: ${missingFields.value.join(', ')}`
+        return false
+      }
+      if (!sample.value?.id) throw new Error('No hay caso cargado')
+      
+      // Preparar datos del diagnóstico CIE-10
+      const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
+        id: primaryDisease.value.id,
+        codigo: primaryDisease.value.codigo,
+        nombre: primaryDisease.value.nombre
+      } : undefined
+
+      // Preparar datos del diagnóstico CIEO
+      const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
+        id: primaryDiseaseCIEO.value.id,
+        codigo: primaryDiseaseCIEO.value.codigo,
+        nombre: primaryDiseaseCIEO.value.nombre
+      } : undefined
+
+      const requestData = {
+        metodo: sections.value.method,
+        resultado_macro: sections.value.macro,
+        resultado_micro: sections.value.micro,
+        diagnostico: sections.value.diagnosis,
+        observaciones: undefined,
+        diagnostico_cie10: diagnosticoCie10,
+        diagnostico_cieo: diagnosticoCIEO
+      }
+      
+      // Guardar resultado y marcar como completado (Por firmar)
+      await resultsApiService.upsertResultado(sample.value.id, requestData)
+      // TODO: Llamar endpoint para cambiar estado a "Por firmar"
+      // await casesApiService.updateCaseStatus(sample.value.caso_id, 'Por firmar')
+      
+      lastSavedAt.value = new Date().toISOString()
+      
+      return true
+    } catch (err) {
+      errorMessage.value = 'No se pudo completar el caso para firma.'
       return false
     } finally {
       saving.value = false
@@ -372,11 +437,11 @@ export function usePerformResults(sampleId: string) {
     activeSection, sections, sectionContent, attachments,
     lastSavedAt, errorMessage, validationMessage,
     previewData, isPreviewOpen,
-    canSave, missingFields,
+    canSave, canSaveProgress, canComplete, missingFields,
     // actions
     initialize, loadCaseByCode,
     addAttachment, removeAttachment,
-    onSaveDraft, onFinalize, onPreview, closePreview, onClear, clearAfterSuccess,
+    onSaveDraft, onCompleteForSigning, onFinalize, onPreview, closePreview, onClear, clearAfterSuccess,
     // meta
     isDirty,
     // CIE-10 diagnosis
