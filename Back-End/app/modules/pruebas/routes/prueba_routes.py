@@ -71,6 +71,58 @@ async def get_pruebas(
         )
 
 
+@router.get("/active", response_model=PruebasListResponse)
+async def get_active_pruebas(
+    query: str = Query(None, description="Término de búsqueda"),
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(10, ge=1, le=1000, description="Número máximo de registros"),
+    service: PruebaService = Depends(get_prueba_service)
+):
+    """Obtener solo pruebas activas con filtros y paginación"""
+    try:
+        search_params = PruebaSearch(
+            query=query,
+            skip=skip,
+            limit=limit
+        )
+        logger.info(f"Buscando pruebas activas - query: {query}, skip: {skip}, limit: {limit}")
+        return await service.get_active_pruebas(search_params)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error inesperado obteniendo pruebas activas: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno del servidor"
+        )
+
+
+@router.get("/all-including-inactive", response_model=PruebasListResponse)
+async def get_all_pruebas_including_inactive(
+    query: str = Query(None, description="Término de búsqueda"),
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(10, ge=1, le=1000, description="Número máximo de registros"),
+    service: PruebaService = Depends(get_prueba_service)
+):
+    """Obtener todas las pruebas incluyendo inactivas con filtros y paginación"""
+    try:
+        search_params = PruebaSearch(
+            query=query,
+            skip=skip,
+            limit=limit
+        )
+        logger.info(f"Buscando todas las pruebas - query: {query}, skip: {skip}, limit: {limit}")
+        return await service.get_all_pruebas_including_inactive(search_params)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error inesperado obteniendo todas las pruebas: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno del servidor"
+        )
+
+
 @router.get("/code/{code}", response_model=PruebaResponse)
 async def get_prueba_by_code(
     code: str,

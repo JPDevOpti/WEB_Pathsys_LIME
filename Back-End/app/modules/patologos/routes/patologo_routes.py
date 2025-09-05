@@ -17,7 +17,7 @@ from app.core.exceptions import (
     NotFoundError,
     ConflictError
 )
-from app.core.dependencies import get_database
+from app.config.database import get_database
 from app.modules.patologos.repositories.patologo_repository import PatologoRepository
 from app.shared.services.user_management import UserManagementService
 

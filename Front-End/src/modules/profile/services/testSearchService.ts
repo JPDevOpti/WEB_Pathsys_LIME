@@ -16,21 +16,24 @@ class TestSearchService {
         return []
       }
 
+      let endpoint: string
+      
+      if (includeInactive) {
+        endpoint = `${this.endpoint}/all-including-inactive`
+      } else {
+        endpoint = `${this.endpoint}/active`
+      }
+
       // Construir parámetros de búsqueda
       const params: any = {
         query: query.trim(),
         limit: 50 // Límite de resultados
       }
-      
-      // Agregar filtro de estado según la necesidad (pruebas usa 'activo')
-      if (!includeInactive) {
-        params.activo = true  // El backend de pruebas espera 'activo', no 'is_active'
-      }
 
-      console.log('🔍 Parámetros de búsqueda pruebas:', params)
+      console.log('🔍 Parámetros de búsqueda pruebas:', params, 'Endpoint:', endpoint)
 
       // Búsqueda por nombre de prueba o código
-      const response = await apiClient.get(`${this.endpoint}/`, { params })
+      const response = await apiClient.get(endpoint, { params })
 
       // Mapear respuesta del backend al formato esperado por el frontend
       if (response.pruebas && Array.isArray(response.pruebas)) {

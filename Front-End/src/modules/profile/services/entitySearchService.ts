@@ -52,20 +52,23 @@ class EntitySearchService {
   async searchResidents(query: string, includeInactive: boolean = false): Promise<any[]> {
     if (!query?.trim()) return []
     
+    let endpoint: string
+    
+    if (includeInactive) {
+      endpoint = '/residentes/all-including-inactive'
+    } else {
+      endpoint = '/residentes/active'
+    }
+    
     // Construir parámetros de búsqueda
     const params: any = { 
-      q: query.trim(),
+      query: query.trim(),
       limit: 50 
     }
     
-    // Agregar filtro de estado según la necesidad (residentes usa 'is_active')
-    if (!includeInactive) {
-      params.is_active = true
-    }
+    console.log('🔍 Parámetros de búsqueda residentes:', params, 'Endpoint:', endpoint)
     
-    console.log('🔍 Parámetros de búsqueda residentes:', params)
-    
-    const response = await apiClient.get('/residentes/search', { params })
+    const response = await apiClient.get(endpoint, { params })
     // console.log('🔍 Respuesta búsqueda residentes:', response)
     if (response && response.residentes && Array.isArray(response.residentes)) {
       return response.residentes.map((residente: any) => {
@@ -152,19 +155,23 @@ class EntitySearchService {
   async searchAuxiliaries(query: string, includeInactive: boolean = false): Promise<any[]> {
     if (!query?.trim()) return []
     
-    // Usar el nuevo parámetro 'query' para búsqueda general
-    const params: Record<string, any> = {
-      query: query.trim()
+    let endpoint: string
+    
+    if (includeInactive) {
+      endpoint = '/auxiliares/all-including-inactive'
+    } else {
+      endpoint = '/auxiliares/active'
+    }
+    
+    // Construir parámetros de búsqueda
+    const params: any = { 
+      query: query.trim(),
+      limit: 50 
     }
 
-    // Solo agregar filtro de estado activo si no se incluyen inactivos
-    if (!includeInactive) {
-      params.is_active = true
-    }
+    console.log('🔍 Parámetros de búsqueda auxiliares:', params, 'Endpoint:', endpoint)
 
-    console.log('🔍 Parámetros de búsqueda auxiliares:', params)
-
-    const response = await apiClient.get('/auxiliares/search', { params })
+    const response = await apiClient.get(endpoint, { params })
     if (response && response.auxiliares && Array.isArray(response.auxiliares)) {
       return response.auxiliares.map((aux: any) => {
         // Mapeo correcto según documentación del backend
@@ -186,6 +193,53 @@ class EntitySearchService {
           auxiliarCode,
           AuxiliarEmail: email,
           observaciones: aux.observaciones || aux.observations || '',
+          isActive: activo
+        }
+      })
+    }
+    return []
+  }
+
+  async searchTests(query: string, includeInactive: boolean = false): Promise<any[]> {
+    if (!query?.trim()) return []
+    
+    let endpoint: string
+    
+    if (includeInactive) {
+      endpoint = '/pruebas/all-including-inactive'
+    } else {
+      endpoint = '/pruebas/active'
+    }
+    
+    // Construir parámetros de búsqueda
+    const params: any = { 
+      query: query.trim(),
+      limit: 50 
+    }
+
+    console.log('🔍 Parámetros de búsqueda pruebas:', params, 'Endpoint:', endpoint)
+
+    const response = await apiClient.get(endpoint, { params })
+    if (response && response.pruebas && Array.isArray(response.pruebas)) {
+      return response.pruebas.map((prueba: any) => {
+        const pruebasName = prueba.prueba_name || prueba.pruebasName || prueba.nombre || prueba.name || ''
+        const pruebaCode = prueba.prueba_code || prueba.pruebaCode || prueba.codigo || prueba.code || ''
+        const pruebasDescription = prueba.prueba_description || prueba.pruebasDescription || prueba.descripcion || prueba.description || ''
+        const activo = prueba.is_active !== undefined ? prueba.is_active : (prueba.isActive !== undefined ? prueba.isActive : prueba.activo)
+        return {
+          id: prueba.id || prueba._id || pruebaCode,
+          nombre: pruebasName,
+          codigo: pruebaCode,
+          tipo: 'prueba',
+          activo,
+          descripcion: pruebasDescription,
+          tiempo: prueba.tiempo || 0,
+          fecha_creacion: prueba.fecha_creacion,
+          fecha_actualizacion: prueba.fecha_actualizacion,
+          // Campos específicos manteniendo nombres esperados por formularios
+          pruebasName,
+          pruebaCode,
+          pruebasDescription,
           isActive: activo
         }
       })

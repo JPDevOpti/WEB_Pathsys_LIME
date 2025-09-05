@@ -49,7 +49,8 @@ async def api_info():
             "patologos",
             "residentes",
             "auxiliares",
-            "enfermedades"
+            "enfermedades",
+            "aprobación"
         ],
         "modules_pendientes": [
             "estadisticas",

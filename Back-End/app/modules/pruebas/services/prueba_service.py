@@ -80,7 +80,9 @@ class PruebaService:
                 pruebas=pruebas_response,
                 total=total,
                 skip=search_params.skip,
-                limit=search_params.limit
+                limit=search_params.limit,
+                has_next=(search_params.skip + search_params.limit) < total,
+                has_prev=search_params.skip > 0
             )
             
         except Exception as e:
@@ -103,7 +105,9 @@ class PruebaService:
                 pruebas=pruebas_response,
                 total=total,
                 skip=search_params.skip,
-                limit=search_params.limit
+                limit=search_params.limit,
+                has_next=(search_params.skip + search_params.limit) < total,
+                has_prev=search_params.skip > 0
             )
             
         except Exception as e:
@@ -126,7 +130,9 @@ class PruebaService:
                 pruebas=pruebas_response,
                 total=total,
                 skip=search_params.skip,
-                limit=search_params.limit
+                limit=search_params.limit,
+                has_next=(search_params.skip + search_params.limit) < total,
+                has_prev=search_params.skip > 0
             )
             
         except Exception as e:

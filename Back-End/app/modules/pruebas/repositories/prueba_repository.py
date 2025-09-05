@@ -117,3 +117,63 @@ class PruebaRepository:
             filter_dict["is_active"] = search_params.activo
         
         return await self.collection.count_documents(filter_dict)
+
+    async def get_active_pruebas(self, search_params: PruebaSearch) -> List[Prueba]:
+        """Obtener solo pruebas activas con filtros"""
+        filter_dict = {"is_active": True}
+        
+        if search_params.query:
+            filter_dict["$or"] = [
+                {"prueba_name": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_code": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_description": {"$regex": search_params.query, "$options": "i"}}
+            ]
+        
+        cursor = self.collection.find(filter_dict)
+        cursor = cursor.skip(search_params.skip).limit(search_params.limit)
+        
+        pruebas_docs = await cursor.to_list(length=None)
+        return [Prueba(**doc) for doc in pruebas_docs]
+
+    async def get_all_pruebas_including_inactive(self, search_params: PruebaSearch) -> List[Prueba]:
+        """Obtener todas las pruebas incluyendo inactivas con filtros"""
+        filter_dict = {}
+        
+        if search_params.query:
+            filter_dict["$or"] = [
+                {"prueba_name": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_code": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_description": {"$regex": search_params.query, "$options": "i"}}
+            ]
+        
+        cursor = self.collection.find(filter_dict)
+        cursor = cursor.skip(search_params.skip).limit(search_params.limit)
+        
+        pruebas_docs = await cursor.to_list(length=None)
+        return [Prueba(**doc) for doc in pruebas_docs]
+
+    async def count_active_pruebas(self, search_params: PruebaSearch) -> int:
+        """Contar solo pruebas activas con filtros"""
+        filter_dict = {"is_active": True}
+        
+        if search_params.query:
+            filter_dict["$or"] = [
+                {"prueba_name": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_code": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_description": {"$regex": search_params.query, "$options": "i"}}
+            ]
+        
+        return await self.collection.count_documents(filter_dict)
+
+    async def count_all_pruebas_including_inactive(self, search_params: PruebaSearch) -> int:
+        """Contar todas las pruebas incluyendo inactivas con filtros"""
+        filter_dict = {}
+        
+        if search_params.query:
+            filter_dict["$or"] = [
+                {"prueba_name": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_code": {"$regex": search_params.query, "$options": "i"}},
+                {"prueba_description": {"$regex": search_params.query, "$options": "i"}}
+            ]
+        
+        return await self.collection.count_documents(filter_dict)

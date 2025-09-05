@@ -54,6 +54,22 @@
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
                   <span class="text-sm font-medium text-gray-900">Caso #{{ caseItem.id }}</span>
+                  <span 
+                    :class="[
+                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                      caseItem.status === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                      caseItem.status === 'gestionando' ? 'bg-blue-100 text-blue-800' :
+                      caseItem.status === 'aprobado' ? 'bg-green-100 text-green-800' :
+                      'bg-red-100 text-red-800'
+                    ]"
+                  >
+                    {{ 
+                      caseItem.status === 'pendiente' ? 'Pendiente' :
+                      caseItem.status === 'gestionando' ? 'En Gestión' :
+                      caseItem.status === 'aprobado' ? 'Aprobado' :
+                      'Rechazado'
+                    }}
+                  </span>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -86,11 +102,27 @@
                   variant="outline"
                   size="sm"
                   text="Ver Detalles"
-                  :disabled="caseItem.approving || caseItem.rejecting"
+                  :disabled="caseItem.approving || caseItem.rejecting || caseItem.managing"
                   custom-class="bg-white border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-500"
                   @click="viewCase(caseItem.id)"
                 />
+                
+                <!-- Botón Gestionar - Solo visible si está pendiente -->
                 <BaseButton
+                  v-if="caseItem.status === 'pendiente'"
+                  variant="outline"
+                  size="sm"
+                  text="Gestionar"
+                  loading-text="Gestionando..."
+                  :loading="caseItem.managing"
+                  :disabled="caseItem.rejecting || caseItem.approving"
+                  custom-class="bg-white border-orange-600 text-orange-600 hover:bg-orange-50 focus:ring-orange-500"
+                  @click="manageCase(caseItem.id)"
+                />
+                
+                <!-- Botón Aprobar - Solo visible si está en gestión -->
+                <BaseButton
+                  v-if="caseItem.status === 'gestionando'"
                   variant="outline"
                   size="sm"
                   text="Aprobar"
@@ -100,13 +132,16 @@
                   custom-class="bg-white border-green-600 text-green-600 hover:bg-green-50 focus:ring-green-500"
                   @click="approveCase(caseItem.id)"
                 />
+                
+                <!-- Botón Rechazar - Siempre visible excepto cuando ya está rechazado -->
                 <BaseButton
+                  v-if="caseItem.status !== 'rechazado' && caseItem.status !== 'aprobado'"
                   variant="outline"
                   size="sm"
                   text="Rechazar"
                   loading-text="Rechazando..."
                   :loading="caseItem.rejecting"
-                  :disabled="caseItem.approving"
+                  :disabled="caseItem.approving || caseItem.managing"
                   custom-class="bg-white border-red-600 text-red-600 hover:bg-red-50 focus:ring-red-500"
                   @click="rejectCase(caseItem.id)"
                 />
@@ -146,8 +181,10 @@ interface CaseToApprove {
   description?: string
   createdAt: string
   updatedAt: string
+  status?: 'pendiente' | 'gestionando' | 'aprobado' | 'rechazado'
   approving?: boolean
   rejecting?: boolean
+  managing?: boolean
 }
 
 // ============================================================================
@@ -167,8 +204,10 @@ const cases = reactive<CaseToApprove[]>([
     description: 'Biopsia de mama derecha - evaluación de lesión sospechosa',
     createdAt: '2024-01-15T10:30:00Z',
     updatedAt: '2024-01-16T14:20:00Z',
+    status: 'pendiente',
     approving: false,
-    rejecting: false
+    rejecting: false,
+    managing: false
   },
   {
     id: 'CASE-002',
@@ -178,8 +217,23 @@ const cases = reactive<CaseToApprove[]>([
     description: 'Citología de ganglio linfático - posible linfoma',
     createdAt: '2024-01-16T09:15:00Z',
     updatedAt: '2024-01-16T16:45:00Z',
+    status: 'gestionando',
     approving: false,
-    rejecting: false
+    rejecting: false,
+    managing: false
+  },
+  {
+    id: 'CASE-003',
+    patientName: 'Carmen Silva Ruiz',
+    pathologistName: 'Dr. Miguel Torres',
+    pathologistId: 'path-003',
+    description: 'Análisis histopatológico de piel - lesión pigmentada',
+    createdAt: '2024-01-17T08:00:00Z',
+    updatedAt: '2024-01-17T10:15:00Z',
+    status: 'pendiente',
+    approving: false,
+    rejecting: false,
+    managing: false
   }
 ])
 
@@ -241,6 +295,26 @@ const viewCase = (caseId: string): void => {
   selectedCaseDetails.value = mapCaseToDetails(c)
 }
 
+const manageCase = async (caseId: string): Promise<void> => {
+  const caseItem = cases.find(c => c.id === caseId)
+  if (!caseItem) return
+
+  caseItem.managing = true
+  try {
+    // Aquí se implementaría la llamada al backend para poner en gestión
+    console.log('Gestionando caso:', caseId)
+    await new Promise(resolve => setTimeout(resolve, 1500)) // Simulación
+    
+    // Cambiar estado a gestionando
+    caseItem.status = 'gestionando'
+    caseItem.updatedAt = new Date().toISOString()
+  } catch (error) {
+    console.error('Error al gestionar caso:', error)
+  } finally {
+    caseItem.managing = false
+  }
+}
+
 const approveCase = async (caseId: string): Promise<void> => {
   const caseItem = cases.find(c => c.id === caseId)
   if (!caseItem) return
@@ -251,7 +325,8 @@ const approveCase = async (caseId: string): Promise<void> => {
     console.log('Aprobando caso:', caseId)
     await new Promise(resolve => setTimeout(resolve, 1000)) // Simulación
     
-    // Actualizar timestamp
+    // Cambiar estado a aprobado
+    caseItem.status = 'aprobado'
     caseItem.updatedAt = new Date().toISOString()
     
     // Remover el caso de la lista (en producción se actualizaría el estado)
@@ -276,7 +351,8 @@ const rejectCase = async (caseId: string): Promise<void> => {
     console.log('Rechazando caso:', caseId)
     await new Promise(resolve => setTimeout(resolve, 1000)) // Simulación
     
-    // Actualizar timestamp
+    // Cambiar estado a rechazado
+    caseItem.status = 'rechazado'
     caseItem.updatedAt = new Date().toISOString()
     
     // Remover el caso de la lista (en producción se actualizaría el estado)
@@ -307,7 +383,7 @@ const closeModal = () => {
 const mapCaseToDetails = (c: CaseToApprove): CaseApprovalDetails => ({
   id: c.id,
   caseCode: c.id,
-  status: 'pendiente',
+  status: c.status || 'pendiente',
   description: c.description,
   createdAt: c.createdAt,
   updatedAt: c.updatedAt,

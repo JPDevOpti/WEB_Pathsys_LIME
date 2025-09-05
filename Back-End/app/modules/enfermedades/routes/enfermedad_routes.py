@@ -2,7 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.core.dependencies import get_database
+from app.config.database import get_database
 from app.modules.enfermedades.repositories.enfermedad_repository import EnfermedadRepository
 from app.modules.enfermedades.services.enfermedad_service import EnfermedadService
 from app.modules.enfermedades.models.enfermedad import EnfermedadCreate, EnfermedadUpdate

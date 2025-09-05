@@ -23,11 +23,11 @@ class TestsApiService {
       const searchParams = new URLSearchParams()
       
       if (params.query) searchParams.append('query', params.query)
-      if (params.activo !== undefined) searchParams.append('activo', params.activo.toString())
       if (params.skip !== undefined) searchParams.append('skip', params.skip.toString())
       if (params.limit !== undefined) searchParams.append('limit', params.limit.toString())
       
-      const response = await apiClient.get(`${this.endpoint}/?${searchParams.toString()}`)
+      // Usar el endpoint específico para pruebas activas
+      const response = await apiClient.get(`${this.endpoint}/active?${searchParams.toString()}`)
       
       if (!response) throw new Error('Respuesta vacía del servidor')
       
@@ -87,7 +87,7 @@ class TestsApiService {
   
   async getAllActiveTests(): Promise<TestDetails[]> {
     try {
-      const response = await apiClient.get(`${this.endpoint}/?activo=true&limit=1000`)
+      const response = await apiClient.get(`${this.endpoint}/active?limit=1000`)
       
       if (!response) throw new Error('Respuesta vacía del servidor')
       
@@ -108,6 +108,32 @@ class TestsApiService {
       
     } catch (error: any) {
       throw new Error(`Error al obtener pruebas activas: ${error.message}`)
+    }
+  }
+
+  async getAllTestsIncludingInactive(): Promise<TestDetails[]> {
+    try {
+      const response = await apiClient.get(`${this.endpoint}/all-including-inactive?limit=1000`)
+      
+      if (!response) throw new Error('Respuesta vacía del servidor')
+      
+      const data = response
+      
+      if (Array.isArray(data)) return data
+      
+      if (data.pruebas && Array.isArray(data.pruebas)) {
+        return data.pruebas.map((prueba: any) => this.transformTestData(prueba))
+      }
+      
+      const dataKeys = Object.keys(data)
+      for (const key of dataKeys) {
+        if (Array.isArray(data[key])) return data[key]
+      }
+      
+      return []
+      
+    } catch (error: any) {
+      throw new Error(`Error al obtener todas las pruebas: ${error.message}`)
     }
   }
   

@@ -117,25 +117,11 @@ class DiseaseService {
   async getAllDiseases(): Promise<DiseaseSearchResponse> {
     try {
       
-      // Primero obtener el total de enfermedades
-      const totalResponse = await apiClient.get(`${this.endpoint}`, {
-        params: {
-          skip: 0,
-          limit: 1, // Solo necesitamos 1 para obtener el total
-          is_active: true
-        }
-      })
-      
-      const totalData = totalResponse.data || totalResponse
-      const total = totalData.total || 12634 // Usar el total real o fallback
-      
-      
-      // Ahora obtener todas las enfermedades usando el total real
+      // Usar el endpoint general para enfermedades (no necesita filtro activo/inactivo)
       const response = await apiClient.get(`${this.endpoint}`, {
         params: {
           skip: 0,
-          limit: total, // Usar el total real para obtener todas las enfermedades
-          is_active: true
+          limit: 15000 // Límite alto para obtener todas las enfermedades
         }
       })
       
@@ -146,12 +132,10 @@ class DiseaseService {
       
       const result = {
         diseases: backendData.enfermedades || [],
-        total: backendData.total || total,
+        total: backendData.total || backendData.enfermedades?.length || 0,
         page: 1,
-        limit: backendData.limit || total
-      }
-      
-      
+        limit: backendData.limit || 15000
+      }      
       return result
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener enfermedades')
