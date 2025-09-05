@@ -89,8 +89,8 @@
             :errors="validationMessage ? [validationMessage] : []" />
           <ErrorMessage v-if="errorMessage" class="mt-2" :message="errorMessage" />
 
-          <!-- Alerta de patólogo no asignado -->
-          <div v-if="caseDetails?.caso_code && !caseDetails.patologo_asignado?.nombre"
+          <!-- Alerta de patólogo no asignado (solo para patólogos) -->
+          <div v-if="caseDetails?.caso_code && !caseDetails.patologo_asignado?.nombre && authStore.user?.rol === 'patologo'"
             class="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <div class="flex items-center">
               <WarningIcon class="w-5 h-5 text-orange-500 mr-2 flex-shrink-0" />
@@ -102,16 +102,36 @@
             </div>
           </div>
 
+          <!-- Información para administradores sobre patólogo no asignado -->
+          <div v-if="caseDetails?.caso_code && !caseDetails.patologo_asignado?.nombre && authStore.user?.rol === 'administrador'"
+            class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div>
+                <p class="text-sm font-medium text-blue-800">Firmando como administrador</p>
+                <p class="text-sm text-blue-700">Este caso no tiene patólogo asignado. Como administrador, puedes firmarlo directamente.</p>
+              </div>
+            </div>
+          </div>
+
           <!-- Alerta de patólogo no autorizado -->
-          <div v-if="caseDetails?.caso_code && caseDetails.patologo_asignado?.nombre && !isAssignedPathologist"
+          <div v-if="caseDetails?.caso_code && caseDetails.patologo_asignado?.nombre && !canUserSign"
             class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
             <div class="flex items-center">
               <ErrorIcon class="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
               <div>
-                <p class="text-sm font-medium text-red-800">No eres el patólogo asignado</p>
-                <p class="text-sm text-red-700">Este caso está asignado a <strong>{{
-                  caseDetails.patologo_asignado.nombre }}</strong>. Solo el patólogo asignado puede firmar este
-                  resultado.</p>
+                <p class="text-sm font-medium text-red-800">No autorizado para firmar</p>
+                <p class="text-sm text-red-700">
+                  <template v-if="authStore.user?.rol === 'patologo'">
+                    Este caso está asignado a <strong>{{ caseDetails.patologo_asignado.nombre }}</strong>. 
+                    Solo el patólogo asignado o un administrador pueden firmar este resultado.
+                  </template>
+                  <template v-else>
+                    Solo patólogos y administradores pueden firmar resultados.
+                  </template>
+                </p>
               </div>
             </div>
           </div>
@@ -132,7 +152,7 @@
             <ClearButton :disabled="loading" @click="handleClearResults" />
             <PreviewButton :disabled="loading" @click="goToPreview" />
             <SaveButton
-              :disabled="loading || !canSave || !hasDisease || !caseDetails?.patologo_asignado?.nombre || !isAssignedPathologist || (!canSignByStatus && !hasBeenSigned)"
+              :disabled="loading || !canSave || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned)"
               :loading="signing" :text="'Firmar'" :loading-text="'Firmando...'" @click="handleSign" />
           </div>
 
@@ -175,7 +195,6 @@ import { ErrorMessage, ValidationAlert } from '@/shared/components/feedback'
 import { FormInputField } from '@/shared/components/forms'
 import { SearchButton, ClearButton, SaveButton, PreviewButton } from '@/shared/components/buttons'
 import { DiseaseList } from '@/shared/components/List'
-import { FormCheckbox, FormTextarea } from '@/shared/components/forms'
 import DocsIcon from '@/assets/icons/DocsIcon.vue'
 import WarningIcon from '@/assets/icons/WarningIcon.vue'
 import ErrorIcon from '@/assets/icons/ErrorIcon.vue'
@@ -193,6 +212,15 @@ import { useNotifications } from '@/modules/cases/composables/useNotifications'
 import type { Disease } from '@/shared/services/disease.service'
 import Notification from '@/shared/components/feedback/Notification.vue'
 import resultsApiService from '../../services/resultsApiService'
+import casoAprobacionService from '@/modules/cases/services/casoAprobacionApi.service'
+import type { PruebaComplementaria } from '@/modules/cases/services/casoAprobacionApi.service'
+
+// Tipo para las pruebas complementarias del componente
+interface ComplementaryTestItem {
+  code: string
+  name: string
+  quantity: number
+}
 
 interface Props {
   sampleId: string
@@ -290,6 +318,40 @@ const isAssignedPathologist = computed(() => {
   const currentUser = getCurrentUserName()
 
   return assignedPathologist === currentUser
+})
+
+// Computed para verificar si el usuario puede firmar (patólogo asignado o administrador)
+const canUserSign = computed(() => {
+  if (!authStore.user) {
+    return false
+  }
+  
+  // Administradores pueden firmar cualquier caso
+  if (authStore.user.rol === 'administrador') {
+    return true
+  }
+  
+  // Patólogos solo pueden firmar sus casos asignados
+  if (authStore.user.rol === 'patologo') {
+    return isAssignedPathologist.value
+  }
+  
+  return false
+})
+
+// Computed para verificar si necesita patólogo asignado
+const needsAssignedPathologist = computed(() => {
+  if (!authStore.user || !caseDetails.value?.caso_code) {
+    return false
+  }
+  
+  // Solo los patólogos necesitan que haya un patólogo asignado
+  // Los administradores pueden firmar casos sin patólogo asignado
+  if (authStore.user.rol === 'patologo') {
+    return !caseDetails.value.patologo_asignado?.nombre
+  }
+  
+  return false
 })
 
 // Función para normalizar estados (convertir a formato de BD)
@@ -552,11 +614,11 @@ async function handleSign() {
       return
     }
 
-    // Validar que el usuario sea el patólogo asignado
-    if (!isAssignedPathologist.value) {
+    // Validar que el usuario pueda firmar (patólogo asignado o administrador)
+    if (!canUserSign.value) {
       showError(
         'No autorizado',
-        'Solo el patólogo asignado al caso puede firmar este resultado.',
+        'Solo el patólogo asignado al caso o un administrador pueden firmar este resultado.',
         0
       )
       return
@@ -572,12 +634,19 @@ async function handleSign() {
       return
     }
 
-    // Obtener el código del patólogo asignado
-    const patologoCodigo = caseDetails?.value?.patologo_asignado?.codigo
+    // Obtener el código del patólogo para firmar
+    let patologoCodigo = caseDetails?.value?.patologo_asignado?.codigo
+    
+    // Si es administrador y no hay patólogo asignado, usar un código por defecto o el del administrador
+    if (!patologoCodigo && authStore.user?.rol === 'administrador') {
+      // Usar el ID del administrador como código de patólogo temporal
+      patologoCodigo = authStore.user.id || 'admin'
+    }
+    
     if (!patologoCodigo) {
       showError(
         'Error al firmar',
-        'No se pudo identificar el patólogo asignado al caso.',
+        'No se pudo identificar el patólogo para firmar el caso.',
         0
       )
       return
@@ -706,23 +775,113 @@ const handleDetailsChange = (value: string) => {
   complementaryTestsDetails.value = value
 }
 
-const handleSignWithChanges = async (details: string) => {
+const handleSignWithChanges = async (data: { details: string; tests: ComplementaryTestItem[] }) => {
   try {
-    // Por ahora solo mostrar una notificación (sin conexión al backend)
-    showSuccess(
-      'Pruebas complementarias solicitadas',
-      `Se han solicitado las siguientes pruebas: ${details}`,
-      5000
+    if (!caseDetails.value) {
+      showError(
+        'Error al crear solicitud',
+        'No se encontraron los detalles del caso.',
+        0
+      )
+      return
+    }
+
+    // Verificar que el usuario pueda solicitar pruebas (patólogo asignado o administrador)
+    if (!canUserSign.value) {
+      showError(
+        'No autorizado',
+        'Solo el patólogo asignado al caso o un administrador pueden solicitar pruebas complementarias.',
+        0
+      )
+      return
+    }
+
+    console.log('🔄 Starting case completion and approval creation...')
+
+    // PASO 1: Firmar y finalizar el caso original
+    console.log('1️⃣ Finalizando caso original...')
+    
+    const diagnosticoCie10 = getDiagnosisData()
+    const resultData = {
+      metodo: sections.value.method || '',
+      resultado_macro: sections.value.macro || '',
+      resultado_micro: sections.value.micro || '',
+      diagnostico: sections.value.diagnosis || '',
+      observaciones: '',
+      diagnostico_cie10: diagnosticoCie10?.primary ? {
+        id: diagnosticoCie10.primary.id,
+        codigo: diagnosticoCie10.primary.codigo,
+        nombre: diagnosticoCie10.primary.nombre
+      } : undefined,
+      diagnostico_cieo: primaryDiseaseCIEO.value ? {
+        id: primaryDiseaseCIEO.value.id,
+        codigo: primaryDiseaseCIEO.value.codigo,
+        nombre: primaryDiseaseCIEO.value.nombre
+      } : undefined
+    }
+
+    // Obtener código del patólogo actual
+    const patologoCodigo = authStore.user?.id || 'unknown'
+    
+    // PASO 1: Firmar el resultado (esto cambia el estado del caso a "completado")
+    console.log('1️⃣ Firmando caso original...')
+    await resultsApiService.firmarResultado(
+      caseDetails.value.caso_code,
+      resultData,
+      patologoCodigo
     )
     
-    // Limpiar el formulario después de "firmar"
-    needsComplementaryTests.value = false
-    complementaryTestsDetails.value = ''
+    console.log('✅ Caso original firmado')
+
+    // PASO 2: Recargar los datos del caso completado
+    console.log('2️⃣ Recargando datos del caso completado...')
+    const casoCompletado = await casesApiService.getCaseByCode(caseDetails.value.caso_code)
+    
+    if (!casoCompletado) {
+      throw new Error('No se pudo obtener el caso completado')
+    }
+    
+    console.log('✅ Datos del caso completado obtenidos')
+
+    // PASO 3: Crear el caso de aprobación con los datos completos
+    console.log('3️⃣ Creando caso de aprobación...')
+    
+    // Convertir las pruebas al formato esperado por el backend
+    const pruebasComplementarias: PruebaComplementaria[] = data.tests.map(test => ({
+      codigo: test.code,
+      nombre: test.name,
+      cantidad: test.quantity || 1,
+      observaciones: ''
+    }))
+
+    // Crear el caso de aprobación usando los datos del caso completado
+    const response = await casoAprobacionService.createFromSignature(
+      casoCompletado._id || casoCompletado.caso_code, // ID del caso completado
+      casoCompletado.caso_code, // Código del caso
+      pruebasComplementarias,
+      data.details, // Motivo/descripción
+      authStore.user?.id || getCurrentUserName() || 'unknown_user' // Usuario solicitante
+    )
+
+    console.log('✅ Caso aprobacion response:', response)
+
+    if (response) {
+      showSuccess(
+        '¡Caso completado y solicitud creada!',
+        `El caso ${casoCompletado.caso_code} ha sido firmado y completado. Se ha creado una solicitud de aprobación para las pruebas complementarias que está pendiente de autorización administrativa.`,
+        8000
+      )
+
+      // Limpiar el formulario después de crear la solicitud
+      needsComplementaryTests.value = false
+      complementaryTestsDetails.value = ''
+    }
     
   } catch (error: any) {
+    console.error('❌ Error en el proceso completo:', error)
     showError(
-      'Error al solicitar pruebas',
-      error.message || 'No se pudieron solicitar las pruebas complementarias.',
+      'Error al procesar solicitud',
+      error.message || 'No se pudo completar el caso y crear la solicitud de aprobación.',
       0
     )
   }

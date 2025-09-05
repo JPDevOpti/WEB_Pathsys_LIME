@@ -124,19 +124,19 @@
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <h5 class="font-medium text-gray-700 mb-1">Método</h5>
-                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ sections.method || '—' }}</div>
+                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.method || '—' }}</div>
                     </div>
                     <div>
                       <h5 class="font-medium text-gray-700 mb-1">Corte Macro</h5>
-                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ sections.macro || '—' }}</div>
+                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.macro || '—' }}</div>
                     </div>
                     <div>
                       <h5 class="font-medium text-gray-700 mb-1">Corte Micro</h5>
-                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ sections.micro || '—' }}</div>
+                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.micro || '—' }}</div>
                     </div>
                     <div>
                       <h5 class="font-medium text-gray-700 mb-1">Diagnóstico</h5>
-                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ sections.diagnosis || '—' }}</div>
+                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.diagnosis || '—' }}</div>
                     </div>
                   </div>
                 </div>
@@ -213,6 +213,7 @@ const {
   missingFields, canSave,
   // addAttachment, removeAttachment,
   onSaveDraft, closePreview, onClear,
+  clearAfterSuccess,
   loadCaseByCode,
   getDiagnosisData,
   hasDiseaseCIEO,
@@ -267,6 +268,14 @@ const casoInfo = ref<any>(null)
 
 // Estado para el modal de casos anteriores
 const selectedPreviousCase = ref<any>(null)
+
+// Estado para almacenar el contenido guardado para mostrar en la notificación
+const savedContent = ref({
+  method: '',
+  macro: '',
+  micro: '',
+  diagnosis: ''
+})
 
 const isValidCodigoFormat = (codigo: string | undefined | null): boolean => {
   if (!codigo || typeof codigo !== 'string' || codigo.trim() === '') return false
@@ -417,10 +426,36 @@ const { notification, showSuccess, showError, closeNotification } = useNotificat
   }
 
 async function handleSaveDraft() {
+  // Capturar el contenido antes de que se limpie
+  savedContent.value = {
+    method: sections.value?.method || '',
+    macro: sections.value?.macro || '',
+    micro: sections.value?.micro || '',
+    diagnosis: sections.value?.diagnosis || ''
+  }
+  
   const ok = await onSaveDraft()
   if (ok) {
     const code = caseDetails?.value?.caso_code || ''
-    showSuccess('¡Resultado guardado!', code ? `Se guardó el resultado del caso ${code}.` : 'Se guardó el resultado correctamente.', 0)
+    
+    // Crear mensaje detallado con el contenido guardado
+    const contentSummary = []
+    if (savedContent.value.method.trim()) contentSummary.push(`Método: ${savedContent.value.method.trim().substring(0, 50)}${savedContent.value.method.length > 50 ? '...' : ''}`)
+    if (savedContent.value.macro.trim()) contentSummary.push(`Macro: ${savedContent.value.macro.trim().substring(0, 50)}${savedContent.value.macro.length > 50 ? '...' : ''}`)
+    if (savedContent.value.micro.trim()) contentSummary.push(`Micro: ${savedContent.value.micro.trim().substring(0, 50)}${savedContent.value.micro.length > 50 ? '...' : ''}`)
+    if (savedContent.value.diagnosis.trim()) contentSummary.push(`Diagnóstico: ${savedContent.value.diagnosis.trim().substring(0, 50)}${savedContent.value.diagnosis.length > 50 ? '...' : ''}`)
+    
+    const detailMessage = contentSummary.length > 0 
+      ? `Se guardó el resultado del caso ${code}:\n\n${contentSummary.join('\n')}`
+      : `Se guardó el resultado del caso ${code} correctamente.`
+    
+    showSuccess('¡Resultado guardado!', detailMessage, 0)
+    
+    // Limpiar el formulario después de un pequeño delay para que el usuario vea la notificación
+    setTimeout(() => {
+      clearAfterSuccess()
+    }, 100)
+    
     // NO cerrar la notificación - se mantiene visible
   } else {
     showError('Error al guardar', errorMessage?.value || 'No se pudo guardar el resultado.', 0)

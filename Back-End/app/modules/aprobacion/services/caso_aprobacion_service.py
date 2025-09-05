@@ -12,7 +12,7 @@ from app.modules.aprobacion.schemas.caso_aprobacion import (
 )
 from app.modules.aprobacion.repositories.caso_aprobacion_repository import CasoAprobacionRepository
 from app.modules.casos.repositories.caso_repository import CasoRepository
-from app.core.exceptions import CasoNotFoundError, CasoAlreadyExistsError
+from app.core.exceptions import NotFoundError, ConflictError
 
 
 class CasoAprobacionService:
@@ -26,12 +26,12 @@ class CasoAprobacionService:
         # Verificar que el caso original existe
         caso_original = await self.caso_repository.get_by_codigo(caso_data.caso_code)
         if not caso_original:
-            raise CasoNotFoundError(f"Caso {caso_data.caso_code} no encontrado")
+            raise NotFoundError(f"Caso {caso_data.caso_code} no encontrado")
         
         # Verificar si ya existe un caso de aprobación para este caso
         caso_existente = await self.repository.find_by_caso_original_id(caso_data.caso_original_id)
         if caso_existente and caso_existente.is_active:
-            raise CasoAlreadyExistsError(f"Ya existe un caso de aprobación activo para el caso {caso_data.caso_code}")
+            raise ConflictError(f"Ya existe un caso de aprobación activo para el caso {caso_data.caso_code}")
         
         # Crear la información de aprobación
         aprobacion_info = AprobacionInfo(
@@ -40,16 +40,73 @@ class CasoAprobacionService:
         )
         
         # Crear el caso de aprobación con toda la información del caso original
+        # Convertir todos los objetos Pydantic a diccionarios para evitar problemas de validación
+        paciente_data = None
+        if caso_original.paciente:
+            if hasattr(caso_original.paciente, 'model_dump'):
+                paciente_data = caso_original.paciente.model_dump()
+            else:
+                paciente_data = caso_original.paciente
+                
+        medico_data = None
+        if caso_original.medico_solicitante:
+            if hasattr(caso_original.medico_solicitante, 'model_dump'):
+                medico_data = caso_original.medico_solicitante.model_dump()
+            else:
+                medico_data = caso_original.medico_solicitante
+                
+        muestras_data = []
+        if caso_original.muestras:
+            for muestra in caso_original.muestras:
+                if hasattr(muestra, 'model_dump'):
+                    muestras_data.append(muestra.model_dump())
+                else:
+                    muestras_data.append(muestra)
+                    
+        patologo_data = None
+        if caso_original.patologo_asignado:
+            if hasattr(caso_original.patologo_asignado, 'model_dump'):
+                patologo_data = caso_original.patologo_asignado.model_dump()
+            else:
+                patologo_data = caso_original.patologo_asignado
+                
+        resultado_data = None
+        if caso_original.resultado:
+            if hasattr(caso_original.resultado, 'model_dump'):
+                resultado_dict = caso_original.resultado.model_dump()
+                # Mapear los diagnósticos al formato esperado por el módulo de aprobación
+                if resultado_dict.get('diagnostico_cie10'):
+                    cie10 = resultado_dict['diagnostico_cie10']
+                    print(f"🔄 DEBUG: Mapeando CIE10 - Original: {cie10}")
+                    resultado_dict['diagnostico_cie10'] = {
+                        'codigo': cie10.get('codigo', ''),
+                        'descripcion': cie10.get('nombre', '')  # 'nombre' en casos -> 'descripcion' en aprobación
+                    }
+                    print(f"✅ DEBUG: CIE10 mapeado: {resultado_dict['diagnostico_cie10']}")
+                
+                if resultado_dict.get('diagnostico_cieo'):
+                    cieo = resultado_dict['diagnostico_cieo']
+                    print(f"🔄 DEBUG: Mapeando CIEO - Original: {cieo}")
+                    resultado_dict['diagnostico_cieo'] = {
+                        'codigo': cieo.get('codigo', ''),
+                        'descripcion': cieo.get('nombre', '')  # 'nombre' en casos -> 'descripcion' en aprobación
+                    }
+                    print(f"✅ DEBUG: CIEO mapeado: {resultado_dict['diagnostico_cieo']}")
+                    
+                resultado_data = resultado_dict
+            else:
+                resultado_data = caso_original.resultado
+
         nuevo_caso = CasoAprobacion(
             caso_original_id=caso_data.caso_original_id,
             caso_code=caso_original.caso_code,
-            paciente=caso_original.paciente,
-            medico_solicitante=caso_original.medico_solicitante,
+            paciente=paciente_data,
+            medico_solicitante=medico_data,
             servicio=caso_original.servicio,
-            muestras=caso_original.muestras,
+            muestras=muestras_data,
             estado_caso_original=caso_original.estado,
-            patologo_asignado=caso_original.patologo_asignado,
-            resultado=caso_original.resultado,
+            patologo_asignado=patologo_data,
+            resultado=resultado_data,
             pruebas_complementarias=caso_data.pruebas_complementarias,
             aprobacion_info=aprobacion_info,
             creado_por=usuario_id

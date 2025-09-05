@@ -63,9 +63,11 @@ class CasoAprobacionService {
   async createCasoAprobacion(data: CasoAprobacionCreate): Promise<CasoAprobacionResponse> {
     try {
       const response = await apiClient.post(this.baseUrl, data)
-      return response.data
+      // El backend retorna ResponseModel wrapper, acceder a data.data
+      return response.data.data || response.data
     } catch (error: any) {
-      throw new Error(error.message || 'Error al crear caso de aprobación')
+      console.error('Error creating caso aprobacion:', error)
+      throw new Error(error.response?.data?.message || error.message || 'Error al crear caso de aprobación')
     }
   }
 
@@ -248,14 +250,15 @@ class CasoAprobacionService {
     casoId: string,
     casoCode: string,
     pruebasComplementarias: PruebaComplementaria[],
-    motivo: string
+    motivo: string,
+    solicitadoPor?: string
   ): Promise<CasoAprobacionResponse> {
     const data: CasoAprobacionCreate = {
       caso_original_id: casoId,
       caso_code: casoCode,
       pruebas_complementarias: pruebasComplementarias,
       motivo,
-      solicitado_por: 'current_user' // Se obtendrá del contexto de autenticación
+      solicitado_por: solicitadoPor || 'current_user' // Se puede pasar o se tomará del backend
     }
 
     return this.createCasoAprobacion(data)

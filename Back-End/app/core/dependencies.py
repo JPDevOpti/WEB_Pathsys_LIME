@@ -7,6 +7,10 @@ from app.config.security import verify_token
 from app.core.exceptions import UnauthorizedError, ForbiddenError
 from app.modules.auth.models.auth import AuthUser
 from app.modules.auth.repositories.auth_repository import AuthRepository
+# Importaciones para servicios
+from app.modules.aprobacion.repositories.caso_aprobacion_repository import CasoAprobacionRepository
+from app.modules.aprobacion.services.caso_aprobacion_service import CasoAprobacionService
+from app.modules.casos.repositories.caso_repository import CasoRepository
 
 # Configurar esquemas de autenticación
 security = HTTPBearer()
@@ -85,3 +89,13 @@ async def get_current_user_optional(
         return await get_current_user(credentials, db)
     except HTTPException:
         return None
+
+# Dependencias para servicios específicos
+
+async def get_caso_aprobacion_service(
+    db: AsyncIOMotorDatabase = Depends(get_database)
+) -> CasoAprobacionService:
+    """Obtener servicio de casos de aprobación"""
+    caso_repo = CasoRepository(db)
+    aprobacion_repo = CasoAprobacionRepository(db)
+    return CasoAprobacionService(aprobacion_repo, caso_repo)

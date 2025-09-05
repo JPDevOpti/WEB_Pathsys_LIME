@@ -10,6 +10,7 @@ from app.modules.patologos.routes.patologo_routes import router as patologos_rou
 from app.modules.residentes.routes.residente_routes import router as residentes_router
 from app.modules.auxiliares.routes import auxiliares_router
 from app.modules.enfermedades.routes import router as enfermedad_router
+from app.modules.aprobacion.routes.caso_aprobacion_routes import router as aprobacion_router
 
 api_router = APIRouter()
 
@@ -23,6 +24,7 @@ api_router.include_router(patologos_router, prefix="/patologos", tags=["patologo
 api_router.include_router(residentes_router, prefix="/residentes", tags=["residentes"])
 api_router.include_router(auxiliares_router, prefix="/auxiliares", tags=["auxiliares"])
 api_router.include_router(enfermedad_router, prefix="/enfermedades", tags=["enfermedades"])
+api_router.include_router(aprobacion_router, prefix="/aprobacion", tags=["aprobacion"])
 
 @api_router.get("/health")
 async def health_check():

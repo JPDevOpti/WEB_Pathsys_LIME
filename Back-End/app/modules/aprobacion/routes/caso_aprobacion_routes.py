@@ -2,6 +2,7 @@
 
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from app.modules.auth.models.auth import AuthUser
 from app.modules.aprobacion.schemas.caso_aprobacion import (
     CasoAprobacionCreate,
     CasoAprobacionUpdate,
@@ -19,18 +20,18 @@ from app.shared.schemas.responses import (
     create_paginated_response
 )
 
-router = APIRouter(prefix="/aprobacion", tags=["Casos de Aprobación"])
+router = APIRouter(tags=["Casos de Aprobación"])
 
 
 @router.post("/", response_model=ResponseModel[CasoAprobacionResponse])
 async def create_caso_aprobacion(
     caso_data: CasoAprobacionCreate,
-    current_user: dict = Depends(get_current_user),
+    current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
     """Crear un nuevo caso de aprobación"""
     try:
-        usuario_id = current_user.get("username", "sistema")
+        usuario_id = current_user.id
         caso = await service.create_caso_aprobacion(caso_data, usuario_id)
         return create_response(
             data=caso,
@@ -145,11 +146,11 @@ async def get_casos_pendientes_usuario(
 async def gestionar_caso(
     caso_id: str,
     comentarios: Optional[str] = None,
-    current_user: dict = Depends(get_current_user),
+    current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
     """Cambiar estado del caso a 'gestionando'"""
-    usuario_id = current_user.get("username", "sistema")
+    usuario_id = current_user.id
     caso = await service.gestionar_caso(caso_id, usuario_id, comentarios)
     
     if not caso:
@@ -168,11 +169,11 @@ async def gestionar_caso(
 async def aprobar_caso(
     caso_id: str,
     comentarios: Optional[str] = None,
-    current_user: dict = Depends(get_current_user),
+    current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
     """Aprobar un caso"""
-    usuario_id = current_user.get("username", "sistema")
+    usuario_id = current_user.id
     caso = await service.aprobar_caso(caso_id, usuario_id, comentarios)
     
     if not caso:
@@ -191,11 +192,11 @@ async def aprobar_caso(
 async def rechazar_caso(
     caso_id: str,
     comentarios: Optional[str] = None,
-    current_user: dict = Depends(get_current_user),
+    current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
     """Rechazar un caso"""
-    usuario_id = current_user.get("username", "sistema")
+    usuario_id = current_user.id
     caso = await service.rechazar_caso(caso_id, usuario_id, comentarios)
     
     if not caso:
@@ -214,11 +215,11 @@ async def rechazar_caso(
 async def update_caso_aprobacion(
     caso_id: str,
     caso_data: CasoAprobacionUpdate,
-    current_user: dict = Depends(get_current_user),
+    current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
     """Actualizar un caso de aprobación"""
-    usuario_id = current_user.get("username", "sistema")
+    usuario_id = current_user.id
     caso = await service.update_caso(caso_id, caso_data, usuario_id)
     
     if not caso:
@@ -236,11 +237,11 @@ async def update_caso_aprobacion(
 @router.delete("/{caso_id}", response_model=ResponseModel[dict])
 async def delete_caso_aprobacion(
     caso_id: str,
-    current_user: dict = Depends(get_current_user),
+    current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
     """Eliminación suave de un caso de aprobación"""
-    usuario_id = current_user.get("username", "sistema")
+    usuario_id = current_user.id
     success = await service.soft_delete_caso(caso_id, usuario_id)
     
     if not success:

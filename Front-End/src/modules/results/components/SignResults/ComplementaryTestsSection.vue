@@ -76,8 +76,8 @@
         <SaveButton
           :disabled="!isReadyToSign"
           :loading="signingWithChanges"
-          text="Firmar con Cambios"
-          loading-text="Firmando..."
+          text="Solicitar Pruebas Complementarias"
+          loading-text="Creando solicitud..."
           @click="handleSignWithChanges"
           size="md"
           variant="secondary"
@@ -108,7 +108,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'needs-tests-change', value: boolean): void
   (e: 'details-change', value: string): void
-  (e: 'sign-with-changes', details: string): void
+  (e: 'sign-with-changes', data: { details: string; tests: ComplementaryTestItem[] }): void
 }>()
 
 // Estado local
@@ -181,7 +181,15 @@ const handleSignWithChanges = async () => {
   
   signingWithChanges.value = true
   try {
-    emit('sign-with-changes', complementaryTestsDetails.value)
+    // Filtrar solo las pruebas que tienen código seleccionado
+    const validTests = tests.value.filter(test => test.code.trim() !== '')
+    
+    const signData = {
+      details: complementaryTestsDetails.value,
+      tests: validTests
+    }
+    
+    emit('sign-with-changes', signData)
   } finally {
     signingWithChanges.value = false
   }

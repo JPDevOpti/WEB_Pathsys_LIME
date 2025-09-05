@@ -293,9 +293,9 @@ class CasoService:
         if not caso.resultado:
             raise BadRequestError("El caso no tiene resultado para firmar")
         
-        # Validar que el caso esté en estado POR_FIRMAR
-        if caso.estado != EstadoCasoEnum.POR_FIRMAR:
-            raise BadRequestError(f"El caso debe estar en estado 'Por firmar' para poder firmarlo. Estado actual: {caso.estado}")
+        # Validar que el caso esté en estado POR_FIRMAR o POR_ENTREGAR
+        if caso.estado not in [EstadoCasoEnum.POR_FIRMAR, EstadoCasoEnum.POR_ENTREGAR]:
+            raise BadRequestError(f"El caso debe estar en estado 'Por firmar' o 'Por entregar' para poder firmarlo. Estado actual: {caso.estado}")
         
         resultado_actualizado = caso.resultado.model_copy()
         
@@ -303,10 +303,13 @@ class CasoService:
         resultado_actualizado.firmado = True
         resultado_actualizado.fecha_firma = datetime.utcnow()
         
+        # Solo cambiar a "Por entregar" si el caso actual está en "Por firmar"
+        nuevo_estado = EstadoCasoEnum.POR_ENTREGAR if caso.estado == EstadoCasoEnum.POR_FIRMAR else caso.estado
+        
         update_data = {
             "resultado": resultado_actualizado.model_dump(),
             "fecha_firma": datetime.utcnow(),
-            "estado": EstadoCasoEnum.POR_ENTREGAR,  # Cambiar estado a "Por entregar"
+            "estado": nuevo_estado,
             "actualizado_por": patologo_codigo,
             "fecha_actualizacion": datetime.utcnow()
         }
@@ -333,9 +336,9 @@ class CasoService:
         if not caso.resultado:
             raise BadRequestError("El caso no tiene resultado para firmar")
         
-        # Validar que el caso esté en estado POR_FIRMAR
-        if caso.estado != EstadoCasoEnum.POR_FIRMAR:
-            raise BadRequestError(f"El caso debe estar en estado 'Por firmar' para poder firmarlo. Estado actual: {caso.estado}")
+        # Validar que el caso esté en estado POR_FIRMAR o POR_ENTREGAR
+        if caso.estado not in [EstadoCasoEnum.POR_FIRMAR, EstadoCasoEnum.POR_ENTREGAR]:
+            raise BadRequestError(f"El caso debe estar en estado 'Por firmar' o 'Por entregar' para poder firmarlo. Estado actual: {caso.estado}")
         
         resultado_actualizado = caso.resultado.model_copy()
         
@@ -350,10 +353,13 @@ class CasoService:
         resultado_actualizado.firmado = True
         resultado_actualizado.fecha_firma = datetime.utcnow()
         
+        # Solo cambiar a "Por entregar" si el caso actual está en "Por firmar"
+        nuevo_estado = EstadoCasoEnum.POR_ENTREGAR if caso.estado == EstadoCasoEnum.POR_FIRMAR else caso.estado
+        
         update_data = {
             "resultado": resultado_actualizado.model_dump(),
             "fecha_firma": datetime.utcnow(),
-            "estado": EstadoCasoEnum.POR_ENTREGAR,  # Cambiar estado a "Por entregar"
+            "estado": nuevo_estado,
             "actualizado_por": patologo_codigo,
             "fecha_actualizacion": datetime.utcnow()
         }

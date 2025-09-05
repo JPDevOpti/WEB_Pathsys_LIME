@@ -229,8 +229,10 @@ export function usePerformResults(sampleId: string) {
       
       await resultsApiService.upsertResultado(sample.value.id, requestData)
       lastSavedAt.value = new Date().toISOString()
-      // Limpiar el formulario después de guardar exitosamente
-      clearAfterSuccess()
+      
+      // NO limpiar automáticamente aquí - dejar que el componente maneje cuándo limpiar
+      // clearAfterSuccess()
+      
       return true
     } catch (err) {
       errorMessage.value = 'No se pudo guardar el borrador.'
