@@ -5,7 +5,7 @@
       <div class="space-y-6">
         <!-- Componente de Modificar Caso -->
         <ComponentCard 
-          title="Modificar Datos del Caso"
+          title="Modificar datos del caso"
           description="Actualice la información del caso existente."
         >
           <template #icon>
@@ -23,7 +23,7 @@
       <div class="space-y-6">
         <!-- Componente de Modificar Datos del Paciente -->
         <ComponentCard 
-          title="Modificar Datos del Paciente"
+          title="Modificar los datos del paciente"
           description="Edite los datos demográficos del paciente asociado."
         >
           <template #icon>

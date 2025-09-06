@@ -144,6 +144,14 @@ class CasoService:
             update_data["paciente"]["fecha_actualizacion"] = datetime.utcnow()
         update_data["actualizado_por"] = usuario_id
         update_data["fecha_actualizacion"] = datetime.utcnow()
+
+        # Log detallado del payload que se va a enviar al repositorio
+        import logging, json
+        logging.getLogger(__name__).info(
+            "Payload update caso %s: %s", 
+            CasoCode, 
+            json.dumps(update_data, default=str)
+        )
         
         caso_actualizado = await self.repository.update_by_caso_code(CasoCode, update_data)
         if not caso_actualizado:

@@ -79,22 +79,31 @@
           <template v-if="notification.type === 'success' && updatedPatient" #content>
             <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div class="space-y-4">
+                <!-- Título del paciente -->
                 <div class="mb-4 pb-3 border-b border-gray-100">
                   <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedPatient.nombre }}</h3>
                   <p class="text-gray-600">
-                    <span class="font-medium">Identificación:</span> 
+                    <span class="font-medium">Documento de identidad:</span> 
                     <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedPatient.paciente_code || updatedPatient.cedula }}</span>
                   </p>
                 </div>
-                <div class="space-y-4">
-                  <div class="grid grid-cols-3 gap-6 text-sm">
-                    <div><span class="text-gray-500 font-medium block mb-1">Edad:</span><p class="text-gray-800 font-semibold">{{ updatedPatient.edad }}</p></div>
-                    <div><span class="text-gray-500 font-medium block mb-1">Sexo:</span><p class="text-gray-800 font-semibold">{{ updatedPatient.sexo }}</p></div>
-                    <div><span class="text-gray-500 font-medium block mb-1">Tipo de Atención:</span><p class="text-gray-800 font-semibold">{{ updatedPatient.tipo_atencion }}</p></div>
+                <!-- Información del paciente en layout vertical -->
+                <div class="space-y-3 text-sm">
+                  <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-500 font-medium">Edad:</span>
+                    <span class="text-gray-800 font-semibold">{{ updatedPatient.edad }} años</span>
                   </div>
-                  <div class="text-sm">
-                    <span class="text-gray-500 font-medium block mb-1">Entidad:</span>
-                    <p class="text-gray-800 font-semibold break-words">{{ updatedPatient.entidad_info?.nombre }}</p>
+                  <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-500 font-medium">Sexo:</span>
+                    <span class="text-gray-800 font-semibold">{{ updatedPatient.sexo }}</span>
+                  </div>
+                  <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-500 font-medium">Entidad:</span>
+                    <span class="text-gray-800 font-semibold text-right max-w-64 truncate">{{ updatedPatient.entidad_info?.nombre }}</span>
+                  </div>
+                  <div class="flex justify-between py-2">
+                    <span class="text-gray-500 font-medium">Tipo de Atención:</span>
+                    <span class="text-gray-800 font-semibold">{{ updatedPatient.tipo_atencion }}</span>
                   </div>
                 </div>
               </div>

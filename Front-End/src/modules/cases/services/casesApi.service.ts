@@ -126,7 +126,8 @@ export class CasesApiService {
       const response = await apiClient.put<UpdateCaseResponse>(`${this.endpoint}/caso-code/${caseCode}`, updateData)
       return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
-      throw new Error(error.message || `Error al actualizar el caso ${caseCode}`)
+  // Reutilizar formateo de errores de validación
+  throw this.handleValidationError(error)
     }
   }
 

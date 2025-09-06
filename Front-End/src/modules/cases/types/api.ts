@@ -23,7 +23,7 @@ export interface CreateCaseRequest {
 
 export interface UpdateCaseRequest {
   patologo_asignado?: { codigo: string; nombre: string }
-  medico_solicitante?: { nombre: string }
+  medico_solicitante?: string
   muestras?: Array<{
     region_cuerpo: string
     pruebas: Array<{ id: string; nombre: string; cantidad: number }>
@@ -38,11 +38,11 @@ export interface UpdateCaseRequest {
     patologo_firma?: string
   }
   estado?: CaseState
+  prioridad?: string
   observaciones_generales?: string
   entidad_info?: { id: string; nombre: string }
   paciente?: {
     paciente_code: string
-    cedula: string
     nombre: string
     edad: number
     sexo: string

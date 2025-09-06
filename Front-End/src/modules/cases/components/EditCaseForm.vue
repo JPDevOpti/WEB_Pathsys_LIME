@@ -92,11 +92,15 @@
           <FormInputField v-model="form.servicio" label="Servicio" placeholder="Procedencia del caso" :required="true" :max-length="100" />
         </div>
 
-        <!-- Campos adicionales del formulario de edición -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          <FormInputField v-model="form.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="99" :required="true" @input="handleLocalNumeroMuestrasChange" />
+        <!-- Estado y Patólogo en una sola línea -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <FormSelect :key="'estado-' + resetKey" v-model="form.estado" label="Estado del Caso" placeholder="Seleccione el estado" :required="true" :options="estadoOptions" />
           <PathologistList :key="'pathologist-' + resetKey" v-model="form.patologoAsignado" label="Patólogo Asignado" placeholder="Buscar patólogo..." :required="false" :auto-load="true" @pathologist-selected="onPathologistSelected" />
+        </div>
+
+        <!-- Número de muestras debajo -->
+        <div>
+          <FormInputField class="max-w-xs" v-model="form.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="99" :required="true" @input="handleLocalNumeroMuestrasChange" />
         </div>
 
         <div v-if="form.muestras.length > 0" class="space-y-4">
@@ -358,90 +362,7 @@ const toInputDate = (value: string | undefined | null): string => {
   return date.toISOString().split('T')[0]
 }
 
-/**
- * Normaliza la región del cuerpo del backend al valor esperado por BodyRegionList
- */
-const normalizeBodyRegion = (value: string | undefined | null): string => {
-  if (!value) return ''
-  const allowedValues = new Set([
-    'cabeza','cuello','cara','cuero_cabelludo','oreja','nariz','boca','lengua','garganta','tiroides',
-    'torax','mama_derecha','mama_izquierda','pulmon_derecho','pulmon_izquierdo','corazon','mediastino',
-    'abdomen','estomago','intestino_delgado','intestino_grueso','colon','recto','higado','vesicula_biliar','pancreas','bazo','rinon_derecho','rinon_izquierdo','vejiga','utero','ovario_derecho','ovario_izquierdo','prostata','testiculo_derecho','testiculo_izquierdo',
-    'brazo_derecho','brazo_izquierdo','antebrazo_derecho','antebrazo_izquierdo','mano_derecha','mano_izquierda','dedo_derecho','dedo_izquierdo',
-    'muslo_derecho','muslo_izquierdo','pierna_derecha','pierna_izquierda','pie_derecho','pie_izquierdo','dedo_pie_derecho','dedo_pie_izquierdo',
-    'piel_cabeza','piel_torax','piel_abdomen','piel_brazo','piel_pierna','piel_espalda','piel_gluteo',
-    'ganglio_cervical','ganglio_axilar','ganglio_inguinal','ganglio_mediastinico','ganglio_abdominal',
-    'otro','no_especificado'
-  ])
-  const basic = String(value)
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '_')
-    .replace(/[-]+/g, '_')
-    .replace(/__+/g, '_')
-    .trim()
-
-  // Mapeos especiales
-  const specials: Record<string, string> = {
-    'piel_de_torax': 'piel_torax',
-    'piel_de_abdomen': 'piel_abdomen',
-    'piel_de_brazo': 'piel_brazo',
-    'piel_de_pierna': 'piel_pierna',
-    'piel_de_espalda': 'piel_espalda',
-    'piel_de_gluteo': 'piel_gluteo',
-  }
-  if (basic in specials) return specials[basic]
-
-  // Remover artículos comunes y preposiciones sueltas
-  const cleaned = basic
-    .replace(/^el_/, '')
-    .replace(/^la_/, '')
-    .replace(/^los_/, '')
-    .replace(/^las_/, '')
-    .replace(/_de_/g, '_')
-    .replace(/_del_/g, '_')
-
-  if (allowedValues.has(basic)) return basic
-  if (allowedValues.has(cleaned)) return cleaned
-
-  // Heurísticas por palabras clave
-  const contains = (text: string) => cleaned.includes(text)
-  const side = contains('derech') ? 'derecho' : contains('izqu') ? 'izquierdo' : ''
-
-  if (contains('torax')) return 'torax'
-  if (contains('mama')) return side === 'izquierdo' ? 'mama_izquierda' : 'mama_derecha'
-  if (contains('pulmon')) return side === 'izquierdo' ? 'pulmon_izquierdo' : 'pulmon_derecho'
-  if (contains('rinon')) return side === 'izquierdo' ? 'rinon_izquierdo' : 'rinon_derecho'
-  if (contains('ovario')) return side === 'izquierdo' ? 'ovario_izquierdo' : 'ovario_derecho'
-  if (contains('testiculo')) return side === 'izquierdo' ? 'testiculo_izquierdo' : 'testiculo_derecho'
-  if (contains('brazo')) return side === 'izquierdo' ? 'brazo_izquierdo' : 'brazo_derecho'
-  if (contains('antebrazo')) return side === 'izquierdo' ? 'antebrazo_izquierdo' : 'antebrazo_derecho'
-  if (contains('mano')) return side === 'izquierdo' ? 'mano_izquierda' : 'mano_derecha'
-  if (contains('muslo')) return side === 'izquierdo' ? 'muslo_izquierdo' : 'muslo_derecho'
-  if (contains('pierna')) return side === 'izquierdo' ? 'pierna_izquierda' : 'pierna_derecha'
-  if (contains('pie')) return side === 'izquierdo' ? 'pie_izquierdo' : 'pie_derecho'
-  if (contains('dedo_pie')) return side === 'izquierdo' ? 'dedo_pie_izquierdo' : 'dedo_pie_derecho'
-  if (contains('abdomen')) return 'abdomen'
-  if (contains('colon')) return 'colon'
-  if (contains('recto')) return 'recto'
-  if (contains('higado')) return 'higado'
-  if (contains('vesicula')) return 'vesicula_biliar'
-  if (contains('pancreas')) return 'pancreas'
-  if (contains('bazo')) return 'bazo'
-  if (contains('vejiga')) return 'vejiga'
-  if (contains('utero')) return 'utero'
-  if (contains('prostata')) return 'prostata'
-  if (contains('intestino_delgado')) return 'intestino_delgado'
-  if (contains('intestino_grueso')) return 'intestino_grueso'
-  if (contains('ganglio') && contains('cervical')) return 'ganglio_cervical'
-  if (contains('ganglio') && contains('axilar')) return 'ganglio_axilar'
-  if (contains('ganglio') && contains('inguinal')) return 'ganglio_inguinal'
-  if (contains('ganglio') && contains('mediastinico')) return 'ganglio_mediastinico'
-  if (contains('ganglio') && contains('abdominal')) return 'ganglio_abdominal'
-
-  // Fallback seguro: no especificado
-  return 'no_especificado'
-}
+// (normalizeBodyRegion eliminado: ahora se acepta directamente el valor devuelto por el backend o el seleccionado en el componente.)
 
 
 /**
@@ -521,41 +442,83 @@ const onSubmit = async () => {
       return mapping[tipo] || 'Ambulatorio'
     }
 
-    const updateData = {
-      estado: form.estado as CaseState,
-      medico_solicitante: form.medicoSolicitante ? { nombre: form.medicoSolicitante } : undefined,
-      servicio: form.servicio || undefined,
-      prioridad_caso: form.prioridadCaso || 'Normal',
-      observaciones_generales: form.observaciones,
-      muestras: form.muestras.map(muestra => ({
-        region_cuerpo: muestra.regionCuerpo,
-        pruebas: muestra.pruebas
-          .filter(prueba => String(prueba.code).trim() !== '')
-          .map(prueba => ({ 
-            id: prueba.code, 
-            nombre: prueba.nombre || prueba.code,
-            cantidad: prueba.cantidad || 1
+    // Normalizar estado a uno de los valores válidos del backend
+    const estadoBackendMap: Record<string, string> = {
+      'Requiere cambios': 'Por entregar', // UI -> backend enum existente
+      'cancelado': 'Completado' // fallback (estado cancelado no existe ya)
+    }
+    const estadoToSend = ((): string => {
+      const raw = form.estado
+      if (!raw) return 'En proceso'
+      return estadoBackendMap[raw] || raw
+    })()
+
+    const prioridadToSend = ((): string => {
+      const p = form.prioridadCaso || 'Normal'
+      if (['Normal','Prioritario','Urgente'].includes(p)) return p
+      return 'Normal'
+    })()
+
+    // Construir muestras replicando lógica de creación (sin descartar por region vacía aún)
+    const existingMuestras = (foundCaseInfo.value?.muestras || []) as any[]
+    const muestrasClean = form.muestras.map((m, idx) => {
+      // Fallback: si el usuario no tocó la región, usar la existente
+      const region = m.regionCuerpo || existingMuestras[idx]?.region_cuerpo || existingMuestras[idx]?.regionCuerpo || ''
+      return {
+        region_cuerpo: region,
+        pruebas: m.pruebas
+          .filter(p => String(p.code).trim() !== '')
+          .map(p => ({
+            id: p.code,
+            nombre: p.nombre || p.code,
+            cantidad: p.cantidad || 1
           }))
-      })),
-      patologo_asignado: form.patologoAsignado
-        ? { codigo: form.patologoAsignado, nombre: selectedPathologist.value?.nombre || '' }
-        : undefined,
-      entidad_info: entityInfoToSend,
-      // Incluir paciente con tipo_atencion actualizado
+      }
+    })
+    // Si todas las regiones quedaron vacías y ya existían muestras, no enviar campo para no sobrescribir
+    const allEmptyRegions = muestrasClean.every(m => !m.region_cuerpo)
+    if (allEmptyRegions && existingMuestras.length) {
+      // Reutilizar las existentes (no enviar muestras en updateData posteriormente)
+    }
+
+    const pacienteEntidad = entityInfoToSend || (form.entidadPaciente && selectedEntity.value?.nombre
+      ? { id: form.entidadPaciente, nombre: selectedEntity.value?.nombre || '' }
+      : undefined)
+
+    const updateData: any = {
+      estado: estadoToSend as CaseState,
+      medico_solicitante: form.medicoSolicitante || undefined,
+      servicio: form.servicio || undefined,
+      prioridad: prioridadToSend,
+      observaciones_generales: form.observaciones || undefined,
+      muestras: allEmptyRegions && existingMuestras.length ? undefined : muestrasClean,
+      patologo_asignado: form.patologoAsignado ? { codigo: form.patologoAsignado, nombre: selectedPathologist.value?.nombre || '' } : undefined,
+      entidad_info: pacienteEntidad,
       paciente: {
         paciente_code: patientInfo.value?.codigo || cedulaToUse,
-        cedula: cedulaToUse,
         nombre: patientInfo.value?.nombre || '',
         edad: patientInfo.value?.edad || 0,
         sexo: patientInfo.value?.sexo || '',
-        entidad_info: entityInfoToSend || {
-          id: form.entidadPaciente,
-          nombre: selectedEntity.value?.nombre || ''
-        },
+        entidad_info: pacienteEntidad || { id: '', nombre: '' },
         tipo_atencion: mapTipoAtencionToBackend(form.tipoAtencionPaciente),
-        observaciones: patientInfo.value?.observaciones || '',
-        // fecha_actualizacion se maneja automáticamente en el backend
+        observaciones: patientInfo.value?.observaciones || undefined
       }
+    }
+
+    // El backend requiere al menos una muestra; si quedó vacío, mantener la anterior del caso existente
+    if (updateData.muestras && updateData.muestras.length) {
+      // Eliminar posibles entradas con region vacía para no violar validación backend
+      updateData.muestras = updateData.muestras.filter((m: any) => m.region_cuerpo)
+      if (!updateData.muestras.length) delete updateData.muestras
+    } else if (!updateData.muestras && foundCaseInfo.value?.muestras?.length) {
+      // Mantener sin cambio
+      delete updateData.muestras
+    }
+
+    // Eliminar campos undefined para payload más limpio
+    Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k])
+    if (updateData.paciente) {
+      Object.keys(updateData.paciente).forEach(k => updateData.paciente[k] === undefined && delete updateData.paciente[k])
     }
     
 
@@ -587,6 +550,17 @@ const onSubmit = async () => {
     
     // Guardar caso actualizado para la notificación
     updatedCase.value = updatedCaseResponse
+    // Normalizar prioridad en el objeto actualizado para garantizar que la notificación la muestre
+    if (updatedCase.value) {
+      // Si el backend devolvió 'prioridad' simple, mapear a prioridad_caso
+      if (!updatedCase.value.prioridad_caso && (updatedCase.value as any).prioridad) {
+        updatedCase.value.prioridad_caso = (updatedCase.value as any).prioridad
+      }
+      // Si no devolvió ningún campo de prioridad, usar la del formulario
+      if (!updatedCase.value.prioridad_caso && !updatedCase.value.prioridadCaso && form.prioridadCaso) {
+        updatedCase.value.prioridad_caso = form.prioridadCaso
+      }
+    }
     
     // Emitir evento de actualización
     emit('case-updated', updatedCaseResponse)
@@ -598,7 +572,29 @@ const onSubmit = async () => {
     // La notificación usará únicamente los datos de updatedCase/foundCaseInfo.
     clearFormAfterSave()
   } catch (error: any) {
-    showError('Error al actualizar el caso', error.message || 'Error desconocido')
+    // Formatear error para evitar [object Object]
+    let msg = ''
+    if (error?.response?.data) {
+      const data = error.response.data
+      if (typeof data === 'string') msg = data
+      else if (data.detail) {
+        if (Array.isArray(data.detail)) {
+          msg = data.detail.map((d: any) => d.msg || d.message || JSON.stringify(d)).join(', ')
+        } else if (typeof data.detail === 'object') {
+          try { msg = JSON.stringify(data.detail) } catch { msg = String(data.detail) }
+        } else msg = String(data.detail)
+      } else if (data.message) {
+        msg = data.message
+      } else {
+        try { msg = JSON.stringify(data) } catch { msg = 'Error desconocido del servidor' }
+      }
+    } else if (error?.message) {
+      msg = error.message
+    } else {
+      try { msg = JSON.stringify(error) } catch { msg = 'Error desconocido' }
+    }
+    console.error('Error updateCase:', error)
+    showError('Error al actualizar el caso', msg || 'Error desconocido')
   } finally {
     isLoading.value = false
   }
@@ -764,12 +760,15 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
         if (muestras && muestras.length > 0) {
           return muestras.map((muestra: any, index: number) => ({
             numero: index + 1,
-            regionCuerpo: 
-              normalizeBodyRegion(
-                muestra.region_cuerpo || 
-                muestra.regionCuerpo || 
-                ''
-              ),
+            // Usar directamente el valor devuelto por el backend (slug o label). El componente BodyRegionList
+            // acepta tanto el label completo como el value en formato snake_case y se encarga de mostrar el label.
+            // Se evita la normalización agresiva previa (normalizeBodyRegion) que reducía valores legítimos a
+            // 'no_especificado' al tener una lista limitada de allowedValues.
+            regionCuerpo: (
+              muestra.region_cuerpo ||
+              muestra.regionCuerpo ||
+              ''
+            ),
             pruebas: (() => {
               const pruebas = muestra.pruebas || muestra.tests || [];
               if (pruebas && pruebas.length > 0) {
@@ -1183,11 +1182,14 @@ const getMedicoSolicitante = (): string => {
   const uc: any = updatedCase.value || {}
   const fc: any = foundCaseInfo.value || {}
   return (
-    uc.medico_solicitante?.nombre ||
-    uc.medicoSolicitante?.nombre ||
-    fc.medico_solicitante?.nombre ||
-    fc.medicoSolicitante ||
-    'No especificado'
+  (typeof uc.medico_solicitante === 'string' && uc.medico_solicitante) ||
+  (typeof fc.medico_solicitante === 'string' && fc.medico_solicitante) ||
+  uc.medico_solicitante?.nombre ||
+  uc.medicoSolicitante?.nombre ||
+  fc.medico_solicitante?.nombre ||
+  fc.medicoSolicitante ||
+  form.medicoSolicitante ||
+  'No especificado'
   )
 }
 
@@ -1214,8 +1216,10 @@ const getPrioridad = (): string => {
   return (
     uc.prioridad_caso ||
     uc.prioridadCaso ||
+  uc.prioridad ||
     fc.prioridad_caso ||
     fc.prioridadCaso ||
+  fc.prioridad ||
     form.prioridadCaso ||
     'Normal'
   )
