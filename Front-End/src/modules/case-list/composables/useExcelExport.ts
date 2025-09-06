@@ -11,7 +11,7 @@ export function useExcelExport() {
       'Médico': c.requester,
       'Estado': c.status,
       'Fecha Recepción': c.receivedAt,
-      'Fecha Entrega': c.deliveredAt || '',
+  'Fecha Firma': c.deliveredAt || '',
       'Pruebas': c.tests.join(', ')
     }))
     const XLSX = await import('xlsx')

@@ -87,7 +87,9 @@ export function useCaseList() {
                bk.caso_code || 
                `case-${Math.random().toString(36).substr(2, 9)}`
     const receivedAt = getDate(bk.fecha_creacion)
-    const deliveredAt = getDate((bk as any).fecha_entrega) || getDate(bk.fecha_firma) || getDate(bk.resultado?.fecha_resultado)
+  // Cambio: ahora 'deliveredAt' refleja la fecha de firma (fecha_firma) y NO la fecha de entrega.
+  // La fecha de entrega original (fecha_entrega) se ignora para cálculos y visualización principales.
+  const deliveredAt = getDate(bk.fecha_firma) || getDate(bk.resultado?.fecha_resultado)
 
     // aplanar pruebas como "code - name"
     const flatTests: string[] = []
@@ -123,8 +125,10 @@ export function useCaseList() {
       caseCode: bk.caso_code || id,
       sampleType: bk.muestras?.[0]?.region_cuerpo || (bk.paciente?.tipo_atencion || ''),
       patient: {
+        // El backend actual usa paciente_code como identificador principal del paciente
         id: bk.paciente?.paciente_code || '',
-        dni: bk.paciente?.cedula || '',
+        // Mostrar el código del paciente (antes cedula) en la columna de documento
+        dni: bk.paciente?.paciente_code || bk.paciente?.cedula || '',
         fullName: bk.paciente?.nombre || '',
         sex: bk.paciente?.sexo || '',
         age: Number(bk.paciente?.edad || 0),
@@ -143,6 +147,9 @@ export function useCaseList() {
       pathologist: bk.patologo_asignado?.nombre || '',
       notes: bk.observaciones_generales || '',
       servicio: bk.servicio || '',
+      // Incorporar prioridad (campo nuevo en backend). Mantenemos compatibilidad aunque el tipo Case aún no lo tenga.
+      // @ts-ignore
+      priority: (bk as any).prioridad || (bk as any).prioridad_caso || 'Normal',
       result: {
         method: bk.resultado?.metodo || '',
         macro: bk.resultado?.resultado_macro || '',
@@ -317,7 +324,7 @@ export function useCaseList() {
 
   
   // Listener para detectar cuando se crea un nuevo caso
-  const handleCaseCreated = (event: CustomEvent) => {
+  const handleCaseCreated = (_event: CustomEvent) => {
     // Recargar la lista de casos para incluir el nuevo caso
     loadCases()
   }

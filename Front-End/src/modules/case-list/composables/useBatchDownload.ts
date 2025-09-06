@@ -327,7 +327,7 @@ export function useBatchDownload() {
         'Médico': c.requester || 'N/A',
         'Estado': c.status || 'N/A',
         'Fecha Recepción': c.receivedAt || 'N/A',
-        'Fecha Entrega': c.deliveredAt || '',
+  'Fecha Firma': c.deliveredAt || '',
         'Pruebas': c.tests?.join(', ') || 'N/A'
       }))
       

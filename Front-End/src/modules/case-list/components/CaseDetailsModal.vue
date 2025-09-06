@@ -58,7 +58,7 @@
               <p class="text-base font-medium text-gray-900">{{ caseItem?.receivedAt ? formatDate(caseItem.receivedAt) : 'N/A' }}</p>
             </div>
             <div>
-              <p class="text-sm text-gray-500">Fecha de Entrega</p>
+              <p class="text-sm text-gray-500">Fecha de Firma</p>
               <p class="text-base font-medium text-gray-900">{{ caseItem?.deliveredAt ? formatDate(caseItem.deliveredAt) : 'Pendiente' }}</p>
             </div>
             <div>

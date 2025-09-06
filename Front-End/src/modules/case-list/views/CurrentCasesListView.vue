@@ -29,7 +29,7 @@
             @toggle-select="toggleSelect" @toggle-select-all="toggleSelectAll" @clear-selection="selectedCaseIds = []"
             @sort="(k: any) => sortBy(k)" @show-details="showDetails" @edit="editCase" @validate="validateCase"
             @perform="performCase" @update-items-per-page="(v: number) => itemsPerPage = v"
-            @prev-page="() => currentPage--" @next-page="() => currentPage++" />
+            @prev-page="() => currentPage--" @next-page="() => currentPage++" @refresh="reload" />
         </div>
 
         <CaseDetailsModal :case-item="selectedCase" @close="closeDetails" @edit="editCase" @preview="previewCase" />
@@ -46,7 +46,6 @@ import { useRouter } from 'vue-router'
 import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import Card from '@/shared/components/layout/Card.vue'
 import { BaseButton } from '@/shared/components'
-import { RefreshIcon } from '@/shared/icons'
 import LoadingSpinner from '@/shared/components/feedback/LoadingSpinner.vue'
 
 import FiltersBar from '../components/FiltersBar.vue'
@@ -80,12 +79,9 @@ const {
   toggleSelectAll,
   toggleSelect,
   sortBy,
-  applyBulkAction,
   showDetails,
   closeDetails,
   validateCase,
-  markAsCompleted,
-  clearFilters,
 } = useCaseList()
 
 const { exportCasesToExcel } = useExcelExport()
@@ -98,7 +94,7 @@ const columns = [
   { key: 'tests', label: 'Pruebas', class: 'w-[15%]' },
   { key: 'status', label: 'Estado', class: 'w-[10%]' },
   { key: 'receivedAt', label: 'Fecha creación', class: 'w-[10%]' },
-  { key: 'deliveredAt', label: 'Fecha entrega', class: 'w-[10%]' },
+  { key: 'deliveredAt', label: 'Fecha firma', class: 'w-[10%]' },
   { key: 'actions', label: 'Acciones', class: 'w-[10%]' },
 ]
 
@@ -116,7 +112,7 @@ const hasActiveFilters = computed(() => {
 
 function reload() { loadCases() }
 function exportExcel() { exportCasesToExcel(filteredCases.value) }
-function performCase(c: any) { /* navegación se integrará luego */ }
+function performCase(_c: any) { /* navegación se integrará luego */ }
 function editCase(c: any) {
   const code = c?.caseCode || c?.id || ''
   if (!code) return
@@ -125,7 +121,7 @@ function editCase(c: any) {
 }
 
 // Listener para detectar cuando se crea un nuevo caso
-const handleCaseCreated = (event: CustomEvent) => {
+const handleCaseCreated = (_event: CustomEvent) => {
   loadCases()
 }
 

@@ -491,7 +491,7 @@ const handleErrorAsignacion = async (error: any) => {
     
     showNotification(
       'success',
-      '¡Patólogo reasignado exitosamente!',
+      '¡Patólogo asignado exitosamente!',
       `El patólogo ha sido reasignado al caso ${codigoCaso} correctamente.`,
       0
     )

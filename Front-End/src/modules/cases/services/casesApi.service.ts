@@ -158,6 +158,28 @@ export class CasesApiService {
     }
   }
 
+  /**
+   * Marca múltiples casos como Completado aplicando cambios en sus muestras.
+   * Genera múltiples peticiones secuenciales al endpoint updateCase existente.
+   * pendingCases: array de objetos con { caseCode, remainingSubsamples } donde remainingSubsamples es el arreglo final que debe persistir.
+   */
+  async batchCompleteCases(pendingCases: Array<{ caseCode: string; remainingSubsamples: Array<{ region_cuerpo: string; pruebas: Array<{ id: string; nombre?: string; cantidad: number }> }> }>): Promise<any[]> {
+    const results: any[] = []
+    for (const item of pendingCases) {
+      try {
+        const payload: any = {
+          estado: 'Completado',
+          muestras: item.remainingSubsamples
+        }
+        const updated = await this.updateCase(item.caseCode, payload)
+        results.push({ caseCode: item.caseCode, success: true, data: updated })
+      } catch (err: any) {
+        results.push({ caseCode: item.caseCode, success: false, error: err.message || String(err) })
+      }
+    }
+    return results
+  }
+
   private handleValidationError(error: any): Error {
     if (error.response?.data?.detail) {
       const validationErrors = Array.isArray(error.response.data.detail) 

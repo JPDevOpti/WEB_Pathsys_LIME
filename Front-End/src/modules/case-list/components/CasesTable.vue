@@ -52,6 +52,15 @@
             Marcar como entregados
           </button>
         </div>
+
+          <!-- Drawer para marcado múltiple de firma/entrega -->
+          <BatchMarkDeliveredDrawer
+            v-model="showMarkDeliveredDrawer"
+            :selected="props.cases.filter(c => props.selectedIds.includes(c.id))"
+            @close="showMarkDeliveredDrawer = false"
+            @confirm="() => {}"
+            @completed="handleBatchCompleted"
+          />
       </div>
     </div>
 
@@ -97,9 +106,17 @@
               <span class="font-medium text-gray-800">{{ c.caseCode || c.id }}</span>
             </td>
             <td class="px-2 py-3 text-center">
-              <div>
+              <div class="flex flex-col items-center gap-1">
                 <p class="text-gray-800 text-sm">{{ c.patient.fullName }}</p>
                 <p class="text-gray-500 text-xs">{{ c.patient.dni }}</p>
+                <span v-if="c.priority" class="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                      :class="{
+                        'bg-green-50 text-green-700': c.priority === 'Normal',
+                        'bg-yellow-50 text-yellow-700': c.priority === 'Prioritario',
+                        'bg-red-50 text-red-700': c.priority === 'Urgente'
+                      }">
+                  {{ c.priority }}
+                </span>
               </div>
             </td>
             <td class="px-2 py-3 text-center">
@@ -218,16 +235,34 @@
                 @click.stop
               />
               <div>
-                <div class="flex items-center gap-2 mb-2">
+                <div class="flex flex-col gap-1 mb-2">
                   <h4 class="font-semibold text-gray-800 text-sm truncate">{{ c.caseCode || c.id }}</h4>
                 </div>
-                <p class="text-gray-600 text-xs">{{ c.patient.fullName }}</p>
-                <p class="text-gray-500 text-xs">{{ c.patient.dni }}</p>
+                <div class="flex flex-col gap-1">
+                  <p class="text-gray-600 text-xs">{{ c.patient.fullName }}</p>
+                  <p class="text-gray-500 text-xs">{{ c.patient.dni }}</p>
+                  <span v-if="c.priority" class="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold self-start"
+                        :class="{
+                          'bg-green-50 text-green-700': c.priority === 'Normal',
+                          'bg-yellow-50 text-yellow-700': c.priority === 'Prioritario',
+                          'bg-red-50 text-red-700': c.priority === 'Urgente'
+                        }">
+                    {{ c.priority }}
+                  </span>
+                </div>
               </div>
             </div>
             <div class="flex-shrink-0 ml-3">
               <span class="inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-medium" :class="statusClass(c)">
                 {{ statusLabel(c) }}
+              </span>
+              <span v-if="c.priority" class="mt-1 inline-flex items-center justify-center rounded-full px-2 py-1 text-[10px] font-semibold w-full"
+                    :class="{
+                      'bg-green-50 text-green-700': c.priority === 'Normal',
+                      'bg-yellow-50 text-yellow-700': c.priority === 'Prioritario',
+                      'bg-red-50 text-red-700': c.priority === 'Urgente'
+                    }">
+                {{ c.priority }}
               </span>
             </div>
           </div>
@@ -253,7 +288,7 @@
               </p>
             </div>
             <div v-if="c.deliveredAt">
-              <p class="text-gray-500">Fecha entrega</p>
+              <p class="text-gray-500">Fecha firma</p>
               <p class="text-gray-800 font-medium">{{ formatDate(c.deliveredAt) }}</p>
             </div>
           </div>
@@ -389,9 +424,10 @@
 import type { Case } from '../types/case.types'
 import { InfoCircleIcon, SettingsIcon, DocsIcon } from '@/assets/icons'
 import { useRouter } from 'vue-router'
-import { ref, computed, watch } from 'vue'
+import { ref } from 'vue'
 import FormCheckbox from '@/shared/components/forms/FormCheckbox.vue'
 import { useBatchDownload } from '../composables/useBatchDownload'
+import BatchMarkDeliveredDrawer from './BatchMarkDeliveredDrawer.vue'
 
 interface Column { 
   key: string
@@ -425,6 +461,7 @@ const emit = defineEmits<{
   'toggle-select': [id: string]
   'toggle-select-all': []
   'clear-selection': []
+  'refresh': []
 }>()
 
 // Router para navegación
@@ -454,10 +491,12 @@ const isCaseSelected = (caseId: string) => {
 }
 
 // Composable para descargas por lotes
-const { downloadMultiplePDFs, exportCasesToExcel, previewMultipleCases } = useBatchDownload()
+const { exportCasesToExcel, previewMultipleCases } = useBatchDownload()
 
 // Ref para controlar el estado de carga de Excel
 const isDownloadingExcel = ref(false)
+// Drawer marcar entregados
+const showMarkDeliveredDrawer = ref(false)
 
 // Handlers de acciones por lote (implementación real)
 function handleBatchDownloadPDF() {
@@ -512,7 +551,13 @@ async function handleBatchDownloadExcel() {
 }
 
 function handleBatchMarkDelivered() {
-  // TODO: Implementar marcado como entregados
+  showMarkDeliveredDrawer.value = true
+}
+
+function handleBatchCompleted(_result: any) {
+  // Limpiar selección y solicitar refresco al padre
+  clearSelection()
+  emit('refresh')
 }
 
 // Handlers de navegación directa

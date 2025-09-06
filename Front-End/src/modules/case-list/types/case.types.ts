@@ -25,6 +25,8 @@ export interface Case {
   pathologist?: string
   notes?: string
   servicio?: string
+  // Nuevo: prioridad del caso (Normal|Prioritario|Urgente)
+  priority?: string
   result?: {
     method?: string
     macro?: string
