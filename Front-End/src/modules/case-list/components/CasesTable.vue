@@ -109,6 +109,97 @@
               <div class="flex flex-col items-center gap-1">
                 <p class="text-gray-800 text-sm">{{ c.patient.fullName }}</p>
                 <p class="text-gray-500 text-xs">{{ c.patient.dni }}</p>
+              </div>
+            </td>
+            <td class="px-2 py-3 text-center">
+              <p class="text-gray-800 text-sm">{{ c.entity }}</p>
+              <p class="text-gray-500 text-xs">{{ c.pathologist || 'No asignado' }}</p>
+            </td>
+            <td class="px-3 py-3 text-center">
+              <div class="w-full max-w-full">
+                <!-- Organizar pruebas en 2 columnas -->
+                <template v-if="getTestsLayout(c).totalTests > 0">
+                  <div class="space-y-1">
+                    <div class="grid grid-cols-2 gap-1">
+                      <!-- Columna 1 -->
+                      <div class="flex flex-col gap-1 items-end">
+                        <span
+                          v-for="(g, idx) in getTestsLayout(c).organized.column1"
+                          :key="`col1-${idx}`"
+                          class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border text-nowrap relative min-w-0 flex-shrink-0"
+                          :title="getTestTooltip(c.tests, g.code, g.count)"
+                        >
+                          <span class="truncate test-code">{{ g.code }}</span>
+                          <span
+                            v-if="g.count > 1"
+                            class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
+                          >
+                            {{ g.count }}
+                          </span>
+                        </span>
+                      </div>
+                      <!-- Columna 2 -->
+                      <div class="flex flex-col gap-1 items-start">
+                        <span
+                          v-for="(g, idx) in getTestsLayout(c).organized.column2"
+                          :key="`col2-${idx}`"
+                          class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border text-nowrap relative min-w-0 flex-shrink-0"
+                          :title="getTestTooltip(c.tests, g.code, g.count)"
+                        >
+                          <span class="truncate test-code">{{ g.code }}</span>
+                          <span
+                            v-if="g.count > 1"
+                            class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
+                          >
+                            {{ g.count }}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <!-- Elemento del medio si hay número impar -->
+                    <div v-if="getTestsLayout(c).organized.middle" class="flex justify-center">
+                      <span
+                        class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border text-nowrap relative min-w-0 flex-shrink-0"
+                        :title="getTestTooltip(c.tests, getTestsLayout(c).organized.middle!.code, getTestsLayout(c).organized.middle!.count)"
+                      >
+                        <span class="truncate test-code">{{ getTestsLayout(c).organized.middle!.code }}</span>
+                        <span
+                          v-if="getTestsLayout(c).organized.middle!.count > 1"
+                          class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
+                        >
+                          {{ getTestsLayout(c).organized.middle!.count }}
+                        </span>
+                      </span>
+                    </div>
+                    
+                    <!-- Indicador de pruebas adicionales -->
+                    <div v-if="getTestsLayout(c).hasMore" class="flex justify-center mt-1">
+                      <span
+                        class="inline-flex items-center justify-center bg-blue-50 text-blue-600 font-mono text-xs px-2 py-1 rounded border"
+                        :title="`${getTestsLayout(c).moreCount} pruebas más`"
+                      >
+                        +{{ getTestsLayout(c).moreCount }}
+                      </span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </td>
+            <td class="px-2 py-3 text-center">
+              <span class="inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium w-full" :class="statusClass(c)">
+                {{ statusLabel(c) }}
+              </span>
+            </td>
+            <td class="px-2 py-3 text-center">
+              <div class="flex flex-col items-center gap-1">
+                <p class="text-gray-800 text-xs">{{ formatDate(c.receivedAt) }}</p>
+                <p v-if="c.deliveredAt" class="text-gray-600 text-xs">{{ formatDate(c.deliveredAt) }}</p>
+                <p v-else class="text-gray-400 text-xs">Pendiente</p>
+              </div>
+            </td>
+            <td class="px-2 py-3 text-center">
+              <div class="flex flex-col items-center gap-1">
                 <span v-if="c.priority" class="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
                       :class="{
                         'bg-green-50 text-green-700': c.priority === 'Normal',
@@ -117,51 +208,10 @@
                       }">
                   {{ c.priority }}
                 </span>
+                <p v-if="c.receivedAt" class="text-xs font-medium px-2 py-0.5 rounded-full" :class="daysClass(c)" :title="`${elapsedDays(c)} días hábiles transcurridos (solo lunes a viernes)`">
+                  {{ elapsedDays(c) }} días
+                </p>
               </div>
-            </td>
-            <td class="px-2 py-3 text-center">
-              <p class="text-gray-800 text-sm">{{ c.entity }}</p>
-              <p class="text-gray-500 text-xs">{{ c.pathologist || 'No asignado' }}</p>
-            </td>
-            <td class="px-3 py-3 text-center">
-              <div class="flex flex-wrap gap-1 justify-center max-w-full">
-                <span
-                  v-for="(g, idx) in groupTests(c.tests).slice(0, 6)"
-                  :key="idx"
-                  class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border text-nowrap relative min-w-0 flex-shrink-0"
-                  :title="getTestTooltip(c.tests, g.code, g.count)"
-                >
-                  <span class="truncate test-code">{{ g.code }}</span>
-                  <span
-                    v-if="g.count > 1"
-                    class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
-                  >
-                    {{ g.count }}
-                  </span>
-                </span>
-                <span
-                  v-if="groupTests(c.tests).length > 6"
-                  class="inline-flex items-center justify-center bg-blue-50 text-blue-600 font-mono text-xs px-2 py-1 rounded border"
-                  :title="`${groupTests(c.tests).length - 6} pruebas más`"
-                >
-                  +{{ groupTests(c.tests).length - 6 }}
-                </span>
-              </div>
-            </td>
-            <td class="px-2 py-3 text-center">
-              <span class="inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium w-full" :class="statusClass(c)">
-                {{ statusLabel(c) }}
-              </span>
-              <p v-if="c.receivedAt" class="text-xs font-medium px-2 py-0.5 rounded-full inline-block mt-1" :class="daysClass(c)">
-                {{ elapsedDays(c) }} días
-              </p>
-            </td>
-            <td class="px-2 py-3 text-center">
-              <p class="text-gray-800 text-sm">{{ formatDate(c.receivedAt) }}</p>
-            </td>
-            <td class="px-2 py-3 text-center">
-              <p v-if="c.deliveredAt" class="text-gray-800 text-sm">{{ formatDate(c.deliveredAt) }}</p>
-              <p v-else class="text-gray-400 text-sm">Pendiente</p>
             </td>
             <td class="px-2 py-3 text-center">
               <div class="flex gap-1 justify-center min-w-[120px]">
@@ -282,7 +332,7 @@
               <p class="text-gray-800 font-medium">{{ formatDate(c.receivedAt) }}</p>
             </div>
             <div>
-              <p class="text-gray-500">Días transcurridos</p>
+              <p class="text-gray-500">Días hábiles</p>
               <p class="text-gray-800 font-medium" :class="daysClass(c)">
                 {{ elapsedDays(c) }} días
               </p>
@@ -634,6 +684,52 @@ function groupTests(tests: string[]): { code: string; count: number }[] {
   }))
 }
 
+function organizeTestsInTwoColumns(tests: { code: string; count: number }[]): {
+  column1: { code: string; count: number }[]
+  column2: { code: string; count: number }[]
+  middle: { code: string; count: number } | null
+} {
+  const visibleTests = tests.slice(0, 6)
+  const totalTests = visibleTests.length
+  
+  if (totalTests === 0) {
+    return { column1: [], column2: [], middle: null }
+  }
+  
+  // Si es par, dividir en 2 columnas iguales
+  if (totalTests % 2 === 0) {
+    const half = totalTests / 2
+    return {
+      column1: visibleTests.slice(0, half),
+      column2: visibleTests.slice(half),
+      middle: null
+    }
+  }
+  
+  // Si es impar, columnas iguales + 1 en el medio
+  const half = Math.floor(totalTests / 2)
+  return {
+    column1: visibleTests.slice(0, half),
+    column2: visibleTests.slice(half + 1),
+    middle: visibleTests[half]
+  }
+}
+
+function getTestsLayout(c: Case) {
+  const groupedTests = groupTests(c.tests)
+  const organized = organizeTestsInTwoColumns(groupedTests)
+  const totalTests = groupedTests.length
+  const hasMore = totalTests > 6
+  const moreCount = hasMore ? totalTests - 6 : 0
+  
+  return {
+    organized,
+    totalTests,
+    hasMore,
+    moreCount
+  }
+}
+
 function getTestTooltip(tests: string[], code: string, count: number): string {
   // Buscar todas las pruebas que empiecen con este código
   const matching = tests.filter(t => t.trim().startsWith(code))
@@ -647,23 +743,84 @@ function getTestTooltip(tests: string[], code: string, count: number): string {
 
 function elapsedDays(c: Case): number {
   if (!c.receivedAt) return 0
-  const start = new Date(c.receivedAt)
-  const end = c.deliveredAt ? new Date(c.deliveredAt) : new Date()
-  const diff = Math.abs(end.getTime() - start.getTime())
-  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+  return calculateBusinessDays(c.receivedAt, c.deliveredAt)
 }
+
+function calculateBusinessDays(startDate: string, endDate?: string): number {
+  const start = new Date(startDate)
+  const end = endDate ? new Date(endDate) : new Date()
+  
+  // Validar fechas válidas
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return 0
+  }
+  
+  // Asegurar que start sea anterior a end
+  const fromDate = start <= end ? start : end
+  const toDate = start <= end ? end : start
+  
+  let businessDays = 0
+  const currentDate = new Date(fromDate)
+  
+  // Si la fecha de inicio es fin de semana, avanzar al próximo lunes
+  while (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+    currentDate.setDate(currentDate.getDate() + 1)
+    // Si después de avanzar ya pasamos la fecha final, retornar 0
+    if (currentDate > toDate) {
+      return 0
+    }
+  }
+  
+  // Ahora currentDate está en el primer día hábil
+  const firstBusinessDay = new Date(currentDate)
+  
+  // Si estamos en el mismo día que empezó (primer día hábil), retornar 0
+  if (firstBusinessDay.toDateString() === toDate.toDateString()) {
+    return 0
+  }
+  
+  // Avanzar al siguiente día para empezar a contar días completados
+  currentDate.setDate(currentDate.getDate() + 1)
+  
+  // Contar días hábiles completados (excluyendo el primer día)
+  while (currentDate <= toDate) {
+    const dayOfWeek = currentDate.getDay()
+    
+    // Contar solo lunes(1) a viernes(5)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      businessDays++
+    }
+    
+    // Avanzar al siguiente día
+    currentDate.setDate(currentDate.getDate() + 1)
+  }
+  
+  // Nunca retornar números negativos
+  return Math.max(0, businessDays)
+}
+
+// Función de ejemplo para pruebas (se puede remover en producción)
+// Ejemplos de la nueva lógica:
+// - Lunes (primer día): 0 días hábiles
+// - Martes (segundo día): 1 día hábil completado
+// - Viernes (quinto día): 4 días hábiles completados
+// - Sábado ingresado → Lunes (primer día hábil): 0 días
+// - Domingo ingresado → Lunes (primer día hábil): 0 días
+// - Sábado ingresado → Martes: 1 día hábil completado (lunes completado)
 
 function statusLabel(c: Case): string {
   const days = elapsedDays(c)
   if (c.status === 'Requiere cambios') return 'Requiere cambios'
-  if (days > 6 && c.status !== 'Completado') return 'URGENTE'
+  // Ajustado para días hábiles: más de 4 días hábiles (1 semana laboral) es urgente
+  if (days > 4 && c.status !== 'Completado') return 'URGENTE'
   return c.status
 }
 
 function statusClass(c: Case): string {
   const days = elapsedDays(c)
   if (c.status === 'Requiere cambios') return 'bg-red-50 text-red-700 font-semibold'
-  if (days > 6 && c.status !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
+  // Ajustado para días hábiles: más de 4 días hábiles (1 semana laboral) es urgente
+  if (days > 4 && c.status !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
   if (c.status === 'Por firmar') return 'bg-yellow-50 text-yellow-700'
   // 'Por entregar' ha sido deprecado y reemplazado por 'Requiere cambios'.
   // Mantenemos compatibilidad visual si aún llega el valor antiguo desde el backend.
@@ -675,7 +832,10 @@ function statusClass(c: Case): string {
 
 function daysClass(c: Case): string {
   const days = elapsedDays(c)
-  if (days > 6 && c.status !== 'Completado') return 'bg-red-50 text-red-700'
+  // Ajustado para días hábiles: más de 4 días hábiles (1 semana laboral) es crítico
+  if (days > 4 && c.status !== 'Completado') return 'bg-red-50 text-red-700'
+  // Más de 3 días hábiles: advertencia
+  if (days > 3 && c.status !== 'Completado') return 'bg-yellow-50 text-yellow-700'
   return 'bg-brand-50 text-brand-700'
 }
 </script>

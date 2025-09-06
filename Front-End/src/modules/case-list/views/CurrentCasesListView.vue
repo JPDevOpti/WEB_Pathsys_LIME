@@ -93,9 +93,9 @@ const columns = [
   { key: 'entity', label: 'Entidad / Patólogo', class: 'w-[20%]' },
   { key: 'tests', label: 'Pruebas', class: 'w-[15%]' },
   { key: 'status', label: 'Estado', class: 'w-[10%]' },
-  { key: 'receivedAt', label: 'Fecha creación', class: 'w-[10%]' },
-  { key: 'deliveredAt', label: 'Fecha firma', class: 'w-[10%]' },
-  { key: 'actions', label: 'Acciones', class: 'w-[10%]' },
+  { key: 'dates', label: 'Creación/Firma', class: 'w-[12%]' },
+  { key: 'priority', label: 'Prioridad/Días', class: 'w-[10%]' },
+  { key: 'actions', label: 'Acciones', class: 'w-[8%]' },
 ]
 
 const hasActiveFilters = computed(() => {
