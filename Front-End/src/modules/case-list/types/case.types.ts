@@ -27,6 +27,10 @@ export interface Case {
   servicio?: string
   // Nuevo: prioridad del caso (Normal|Prioritario|Urgente)
   priority?: string
+  // Campo para capturar días hábiles al completar el caso
+  oportunidad?: number
+  // Campo para registrar quién recibe el caso al ser entregado
+  entregado_a?: string
   result?: {
     method?: string
     macro?: string

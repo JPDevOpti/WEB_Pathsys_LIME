@@ -161,15 +161,35 @@ export class CasesApiService {
   /**
    * Marca múltiples casos como Completado aplicando cambios en sus muestras.
    * Genera múltiples peticiones secuenciales al endpoint updateCase existente.
-   * pendingCases: array de objetos con { caseCode, remainingSubsamples } donde remainingSubsamples es el arreglo final que debe persistir.
+   * pendingCases: array de objetos con { caseCode, remainingSubsamples, oportunidad, entregadoA, fechaEntrega } donde remainingSubsamples es el arreglo final que debe persistir.
    */
-  async batchCompleteCases(pendingCases: Array<{ caseCode: string; remainingSubsamples: Array<{ region_cuerpo: string; pruebas: Array<{ id: string; nombre?: string; cantidad: number }> }> }>): Promise<any[]> {
+  async batchCompleteCases(pendingCases: Array<{ 
+    caseCode: string; 
+    remainingSubsamples: Array<{ region_cuerpo: string; pruebas: Array<{ id: string; nombre?: string; cantidad: number }> }>; 
+    oportunidad?: number;
+    entregadoA?: string;
+    fechaEntrega?: string;
+  }>): Promise<any[]> {
     const results: any[] = []
     for (const item of pendingCases) {
       try {
         const payload: any = {
           estado: 'Completado',
           muestras: item.remainingSubsamples
+        }
+        
+        // Incluir campo oportunidad si está presente
+        if (item.oportunidad !== undefined) {
+          payload.oportunidad = item.oportunidad
+        }
+        
+        // Incluir campos de entrega si están presentes
+        if (item.entregadoA) {
+          payload.entregado_a = item.entregadoA
+        }
+        
+        if (item.fechaEntrega) {
+          payload.fecha_entrega = item.fechaEntrega
         }
         const updated = await this.updateCase(item.caseCode, payload)
         results.push({ caseCode: item.caseCode, success: true, data: updated })

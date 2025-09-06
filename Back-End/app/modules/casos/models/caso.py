@@ -114,6 +114,8 @@ class Caso(BaseModel):
     muestras: List[MuestraInfo] = Field(min_items=1)
     estado: EstadoCasoEnum = Field(default=EstadoCasoEnum.EN_PROCESO)
     prioridad: PrioridadCasoEnum = Field(default=PrioridadCasoEnum.NORMAL, description="Prioridad del caso")
+    oportunidad: Optional[int] = Field(None, description="Días hábiles transcurridos al completar el caso", ge=0)
+    entregado_a: Optional[str] = Field(None, max_length=100, description="Persona que recibe el caso al ser entregado")
     fecha_creacion: datetime = Field(default_factory=datetime.utcnow)
     fecha_firma: Optional[datetime] = None
     fecha_entrega: Optional[datetime] = None

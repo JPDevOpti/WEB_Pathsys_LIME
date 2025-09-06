@@ -76,9 +76,9 @@
                   leave-to-class="max-h-0 opacity-0"
                 >
                   <div v-if="isExpanded(c.id)" class="px-4 pb-4 pt-1 bg-gray-50/60 border-t border-gray-200 space-y-4">
-                    <!-- Metadata Card (Entidad, Patólogo, Fecha Creación) -->
+                    <!-- Metadata Card (Entidad, Patólogo, Fecha Creación, Oportunidad) -->
                     <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <div>
                           <p class="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Entidad</p>
                           <p class="text-[11px] font-semibold text-gray-800 truncate">{{ c.entity || '—' }}</p>
@@ -90,6 +90,12 @@
                         <div>
                           <p class="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Fecha creación</p>
                           <p class="text-[11px] font-semibold text-gray-800">{{ c.receivedAt ? formatDate(c.receivedAt) : 'N/A' }}</p>
+                        </div>
+                        <div>
+                          <p class="text-[10px] font-medium text-blue-600 uppercase tracking-wide">Oportunidad</p>
+                          <p class="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded" :title="`${calculateBusinessDays(c.receivedAt || '')} días hábiles transcurridos`">
+                            {{ calculateBusinessDays(c.receivedAt || '') }} días
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -153,11 +159,39 @@
         </div>
 
         <!-- Footer actions -->
-        <div class="px-5 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-end gap-2">
-          <BaseButton size="sm" variant="outline" @click="emit('close')">Cancelar</BaseButton>
-          <BaseButton size="sm" variant="primary" :disabled="cases.length === 0" @click="emitConfirm">
-            Confirmar ({{ cases.length }})
-          </BaseButton>
+        <div class="px-5 py-4 border-t border-gray-200 bg-gray-50 space-y-3">
+          <!-- Campo "Entregado a" -->
+          <div>
+            <label for="entregado-a" class="block text-sm font-medium text-gray-700 mb-2">
+              Entregado a
+            </label>
+            <input
+              id="entregado-a"
+              v-model="entregadoA"
+              type="text"
+              maxlength="100"
+              placeholder="Nombre de la persona que recibe los casos..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': entregadoAError }"
+            />
+            <div class="flex justify-between items-center mt-1">
+              <p v-if="entregadoAError" class="text-red-600 text-xs">{{ entregadoAError }}</p>
+              <p class="text-gray-500 text-xs ml-auto">{{ entregadoA.length }}/100</p>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex flex-col sm:flex-row justify-end gap-2">
+            <BaseButton size="sm" variant="outline" @click="emit('close')">Cancelar</BaseButton>
+            <BaseButton 
+              size="sm" 
+              variant="primary" 
+              :disabled="cases.length === 0 || !entregadoA.trim()" 
+              @click="emitConfirm"
+            >
+              Confirmar ({{ cases.length }})
+            </BaseButton>
+          </div>
         </div>
       </div>
     </div>
@@ -184,6 +218,10 @@ const cases = computed(() => props.selected || [])
 
 // Estado de paneles expandidos
 const expandedIds = ref<Set<string>>(new Set())
+
+// Campo "Entregado a"
+const entregadoA = ref('')
+const entregadoAError = ref('')
 
 function toggleExpanded(id: string) {
   if (!id) return
@@ -284,12 +322,24 @@ const overlayLeftClass = computed(() => {
 })
 
 function emitConfirm() {
+  // Validar campo "Entregado a"
+  entregadoAError.value = ''
+  if (!entregadoA.value.trim()) {
+    entregadoAError.value = 'Este campo es requerido'
+    return
+  }
+  if (entregadoA.value.length > 100) {
+    entregadoAError.value = 'Máximo 100 caracteres'
+    return
+  }
+
   const ids = cases.value.map(c => c.id).filter(Boolean)
   // Emitir primero ids (compatibilidad)
   emit('confirm', ids)
   // Emitir evento adicional opcional con detalle (si se decide usar después)
   // @ts-ignore (evento extendido posible a futuro)
   emit('confirm-removals', buildRemovalSummary())
+  
   // Construir payload de casos a completar con muestras restantes
   const batchPayload = cases.value.map(c => {
     const subs = c.subsamples || []
@@ -313,12 +363,26 @@ function emitConfirm() {
           pruebas: Object.values(grouped)
         }
       })
-    return { caseCode: c.caseCode || c.id, remainingSubsamples: remaining }
+    
+    // Calcular días hábiles de oportunidad (días transcurridos hasta el momento de completar)
+    const oportunidad = calculateBusinessDays(c.receivedAt || '')
+    
+    return { 
+      caseCode: c.caseCode || c.id, 
+      remainingSubsamples: remaining,
+      oportunidad: oportunidad, // Campo para registrar días hábiles al completar
+      entregadoA: entregadoA.value.trim(), // Campo para registrar quién recibe
+      fechaEntrega: new Date().toISOString() // Fecha actual de entrega
+    }
   })
+  
   casesApiService.batchCompleteCases(batchPayload)
     .then(r => {
       emit('completed', r)
       emit('update:modelValue', false)
+      // Limpiar campo al cerrar exitosamente
+      entregadoA.value = ''
+      entregadoAError.value = ''
     })
     .catch(() => {
       // En caso de error simplemente mantenemos abierto? podría mejorarse con estado de error
@@ -338,6 +402,60 @@ function expandTests(tests: DrawerTestEntry[]): DrawerTestEntry[] {
     }
   }
   return expanded
+}
+
+// ================= Cálculo de días hábiles para Oportunidad =================
+function calculateBusinessDays(startDate: string, endDate?: string): number {
+  const start = new Date(startDate)
+  const end = endDate ? new Date(endDate) : new Date()
+  
+  // Validar fechas válidas
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return 0
+  }
+  
+  // Asegurar que start sea anterior a end
+  const fromDate = start <= end ? start : end
+  const toDate = start <= end ? end : start
+  
+  let businessDays = 0
+  const currentDate = new Date(fromDate)
+  
+  // Si la fecha de inicio es fin de semana, avanzar al próximo lunes
+  while (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+    currentDate.setDate(currentDate.getDate() + 1)
+    // Si después de avanzar ya pasamos la fecha final, retornar 0
+    if (currentDate > toDate) {
+      return 0
+    }
+  }
+  
+  // Ahora currentDate está en el primer día hábil
+  const firstBusinessDay = new Date(currentDate)
+  
+  // Si estamos en el mismo día que empezó (primer día hábil), retornar 0
+  if (firstBusinessDay.toDateString() === toDate.toDateString()) {
+    return 0
+  }
+  
+  // Avanzar al siguiente día para empezar a contar días completados
+  currentDate.setDate(currentDate.getDate() + 1)
+  
+  // Contar días hábiles completados (excluyendo el primer día)
+  while (currentDate <= toDate) {
+    const dayOfWeek = currentDate.getDay()
+    
+    // Contar solo lunes(1) a viernes(5)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      businessDays++
+    }
+    
+    // Avanzar al siguiente día
+    currentDate.setDate(currentDate.getDate() + 1)
+  }
+  
+  // Nunca retornar números negativos
+  return Math.max(0, businessDays)
 }
 </script>
 

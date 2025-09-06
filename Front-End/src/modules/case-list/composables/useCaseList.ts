@@ -160,6 +160,10 @@ export function useCaseList() {
       // Incorporar prioridad (campo nuevo en backend). Mantenemos compatibilidad aunque el tipo Case aún no lo tenga.
       // @ts-ignore
       priority: (bk as any).prioridad || (bk as any).prioridad_caso || 'Normal',
+      // Campo oportunidad para días hábiles al completar
+      oportunidad: (bk as any).oportunidad || undefined,
+      // Campo entregado_a para registro de entrega
+      entregado_a: (bk as any).entregado_a || undefined,
       result: {
         method: bk.resultado?.metodo || '',
         macro: bk.resultado?.resultado_macro || '',

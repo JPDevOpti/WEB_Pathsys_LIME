@@ -65,6 +65,8 @@ app/modules/casos/
   ],
   "estado": "string (En proceso|Por firmar|Por entregar|Completado)",
   "prioridad": "string (Normal|Prioritario|Urgente, default: Normal)",
+  "oportunidad": "number|null (días hábiles transcurridos al completar el caso, >=0)",
+  "entregado_a": "string|null (persona que recibe el caso al ser entregado, <=100 chars)",
   "fecha_creacion": "datetime",
   "fecha_firma": "datetime|null",
   "fecha_entrega": "datetime|null",
@@ -131,6 +133,8 @@ app/modules/casos/
   ],
   "estado": "string",
   "prioridad": "string (Normal|Prioritario|Urgente)",
+  "oportunidad": "number|null (días hábiles transcurridos al completar el caso)",
+  "entregado_a": "string|null (persona que recibe el caso al ser entregado)",
   "fecha_creacion": "datetime ISO",
   "fecha_firma": "datetime ISO|null",
   "fecha_entrega": "datetime ISO|null",
@@ -559,3 +563,81 @@ app/modules/casos/
   }
 }
 ```
+
+---
+
+## 4. Campo Oportunidad - Métricas de Tiempo de Procesamiento
+
+### 4.1. Descripción
+
+El campo `oportunidad` es una nueva funcionalidad que permite capturar automáticamente el tiempo transcurrido (en días hábiles) desde la recepción del caso hasta su completación. Este campo se utiliza para métricas de rendimiento y análisis de eficiencia del laboratorio.
+
+### 4.2. Características Técnicas
+
+- **Tipo**: `Optional[int]`
+- **Validación**: `>= 0` (solo valores positivos o cero)
+- **Cálculo**: Automático en el frontend al marcar casos como "Completado"
+- **Persistencia**: Se almacena en MongoDB como parte del documento del caso
+- **Consideraciones**:
+  - Solo cuenta días hábiles (lunes a viernes)
+  - Excluye fines de semana y días festivos
+  - Se calcula desde `fecha_creacion` hasta el momento de completar
+
+### 4.3. Flujo de Captura
+
+1. **Frontend** calcula días hábiles transcurridos usando `calculateBusinessDays(fecha_creacion)`
+2. **Batch Completion**: Al completar casos en lote, se incluye automáticamente el campo `oportunidad`
+3. **Backend** recibe y valida el campo a través del esquema `CasoUpdate`
+4. **Almacenamiento**: Se persiste en MongoDB junto con el cambio de estado a "Completado"
+
+### 4.4. Ejemplo de Uso en API
+
+```json
+// PUT /api/v1/casos/2025-00001
+{
+  "estado": "Completado",
+  "oportunidad": 5,
+  "entregado_a": "Dr. Juan Pérez",
+  "fecha_entrega": "2025-09-06T14:30:00.000Z",
+  "muestras": [
+    // ... muestras actualizadas
+  ]
+}
+```
+
+### 4.5. Beneficios
+
+- **Métricas históricas**: Datos precisos para análisis de rendimiento
+- **Automatización**: No requiere intervención manual para capturar tiempos
+- **Consistencia**: Mismo algoritmo de cálculo en toda la aplicación
+- **Análisis**: Base para reportes de eficiencia y cumplimiento de SLAs
+
+---
+
+## 5. Campo Entregado A - Control de Entrega
+
+### 5.1. Descripción
+
+El campo `entregado_a` permite registrar la persona responsable que recibe físicamente los casos completados. Este campo es requerido al momento de marcar casos como entregados y proporciona trazabilidad en el proceso de entrega.
+
+### 5.2. Características Técnicas
+
+- **Tipo**: `Optional[str]`
+- **Validación**: Máximo 100 caracteres
+- **Requerido**: Solo al completar casos (marcar como "Completado")
+- **Persistencia**: Se almacena en MongoDB como parte del documento del caso
+
+### 5.3. Flujo de Entrega
+
+1. **Frontend**: Usuario debe llenar el campo "Entregado a" antes de confirmar
+2. **Validación**: Campo requerido y límite de 100 caracteres
+3. **Payload**: Se incluye en la actualización junto con `fecha_entrega` automática
+4. **Backend**: Valida y almacena el campo en el documento del caso
+
+### 5.4. Integración con Fecha de Entrega
+
+- `fecha_entrega` se establece automáticamente al momento de completar
+- Ambos campos se actualizan simultáneamente
+- Proporciona trazabilidad completa del proceso de entrega
+
+---
