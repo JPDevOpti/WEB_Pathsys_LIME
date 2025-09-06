@@ -2,9 +2,9 @@
   <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
     <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
       <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
       </svg>
-      Pruebas Complementarias
+      ¿Se necesitan más pruebas para completar el diagnóstico?
     </h3>
 
     <!-- Checkbox para activar pruebas complementarias -->
@@ -13,7 +13,7 @@
         id="needs-complementary-tests"
         :model-value="needsComplementaryTests"
         @update:model-value="handleNeedsTestsChange"
-        label="Se necesitan pruebas complementarias"
+        label="Solicitar pruebas complementarias"
         class="text-sm font-medium text-gray-700"
       />
     </div>
@@ -58,7 +58,7 @@
       <!-- Campo de texto para describir las pruebas necesarias -->
       <div>
         <label for="complementary-tests-details" class="block text-sm font-medium text-gray-700 mb-2">
-          Descripción de las pruebas complementarias requeridas <span class="text-red-500">*</span>
+          Nota que ira en el diagnostico final del informe actual <span class="text-red-500">*</span>
         </label>
         <FormTextarea
           id="complementary-tests-details"
@@ -76,7 +76,7 @@
         <SaveButton
           :disabled="!isReadyToSign"
           :loading="signingWithChanges"
-          text="Solicitar Pruebas Complementarias"
+          text="Solicitar pruebas"
           loading-text="Creando solicitud..."
           @click="handleSignWithChanges"
           size="md"

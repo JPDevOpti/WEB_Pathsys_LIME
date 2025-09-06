@@ -1,9 +1,22 @@
 <template>
   <div class="space-y-6">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-      <ComponentCard class="lg:col-span-2 min-h-[640px] flex flex-col" :dense="false" :fullHeight="true">
+    <div class="grid gap-6 items-start grid-cols-1 lg:grid-cols-3">
+      <ComponentCard 
+        :class="[
+          'flex flex-col',
+          casoEncontrado ? 'lg:col-span-2 min-h-[600px]' : 'lg:col-span-2 min-h-[160px]'
+        ]" 
+        :dense="false"
+      >
         <div class="flex items-center justify-between mb-2">
-          <h2 class="text-lg font-semibold">Realizar Resultados</h2>
+          <div>
+            <h2 class="text-lg font-semibold">
+              {{ casoEncontrado ? 'Realizar Resultados' : 'Buscar Caso para Realizar Resultados' }}
+            </h2>
+            <p v-if="!casoEncontrado" class="text-sm text-gray-500 mt-1">
+              Ingresa el código del caso para acceder a los campos de método, cortes y diagnóstico
+            </p>
+          </div>
           <div v-if="caseDetails?.caso_code" class="text-sm text-gray-500">
             <span class="font-medium">Caso:</span> {{ caseDetails.caso_code }}
             <span class="mx-2">-</span>
@@ -24,7 +37,6 @@
             </svg>
             Buscar Caso
           </h3>
-          
 
 
           <div class="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-end">
@@ -80,7 +92,8 @@
           <!-- Se elimina el bloque de notificación de caso encontrado -->
         </div>
 
-        <div class="flex-1 flex flex-col min-h-0 mt-0">
+        <!-- Editor de resultados - Solo visible cuando se encuentra un caso -->
+        <div v-if="casoEncontrado" class="flex-1 flex flex-col min-h-0 mt-0">
           <ResultEditor
             class="flex-1 min-h-0"
             :model-value="sections[activeSection]"
@@ -88,7 +101,21 @@
             :active-section="activeSection"
             @update:activeSection="activeSection = $event"
             :sections="sections"
-          />
+          >
+            <template #footer>
+              <div class="flex flex-wrap items-center gap-3 justify-end">
+                <ClearButton :disabled="loading" @click="handleClearResults" />
+                <PreviewButton :disabled="loading" @click="goToPreview" />
+                <SaveButton 
+                  :disabled="saving || loading || !canSaveProgress" 
+                  :loading="saving" 
+                  :text="canComplete ? 'Completar para Firma' : 'Guardar Progreso'" 
+                  :loading-text="canComplete ? 'Completando...' : 'Guardando...'" 
+                  @click="handleSaveAction"
+                />
+              </div>
+            </template>
+          </ResultEditor>
 
           <ValidationAlert
             :visible="!!validationMessage"
@@ -96,17 +123,8 @@
             :errors="validationMessage ? [validationMessage] : []"
           />
           <ErrorMessage v-if="errorMessage" class="mt-2" :message="errorMessage" />
-          <div class="mt-3 flex flex-wrap items-center gap-3 justify-end">
-            <ClearButton :disabled="loading" @click="handleClearResults" />
-            <PreviewButton :disabled="loading" @click="goToPreview" />
-            <SaveButton 
-              :disabled="saving || loading || !canSaveProgress" 
-              :loading="saving" 
-              :text="canComplete ? 'Completar para Firma' : 'Guardar Progreso'" 
-              :loading-text="canComplete ? 'Completando...' : 'Guardando...'" 
-              @click="handleSaveAction"
-            />
-          </div>
+          
+          <!-- Notificación de éxito -->
           <Notification
             class="mt-3"
             :visible="notification.visible"
@@ -152,6 +170,7 @@
         </div>
       </ComponentCard>
 
+      <!-- Paneles laterales - Siempre visibles -->
       <div class="space-y-6">
         <ComponentCard>
           <PatientInfoCard 
@@ -392,6 +411,10 @@ const limpiarBusqueda = () => {
   casoEncontrado.value = false
   searchError.value = ''
   casoInfo.value = null
+  
+  // Limpiar completamente los datos del composable
+  onClear()
+  
   // NO cerrar la notificación - se mantiene visible
 }
 

@@ -1,9 +1,22 @@
 <template>
   <div class="space-y-6">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-      <ComponentCard class="lg:col-span-2 min-h-[640px] flex flex-col" :dense="false" :fullHeight="true">
+    <div class="grid gap-6 items-start grid-cols-1 lg:grid-cols-3">
+      <ComponentCard 
+        :class="[
+          'flex flex-col',
+          casoEncontrado ? 'lg:col-span-2 min-h-[640px]' : 'lg:col-span-2 min-h-[160px]'
+        ]" 
+        :dense="false"
+      >
         <div class="flex items-center justify-between mb-2">
-          <h2 class="text-lg font-semibold">Firmar Resultados</h2>
+          <div>
+            <h2 class="text-lg font-semibold">
+              {{ casoEncontrado ? 'Firmar Resultados' : 'Buscar Caso para Firmar Resultados' }}
+            </h2>
+            <p v-if="!casoEncontrado" class="text-sm text-gray-500 mt-1">
+              Ingresa el código del caso para acceder a la firma de resultados
+            </p>
+          </div>
           <div v-if="caseDetails?.caso_code" class="text-sm text-gray-500">
             <span class="font-medium">Caso:</span> {{ caseDetails.caso_code }}
             <span class="mx-2">-</span>
@@ -18,11 +31,7 @@
 
         <!-- Buscador de caso -->
         <div class="bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-200 mb-4">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">
             Buscar Caso
           </h3>
 
@@ -56,7 +65,8 @@
           </div>
         </div>
 
-        <div class="flex-1 flex flex-col min-h-0 mt-0">
+        <!-- Editor de resultados y firma - Solo visible cuando se encuentra un caso -->
+        <div v-if="casoEncontrado" class="flex-1 flex flex-col min-h-0 mt-0">
           <ResultEditor class="flex-1 min-h-0" :model-value="sections[activeSection]"
             @update:model-value="updateSectionContent" :active-section="activeSection"
             @update:activeSection="activeSection = $event" :sections="sections" />
@@ -164,6 +174,7 @@
         </div>
       </ComponentCard>
 
+      <!-- Paneles laterales - Siempre visibles -->
       <div class="space-y-6">
         <ComponentCard>
           <PatientInfoCard 
@@ -564,12 +575,16 @@ const limpiarBusqueda = () => {
   casoEncontrado.value = false
   searchError.value = ''
   hasBeenSigned.value = false // Resetear el estado de firma
-  // NO cerrar la notificación - se mantiene visible
-
+  
+  // Limpiar completamente los datos del composable
+  onClear()
+  
   // Limpiar diagnósticos cuando se limpia la búsqueda
   clearDiagnosis()
   clearPrimaryDiseaseCIEO()
   showCIEODiagnosis.value = false
+  
+  // NO cerrar la notificación - se mantiene visible
 }
 
 // Acciones

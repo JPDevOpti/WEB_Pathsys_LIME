@@ -1,32 +1,52 @@
 <template>
-  <div class="h-full flex flex-col">
-    <div class="flex flex-wrap items-center gap-4 mb-4 flex-shrink-0">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        class="px-3 py-1.5 rounded text-sm border transition-colors"
-        :class="getTabClasses(tab.key)"
-        @click="$emit('update:activeSection', tab.key)"
-      >
-        {{ tab.label }}
-      </button>
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col h-96">
+    <!-- Header con tabs -->
+    <div class="p-4 border-b border-gray-200 flex-shrink-0">
+      <div class="flex flex-wrap items-center gap-4">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
+          class="px-3 py-1.5 rounded text-sm border transition-colors"
+          :class="getTabClasses(tab.key)"
+          @click="$emit('update:activeSection', tab.key)"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
     </div>
-    <div class="flex-1 min-h-0">
+
+    <!-- Contenido principal -->
+    <div class="flex-1 min-h-0 p-4">
+      <!-- Sección de métodos cuando la pestaña activa es 'method' -->
+      <div v-if="activeSection === 'method'" class="h-full">
+        <MethodSection
+          :model-value="modelValue"
+          @update:model-value="$emit('update:modelValue', $event)"
+        />
+      </div>
+      
+      <!-- Textarea para otras secciones -->
       <FormTextarea 
+        v-else
         :model-value="modelValue" 
         @update:model-value="$emit('update:modelValue', $event)" 
-        class="w-full h-full resize-none py-3 transition-colors"
+        class="w-full h-full resize-none transition-colors"
         :class="getTextareaClasses()"
-        :rows="12"
+        :rows="8"
         :show-counter="false"
       />
+    </div>
+
+    <!-- Footer con botones -->
+    <div class="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+      <slot name="footer"></slot>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { FormTextarea } from '@/shared/components/forms'
-import { computed } from 'vue'
+import MethodSection from './MethodSection.vue'
 
 type EditorSectionKey = 'method' | 'macro' | 'micro' | 'diagnosis'
 const props = defineProps<{ 
@@ -43,35 +63,18 @@ const tabs: Array<{ key: EditorSectionKey, label: string }> = [
   { key: 'diagnosis', label: 'Diagnóstico' }
 ]
 
-// Usar directamente la prop sin computed
-
-function isFieldComplete(fieldKey: EditorSectionKey): boolean {
-  if (!props.sections) return true
-  return !!props.sections[fieldKey]?.trim()
-}
-
+// Funciones para estilos
 function getTabClasses(tabKey: EditorSectionKey): string {
   const isActive = tabKey === props.activeSection
-  const isComplete = isFieldComplete(tabKey)
   
   if (isActive) {
     return 'bg-blue-600 text-white border-blue-600'
-  }
-  
-  if (!isComplete) {
-    return 'bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100'
   }
   
   return 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
 }
 
 function getTextareaClasses(): string {
-  const isComplete = isFieldComplete(props.activeSection)
-  
-  if (!isComplete) {
-    return 'border-yellow-300 focus:border-yellow-400 focus:ring-yellow-400'
-  }
-  
   return 'border-gray-300 focus:border-blue-400 focus:ring-blue-400'
 }
 </script>
