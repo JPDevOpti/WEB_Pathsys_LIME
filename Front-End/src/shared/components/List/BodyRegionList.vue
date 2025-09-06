@@ -59,7 +59,7 @@
           :class="[
             'px-3 py-2 text-sm cursor-pointer transition-colors',
             index === highlightedIndex ? 'bg-blue-50 text-blue-900' : 'text-gray-900 hover:bg-gray-50',
-            selectedRegion === option.value ? 'bg-blue-100 text-blue-900 font-medium' : ''
+            selectedRegion === option.label ? 'bg-blue-100 text-blue-900 font-medium' : ''
           ]"
           @click="selectOption(option)"
           @mouseenter="highlightedIndex = index"
@@ -70,7 +70,7 @@
               <span class="font-medium">{{ option.label }}</span>
             </div>
             <svg 
-              v-if="selectedRegion === option.value"
+              v-if="selectedRegion === option.label"
               class="h-4 w-4 text-blue-600"
               fill="currentColor"
               viewBox="0 0 20 20"
@@ -623,7 +623,7 @@ const filteredOptions = computed((): BodyRegion[] => {
 const currentSelectedRegion = computed((): BodyRegion | null => {
   if (!selectedRegion.value) return null
   
-  const option = availableOptions.value.find(opt => opt.value === selectedRegion.value)
+  const option = availableOptions.value.find(opt => opt.label === selectedRegion.value)
   return option || null
 })
 
@@ -678,13 +678,13 @@ const toggleDropdown = () => {
 }
 
 const selectOption = (option: BodyRegion) => {
-  selectedRegion.value = option.value
+  selectedRegion.value = option.label
   searchQuery.value = ''
   isOpen.value = false
   highlightedIndex.value = -1
   
   // Emit events
-  emit('update:modelValue', option.value)
+  emit('update:modelValue', option.label)
   emit('region-selected', option)
   
   // Quitar focus del input
@@ -732,7 +732,25 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 // Watchers
 watch(() => props.modelValue, (newValue) => {
-  selectedRegion.value = newValue || ''
+  if (!newValue) {
+    selectedRegion.value = ''
+    return
+  }
+  
+  // Buscar si el valor es un label (nombre legible)
+  const optionByLabel = bodyRegions.find(opt => opt.label === newValue)
+  if (optionByLabel) {
+    selectedRegion.value = newValue
+    return
+  }
+  
+  // Si no es un label, buscar por value (valor simplificado) y convertir a label
+  const optionByValue = bodyRegions.find(opt => opt.value === newValue)
+  if (optionByValue) {
+    selectedRegion.value = optionByValue.label
+  } else {
+    selectedRegion.value = newValue
+  }
 }, { immediate: true })
 
 watch(selectedRegion, (newValue) => {
