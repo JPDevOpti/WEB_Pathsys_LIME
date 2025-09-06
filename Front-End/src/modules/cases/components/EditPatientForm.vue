@@ -30,19 +30,11 @@
         </div>
         <!-- Información del paciente encontrado -->
         <div v-if="patientFound && foundPatientInfo" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div class="flex items-center mb-3">
+          <div class="flex items-center">
             <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <h4 class="text-sm font-semibold text-green-800">Paciente Encontrado y Cargado</h4>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-            <div><span class="font-medium text-green-700">Nombre:</span><p class="text-green-800 break-words">{{ foundPatientInfo.nombrePaciente }}</p></div>
-            <div><span class="font-medium text-green-700">Identificación:</span><p class="text-green-800 font-mono">{{ foundPatientInfo.pacienteCode }}</p></div>
-            <div><span class="font-medium text-green-700">Edad:</span><p class="text-green-800">{{ foundPatientInfo.edad }} años</p></div>
-            <div><span class="font-medium text-green-700">Sexo:</span><p class="text-green-800">{{ foundPatientInfo.sexo }}</p></div>
-            <div><span class="font-medium text-green-700">Entidad:</span><p class="text-green-800 break-words">{{ foundPatientInfo.entidad }}</p></div>
-            <div><span class="font-medium text-green-700">Tipo de Atención:</span><p class="text-green-800 break-words">{{ foundPatientInfo.tipoAtencion }}</p></div>
+            <h4 class="text-sm font-semibold text-green-800">Paciente encontrado y cargado</h4>
           </div>
         </div>
       </div>
@@ -60,7 +52,13 @@
 
       <!-- Formulario de edición (visible solo cuando se encuentra un paciente) -->
       <div v-if="patientFound" class="space-y-6">
-        <FormInputField v-model="form.nombrePaciente" label="Nombre completo" placeholder="Ingrese el nombre del paciente" required />
+        <!-- Campos de nombre y código del paciente -->
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormInputField v-model="form.nombrePaciente" label="Nombre completo" placeholder="Ingrese el nombre del paciente" required />
+          <FormInputField v-model="form.pacienteCode" label="Documento de identidad" placeholder="Documento del paciente" :required="true" :max-length="12" inputmode="numeric" />
+        </div>
+        
+        <!-- Otros campos del formulario -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormInputField v-model="form.edad" type="number" label="Edad" placeholder="Ingrese la edad" required />
           <FormSelect v-model="form.sexo" :options="sexoOptions" label="Sexo" placeholder="Seleccione sexo" required />
@@ -229,8 +227,9 @@ const loadPatientData = async () => {
 const onSubmit = async () => {
   if (!isFormValid.value) return
   
-  const pacienteCodeToUse = form.pacienteCode || searchPatientCedula.value
-  if (!pacienteCodeToUse) {
+  // Usar el código original del paciente para el endpoint, no el nuevo código del formulario
+  const originalPatientCode = originalData.value?.pacienteCode || searchPatientCedula.value
+  if (!originalPatientCode) {
     showNotification('error', 'Error', 'Debe buscar un paciente primero para poder editar sus datos')
     return
   }
@@ -246,36 +245,48 @@ const onSubmit = async () => {
       form.entidad = selectedEntity.value.nombre
     }
 
-    // Prepara los datos para la actualización
-    const patientUpdateData = {
-      nombre: form.nombrePaciente.trim(),
-      edad: parseInt(form.edad),
-      sexo: form.sexo === 'masculino' ? 'Masculino' : 'Femenino',
-      entidad_info: { id: form.entidadCodigo || '', nombre: form.entidad.trim() },
-      tipo_atencion: form.tipoAtencion === 'ambulatorio' ? 'Ambulatorio' : 'Hospitalizado',
-      observaciones: form.observaciones.trim()
+    // Verificar si el código del paciente cambió
+    const codeChanged = form.pacienteCode.trim() !== originalPatientCode
+    
+    let updatedPatientResponse: any
+
+    if (codeChanged) {
+      // Si cambió el código, usar el endpoint específico para cambio de código
+      updatedPatientResponse = await patientsApiService.changePatientCode(originalPatientCode, form.pacienteCode.trim())
+      showNotification('success', '¡Código de Paciente Actualizado!', 'El código del paciente ha sido cambiado exitosamente', 5000)
+    } else {
+      // Si no cambió el código, usar el endpoint normal de actualización
+      const patientUpdateData = {
+        nombre: form.nombrePaciente.trim(),
+        edad: parseInt(form.edad),
+        sexo: form.sexo === 'masculino' ? 'Masculino' : 'Femenino',
+        entidad_info: { id: form.entidadCodigo || '', nombre: form.entidad.trim() },
+        tipo_atencion: form.tipoAtencion === 'ambulatorio' ? 'Ambulatorio' : 'Hospitalizado',
+        observaciones: form.observaciones.trim()
+      }
+      
+      // Validaciones adicionales
+      if (!patientUpdateData.nombre || !patientUpdateData.entidad_info.nombre) {
+        throw new Error('El nombre del paciente y la entidad son obligatorios')
+      }
+      
+      if (patientUpdateData.edad <= 0 || patientUpdateData.edad > 150) {
+        throw new Error('La edad debe estar entre 1 y 150 años')
+      }
+      
+      if (!patientUpdateData.sexo || !patientUpdateData.tipo_atencion) {
+        throw new Error('El sexo y tipo de atención son obligatorios')
+      }
+      
+      // Actualiza el paciente en la API usando el código original para el endpoint
+      updatedPatientResponse = await patientsApiService.updatePatient(originalPatientCode, patientUpdateData as any)
+      showNotification('success', '¡Paciente Actualizado Exitosamente!', '', 0)
     }
     
-    // Validaciones adicionales
-    if (!patientUpdateData.nombre || !patientUpdateData.entidad_info.nombre) {
-      throw new Error('El nombre del paciente y la entidad son obligatorios')
-    }
-    
-    if (patientUpdateData.edad <= 0 || patientUpdateData.edad > 150) {
-      throw new Error('La edad debe estar entre 1 y 150 años')
-    }
-    
-    if (!patientUpdateData.sexo || !patientUpdateData.tipo_atencion) {
-      throw new Error('El sexo y tipo de atención son obligatorios')
-    }
-    
-    // Actualiza el paciente en la API
-    const updatedPatientResponse = await patientsApiService.updatePatient(pacienteCodeToUse, patientUpdateData as any)
     const mappedUpdatedData = mapApiResponseToPatientData(updatedPatientResponse)
     originalData.value = { ...mappedUpdatedData }
     updatedPatient.value = updatedPatientResponse
     emit('patient-updated', mappedUpdatedData)
-    showNotification('success', '¡Paciente Actualizado Exitosamente!', '', 0)
     resetFormData()
   } catch (error: any) {
     showNotification('error', 'Error de Validación', error.message || 'Error al actualizar los datos del paciente')

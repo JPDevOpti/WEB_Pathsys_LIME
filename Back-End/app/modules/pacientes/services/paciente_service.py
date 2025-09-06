@@ -66,6 +66,19 @@ class PacienteService:
         paciente_data = await self.repository.update(paciente_id, paciente_update)
         return PacienteResponse(**paciente_data)
 
+    async def change_patient_code(self, paciente_id: str, new_code: str) -> PacienteResponse:
+        """Cambiar el código de un paciente existente"""
+        logger.info(f"Cambiando código del paciente {paciente_id} a: {new_code}")
+        # Validar formato del nuevo código
+        if not new_code or len(new_code.strip()) < 6 or len(new_code.strip()) > 12:
+            raise BadRequestError("El código del paciente debe tener entre 6 y 12 caracteres")
+
+        # Usar método especializado del repositorio para propagar cambio
+        casos_collection = self.repository.db.casos if hasattr(self.repository.db, 'casos') else None
+        paciente_data = await self.repository.change_code(paciente_id, new_code.strip(), casos_collection)
+        logger.info(f"Código del paciente {paciente_id} cambiado exitosamente a: {new_code}")
+        return PacienteResponse(**paciente_data)
+
     async def delete_paciente(self, paciente_id: str) -> bool:
         """Eliminar un paciente"""
         logger.info(f"Intentando eliminar paciente: {paciente_id}")

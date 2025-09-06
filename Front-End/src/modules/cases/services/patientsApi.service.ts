@@ -109,6 +109,32 @@ export class PatientsApiService {
     }
   }
 
+  async changePatientCode(currentCedula: string, newCode: string): Promise<PatientResponse> {
+    try {
+      const response = await apiClient.put<PatientResponse>(`${this.endpoint}/${currentCedula}/change-code?new_code=${encodeURIComponent(newCode)}`)
+      return response
+    } catch (error: any) {
+      if (error.response?.data?.detail) {
+        let errorMessage = 'Error al cambiar código: '
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage += error.response.data.detail.map((err: any) => {
+            if (typeof err === 'object' && err !== null) {
+              return err.msg || err.loc?.join('.') || JSON.stringify(err)
+            }
+            return String(err)
+          }).join(', ')
+        } else {
+          errorMessage += JSON.stringify(error.response.data.detail)
+        }
+        throw new Error(errorMessage)
+      } else if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      } else {
+        throw new Error(error.message || `Error al cambiar el código del paciente ${currentCedula}`)
+      }
+    }
+  }
+
   async checkPatientExists(cedula: string): Promise<boolean> {
     try {
       const patient = await this.getPatientByCedula(cedula)

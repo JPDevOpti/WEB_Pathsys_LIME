@@ -86,6 +86,37 @@ class PacienteRepository:
             raise NotFoundError("Paciente no encontrado después de la actualización")
         return self._convert_doc_to_response(dict(updated_patient))
 
+    async def change_code(self, old_code: str, new_code: str, casos_collection) -> dict:
+        """Cambiar el código del paciente y propagar a los casos relacionados"""
+        # Verificar existencia del paciente original
+        existing_patient = await self.collection.find_one({"paciente_code": old_code})
+        if not existing_patient:
+            raise NotFoundError("Paciente no encontrado")
+
+        # Verificar que el nuevo código no exista ya
+        duplicated = await self.collection.find_one({"paciente_code": new_code})
+        if duplicated:
+            raise ConflictError(f"Ya existe un paciente con el código {new_code}")
+
+        # Actualizar código en colección de pacientes
+        await self.collection.update_one(
+            {"paciente_code": old_code},
+            {"$set": {"paciente_code": new_code, "fecha_actualizacion": datetime.now(timezone.utc)}}
+        )
+
+        # Propagar cambio a casos embebidos (paciente.paciente_code)
+        if casos_collection is not None:
+            await casos_collection.update_many(
+                {"paciente.paciente_code": old_code},
+                {"$set": {"paciente.paciente_code": new_code}}
+            )
+
+        # Recuperar paciente con nuevo código
+        updated_patient = await self.collection.find_one({"paciente_code": new_code})
+        if not updated_patient:
+            raise NotFoundError("Paciente no encontrado después de cambiar el código")
+        return self._convert_doc_to_response(dict(updated_patient))
+
     async def delete(self, paciente_id: str) -> bool:
         """Eliminar un paciente"""
         result = await self.collection.delete_one({"paciente_code": paciente_id})

@@ -208,6 +208,30 @@ async def update_paciente(
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
+@router.put("/{paciente_id}/change-code", response_model=PacienteResponse)
+async def change_patient_code(
+    paciente_id: str,
+    new_code: str = Query(..., description="Nuevo código del paciente"),
+    service: PacienteService = Depends(get_service)
+) -> PacienteResponse:
+    """Cambiar el código de un paciente existente"""
+    try:
+        logger.info(f"Cambiando código del paciente {paciente_id} a: {new_code}")
+        return await service.change_patient_code(paciente_id, new_code)
+    except NotFoundError as e:
+        logger.warning(f"Paciente no encontrado: {str(e)}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ConflictError as e:
+        logger.warning(f"Conflicto al cambiar código: {str(e)}")
+        raise HTTPException(status_code=409, detail=str(e))
+    except BadRequestError as e:
+        logger.warning(f"Error de validación: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error al cambiar código del paciente: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
+
 @router.delete("/{paciente_id}", response_model=Dict[str, str])
 async def delete_paciente(
     paciente_id: str,
