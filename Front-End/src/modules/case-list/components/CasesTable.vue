@@ -131,7 +131,7 @@
                   class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border text-nowrap relative min-w-0 flex-shrink-0"
                   :title="getTestTooltip(c.tests, g.code, g.count)"
                 >
-                  <span class="truncate test-code">{{ extractTestCode(g.code) }}</span>
+                  <span class="truncate test-code">{{ g.code }}</span>
                   <span
                     v-if="g.count > 1"
                     class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
@@ -303,7 +303,7 @@
                 class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0 flex-shrink-0"
                 :title="getTestTooltip(c.tests, g.code, g.count)"
               >
-                <span class="truncate test-code">{{ extractTestCode(g.code) }}</span>
+                <span class="truncate test-code">{{ g.code }}</span>
                 <span
                   v-if="g.count > 1"
                   class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
@@ -603,28 +603,45 @@ function formatDate(dateString: string) {
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-function extractTestCode(testString: string) {
-  const match = testString.match(/^\d{6}/)
-  return match ? match[0] : testString.split(' ')[0]
-}
+// ===== Agrupamiento de pruebas =====
 
 function groupTests(tests: string[]): { code: string; count: number }[] {
-  const groups: Record<string, number> = {}
-  tests.forEach(t => {
-    const code = extractTestCode(t)
-    groups[code] = (groups[code] || 0) + 1
+  const counts: Record<string, number> = {}
+  const seenOrder: string[] = []
+  
+  // Contar cada código exactamente como aparece (sin normalizar)
+  tests.forEach((test) => {
+    const trimmed = test.trim()
+    if (!trimmed) return
+    
+    // Extraer solo el código inicial (antes del primer espacio o guión)
+    let code = trimmed.split(/[\s-]/)[0]
+    
+    // Si no encontramos nada, usar el string completo truncado
+    if (!code) code = trimmed.substring(0, 10)
+    
+    if (!counts[code]) {
+      counts[code] = 0
+      seenOrder.push(code)
+    }
+    counts[code] += 1
   })
-  return Object.entries(groups).map(([code, count]) => ({ code, count }))
+  
+  // Retornar en el orden que aparecieron por primera vez
+  return seenOrder.map(code => ({
+    code: code,
+    count: counts[code]
+  }))
 }
 
 function getTestTooltip(tests: string[], code: string, count: number): string {
-  const normalizedCode = extractTestCode(code)
-  const matching = tests.filter(t => extractTestCode(t) === normalizedCode)
+  // Buscar todas las pruebas que empiecen con este código
+  const matching = tests.filter(t => t.trim().startsWith(code))
   const names = matching
-    .map(t => (t.includes(' - ') ? t.split(' - ').slice(1).join(' - ') : t))
+    .map(t => t.includes(' - ') ? t.split(' - ').slice(1).join(' - ') : t)
     .filter(Boolean)
   const uniqueNames = Array.from(new Set(names))
-  const nameStr = uniqueNames.length ? uniqueNames.join(', ') : `Código ${normalizedCode}`
+  const nameStr = uniqueNames.length ? uniqueNames.join(', ') : `Código ${code}`
   return `${nameStr} • ${count} vez${count > 1 ? 'es' : ''}`
 }
 

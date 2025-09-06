@@ -91,7 +91,7 @@ export function useCaseList() {
   // La fecha de entrega original (fecha_entrega) se ignora para cálculos y visualización principales.
   const deliveredAt = getDate(bk.fecha_firma) || getDate(bk.resultado?.fecha_resultado)
 
-    // aplanar pruebas como "code - name"
+    // aplanar pruebas como "code - name" expandidas por cantidad
     const flatTests: string[] = []
     const subsamples: Case['subsamples'] = []
     if (Array.isArray(bk.muestras)) {
@@ -100,8 +100,18 @@ export function useCaseList() {
         m.pruebas?.forEach((p) => {
           const code = p.id || ''
           const name = p.nombre || testsCatalog.get(code) || ''
-          if (code) flatTests.push(name ? `${code} - ${name}` : code)
-          items.push({ id: code, name: name || code, quantity: p.cantidad || 1 })
+          const cantidad = p.cantidad || 1
+          
+          // Expandir según cantidad para flatTests (para el agrupamiento en tabla)
+          if (code) {
+            const testString = name ? `${code} - ${name}` : code
+            for (let i = 0; i < cantidad; i++) {
+              flatTests.push(testString)
+            }
+          }
+          
+          // Para subsamples mantener la estructura con cantidad
+          items.push({ id: code, name: name || code, quantity: cantidad })
         })
         subsamples.push({ bodyRegion: m.region_cuerpo || '', tests: items })
       })
