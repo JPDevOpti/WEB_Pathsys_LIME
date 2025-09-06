@@ -2,6 +2,21 @@
  * Tipos para el módulo de dashboard
  */
 
+// Enum para prioridad de casos
+export enum CasePriority {
+  Normal = 'Normal',
+  Prioritario = 'Prioritario',
+  Urgente = 'Urgente'
+}
+
+// Enum para estados de casos
+export enum CaseStatus {
+  EnProceso = 'En proceso',
+  PorFirmar = 'Por firmar',
+  PorEntregar = 'Por entregar',
+  Completado = 'Completado'
+}
+
 // Estadísticas de pacientes
 export interface PacienteStats {
   total_pacientes: number
@@ -16,17 +31,22 @@ export interface PacienteStats {
   }
 }
 
-// Estadísticas de casos
+// Estadísticas de casos actualizadas según la documentación del backend
 export interface CasoStats {
   total_casos: number
+  casos_en_proceso: number
+  casos_por_firmar: number
+  casos_por_entregar: number
+  casos_completados: number
+  casos_vencidos: number
+  casos_sin_patologo: number
+  tiempo_promedio_procesamiento: number | null
   casos_mes_actual: number
   casos_mes_anterior: number
+  casos_semana_actual: number
   cambio_porcentual: number
-  casos_por_estado: {
-    [estado: string]: number
-  }
-  casos_vencidos: number
-  tiempo_promedio_procesamiento: number
+  casos_por_patologo: Record<string, number>
+  casos_por_tipo_prueba: Record<string, number>
 }
 
 // Estadísticas de casos por mes
@@ -36,7 +56,7 @@ export interface CasosPorMes {
   total_casos: number
 }
 
-// Caso urgente
+// Caso urgente actualizado con prioridad
 export interface CasoUrgente {
   codigo: string
   paciente: {
@@ -47,7 +67,8 @@ export interface CasoUrgente {
   pruebas: string[]
   patologo: string
   fecha_creacion: string
-  estado: string
+  estado: CaseStatus
+  prioridad: CasePriority
   dias_en_sistema: number
 }
 
@@ -80,12 +101,20 @@ export interface EstadisticasOportunidad {
   }
 }
 
-// Filtros para casos urgentes
+// Filtros para casos urgentes actualizados
 export interface FiltrosCasosUrgentes {
   patologo?: string
-  estado?: string
+  estado?: CaseStatus
+  prioridad?: CasePriority
   dias_minimos?: number
   limite?: number
+}
+
+// Estadísticas por prioridad
+export interface EstadisticasPorPrioridad {
+  [CasePriority.Normal]: number
+  [CasePriority.Prioritario]: number
+  [CasePriority.Urgente]: number
 }
 
 // Respuesta de la API para casos por mes

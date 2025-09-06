@@ -22,8 +22,8 @@ export const API_CONFIG = {
     ENTITIES: '/entidades',
     PATHOLOGISTS: '/patologos',
     PATIENTS: '/pacientes',
-    RESIDENTS: '/residentes',  // ✅ AGREGADO: Endpoint para residentes
-    AUXILIARIES: '/auxiliares', // ✅ AGREGADO: Endpoint para auxiliares
+    RESIDENTS: '/residentes',  
+    AUXILIARIES: '/auxiliares', 
     AUTH: {
       LOGIN: '/auth/login',
       LOGOUT: '/auth/logout',

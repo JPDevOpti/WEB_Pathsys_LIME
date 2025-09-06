@@ -33,12 +33,10 @@ export interface Case {
     resultDate?: string
     // Campos adicionales para diagnósticos
     diagnostico_cie10?: {
-      id: string
       codigo: string
       nombre: string
     } | null
     diagnostico_cieo?: {
-      id: string
       codigo: string
       nombre: string
     } | null

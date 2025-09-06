@@ -1,5 +1,27 @@
 """Modelos para el módulo de casos"""
 
-from .caso import Caso
+from .caso import (
+    Caso,
+    PrioridadCasoEnum,
+    TipoResultadoEnum,
+    EntidadInfo,
+    MuestraInfo,
+    PacienteInfo,
+    PatologoInfo,
+    DiagnosticoCIE10,
+    DiagnosticoCIEO,
+    ResultadoInfo
+)
 
-__all__ = ["Caso"]
+__all__ = [
+    "Caso",
+    "PrioridadCasoEnum", 
+    "TipoResultadoEnum",
+    "EntidadInfo",
+    "MuestraInfo", 
+    "PacienteInfo",
+    "PatologoInfo",
+    "DiagnosticoCIE10",
+    "DiagnosticoCIEO", 
+    "ResultadoInfo"
+]

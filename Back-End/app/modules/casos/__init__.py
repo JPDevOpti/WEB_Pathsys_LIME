@@ -1,6 +1,15 @@
 """Módulo de casos"""
 
-from .models import Caso
+from .models import (
+    Caso, 
+    PrioridadCasoEnum,
+    TipoResultadoEnum,
+    EntidadInfo,
+    PatologoInfo as ModelPatologoInfo,
+    DiagnosticoCIE10 as ModelDiagnosticoCIE10,
+    DiagnosticoCIEO as ModelDiagnosticoCIEO,
+    ResultadoInfo as ModelResultadoInfo
+)
 from .schemas import (
     CasoCreate,
     CasoUpdate,
@@ -9,7 +18,6 @@ from .schemas import (
     CasoStats,
     MuestraInfo,
     PacienteInfo,
-    MedicoInfo,
     PatologoInfo,
     ResultadoInfo,
     DiagnosticoCIE10,
@@ -25,6 +33,13 @@ from .routes import router
 
 __all__ = [
     "Caso",
+    "PrioridadCasoEnum",
+    "TipoResultadoEnum", 
+    "EntidadInfo",
+    "ModelPatologoInfo",
+    "ModelDiagnosticoCIE10",
+    "ModelDiagnosticoCIEO",
+    "ModelResultadoInfo",
     "CasoCreate",
     "CasoUpdate",
     "CasoResponse",
@@ -32,7 +47,6 @@ __all__ = [
     "CasoStats",
     "MuestraInfo",
     "PacienteInfo",
-    "MedicoInfo",
     "PatologoInfo",
     "ResultadoInfo",
     "DiagnosticoCIE10",

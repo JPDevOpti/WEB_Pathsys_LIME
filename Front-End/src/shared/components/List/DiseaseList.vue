@@ -181,7 +181,7 @@ import { FormCheckbox } from '../forms'
 
 // Types
 interface Disease {
-  id: string
+  id?: string
   tabla: string
   codigo: string
   nombre: string

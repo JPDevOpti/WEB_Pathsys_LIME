@@ -3,7 +3,6 @@
 from .caso import (
     MuestraInfo,
     PacienteInfo,
-    MedicoInfo,
     PatologoInfo,
     ResultadoInfo,
     DiagnosticoCIE10,
@@ -28,7 +27,6 @@ from .caso import (
 __all__ = [
     "MuestraInfo",
     "PacienteInfo",
-    "MedicoInfo",
     "PatologoInfo",
     "ResultadoInfo",
     "DiagnosticoCIE10",

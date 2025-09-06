@@ -34,7 +34,7 @@ export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
       fecha_actualizacion: beCase.paciente.fecha_actualizacion
     },
     medico_solicitante: beCase.medico_solicitante
-      ? { nombre: beCase.medico_solicitante.nombre }
+      ? { nombre: beCase.medico_solicitante }
       : undefined,
     muestras: (beCase.muestras || []).map(m => ({
       region_cuerpo: m.region_cuerpo,

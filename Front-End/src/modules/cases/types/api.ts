@@ -3,7 +3,6 @@ import type { CaseModel, CaseListItem, CaseStatistics, CaseState } from './case'
 export interface CreateCaseRequest {
   paciente: {
     paciente_code: string
-    cedula: string
     nombre: string
     edad: number
     sexo: string
@@ -11,13 +10,14 @@ export interface CreateCaseRequest {
     tipo_atencion: string
     observaciones?: string
   }
-  medico_solicitante?: { nombre: string }
+  medico_solicitante?: string
   servicio?: string
   muestras: Array<{
     region_cuerpo: string
     pruebas: Array<{ id: string; nombre: string; cantidad: number }>
   }>
   estado: CaseState
+  prioridad?: string
   observaciones_generales?: string
 }
 

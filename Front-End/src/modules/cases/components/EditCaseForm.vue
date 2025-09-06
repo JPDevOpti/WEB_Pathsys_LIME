@@ -74,23 +74,28 @@
       </div>
 
       <div v-if="caseFound" class="space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="form.medicoSolicitante" label="Médico Solicitante" placeholder="Médico que solicita el estudio" :required="false" :max-length="100" />
-          <FormInputField v-model="form.servicio" label="Servicio" placeholder="Procedencia del caso" :required="false" :max-length="100" />
-        </div>
-
+        <!-- Campos de entidad y tipo de atención -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <EntityList :key="'entity-' + resetKey" v-model="form.entidadPaciente" label="Entidad del Paciente" placeholder="Buscar entidad..." :required="true" :auto-load="true" @entity-selected="onEntitySelected" />
           <FormSelect :key="'tipoAtencion-' + resetKey + '-' + form.tipoAtencionPaciente" v-model="form.tipoAtencionPaciente" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" />
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          <FormInputField v-model="form.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="99" :required="true" @input="handleLocalNumeroMuestrasChange" />
-          <FormInputField v-model="form.fechaIngreso" label="Fecha de creación" type="date" :required="true" />
-          <FormSelect :key="'estado-' + resetKey" v-model="form.estado" label="Estado del Caso" placeholder="Seleccione el estado" :required="true" :options="estadoOptions" />
+        <!-- Campos de fecha de ingreso y prioridad -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          <FormInputField v-model="form.fechaIngreso" label="Fecha de Ingreso" type="date" :required="true" help-text="Fecha en que ingresa el caso al sistema" />
+          <FormSelect v-model="form.prioridadCaso" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" help-text="Nivel de urgencia del caso médico" />
         </div>
 
-        <div class="max-w-md">
+        <!-- Campos de médico solicitante y servicio -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          <FormInputField v-model="form.medicoSolicitante" label="Médico Solicitante" placeholder="Médico que solicita el estudio" :required="true" :max-length="200" />
+          <FormInputField v-model="form.servicio" label="Servicio" placeholder="Procedencia del caso" :required="true" :max-length="100" />
+        </div>
+
+        <!-- Campos adicionales del formulario de edición -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+          <FormInputField v-model="form.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="99" :required="true" @input="handleLocalNumeroMuestrasChange" />
+          <FormSelect :key="'estado-' + resetKey" v-model="form.estado" label="Estado del Caso" placeholder="Seleccione el estado" :required="true" :options="estadoOptions" />
           <PathologistList :key="'pathologist-' + resetKey" v-model="form.patologoAsignado" label="Patólogo Asignado" placeholder="Buscar patólogo..." :required="false" :auto-load="true" @pathologist-selected="onPathologistSelected" />
         </div>
 
@@ -168,6 +173,7 @@
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Detalles del Caso</h4>
                     <div class="space-y-2 text-sm">
                       <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ updatedCase.estado || 'Pendiente' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Prioridad:</span><p class="text-gray-900 font-semibold">{{ getPrioridad() }}</p></div>
                       <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ getMedicoSolicitante() }}</p></div>
                       <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ getServicio() }}</p></div>
                       <div><span class="text-gray-500 font-medium">Número de Submuestras:</span><p class="text-gray-900 font-semibold">{{ getMuestrasCount() }}</p></div>
@@ -275,6 +281,7 @@ const form = reactive<CaseFormData & { estado: string; patologoAsignado?: string
   servicio: '',
   entidadPaciente: '',
   tipoAtencionPaciente: '',
+  prioridadCaso: '',
   numeroMuestras: '0',
   muestras: [],
   observaciones: '',
@@ -285,6 +292,12 @@ const form = reactive<CaseFormData & { estado: string; patologoAsignado?: string
 const tipoAtencionOptions = [
   { value: 'ambulatorio', label: 'Ambulatorio' },
   { value: 'hospitalizado', label: 'Hospitalizado' },
+]
+
+const prioridadOptions = [
+  { value: 'Normal', label: 'Normal' },
+  { value: 'Prioritario', label: 'Prioritario' },
+  { value: 'Urgente', label: 'Urgente' }
 ]
 
 const estadoOptions = [
@@ -303,9 +316,11 @@ const estadoOptions = [
 const isFormValid = computed(() => {
   return (
     form.fechaIngreso.trim() !== '' &&
-    // Médico solicitante es opcional
+    form.medicoSolicitante.trim() !== '' &&
+    form.servicio.trim() !== '' &&
     form.entidadPaciente.trim() !== '' &&
     form.tipoAtencionPaciente !== '' &&
+    form.prioridadCaso !== '' &&
     form.estado !== '' &&
     form.numeroMuestras !== ''
   )
@@ -510,6 +525,7 @@ const onSubmit = async () => {
       estado: form.estado as CaseState,
       medico_solicitante: form.medicoSolicitante ? { nombre: form.medicoSolicitante } : undefined,
       servicio: form.servicio || undefined,
+      prioridad_caso: form.prioridadCaso || 'Normal',
       observaciones_generales: form.observaciones,
       muestras: form.muestras.map(muestra => ({
         region_cuerpo: muestra.regionCuerpo,
@@ -691,15 +707,27 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
       ),
         
       medicoSolicitante: 
-        caseData.medico_solicitante?.nombre || 
-        (caseData as any).medico_solicitante ||
-        (caseData as any).medicoSolicitante ||
-        '',
+        (() => {
+          const medico = caseData.medico_solicitante;
+          if (typeof medico === 'object' && medico && 'nombre' in medico) {
+            return (medico as any).nombre;
+          }
+          if (typeof medico === 'string') {
+            return medico;
+          }
+          return (caseData as any).medicoSolicitante || '';
+        })(),
         
       servicio: 
         caseData.servicio ||
         (caseData as any).servicio ||
         '',
+
+      prioridadCaso:
+        (caseData as any).prioridad_caso ||
+        (caseData as any).prioridadCaso ||
+        (caseData as any).prioridad ||
+        'Normal',
         
       entidadPaciente: 
         caseData.entidad_info?.codigo || 
@@ -864,6 +892,7 @@ const onReset = () => {
     servicio: '',
     entidadPaciente: '',
     tipoAtencionPaciente: '',
+    prioridadCaso: '',
     estado: '',
     numeroMuestras: '1',
     muestras: [createEmptySubSample(1)],
@@ -1004,6 +1033,7 @@ const clearFormAfterSave = () => {
     servicio: '',
     entidadPaciente: '',
     tipoAtencionPaciente: '',
+    prioridadCaso: '',
     estado: '',
     numeroMuestras: '1',
     muestras: [createEmptySubSample(1)],
@@ -1172,6 +1202,22 @@ const getServicio = (): string => {
     fc.servicio ||
     form.servicio ||
     'No especificado'
+  )
+}
+
+/**
+ * Obtiene la prioridad del caso
+ */
+const getPrioridad = (): string => {
+  const uc: any = updatedCase.value || {}
+  const fc: any = foundCaseInfo.value || {}
+  return (
+    uc.prioridad_caso ||
+    uc.prioridadCaso ||
+    fc.prioridad_caso ||
+    fc.prioridadCaso ||
+    form.prioridadCaso ||
+    'Normal'
   )
 }
 

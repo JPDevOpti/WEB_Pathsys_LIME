@@ -50,22 +50,27 @@
 
       <!-- Formulario del caso (visible solo si hay paciente verificado) -->
       <div v-if="patientVerified" class="space-y-6">
-        <!-- Campos de médico solicitante y servicio -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="formData.medicoSolicitante" label="Médico Solicitante" placeholder="Médico que solicita el estudio" :required="false" :max-length="100" :errors="errors.medicoSolicitante" :warnings="warnings.medicoSolicitante" />
-          <FormInputField v-model="formData.servicio" label="Servicio" placeholder="Procedencia del caso" :required="false" :max-length="100" :errors="errors.servicio" :warnings="warnings.servicio" />
-        </div>
-
         <!-- Campos de entidad y tipo de atención -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <EntityList v-model="formData.entidadPaciente" label="Entidad del Paciente" placeholder="Buscar entidad..." :required="true" :auto-load="true" :error="validationState.hasAttemptedSubmit && !formData.entidadPaciente ? 'La entidad es obligatoria' : ''" />
           <FormSelect v-model="formData.tipoAtencionPaciente" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="validationState.hasAttemptedSubmit && !formData.tipoAtencionPaciente ? 'Por favor seleccione el tipo de atención' : ''" />
         </div>
 
-        <!-- Campos de número de muestras y fecha de ingreso -->
+        <!-- Campos de fecha de ingreso y prioridad -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          <FormInputField v-model="formData.fechaIngreso" label="Fecha de Ingreso" type="date" :required="true" :errors="errors.fechaIngreso" :warnings="warnings.fechaIngreso" help-text="Fecha en que ingresa el caso al sistema" />
+          <FormSelect v-model="formData.prioridadCaso" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" :error="validationState.hasAttemptedSubmit && !formData.prioridadCaso ? 'La prioridad es obligatoria' : ''" help-text="Nivel de urgencia del caso médico" />
+        </div>
+
+        <!-- Campos de médico solicitante y servicio -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          <FormInputField v-model="formData.medicoSolicitante" label="Médico Solicitante" placeholder="Médico que solicita el estudio" :required="true" :max-length="200" :error="validationState.hasAttemptedSubmit && !formData.medicoSolicitante ? 'El médico solicitante es obligatorio' : ''" />
+          <FormInputField v-model="formData.servicio" label="Servicio" placeholder="Procedencia del caso" :required="true" :max-length="100" :error="validationState.hasAttemptedSubmit && formData.medicoSolicitante && !formData.servicio ? 'El servicio es obligatorio cuando se especifica un médico' : ''" />
+        </div>
+
+        <!-- Campo de número de muestras -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <FormInputField v-model="formData.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="10" :required="true" :errors="errors.numeroMuestras" :warnings="warnings.numeroMuestras" help-text="Cantidad de submuestras para este caso (máximo 10)" @input="handleNumeroMuestrasChange" />
-          <FormInputField v-model="formData.fechaIngreso" label="Fecha de Ingreso" type="date" :required="true" :errors="errors.fechaIngreso" :warnings="warnings.fechaIngreso" help-text="Fecha en que ingresa el caso al sistema" />
         </div>
 
         <!-- Sección de información de submuestras -->
@@ -151,7 +156,7 @@
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Información del Paciente</h4>
                     <div class="space-y-2 text-sm">
                       <div><span class="text-gray-500 font-medium">Nombre:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.nombre || verifiedPatient?.nombrePaciente }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Código:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.paciente?.cedula || verifiedPatient?.pacienteCode }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Código:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.paciente?.paciente_code || createdCase.paciente?.cedula || verifiedPatient?.pacienteCode }}</p></div>
                       <div><span class="text-gray-500 font-medium">Edad:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.edad || verifiedPatient?.edad }} años</p></div>
                       <div><span class="text-gray-500 font-medium">Sexo:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.sexo || verifiedPatient?.sexo }}</p></div>
                       <div><span class="text-gray-500 font-medium">Entidad:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.entidad || verifiedPatient?.entidad }}</p></div>
@@ -163,8 +168,9 @@
                   <div>
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Detalles del Caso</h4>
                     <div class="space-y-2 text-sm">
-                      <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ createdCase.estado || 'Pendiente' }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ createdCase.medicoSolicitante || formData.medicoSolicitante }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ createdCase.estado || 'En proceso' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Prioridad:</span><p class="text-gray-900 font-semibold">{{ createdCase.prioridad || formData.prioridadCaso || 'Normal' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ createdCase.medicoSolicitante || formData.medicoSolicitante || 'No especificado' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ createdCase.servicio || formData.servicio || 'No especificado' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Número de Submuestras:</span><p class="text-gray-900 font-semibold">{{ getMuestrasForNotification().length }}</p></div>
                       <div v-if="createdCase.observaciones || formData.observaciones"><span class="text-gray-500 font-medium">Observaciones:</span><p class="text-gray-900">{{ createdCase.observaciones || formData.observaciones }}</p></div>
@@ -211,6 +217,17 @@ import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList, TestList, BodyRegionList } from '@/shared/components/List'
 import { PlusIcon, UserCircleIcon, TaskIcon } from '@/assets/icons'
 
+/**
+ * Componente NewCase actualizado según la documentación del backend v1.0
+ * 
+ * Cambios principales:
+ * - Agregado campo de prioridad del caso (Normal, Prioritario, Urgente)
+ * - Valores de tipo de atención actualizados (Ambulatorio, Hospitalizado)
+ * - Estructura de API alineada con esquemas del backend
+ * - Campo medico_solicitante como string directo
+ * - Validaciones mejoradas para todos los campos
+ */
+
 // Referencias del DOM y estado local
 const notificationContainer = ref<HTMLElement | null>(null)
 const createdCase = ref<CreatedCase | null>(null)
@@ -226,7 +243,16 @@ const { createCase, error: apiError, clearState } = useCaseAPI()
 const pacienteCodeBusqueda = ref('')
 
 // Opciones para los selectores
-const tipoAtencionOptions = [{ value: 'ambulatorio', label: 'Ambulatorio' }, { value: 'hospitalizado', label: 'Hospitalizado' }]
+const tipoAtencionOptions = [
+  { value: 'Ambulatorio', label: 'Ambulatorio' }, 
+  { value: 'Hospitalizado', label: 'Hospitalizado' }
+]
+
+const prioridadOptions = [
+  { value: 'Normal', label: 'Normal' },
+  { value: 'Prioritario', label: 'Prioritario' },
+  { value: 'Urgente', label: 'Urgente' }
+]
 
 // Validación de errores del formulario
 const validationErrors = computed(() => {
@@ -234,6 +260,7 @@ const validationErrors = computed(() => {
   if (!patientVerified.value) validationErrorsList.push('Debe verificar un paciente antes de crear el caso')
   if (!formData.fechaIngreso || errors.fechaIngreso?.length > 0) validationErrorsList.push('Fecha de ingreso válida requerida')
   if (errors.medicoSolicitante?.length > 0) validationErrorsList.push('Médico solicitante debe tener formato válido')
+  if (errors.prioridadCaso?.length > 0) validationErrorsList.push('Prioridad seleccionada no válida')
   if (!formData.numeroMuestras || errors.numeroMuestras?.length > 0) validationErrorsList.push('Número de muestras válido requerido')
   if (errors.muestras?.length > 0) validationErrorsList.push('Complete la información de todas las submuestras')
   if (!formData.entidadPaciente) validationErrorsList.push('Entidad requerida')
@@ -324,8 +351,8 @@ const searchPatient = async () => {
 // Normalización del tipo de atención
 const normalizeAttentionType = (value: string): string => {
   const v = String(value || '').toLowerCase()
-  if (v.includes('ambulator')) return 'ambulatorio'
-  if (v.includes('hospital')) return 'hospitalizado'
+  if (v.includes('ambulator') || v === 'ambulatorio') return 'Ambulatorio'
+  if (v.includes('hospital') || v === 'hospitalizado') return 'Hospitalizado'
   return ''
 }
 
@@ -341,6 +368,7 @@ const clearPatientFormData = () => {
   formData.pacienteCedula = ''
   formData.entidadPaciente = ''
   formData.tipoAtencionPaciente = ''
+  formData.prioridadCaso = 'Normal'
   formData.servicio = ''
 }
 

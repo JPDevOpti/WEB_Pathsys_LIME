@@ -8,8 +8,10 @@ import type {
   DashboardMetrics,
   EstadisticasOportunidad,
   FiltrosCasosUrgentes,
-  MuestraStats
+  MuestraStats,
+  CaseStatus
 } from '../types/dashboard.types'
+import { CasePriority } from '../types/dashboard.types'
 
 class DashboardApiService {
   private readonly baseUrl = API_CONFIG.ENDPOINTS
@@ -25,34 +27,68 @@ class DashboardApiService {
 
   async getEstadisticasCasos(): Promise<CasoStats> {
     try {
+      // Endpoint según documentación: GET /api/v1/casos/estadisticas
       const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas`)
-      return response?.data ?? response
+      const data = response?.data ?? response
+      
+      // Validar que los datos tengan la estructura esperada según documentación
+      return {
+        total_casos: data.total_casos || 0,
+        casos_en_proceso: data.casos_en_proceso || 0,
+        casos_por_firmar: data.casos_por_firmar || 0,
+        casos_por_entregar: data.casos_por_entregar || 0,
+        casos_completados: data.casos_completados || 0,
+        casos_vencidos: data.casos_vencidos || 0,
+        casos_sin_patologo: data.casos_sin_patologo || 0,
+        tiempo_promedio_procesamiento: data.tiempo_promedio_procesamiento || null,
+        casos_mes_actual: data.casos_mes_actual || 0,
+        casos_mes_anterior: data.casos_mes_anterior || 0,
+        casos_semana_actual: data.casos_semana_actual || 0,
+        cambio_porcentual: data.cambio_porcentual || 0,
+        casos_por_patologo: data.casos_por_patologo || {},
+        casos_por_tipo_prueba: data.casos_por_tipo_prueba || {}
+      }
     } catch (error) {
+      console.error('Error obteniendo estadísticas de casos:', error)
       throw error
     }
   }
 
   async getEstadisticasMuestras(): Promise<MuestraStats> {
     try {
+      // Endpoint según documentación: GET /api/v1/casos/estadisticas-muestras
       const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas-muestras`)
-      return response?.data ?? response
+      const data = response?.data ?? response
+      
+      // Validar estructura según documentación
+      return {
+        total_muestras: data.total_muestras || 0,
+        muestras_mes_anterior: data.muestras_mes_anterior || 0,
+        muestras_mes_anterior_anterior: data.muestras_mes_anterior_anterior || 0,
+        cambio_porcentual: data.cambio_porcentual || 0,
+        muestras_por_region: data.muestras_por_region || {},
+        muestras_por_tipo_prueba: data.muestras_por_tipo_prueba || {},
+        tiempo_promedio_procesamiento: data.tiempo_promedio_procesamiento || 0
+      }
     } catch (error) {
+      console.error('Error obteniendo estadísticas de muestras:', error)
       throw error
     }
   }
 
   async getMetricasDashboard(): Promise<DashboardMetrics> {
     try {
-      const [pacientesStats, casosStats] = await Promise.all([
-        this.getEstadisticasPacientes(),
-        this.getEstadisticasCasos()
-      ])
+      // Según la documentación, solo necesitamos llamar al endpoint de estadísticas de casos
+      // que ya incluye casos_mes_actual, casos_mes_anterior y cambio_porcentual
+      const casosStats = await this.getEstadisticasCasos()
 
+      // Para pacientes, vamos a asumir que también vienen del mismo endpoint de casos
+      // o crear valores por defecto hasta que se implemente el endpoint de pacientes
       return {
         pacientes: {
-          mes_actual: pacientesStats.pacientes_mes_actual || 0,
-          mes_anterior: pacientesStats.pacientes_mes_anterior || 0,
-          cambio_porcentual: pacientesStats.cambio_porcentual || 0
+          mes_actual: 0, // Por ahora valores por defecto
+          mes_anterior: 0,
+          cambio_porcentual: 0
         },
         casos: {
           mes_actual: casosStats.casos_mes_actual || 0,
@@ -61,6 +97,7 @@ class DashboardApiService {
         }
       }
     } catch (error) {
+      console.error('Error obteniendo métricas del dashboard:', error)
       return {
         pacientes: { mes_actual: 0, mes_anterior: 0, cambio_porcentual: 0 },
         casos: { mes_actual: 0, mes_anterior: 0, cambio_porcentual: 0 }
@@ -77,15 +114,28 @@ class DashboardApiService {
     }
 
     try {
+      // Endpoint según documentación: GET /api/v1/casos/casos-por-mes/{year}
+      // Rango permitido: 2020-2030
+      if (añoActual < 2020 || añoActual > 2030) {
+        console.warn(`Año ${añoActual} fuera del rango permitido (2020-2030)`)
+        return defaultResponse
+      }
+
       const response = await apiClient.get<any>(`${this.baseUrl.CASES}/casos-por-mes/${añoActual}`)
       const data = response?.data ?? response
       
-      if (!data || !Array.isArray(data.datos)) {
+      if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) {
+        console.warn('Estructura de datos inválida para casos por mes')
         return defaultResponse
       }
       
-      return data as CasosPorMesResponse
+      return {
+        datos: data.datos,
+        total: data.total || 0,
+        año: data.año || añoActual
+      }
     } catch (error) {
+      console.error(`Error obteniendo casos por mes para ${añoActual}:`, error)
       return defaultResponse
     }
   }
@@ -199,16 +249,17 @@ class DashboardApiService {
       }
 
       return {
-        codigo: caso.CasoCode || caso.codigo || caso.id || 'N/A',
+        codigo: caso.caso_code || caso.codigo || caso.id || 'N/A',
         paciente: {
           nombre: caso.paciente?.nombre || 'N/A',
-          cedula: caso.paciente?.cedula || 'N/A',
-          entidad: caso.paciente?.entidad_info?.nombre || 'Entidad'
+          cedula: caso.paciente?.paciente_code || caso.paciente?.cedula || 'N/A',
+          entidad: caso.paciente?.entidad_info?.nombre || 'Sin entidad'
         },
         pruebas,
         patologo: caso.patologo_asignado?.nombre || 'Sin asignar',
         fecha_creacion: caso.fecha_creacion,
-        estado: caso.estado,
+        estado: caso.estado as CaseStatus,
+        prioridad: (caso.prioridad as CasePriority) || CasePriority.Normal,
         dias_en_sistema: diasEnSistema
       }
     })

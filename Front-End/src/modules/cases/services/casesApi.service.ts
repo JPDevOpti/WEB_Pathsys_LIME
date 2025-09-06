@@ -9,6 +9,28 @@ import type {
 export class CasesApiService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.CASES
 
+  /**
+   * Limpia campos duplicados de estado activo que puede agregar el backend
+   * Mantiene snake_case (is_active) y elimina camelCase (isActive)
+   */
+  private cleanDuplicateActiveFields(data: any): any {
+    if (!data || typeof data !== 'object') return data
+    
+    // Si es un array, limpiar cada elemento
+    if (Array.isArray(data)) {
+      return data.map(item => this.cleanDuplicateActiveFields(item))
+    }
+    
+    // Si ambos campos existen, eliminar el camelCase
+    if ('isActive' in data && 'is_active' in data) {
+      const cleaned = { ...data }
+      delete cleaned.isActive
+      return cleaned
+    }
+    
+    return data
+  }
+
   async consultarConsecutivo(): Promise<{ codigo_consecutivo: string; mensaje: string }> {
     try {
       const response = await apiClient.get<{ codigo_consecutivo: string; mensaje: string }>(`${this.endpoint}/siguiente-consecutivo`)
@@ -21,7 +43,7 @@ export class CasesApiService {
   async getCases(params: CaseListParams = {}): Promise<CaseListResponse> {
     try {
       const response = await apiClient.get<CaseListResponse>(this.endpoint, { params })
-      return response
+      return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
       throw new Error(error.message || 'Error al obtener la lista de casos')
     }
@@ -30,7 +52,7 @@ export class CasesApiService {
   async getCaseByCode(caseCode: string): Promise<CaseModel> {
     try {
       const response = await apiClient.get<CaseModel>(`${this.endpoint}/caso-code/${caseCode}`)
-      return response
+      return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
       throw new Error(error.message || `Error al obtener el caso ${caseCode}`)
     }
@@ -93,7 +115,7 @@ export class CasesApiService {
   async createCase(caseData: CreateCaseRequest): Promise<CreateCaseResponse> {
     try {
       const response = await apiClient.post<CreateCaseResponse>(this.endpoint, caseData)
-      return response
+      return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
       throw this.handleValidationError(error)
     }
@@ -102,7 +124,7 @@ export class CasesApiService {
   async updateCase(caseCode: string, updateData: UpdateCaseRequest): Promise<UpdateCaseResponse> {
     try {
       const response = await apiClient.put<UpdateCaseResponse>(`${this.endpoint}/caso-code/${caseCode}`, updateData)
-      return response
+      return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
       throw new Error(error.message || `Error al actualizar el caso ${caseCode}`)
     }

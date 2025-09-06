@@ -170,7 +170,6 @@ export function usePerformResults(sampleId: string) {
         const resultado = beCase.resultado as any
         if (resultado.diagnostico_cie10) {
           const diseaseData = {
-            id: resultado.diagnostico_cie10.id,
             codigo: resultado.diagnostico_cie10.codigo,
             nombre: resultado.diagnostico_cie10.nombre,
             tabla: 'CIE-10',
@@ -181,7 +180,6 @@ export function usePerformResults(sampleId: string) {
         
         if (resultado.diagnostico_cieo) {
           const diseaseDataCIEO = {
-            id: resultado.diagnostico_cieo.id,
             codigo: resultado.diagnostico_cieo.codigo,
             nombre: resultado.diagnostico_cieo.nombre,
             tabla: 'CIE-O',

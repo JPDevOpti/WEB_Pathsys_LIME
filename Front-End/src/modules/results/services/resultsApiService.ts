@@ -9,12 +9,10 @@ export interface UpsertResultadoRequest {
   diagnostico?: string
   observaciones?: string
   diagnostico_cie10?: {
-    id: string
     codigo: string
     nombre: string
   }
   diagnostico_cieo?: {
-    id: string
     codigo: string
     nombre: string
   }

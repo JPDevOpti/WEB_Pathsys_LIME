@@ -7,11 +7,11 @@ from app.modules.aprobacion.models.caso_aprobacion import (
     EstadoAprobacionEnum,
     PruebaComplementariaInfo,
     PacienteInfo,
-    MedicoInfo,
     PatologoInfo,
     MuestraInfo,
     ResultadoInfo,
-    AprobacionInfo
+    AprobacionInfo,
+    PrioridadCasoEnum
 )
 from app.shared.schemas.common import EstadoCasoEnum
 
@@ -52,10 +52,11 @@ class CasoAprobacionResponse(BaseModel):
     
     # Información del caso
     paciente: PacienteInfo = Field(..., description="Información del paciente")
-    medico_solicitante: Optional[MedicoInfo] = None
+    medico_solicitante: Optional[str] = Field(None, max_length=200, description="Médico que solicita")
     servicio: Optional[str] = None
     muestras: List[MuestraInfo] = Field(..., description="Muestras del caso")
     estado_caso_original: EstadoCasoEnum = Field(..., description="Estado del caso original")
+    prioridad: PrioridadCasoEnum = Field(..., description="Prioridad del caso")
     patologo_asignado: Optional[PatologoInfo] = None
     resultado: Optional[ResultadoInfo] = None
     

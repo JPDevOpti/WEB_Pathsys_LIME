@@ -4,6 +4,12 @@ export type CaseState = typeof CASE_STATES[keyof typeof CASE_STATES]
 export type AttentionType = typeof ATTENTION_TYPES[keyof typeof ATTENTION_TYPES]
 export type Gender = typeof GENDER_OPTIONS[keyof typeof GENDER_OPTIONS]
 
+export enum CasePriority {
+  NORMAL = 'Normal',
+  PRIORITARIO = 'Prioritario',
+  URGENTE = 'Urgente'
+}
+
 export interface EntityInfo {
   codigo: string
   nombre: string
@@ -47,18 +53,19 @@ export interface CaseResult {
   firmado?: boolean
   fecha_firma?: string
   patologo_firma?: string
-  diagnostico_cie10?: { id: string; codigo: string; nombre: string }
-  diagnostico_cieo?: { id: string; codigo: string; nombre: string }
+  diagnostico_cie10?: { codigo: string; nombre: string }
+  diagnostico_cieo?: { codigo: string; nombre: string }
 }
 
 export interface CaseModel {
   _id?: string
   caso_code: string
   paciente: PatientInfo
-  medico_solicitante?: DoctorInfo
+  medico_solicitante?: string
   servicio?: string
   muestras: SampleInfo[]
   estado: CaseState
+  prioridad?: CasePriority
   fecha_ingreso: string
   fecha_firma?: string
   fecha_actualizacion: string

@@ -9,18 +9,17 @@ from app.shared.schemas.common import (
     GeneroEnum
 )
 from app.modules.pruebas.schemas.prueba import PruebasItem
+from app.modules.casos.models.caso import PrioridadCasoEnum
 
 
 class DiagnosticoCIE10(BaseModel):
     """Información del diagnóstico CIE-10."""
-    id: str = Field(..., max_length=24, description="ID único de la enfermedad CIE-10")
     codigo: str = Field(..., max_length=20, description="Código CIE-10 de la enfermedad")
     nombre: str = Field(..., max_length=500, description="Nombre de la enfermedad CIE-10")
 
 
 class DiagnosticoCIEO(BaseModel):
     """Información del diagnóstico CIEO (cáncer)."""
-    id: str = Field(..., max_length=24, description="ID único de la enfermedad CIEO")
     codigo: str = Field(..., max_length=20, description="Código CIEO de la enfermedad")
     nombre: str = Field(..., max_length=500, description="Nombre de la enfermedad CIEO")
 
@@ -78,10 +77,6 @@ class PacienteInfo(BaseModel):
             raise ValueError('El código del paciente debe tener entre 6 y 12 dígitos')
         return codigo_clean
 
-class MedicoInfo(BaseModel):
-    """Información del médico solicitante"""
-    nombre: str = Field(..., max_length=200, description="Nombre completo del médico solicitante")
-
 class PatologoInfo(BaseModel):
     """Información del patólogo asignado"""
     codigo: str = Field(..., description="Código único del patólogo")
@@ -99,18 +94,17 @@ class ResultadoInfo(BaseModel):
     diagnostico_cie10: Optional[DiagnosticoCIE10] = Field(None, description="Diagnóstico CIE-10")
     diagnostico_cieo: Optional[DiagnosticoCIEO] = Field(None, description="Diagnóstico CIEO (cáncer)")
     observaciones: Optional[str] = Field(None, description="Observaciones adicionales")
-    fecha_resultado: Optional[datetime] = Field(None, description="Fecha del resultado")
-    firmado: bool = Field(default=False, description="Si el resultado está firmado")
-    fecha_firma: Optional[datetime] = Field(None, description="Fecha de firma")
+    # Eliminados campos internos de control: fecha_resultado, firmado, fecha_firma interna.
 
 class CasoBase(BaseModel):
     """Modelo base para casos"""
     caso_code: str = Field(..., max_length=50, description="Código único del caso")
     paciente: PacienteInfo = Field(..., description="Información del paciente")
-    medico_solicitante: Optional[MedicoInfo] = Field(None, description="Médico que solicita (opcional)")
+    medico_solicitante: Optional[str] = Field(None, max_length=200, description="Médico que solicita (opcional)")
     servicio: Optional[str] = Field(None, max_length=100, description="Servicio médico o especialidad")
     muestras: List[MuestraInfo] = Field(..., description="Muestras del caso")
     estado: EstadoCasoEnum = Field(default=EstadoCasoEnum.EN_PROCESO)
+    prioridad: PrioridadCasoEnum = Field(default=PrioridadCasoEnum.NORMAL, description="Prioridad del caso")
     fecha_creacion: datetime = Field(default_factory=datetime.utcnow, description="Fecha de creación del caso")
     fecha_firma: Optional[datetime] = Field(None, description="Fecha de firma del resultado")
     fecha_entrega: Optional[datetime] = Field(None, description="Fecha de entrega del caso")
@@ -145,10 +139,11 @@ class CasoBase(BaseModel):
 class CasoCreateRequest(BaseModel):
     """Modelo para crear un nuevo caso - SIN código (se genera automáticamente)"""
     paciente: PacienteInfo = Field(..., description="Información del paciente")
-    medico_solicitante: Optional[MedicoInfo] = Field(None, description="Médico que solicita (opcional)")
+    medico_solicitante: Optional[str] = Field(None, max_length=200, description="Médico que solicita (opcional)")
     servicio: Optional[str] = Field(None, max_length=100, description="Servicio médico o especialidad")
     muestras: List[MuestraInfo] = Field(..., description="Muestras del caso")
     estado: EstadoCasoEnum = Field(default=EstadoCasoEnum.EN_PROCESO)
+    prioridad: PrioridadCasoEnum = Field(default=PrioridadCasoEnum.NORMAL, description="Prioridad del caso")
     fecha_creacion: datetime = Field(default_factory=datetime.utcnow, description="Fecha de creación del caso")
     fecha_firma: Optional[datetime] = Field(None, description="Fecha de firma del resultado")
     fecha_entrega: Optional[datetime] = Field(None, description="Fecha de entrega del caso")
@@ -159,10 +154,11 @@ class CasoCreateWithCode(BaseModel):
     """Modelo para crear un nuevo caso CON código específico (desde frontend)"""
     caso_code: str = Field(..., max_length=50, description="Código único del caso")
     paciente: PacienteInfo = Field(..., description="Información del paciente")
-    medico_solicitante: Optional[MedicoInfo] = Field(None, description="Médico que solicita (opcional)")
+    medico_solicitante: Optional[str] = Field(None, max_length=200, description="Médico que solicita (opcional)")
     servicio: Optional[str] = Field(None, max_length=100, description="Servicio médico o especialidad")
     muestras: List[MuestraInfo] = Field(..., description="Muestras del caso")
     estado: EstadoCasoEnum = Field(default=EstadoCasoEnum.EN_PROCESO)
+    prioridad: PrioridadCasoEnum = Field(default=PrioridadCasoEnum.NORMAL, description="Prioridad del caso")
     fecha_creacion: datetime = Field(default_factory=datetime.utcnow, description="Fecha de creación del caso")
     fecha_firma: Optional[datetime] = Field(None, description="Fecha de firma del resultado")
     fecha_entrega: Optional[datetime] = Field(None, description="Fecha de entrega del caso")
@@ -200,10 +196,11 @@ class CasoCreate(CasoBase):
 
 class CasoUpdate(BaseModel):
     """Modelo para actualizar un caso existente"""
-    medico_solicitante: Optional[MedicoInfo] = None
+    medico_solicitante: Optional[str] = Field(None, max_length=200)
     servicio: Optional[str] = Field(None, max_length=100)
     muestras: Optional[List[MuestraInfo]] = None
     estado: Optional[EstadoCasoEnum] = None
+    prioridad: Optional[PrioridadCasoEnum] = None
 
     fecha_firma: Optional[datetime] = None
     fecha_actualizacion: Optional[datetime] = None
@@ -224,7 +221,7 @@ class CasoResponse(CasoBase):
     resultado: Optional[ResultadoInfo] = None
     
     # Campos de auditoría
-    creado_por: Optional[str] = None
+    ingresado_por: Optional[str] = None
     actualizado_por: Optional[str] = None
 
 class CasoSearch(BaseModel):
@@ -236,6 +233,7 @@ class CasoSearch(BaseModel):
     medico_nombre: Optional[str] = Field(None, description="Nombre del médico")
     patologo_codigo: Optional[str] = Field(None, description="Código del patólogo asignado")
     estado: Optional[EstadoCasoEnum] = None
+    prioridad: Optional[PrioridadCasoEnum] = None
     fecha_ingreso_desde: Optional[datetime] = None
     fecha_ingreso_hasta: Optional[datetime] = None
 
@@ -252,7 +250,7 @@ class CasoStats(BaseModel):
     casos_por_firmar: int = 0
     casos_por_entregar: int = 0
     casos_completados: int = 0
-    casos_cancelados: int = 0
+    # Eliminado casos_cancelados tras remover estado CANCELADO
     casos_vencidos: int = 0
     casos_sin_patologo: int = 0
     

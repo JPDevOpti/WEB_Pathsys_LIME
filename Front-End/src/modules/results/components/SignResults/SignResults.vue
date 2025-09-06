@@ -534,7 +534,6 @@ const loadExistingDiagnosis = async (caseData: any) => {
       // Cargar diagnóstico CIE-10 existente
       if (resultado.diagnostico_cie10) {
         const diseaseData = {
-          id: resultado.diagnostico_cie10.id,
           codigo: resultado.diagnostico_cie10.codigo,
           nombre: resultado.diagnostico_cie10.nombre,
           tabla: 'CIE-10',
@@ -546,7 +545,6 @@ const loadExistingDiagnosis = async (caseData: any) => {
       // Cargar diagnóstico CIE-O existente
       if (resultado.diagnostico_cieo) {
         const diseaseDataCIEO = {
-          id: resultado.diagnostico_cieo.id,
           codigo: resultado.diagnostico_cieo.codigo,
           nombre: resultado.diagnostico_cieo.nombre,
           tabla: 'CIE-O',
@@ -591,7 +589,6 @@ function goToPreview() {
     diagnosis: {
       cie10: getDiagnosisData(),
       cieo: hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
-        id: primaryDiseaseCIEO.value.id,
         codigo: primaryDiseaseCIEO.value.codigo,
         nombre: primaryDiseaseCIEO.value.nombre
       } : undefined,
@@ -655,13 +652,11 @@ async function handleSign() {
     // Preparar datos para la firma
     const casoCode = caseDetails?.value?.caso_code || props.sampleId
     const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
-      id: primaryDisease.value.id,
       codigo: primaryDisease.value.codigo,
       nombre: primaryDisease.value.nombre
     } : undefined
 
     const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
-      id: primaryDiseaseCIEO.value.id,
       codigo: primaryDiseaseCIEO.value.codigo,
       nombre: primaryDiseaseCIEO.value.nombre
     } : undefined
@@ -809,12 +804,10 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
       diagnostico: sections.value.diagnosis || '',
       observaciones: '',
       diagnostico_cie10: diagnosticoCie10?.primary ? {
-        id: diagnosticoCie10.primary.id,
         codigo: diagnosticoCie10.primary.codigo,
         nombre: diagnosticoCie10.primary.nombre
       } : undefined,
       diagnostico_cieo: primaryDiseaseCIEO.value ? {
-        id: primaryDiseaseCIEO.value.id,
         codigo: primaryDiseaseCIEO.value.codigo,
         nombre: primaryDiseaseCIEO.value.nombre
       } : undefined

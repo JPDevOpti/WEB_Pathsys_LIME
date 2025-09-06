@@ -22,7 +22,7 @@
       <div class="flex items-end justify-between mt-3">
         <div>
           <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
-            Pacientes ingresados mes anterior
+            Pacientes ingresados mes actual
           </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
             {{ isLoading ? '...' : formatNumber(pacientesMesActual) }}
@@ -30,7 +30,7 @@
         </div>
 
         <span
-          v-if="!isLoading && estadisticas?.pacientes"
+          v-if="!isLoading && metricas?.pacientes"
           :class="getPorcentajeClass(pacientesCambio)"
           class="flex items-center gap-1 rounded-full py-0.5 pl-2 pr-2.5 text-xs font-medium transition-all duration-300"
         >
@@ -84,14 +84,14 @@
       <div class="flex items-end justify-between mt-3">
         <div>
           <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
-            Casos ingresados mes anterior
+            Casos ingresados mes actual
           </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
             {{ isLoading ? '...' : formatNumber(casosMesActual) }}
           </h4>
         </div>
         <span
-          v-if="!isLoading && estadisticas?.casos"
+          v-if="!isLoading && metricas?.casos"
           :class="getPorcentajeClass(casosCambio)"
           class="flex items-center gap-1 rounded-full py-0.5 pl-2 pr-2.5 text-xs font-medium transition-all duration-300"
         >
@@ -142,6 +142,14 @@ import { onMounted, computed } from 'vue'
 import { Card } from '@/shared/components/layout'
 import { useDashboard } from '../composables/useDashboard'
 
+/**
+ * Componente para mostrar métricas básicas del dashboard
+ * Actualizado según la documentación del backend para usar:
+ * - casos_mes_actual: casos del mes actual
+ * - casos_mes_anterior: casos del mes anterior 
+ * - cambio_porcentual: porcentaje de cambio entre meses
+ */
+
 const {
   metricas,
   loadingMetricas: isLoading,
@@ -151,11 +159,22 @@ const {
   obtenerClasePorcentaje: getPorcentajeClass
 } = useDashboard()
 
-const estadisticas = metricas
-const pacientesMesActual = computed(() => Number(estadisticas.value?.pacientes?.mes_actual ?? 0))
-const pacientesCambio = computed(() => Number(estadisticas.value?.pacientes?.cambio_porcentual ?? 0))
-const casosMesActual = computed(() => Number(estadisticas.value?.casos?.mes_actual ?? 0))
-const casosCambio = computed(() => Number(estadisticas.value?.casos?.cambio_porcentual ?? 0))
+// Métricas basadas en la documentación del backend
+const pacientesMesActual = computed(() => {
+  return Number(metricas.value?.pacientes?.mes_actual ?? 0)
+})
+
+const pacientesCambio = computed(() => {
+  return Number(metricas.value?.pacientes?.cambio_porcentual ?? 0)
+})
+
+const casosMesActual = computed(() => {
+  return Number(metricas.value?.casos?.mes_actual ?? 0)
+})
+
+const casosCambio = computed(() => {
+  return Number(metricas.value?.casos?.cambio_porcentual ?? 0)
+})
 
 const cargarEstadisticas = async () => {
   await cargarMetricas()

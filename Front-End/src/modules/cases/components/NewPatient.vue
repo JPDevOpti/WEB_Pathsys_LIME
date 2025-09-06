@@ -20,7 +20,7 @@
       <!-- Campos de entidad y tipo de atención -->
       <EntityList v-model="formData.entidad" label="Entidad" placeholder="Buscar entidad..." :required="true" :auto-load="true" :error="getEntidadError" :key="entityListKey" @entity-selected="onEntitySelected" />
       <FormSelect v-model="formData.tipoAtencion" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="getTipoAtencionError" />
-      <FormTextarea v-model="formData.observaciones" label="Observaciones" placeholder="Observaciones adicionales (opcional)" :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional sobre el paciente o el caso" />
+      <FormTextarea v-model="formData.observaciones" label="Observaciones del paciente" placeholder="Observaciones adicionales (opcional)" :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional sobre el paciente" />
 
       <!-- Botones de acción -->
       <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">

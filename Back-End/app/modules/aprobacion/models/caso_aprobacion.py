@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, validator
 from app.shared.models.base import PyObjectId
 from app.shared.schemas.common import EstadoCasoEnum
 from app.modules.pruebas.schemas.prueba import PruebasItem
+from app.modules.casos.models.caso import PrioridadCasoEnum
 
 
 class EstadoAprobacionEnum(str, Enum):
@@ -49,11 +50,6 @@ class PacienteInfo(BaseModel):
     observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones del paciente")
 
 
-class MedicoInfo(BaseModel):
-    """Información del médico solicitante."""
-    nombre: str = Field(..., max_length=200, description="Nombre completo del médico solicitante")
-
-
 class PatologoInfo(BaseModel):
     """Información del patólogo asignado."""
     codigo: str = Field(..., description="Código único del patólogo")
@@ -62,14 +58,14 @@ class PatologoInfo(BaseModel):
 
 class DiagnosticoCIE10(BaseModel):
     """Información del diagnóstico CIE-10."""
-    codigo: str = Field(..., max_length=10, description="Código CIE-10")
-    descripcion: str = Field(..., max_length=500, description="Descripción del diagnóstico")
+    codigo: str = Field(..., max_length=20, description="Código CIE-10 de la enfermedad")
+    nombre: str = Field(..., max_length=500, description="Nombre de la enfermedad CIE-10")
 
 
 class DiagnosticoCIEO(BaseModel):
     """Información del diagnóstico CIEO (cáncer)."""
-    codigo: str = Field(..., max_length=10, description="Código CIEO")
-    descripcion: str = Field(..., max_length=500, description="Descripción del diagnóstico")
+    codigo: str = Field(..., max_length=20, description="Código CIEO de la enfermedad")
+    nombre: str = Field(..., max_length=500, description="Nombre de la enfermedad CIEO")
 
 
 class ResultadoInfo(BaseModel):
@@ -112,10 +108,11 @@ class CasoAprobacion(BaseModel):
     
     # Información copiada del caso original
     paciente: PacienteInfo = Field(..., description="Información del paciente")
-    medico_solicitante: Optional[MedicoInfo] = Field(None, description="Médico que solicita")
+    medico_solicitante: Optional[str] = Field(None, max_length=200, description="Médico que solicita")
     servicio: Optional[str] = Field(None, max_length=100, description="Servicio médico")
     muestras: List[MuestraInfo] = Field(..., description="Muestras del caso")
     estado_caso_original: EstadoCasoEnum = Field(..., description="Estado del caso original")
+    prioridad: PrioridadCasoEnum = Field(default=PrioridadCasoEnum.NORMAL, description="Prioridad del caso")
     patologo_asignado: Optional[PatologoInfo] = Field(None, description="Patólogo asignado")
     resultado: Optional[ResultadoInfo] = Field(None, description="Resultado del caso")
     

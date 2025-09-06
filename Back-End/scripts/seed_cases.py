@@ -22,9 +22,9 @@ from app.modules.casos.schemas.caso import (
     EntidadInfo as CasoEntidadInfo,
     MuestraInfo,
     PatologoInfo as CasoPatologoInfo,
-    MedicoInfo,
     ResultadoInfo,
 )
+from app.modules.casos.models.caso import PrioridadCasoEnum
 from app.modules.pruebas.repositories.prueba_repository import PruebaRepository
 from app.modules.pruebas.schemas.prueba import PruebasItem
 from app.modules.patologos.repositories.patologo_repository import PatologoRepository
@@ -343,10 +343,10 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 muestras.append(MuestraInfo(region_cuerpo=region, pruebas=pruebas_items))
 
             # Médico solicitante (80% de probabilidad de tener uno)
-            medico_solicitante: Optional[MedicoInfo] = None
+            medico_solicitante: Optional[str] = None
             if random.random() < 0.8:  # 80% de casos tendrán médico solicitante
                 nombre_medico = random.choice(NOMBRES_MEDICOS)
-                medico_solicitante = MedicoInfo(nombre=nombre_medico)
+                medico_solicitante = nombre_medico
 
             # Determinar si este caso será reciente o antiguo
             # Los ÚLTIMOS N casos serán recientes (números más altos = fechas más recientes)
@@ -475,6 +475,15 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
             region_principal = muestras[0].region_cuerpo if muestras else "región no especificada"
             observaciones_generadas = generar_observaciones_caso(region_principal, tipo_atencion_valido, estado_final, es_caso_reciente)
             
+            # Determinar prioridad (Normal: 70%, Prioritario: 25%, Urgente: 5%)
+            prioridad_rand = random.random()
+            if prioridad_rand < 0.70:
+                prioridad_caso = PrioridadCasoEnum.NORMAL
+            elif prioridad_rand < 0.95:
+                prioridad_caso = PrioridadCasoEnum.PRIORITARIO
+            else:
+                prioridad_caso = PrioridadCasoEnum.URGENTE
+            
             # Usar CasoCreateRequest en lugar de CasoCreate (sin CasoCode)
             caso_create = CasoCreateRequest(
                 paciente=paciente_info,
@@ -482,6 +491,7 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 servicio=random.choice(SERVICIOS_MEDICOS),  # Servicio aleatorio
                 muestras=muestras,
                 estado=estado_final,
+                prioridad=prioridad_caso,
                 fecha_creacion=fecha_creacion,
                 fecha_firma=fecha_firma_final,
                 fecha_entrega=fecha_entrega,
@@ -510,7 +520,7 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
             if dry_run:
                 created += 1
                 entrega_txt = fecha_entrega.strftime('%d/%m/%Y') if fecha_entrega else 'SIN ENTREGA'
-                medico_txt = medico_solicitante.nombre if medico_solicitante else 'sin médico'
+                medico_txt = medico_solicitante if medico_solicitante else 'sin médico'
                 reciente_txt = "RECIENTE" if es_caso_reciente else "ANTIGUO"
                 dias_txt = f"({days_since_creation}d)"
                 print(f"[DRY-RUN] Caso #{i+1} {reciente_txt} {dias_txt} | estado={estado_final.value}, entrega={entrega_txt}, médico={medico_txt}")
@@ -569,9 +579,9 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                     patologo_asignado=patologo_info.model_dump() if patologo_info else None,
                     resultado=resultado_data.model_dump() if resultado_data else None,
                     observaciones_generales=observaciones_generadas,
-                    creado_por="seed_script",
+                    ingresado_por="seed_script",
                     actualizado_por="seed_script",
-                    activo=True
+                    # Campo activo eliminado
                 )
                 
                 # Insertar directamente en MongoDB para evitar cualquier modificación del repositorio
@@ -582,7 +592,7 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 created_caso = caso_completo
                 
                 created += 1
-                medico_txt = medico_solicitante.nombre if medico_solicitante else 'sin médico'
+                medico_txt = medico_solicitante if medico_solicitante else 'sin médico'
                 reciente_txt = "RECIENTE" if es_caso_reciente else "ANTIGUO"
                 entrega_txt = fecha_entrega.strftime('%d/%m/%Y') if fecha_entrega else 'SIN ENTREGA'
                 print(f"[OK] Caso {reciente_txt} creado: {caso_code_generado} - estado={estado_final.value}, entrega={entrega_txt}, médico={medico_txt}")

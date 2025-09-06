@@ -17,6 +17,7 @@ export interface CaseFormData {
   servicio: string
   entidadPaciente: string
   tipoAtencionPaciente: string
+  prioridadCaso: string
   numeroMuestras: string
   muestras: FormSubSample[]
   observaciones: string
@@ -28,6 +29,7 @@ export interface CaseFormDefaults {
   servicio: string
   entidadPaciente: string
   tipoAtencionPaciente: string
+  prioridadCaso: string
   numeroMuestras: string
   muestras: FormSubSample[]
   observaciones: string
@@ -45,6 +47,7 @@ export interface CaseFormErrors {
   servicio: string[]
   entidadPaciente: string[]
   tipoAtencionPaciente: string[]
+  prioridadCaso: string[]
   numeroMuestras: string[]
   muestras: string[]
   observaciones: string[]
@@ -54,6 +57,7 @@ export interface CaseFormWarnings {
   fechaIngreso: string[]
   medicoSolicitante: string[]
   servicio: string[]
+  prioridadCaso: string[]
   numeroMuestras: string[]
 }
 
@@ -68,7 +72,8 @@ export interface CreatedCase {
   id: string
   codigo: string
   paciente: {
-    cedula: string
+    paciente_code?: string
+    cedula?: string  // Mantener por compatibilidad
     nombre: string
     edad: number
     sexo: string
@@ -78,6 +83,7 @@ export interface CreatedCase {
   fechaIngreso: string
   medicoSolicitante: string
   servicio: string
+  prioridad: string
   muestras: FormSubSample[]
   observaciones: string
   estado: string
@@ -92,6 +98,12 @@ export interface SelectOption {
 export const MAX_MUESTRAS = 10
 
 export const TIPOS_ATENCION: SelectOption[] = [
-  { value: 'ambulatorio', label: 'Ambulatorio' },
-  { value: 'hospitalizado', label: 'Hospitalizado' }
+  { value: 'Ambulatorio', label: 'Ambulatorio' },
+  { value: 'Hospitalizado', label: 'Hospitalizado' }
+]
+
+export const PRIORIDADES_CASO: SelectOption[] = [
+  { value: 'Normal', label: 'Normal' },
+  { value: 'Prioritario', label: 'Prioritario' },
+  { value: 'Urgente', label: 'Urgente' }
 ]

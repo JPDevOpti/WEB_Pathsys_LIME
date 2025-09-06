@@ -49,7 +49,6 @@ export function useCaseAPI() {
     return {
       paciente: {
         paciente_code: verifiedPatient.pacienteCode || verifiedPatient.codigo || `PAC_${verifiedPatient.numeroCedula}`,
-        cedula: verifiedPatient.numeroCedula || verifiedPatient.cedula || formData.pacienteCedula,
         nombre: verifiedPatient.nombrePaciente,
         edad: parseInt(verifiedPatient.edad),
         sexo: normalizeSexo(verifiedPatient.sexo),
@@ -60,7 +59,7 @@ export function useCaseAPI() {
         tipo_atencion: normalizeTipoAtencion(formData.tipoAtencionPaciente),
         observaciones: verifiedPatient.observaciones || undefined
       },
-      medico_solicitante: formData.medicoSolicitante ? { nombre: formData.medicoSolicitante } : undefined,
+      medico_solicitante: formData.medicoSolicitante || undefined,
       servicio: formData.servicio || undefined,
       muestras: formData.muestras.map(muestra => ({
         region_cuerpo: muestra.regionCuerpo,
@@ -71,6 +70,7 @@ export function useCaseAPI() {
         }))
       })),
       estado: 'En proceso' as CaseState,
+      prioridad: formData.prioridadCaso || 'Normal',
       observaciones_generales: formData.observaciones || undefined
     }
   }
@@ -82,7 +82,8 @@ export function useCaseAPI() {
       id: apiResponse._id || apiResponse.id || codigoCaso,
       codigo: codigoCaso,
       paciente: {
-        cedula: apiResponse.paciente?.cedula || verifiedPatient.numeroCedula,
+        paciente_code: apiResponse.paciente?.paciente_code || verifiedPatient.numeroCedula,
+        cedula: apiResponse.paciente?.cedula || verifiedPatient.numeroCedula, // Mantener por compatibilidad
         nombre: apiResponse.paciente?.nombre || verifiedPatient.nombrePaciente,
         edad: apiResponse.paciente?.edad || parseInt(verifiedPatient.edad),
         sexo: apiResponse.paciente?.sexo || verifiedPatient.sexo,
@@ -90,8 +91,9 @@ export function useCaseAPI() {
         tipoAtencion: apiResponse.paciente?.tipo_atencion || caseData.tipoAtencionPaciente
       },
       fechaIngreso: apiResponse.fecha_ingreso || caseData.fechaIngreso,
-      medicoSolicitante: apiResponse.medico_solicitante?.nombre || caseData.medicoSolicitante,
+      medicoSolicitante: apiResponse.medico_solicitante || caseData.medicoSolicitante,
       servicio: caseData.servicio,
+      prioridad: apiResponse.prioridad || caseData.prioridadCaso || 'Normal',
       muestras: caseData.muestras,
       observaciones: apiResponse.observaciones_generales || caseData.observaciones || '',
       estado: apiResponse.estado || 'Pendiente',

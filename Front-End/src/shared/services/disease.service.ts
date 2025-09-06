@@ -3,7 +3,7 @@ import { API_CONFIG } from '@/core/config/api.config'
 
 // Types
 export interface Disease {
-  id: string
+  id?: string
   tabla: string
   codigo: string
   nombre: string

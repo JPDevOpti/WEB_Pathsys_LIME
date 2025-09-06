@@ -17,7 +17,6 @@ class EstadoCasoEnum(str, Enum):
     POR_FIRMAR = "Por firmar"
     POR_ENTREGAR = "Por entregar"
     COMPLETADO = "Completado"
-    CANCELADO = "cancelado"
 
 class TipoDocumentoEnum(str, Enum):
     """Tipos de documento de identidad"""

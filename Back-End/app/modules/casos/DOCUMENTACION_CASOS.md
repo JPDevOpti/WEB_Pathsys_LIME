@@ -1,440 +1,561 @@
 # Documentación del Módulo de Casos
 
-## 1. Modelo y Esquemas (Actualizado)
+## 1. Arquitectura de Archivos
 
-La siguiente estructura refleja el estado REAL del código (`models/caso.py` y `schemas/caso.py`).
+```text
+app/modules/casos/
+├── models/
+│   └── caso.py                 # Modelos MongoDB (Caso, ResultadoInfo, DiagnosticoCIE10/CIEO)
+├── schemas/
+│   └── caso.py                 # Esquemas Pydantic para API (Request/Response)
+├── repositories/
+│   ├── caso_repository.py      # Operaciones CRUD y consultas avanzadas
+│   └── consecutivo_repository.py  # Gestión códigos consecutivos
+├── services/
+│   └── caso_service.py         # Lógica de negocio y transformaciones
+├── routes/
+│   └── caso_routes.py          # Endpoints FastAPI
+└── DOCUMENTACION_CASOS.md      # Este archivo
+```
 
-### 1.1 Modelo Persistido (MongoDB) `Caso` (models)
+### Capas y Responsabilidades
+
+- **Models**: Definición de estructuras de datos para MongoDB
+- **Schemas**: Validación y serialización para API REST
+- **Repositories**: Acceso a datos y consultas complejas
+- **Services**: Lógica de negocio, validaciones, transformaciones
+- **Routes**: Definición de endpoints HTTP
+
+---
+
+## 2. Esquema Completo
+
+### 2.1. Modelo Principal (`Caso`)
 
 ```json
 {
-  "_id": "string (ObjectId)",
-  "caso_code": "string (formato 20YY-NNNNN, ejemplo 2025-00001, único)",
+  "_id": "ObjectId",
+  "caso_code": "string (formato YYYY-NNNNN, ej: 2025-00001)",
   "paciente": {
-    "paciente_code": "string (6-12 dígitos, se normaliza a solo números)",
-    "nombre": "string (capitalizado, máx 200)",
-    "edad": "int (0-150)",
-    "sexo": "string (máx 20)",
-    "entidad_info": {"id": "string (máx 50)", "nombre": "string (máx 200)"},
-    "tipo_atencion": "Ambulatorio | Hospitalizado",
-    "observaciones": "string | null (máx 1000)",
-    "fecha_actualizacion": "datetime ISO"
+    "paciente_code": "string (6-12 dígitos)",
+    "nombre": "string (<=200 chars, capitalizado)",
+    "edad": "number (0-150)",
+    "sexo": "string (<=20 chars)",
+    "entidad_info": {
+      "id": "string (<=50 chars)",
+      "nombre": "string (<=200 chars)"
+    },
+    "tipo_atencion": "string (Ambulatorio|Hospitalizado)",
+    "observaciones": "string|null (<=1000 chars)",
+    "fecha_actualizacion": "datetime"
   },
-  "medico_solicitante": {"nombre": "string (máx 200)"} | null,
-  "servicio": "string | null (máx 100)",
+  "medico_solicitante": "string|null (<=200 chars)",
+  "servicio": "string|null (<=100 chars)",
   "muestras": [
     {
       "region_cuerpo": "string",
       "pruebas": [
-        {"id": "string", "nombre": "string", "cantidad": "int (default 1)"}
+        {
+          "id": "string",
+          "nombre": "string",
+          "cantidad": "number (default: 1)"
+        }
       ]
     }
   ],
-  "estado": "En proceso | Por firmar | Por entregar | Completado | cancelado",
-  "fecha_creacion": "datetime ISO",
-  "fecha_firma": "datetime ISO | null (firma global del caso, se establece al firmar resultado)",
-  "fecha_entrega": "datetime ISO | null",
-  "fecha_actualizacion": "datetime ISO",
-  "patologo_asignado": {"codigo": "string", "nombre": "string"} | null,
-  "resultado": {
-    "tipo_resultado": "histopatologia | citologia | inmunohistoquimica | null",
-    "metodo": "string | null",
-    "resultado_macro": "string | null",
-    "resultado_micro": "string | null",
-    "diagnostico": "string | null",
-    "diagnostico_cie10": {"id": "string", "codigo": "string (<=20)", "nombre": "string (<=500)"} | null,
-    "diagnostico_cieo": {"id": "string", "codigo": "string (<=20)", "nombre": "string (<=500)"} | null,
-    "observaciones": "string | null",
-    "fecha_resultado": "datetime ISO | null",
-    "firmado": "bool (default false)",
-    "fecha_firma": "datetime ISO | null"
+  "estado": "string (En proceso|Por firmar|Por entregar|Completado)",
+  "prioridad": "string (Normal|Prioritario|Urgente, default: Normal)",
+  "fecha_creacion": "datetime",
+  "fecha_firma": "datetime|null",
+  "fecha_entrega": "datetime|null",
+  "fecha_actualizacion": "datetime",
+  "patologo_asignado": {
+    "codigo": "string",
+    "nombre": "string"
   } | null,
-  "observaciones_generales": "string | null (<=1000)",
-  "creado_por": "string | null",
-  "actualizado_por": "string | null",
-  "activo": true
+  "resultado": {
+    "metodo": "string|null",
+    "resultado_macro": "string|null",
+    "resultado_micro": "string|null",
+    "diagnostico": "string|null",
+    "diagnostico_cie10": {
+      "codigo": "string (<=20 chars)",
+      "nombre": "string (<=500 chars)"
+    } | null,
+    "diagnostico_cieo": {
+      "codigo": "string (<=20 chars)",
+      "nombre": "string (<=500 chars)"
+    } | null,
+    "observaciones": "string|null"
+  } | null,
+  "observaciones_generales": "string|null (<=1000 chars)",
+  "ingresado_por": "string|null",
+  "actualizado_por": "string|null"
 }
 ```
 
-### 1.2 Esquema de Entrada/Salida Principal (API) `CasoResponse` (schemas)
+### 2.2. Esquemas API
 
-El esquema expuesto por la API omite `_id` y utiliza `id` como string:
-
-```json
-{
-  "id": "string (ObjectId como texto)",
-  "caso_code": "2025-00001",
-  "paciente": { "paciente_code": "123456", "nombre": "Juan Perez", "edad": 45, "sexo": "Masculino", "entidad_info": {"id": "EPS001", "nombre": "Entidad Salud"}, "tipo_atencion": "Ambulatorio", "observaciones": null, "fecha_actualizacion": "2025-01-15T10:30:00Z" },
-  "medico_solicitante": {"nombre": "Dra. Ana Gómez"},
-
-### 20. GET http://localhost:8000/api/v1/casos/estadisticas
-
-**Obtener estadísticas generales de casos**
-
-**Descripción**: Obtiene estadísticas completas del sistema de casos.
-
-**Autenticación**: Requerida
-
-Body: (sin body)
-
-Respuesta (200):
+#### CasoResponse (GET requests)
 
 ```json
 {
-  "total_casos": 150,
-  "casos_en_proceso": 45,
-  "casos_por_firmar": 30,
-  "casos_por_entregar": 25,
-  "casos_completados": 40,
-  "casos_cancelados": 10,
-  "casos_vencidos": 8,
-  "casos_sin_patologo": 25,
-  "tiempo_promedio_procesamiento": 5.2,
-  "casos_mes_actual": 45,
-  "casos_mes_anterior": 38,
-  "casos_semana_actual": 12,
-  "cambio_porcentual": 18.4,
-  "casos_por_patologo": {
-    "PAT001": 25,
-    "PAT002": 20,
-    "PAT003": 15
+  "id": "string (ObjectId convertido)",
+  "caso_code": "string",
+  "paciente": {
+    "paciente_code": "string",
+    "nombre": "string",
+    "edad": "number",
+    "sexo": "string",
+    "entidad_info": {
+      "id": "string",
+      "nombre": "string"
+    },
+    "tipo_atencion": "string",
+    "observaciones": "string|null",
+    "fecha_actualizacion": "datetime ISO"
   },
-  "casos_por_tipo_prueba": {
-    "Histopatología": 80,
-    "Citología": 45,
-    "Inmunohistoquímica": 25
-  }
+  "medico_solicitante": "string|null",
+  "servicio": "string|null",
+  "muestras": [
+    {
+      "region_cuerpo": "string",
+      "pruebas": [
+        {
+          "id": "string",
+          "nombre": "string",
+          "cantidad": "number"
+        }
+      ]
+    }
+  ],
+  "estado": "string",
+  "prioridad": "string (Normal|Prioritario|Urgente)",
+  "fecha_creacion": "datetime ISO",
+  "fecha_firma": "datetime ISO|null",
+  "fecha_entrega": "datetime ISO|null",
+  "fecha_actualizacion": "datetime ISO",
+  "patologo_asignado": {
+    "codigo": "string",
+    "nombre": "string"
+  } | null,
+  "resultado": {
+    "metodo": "string|null",
+    "resultado_macro": "string|null",
+    "resultado_micro": "string|null",
+    "diagnostico": "string|null",
+    "diagnostico_cie10": {
+      "codigo": "string",
+      "nombre": "string"
+    } | null,
+    "diagnostico_cieo": {
+      "codigo": "string",
+      "nombre": "string"
+    } | null,
+    "observaciones": "string|null"
+  } | null,
+  "observaciones_generales": "string|null",
+  "ingresado_por": "string|null",
+  "actualizado_por": "string|null"
 }
 ```
 
-### 21. GET <http://localhost:8000/api/v1/casos/estadisticas-muestras>
-
-Descripción: Obtiene estadísticas específicas sobre las muestras procesadas.
-
-**Autenticación**: Requerida
-
-Body: (sin body)
-
-Respuesta (200):
+#### CasoCreateRequest (POST sin código)
 
 ```json
 {
-  "total_muestras": 200,
-  "muestras_mes_anterior": 45,
-  "muestras_mes_anterior_anterior": 38,
-  "cambio_porcentual": 18.4,
-  "muestras_por_region": {
-    "Piel": 50,
-    "Colon": 30,
-    "Mama": 25,
-    "Próstata": 20
+  "paciente": {
+    "paciente_code": "string (requerido)",
+    "nombre": "string (requerido)",
+    "edad": "number (requerido)",
+    "sexo": "string (requerido)",
+    "entidad_info": {
+      "id": "string (requerido)",
+      "nombre": "string (requerido)"
+    },
+    "tipo_atencion": "string (requerido)",
+    "observaciones": "string|null"
   },
-  "muestras_por_tipo_prueba": {
-    "Histopatología": 120,
-    "Citología": 50,
-    "Inmunohistoquímica": 30
-  },
-  "tiempo_promedio_procesamiento": 4.8
+  "medico_solicitante": "string|null (<=200 chars)",
+  "servicio": "string|null",
+  "muestras": [
+    {
+      "region_cuerpo": "string (requerido)",
+      "pruebas": [
+        {
+          "id": "string (requerido)",
+          "nombre": "string (requerido)",
+          "cantidad": "number (default: 1)"
+        }
+      ]
+    }
+  ],
+  "estado": "string (default: En proceso)",
+  "prioridad": "string (Normal|Prioritario|Urgente, default: Normal)",
+  "observaciones_generales": "string|null"
 }
 ```
 
-### 22. GET <http://localhost:8000/api/v1/casos/casos-por-mes/{year}>
-
-Descripción: Obtiene estadísticas mensuales de casos para un año determinado.
-
-**Autenticación**: Requerida
-
-**Path Parameters**:
-
-- `year`: Año para consultar (rango: 2020-2030)
-
-Ejemplo: `http://localhost:8000/api/v1/casos/casos-por-mes/2025`
-
-Body: (sin body)
-
-Respuesta (200):
+#### CasoCreateWithCode (POST con código específico)
 
 ```json
 {
-  "year": 2025,
-  "casos_por_mes": {
-    "enero": 45,
-    "febrero": 38,
-    "marzo": 52,
-    "abril": 41,
-    "mayo": 48,
-    "junio": 35,
-    "julio": 42,
-    "agosto": 39,
-    "septiembre": 44,
-    "octubre": 47,
-    "noviembre": 41,
-    "diciembre": 38
+  "caso_code": "string (formato YYYY-NNNNN validado)",
+  "paciente": {
+    "paciente_code": "string",
+    "nombre": "string",
+    "edad": "number",
+    "sexo": "string",
+    "entidad_info": {
+      "id": "string",
+      "nombre": "string"
+    },
+    "tipo_atencion": "string",
+    "observaciones": "string|null"
   },
-  "total_año": 510
+  "medico_solicitante": "string|null (<=200 chars)",
+  "servicio": "string|null",
+  "muestras": [
+    {
+      "region_cuerpo": "string",
+      "pruebas": [
+        {
+          "id": "string",
+          "nombre": "string",
+          "cantidad": "number"
+        }
+      ]
+    }
+  ],
+  "estado": "string (default: En proceso)",
+  "prioridad": "string (Normal|Prioritario|Urgente, default: Normal)",
+  "observaciones_generales": "string|null"
 }
 ```
 
-### 23. GET <http://localhost:8000/api/v1/casos/estadisticas-oportunidad-mensual>
-
-Descripción: Obtiene estadísticas de oportunidad del mes anterior comparado con el mes anterior a este.
-
-**Autenticación**: Requerida
-
-Body: (sin body)
-
-Respuesta (200):
+#### ResultadoInfo (Resultado del caso)
 
 ```json
 {
+  "metodo": "string|null",
+  "resultado_macro": "string|null",
+  "resultado_micro": "string|null",
+  "diagnostico": "string|null",
+  "diagnostico_cie10": {
+    "codigo": "string",
+    "nombre": "string"
+  } | null,
+  "diagnostico_cieo": {
+    "codigo": "string",
+    "nombre": "string"
+  } | null,
+  "observaciones": "string|null"
+}
+```
+
+---
+
+## 3. Endpoints Completos
+
+### 3.1. Gestión de Casos
+
+#### GET `/api/v1/casos/{caso_code}`
+
+**Descripción**: Obtener un caso específico por código  
+**Parámetros**: `caso_code` (path)  
+**Respuesta**: `CasoResponse`
+
+#### GET `/api/v1/casos`
+
+**Descripción**: Listar casos con filtros y paginación  
+**Query Params**:
+
+- `skip` (int, default: 0)
+- `limit` (int, default: 100, max: 1000)
+- `estado` (string, opcional)
+- `prioridad` (string, opcional: Normal|Prioritario|Urgente)
+- `patologo_codigo` (string, opcional)
+- `fecha_desde` (datetime, opcional)
+- `fecha_hasta` (datetime, opcional)
+
+**Respuesta**: `Array<CasoResponse>`
+
+#### POST `/api/v1/casos`
+
+**Descripción**: Crear caso con código auto-generado  
+**Body**: `CasoCreateRequest`  
+**Respuesta**: `CasoResponse`
+
+#### POST `/api/v1/casos/con-codigo`
+
+**Descripción**: Crear caso con código específico  
+**Body**: `CasoCreateWithCode`  
+**Respuesta**: `CasoResponse`
+
+#### PUT `/api/v1/casos/{caso_code}`
+
+**Descripción**: Actualizar datos del caso  
+**Parámetros**: `caso_code` (path)  
+**Body**: `CasoUpdate` (campos opcionales)  
+**Respuesta**: `CasoResponse`
+
+#### DELETE `/api/v1/casos/{caso_code}`
+
+**Descripción**: Eliminar caso  
+**Parámetros**: `caso_code` (path)  
+**Respuesta**: `{"message": "string", "caso_code": "string", "eliminado": true}`
+
+### 3.2. Gestión de Patólogos
+
+#### PUT `/api/v1/casos/{caso_code}/asignar-patologo`
+
+**Descripción**: Asignar patólogo a un caso  
+**Parámetros**: `caso_code` (path)  
+**Body**: `PatologoInfo`
+
+```json
+{
+  "codigo": "string",
+  "nombre": "string"
+}
+```
+
+**Respuesta**: `CasoResponse`
+
+#### PUT `/api/v1/casos/{caso_code}/desasignar-patologo`
+
+**Descripción**: Quitar patólogo asignado  
+**Parámetros**: `caso_code` (path)  
+**Respuesta**: `CasoResponse`
+
+### 3.3. Gestión de Resultados
+
+#### GET `/api/v1/casos/{caso_code}/resultado`
+
+**Descripción**: Obtener resultado de un caso  
+**Parámetros**: `caso_code` (path)  
+**Respuesta**: `ResultadoInfo`
+
+#### PUT `/api/v1/casos/{caso_code}/resultado`
+
+**Descripción**: Crear o actualizar resultado  
+**Parámetros**: `caso_code` (path)  
+**Body**: `ResultadoInfo`  
+**Respuesta**: `CasoResponse`
+
+#### POST `/api/v1/casos/{caso_code}/resultado/firmar`
+
+**Descripción**: Firmar resultado sin modificar diagnósticos  
+**Parámetros**: `caso_code` (path)  
+**Query Params**: `patologo_codigo` (string)  
+**Respuesta**: `CasoResponse`
+
+#### POST `/api/v1/casos/{caso_code}/resultado/firmar-con-diagnosticos`
+
+**Descripción**: Firmar resultado y actualizar diagnósticos  
+**Parámetros**: `caso_code` (path)  
+**Query Params**: `patologo_codigo` (string)  
+**Body**:
+
+```json
+{
+  "diagnostico_cie10": {
+    "codigo": "string",
+    "nombre": "string"
+  } | null,
+  "diagnostico_cieo": {
+    "codigo": "string",
+    "nombre": "string"
+  } | null
+}
+```
+
+**Respuesta**: `CasoResponse`
+
+### 3.4. Búsquedas Avanzadas
+
+#### POST `/api/v1/casos/buscar`
+
+**Descripción**: Búsqueda avanzada con múltiples criterios  
+**Body**: `CasoSearch`
+
+```json
+{
+  "query": "string|null (búsqueda general)",
+  "caso_code": "string|null",
+  "paciente_code": "string|null",
+  "paciente_nombre": "string|null",
+  "medico_nombre": "string|null",
+  "patologo_codigo": "string|null",
+  "estado": "EstadoCasoEnum|null",
+  "prioridad": "PrioridadCasoEnum|null (Normal|Prioritario|Urgente)",
+  "fecha_ingreso_desde": "datetime|null",
+  "fecha_ingreso_hasta": "datetime|null",
+  "fecha_firma_desde": "datetime|null",
+  "fecha_firma_hasta": "datetime|null",
+  "solo_vencidos": "boolean (default: false)",
+  "solo_sin_patologo": "boolean (default: false)",
+  "solo_firmados": "boolean (default: false)"
+}
+```
+
+**Query Params**: `skip`, `limit`  
+**Respuesta**: `Array<CasoResponse>`
+
+#### GET `/api/v1/casos/paciente/{paciente_code}`
+
+**Descripción**: Obtener todos los casos de un paciente  
+**Parámetros**: `paciente_code` (path)  
+**Respuesta**: `Array<CasoResponse>`
+
+#### GET `/api/v1/casos/patologo/{patologo_codigo}`
+
+**Descripción**: Obtener casos asignados a un patólogo  
+**Parámetros**: `patologo_codigo` (path)  
+**Query Params**: `skip`, `limit`  
+**Respuesta**: `Array<CasoResponse>`
+
+#### GET `/api/v1/casos/estado/{estado}`
+
+**Descripción**: Obtener casos por estado  
+**Parámetros**: `estado` (path)  
+**Query Params**: `skip`, `limit`  
+**Respuesta**: `Array<CasoResponse>`
+
+#### GET `/api/v1/casos/sin-patologo`
+
+**Descripción**: Obtener casos sin patólogo asignado  
+**Query Params**: `skip`, `limit`  
+**Respuesta**: `Array<CasoResponse>`
+
+#### GET `/api/v1/casos/vencidos`
+
+**Descripción**: Obtener casos vencidos (>15 días sin completar)  
+**Respuesta**: `Array<CasoResponse>`
+
+### 3.5. Estadísticas y Reportes
+
+#### GET `/api/v1/casos/estadisticas`
+
+**Descripción**: Estadísticas generales del sistema  
+**Respuesta**: `CasoStats`
+
+```json
+{
+  "total_casos": "number",
+  "casos_en_proceso": "number",
+  "casos_por_firmar": "number",
+  "casos_por_entregar": "number",
+  "casos_completados": "number",
+  "casos_vencidos": "number",
+  "casos_sin_patologo": "number",
+  "tiempo_promedio_procesamiento": "number|null (días)",
+  "casos_mes_actual": "number",
+  "casos_mes_anterior": "number",
+  "casos_semana_actual": "number",
+  "cambio_porcentual": "number",
+  "casos_por_patologo": "object",
+  "casos_por_tipo_prueba": "object"
+}
+```
+
+#### GET `/api/v1/casos/estadisticas-muestras`
+
+**Descripción**: Estadísticas específicas de muestras  
+**Respuesta**: `MuestraStats`
+
+```json
+{
+  "total_muestras": "number",
+  "muestras_mes_anterior": "number",
+  "muestras_mes_anterior_anterior": "number",
+  "cambio_porcentual": "number",
+  "muestras_por_region": "object",
+  "muestras_por_tipo_prueba": "object",
+  "tiempo_promedio_procesamiento": "number"
+}
+```
+
+#### GET `/api/v1/casos/casos-por-mes/{year}`
+
+**Descripción**: Casos agrupados por mes del año  
+**Parámetros**: `year` (path, range: 2020-2030)  
+**Respuesta**:
+
+```json
+{
+  "datos": "[number] (12 elementos, índices 0-11)",
+  "total": "number",
+  "año": "number"
+}
+```
+
+#### GET `/api/v1/casos/estadisticas-oportunidad-mensual`
+
+**Descripción**: Métricas de oportunidad del mes anterior  
+**Respuesta**:
+
+```json
+{
+  "porcentaje_oportunidad": "number",
+  "cambio_porcentual": "number",
+  "tiempo_promedio": "number",
+  "casos_dentro_oportunidad": "number",
+  "casos_fuera_oportunidad": "number",
+  "total_casos_mes_anterior": "number",
   "mes_anterior": {
-    "mes": "diciembre",
-    "año": 2024,
-    "total_casos": 45,
-    "casos_completados": 42,
-    "tiempo_promedio_dias": 4.2,
-    "casos_vencidos": 3
-  },
-  "mes_anterior_anterior": {
-    "mes": "noviembre",
-    "año": 2024,
-    "total_casos": 38,
-    "casos_completados": 35,
-    "tiempo_promedio_dias": 5.1,
-    "casos_vencidos": 5
-  },
-  "comparacion": {
-    "cambio_casos": 18.4,
-    "cambio_completados": 20.0,
-    "mejora_tiempo": -17.6,
-    "reduccion_vencidos": -40.0
+    "nombre": "string",
+    "inicio": "datetime ISO",
+    "fin": "datetime ISO"
   }
 }
 ```
 
-## Estructura del modelo
+#### GET `/api/v1/casos/oportunidad-detalle`
 
-### Modelos de Diagnóstico
+**Descripción**: Detalle de oportunidad por pruebas y patólogos  
+**Query Params**: `year` (optional), `month` (optional)  
+**Respuesta**:
 
-#### DiagnosticoCIE10
-
-```python
-class DiagnosticoCIE10(BaseModel):
-    id: str                    # ID único de la enfermedad CIE-10
-    codigo: str               # Código CIE-10 (ej: "A000")
-    nombre: str               # Nombre completo de la enfermedad
-```
-
-#### DiagnosticoCIEO
-
-```python
-class DiagnosticoCIEO(BaseModel):
-    id: str                    # ID único de la enfermedad CIEO
-    codigo: str               # Código CIEO (ej: "C000")
-    nombre: str               # Nombre completo de la enfermedad
-```
-
-### Modelo de Resultado (Actualizado)
-
-#### ResultadoInfo
-
-```python
-class ResultadoInfo(BaseModel):
-    metodo: Optional[str]                    # Método realizado
-    resultado_macro: Optional[str]           # Descripción macroscópica
-    resultado_micro: Optional[str]           # Descripción microscópica
-    diagnostico: Optional[str]               # Diagnóstico final (texto libre)
-    diagnostico_cie10: Optional[DiagnosticoCIE10]  # Diagnóstico CIE-10 estructurado
-    diagnostico_cieo: Optional[DiagnosticoCIEO]    # Diagnóstico CIEO estructurado
-    observaciones: Optional[str]             # Observaciones adicionales
-    fecha_resultado: Optional[datetime]      # Fecha del resultado
-    firmado: bool                            # Si el resultado está firmado
-    fecha_firma: Optional[datetime]          # Fecha de firma
-```
-
-## Endpoints Disponibles
-
-### Gestión de Resultados
-
-#### Obtener Resultado
-
-```http
-GET /api/v1/casos/caso-code/{CasoCode}/resultado
-```
-
-**Respuesta:**
- 
 ```json
 {
-  "metodo": "Histopatología",
-  "resultado_macro": "Muestra de tejido del labio superior",
-  "resultado_micro": "Presencia de células neoplásicas",
-  "diagnostico": "Carcinoma del labio superior",
-  "diagnostico_cie10": {
-    "id": "68a87f6f77c035944761c564",
-    "codigo": "A000",
-    "nombre": "COLERA DEBIDO A VIBRIO CHOLERAE 01, BIOTIPO CHOLERAE"
+  "pruebas": "[object] (estadísticas por tipo de prueba)",
+  "patologos": "[object] (estadísticas por patólogo)",
+  "resumen": {
+    "total": "number",
+    "dentro": "number",
+    "fuera": "number"
   },
-  "diagnostico_cieo": {
-    "id": "68a89325a8937355a92cc019",
-    "codigo": "C000",
-    "nombre": "Tumor maligno del labio superior, cara externa"
-  },
-  "observaciones": "Caso complejo que requiere seguimiento",
-  "fecha_resultado": "2025-01-22T10:30:00Z",
-  "firmado": true,
-  "fecha_firma": "2025-01-22T15:45:00Z"
+  "periodo": {
+    "inicio": "datetime ISO",
+    "fin": "datetime ISO"
+  }
 }
 ```
 
-#### Crear/Actualizar Resultado
+### 3.6. Utilidades
 
-```http
-PUT /api/v1/casos/caso-code/{CasoCode}/resultado
-```
+#### GET `/api/v1/casos/siguiente-consecutivo`
 
-**Cuerpo de la petición:**
- 
+**Descripción**: Consultar próximo código consecutivo (sin consumir)  
+**Respuesta**: `{"codigo": "string (YYYY-NNNNN)"}`
+
+#### GET `/api/v1/casos/entidades-por-patologo/{patologo_codigo}`
+
+**Descripción**: Entidades donde ha trabajado un patólogo  
+**Parámetros**: `patologo_codigo` (path)  
+**Query Params**: `year`, `month` (opcionales)  
+**Respuesta**:
+
 ```json
 {
-  "metodo": "Histopatología",
-  "resultado_macro": "Muestra de tejido del labio superior",
-  "resultado_micro": "Presencia de células neoplásicas",
-  "diagnostico": "Carcinoma del labio superior",
-  "diagnostico_cie10": {
-    "id": "68a87f6f77c035944761c564",
-    "codigo": "A000",
-    "nombre": "COLERA DEBIDO A VIBRIO CHOLERAE 01, BIOTIPO CHOLERAE"
-  },
-  "diagnostico_cieo": {
-    "id": "68a89325a8937355a92cc019",
-    "codigo": "C000",
-    "nombre": "Tumor maligno del labio superior, cara externa"
-  },
-  "observaciones": "Caso complejo que requiere seguimiento"
+  "patologo": "string",
+  "entidades": "[object]",
+  "total_entidades": "number",
+  "periodo": {
+    "month": "number|null",
+    "year": "number|null",
+    "filtrado": "boolean"
+  }
 }
 ```
-
-#### Firmar Resultado
-
-```http
-POST /api/v1/casos/caso-code/{CasoCode}/resultado/firmar
-```
-
-**Parámetros:**
-- `patologo_codigo`: Código del patólogo que firma
-
-## Casos de Uso
-
-### 1. Crear Resultado con Diagnóstico CIE-10
-```python
-from app.modules.casos.models.caso import ResultadoInfo, DiagnosticoCIE10
-
-# Crear diagnóstico CIE-10
-diagnostico_cie10 = DiagnosticoCIE10(
-    id="68a87f6f77c035944761c564",
-    codigo="A000",
-    nombre="COLERA DEBIDO A VIBRIO CHOLERAE 01, BIOTIPO CHOLERAE"
-)
-
-# Crear resultado
-resultado = ResultadoInfo(
-    metodo="Histopatología",
-    resultado_macro="Muestra de tejido",
-    resultado_micro="Presencia de bacterias",
-    diagnostico="Cólera confirmado",
-    diagnostico_cie10=diagnostico_cie10
-)
-```
-
-### 2. Crear Resultado con Ambos Diagnósticos
-```python
-from app.modules.casos.models.caso import ResultadoInfo, DiagnosticoCIE10, DiagnosticoCIEO
-
-# Diagnóstico CIE-10
-diagnostico_cie10 = DiagnosticoCIE10(
-    id="68a87f6f77c035944761c564",
-    codigo="A000",
-    nombre="COLERA DEBIDO A VIBRIO CHOLERAE 01, BIOTIPO CHOLERAE"
-)
-
-# Diagnóstico CIEO
-diagnostico_cieo = DiagnosticoCIEO(
-    id="68a89325a8937355a92cc019",
-    codigo="C000",
-    nombre="Tumor maligno del labio superior, cara externa"
-)
-
-# Resultado con ambos diagnósticos
-resultado = ResultadoInfo(
-    metodo="Histopatología",
-    resultado_macro="Muestra de tejido del labio superior",
-    resultado_micro="Presencia de células neoplásicas",
-    diagnostico="Carcinoma del labio superior",
-    diagnostico_cie10=diagnostico_cie10,
-    diagnostico_cieo=diagnostico_cieo
-)
-```
-
-### 3. Actualizar Solo Diagnóstico CIEO
-```python
-# Obtener resultado existente
-resultado_existente = await caso_service.obtener_resultado_por_caso_code("2025-00001")
-
-# Actualizar solo el diagnóstico CIEO
-resultado_existente.diagnostico_cieo = DiagnosticoCIEO(
-    id="68a89325a8937355a92cc019",
-    codigo="C000",
-    nombre="Tumor maligno del labio superior, cara externa"
-)
-
-# Guardar cambios
-await caso_service.agregar_o_actualizar_resultado_por_caso_code(
-    "2025-00001", 
-    resultado_existente, 
-    "usuario_id"
-)
-```
-
-## Ventajas de los Nuevos Campos
-
-### 1. **Estructuración de Datos**
-- Los diagnósticos ahora tienen campos específicos para ID, código y nombre
-- Facilita la búsqueda y filtrado por códigos de enfermedad
-- Permite la validación de datos
-
-### 2. **Compatibilidad con Frontend**
-- El frontend puede mostrar códigos y nombres de manera estructurada
-- Facilita la creación de reportes y estadísticas
-- Permite la integración con sistemas externos
-
-### 3. **Trazabilidad**
-- Se mantiene el historial de qué enfermedades específicas fueron diagnosticadas
-- Facilita la auditoría y seguimiento de casos
-- Permite análisis epidemiológicos
-
-### 4. **Flexibilidad**
-- Se mantiene el campo `diagnostico` para texto libre
-- Los nuevos campos son opcionales, no rompen la compatibilidad
-- Permite migración gradual de casos existentes
-
-## Migración de Datos Existentes
-
-Los casos existentes que solo tienen el campo `diagnostico` (texto libre) seguirán funcionando normalmente. Los nuevos campos `diagnostico_cie10` y `diagnostico_cieo` son opcionales y se pueden agregar gradualmente.
-
-## Validaciones
-
-### DiagnosticoCIE10
-- `id`: Debe ser un string válido
-- `codigo`: Máximo 20 caracteres
-- `nombre`: Máximo 500 caracteres
-
-### DiagnosticoCIEO
-- `id`: Debe ser un string válido
-- `codigo`: Máximo 20 caracteres
-- `nombre`: Máximo 500 caracteres
-
-### ResultadoInfo
-- Los campos de diagnóstico son opcionales
-- Se puede tener solo CIE-10, solo CIEO, ambos, o ninguno
-- El campo `diagnostico` (texto libre) sigue siendo opcional

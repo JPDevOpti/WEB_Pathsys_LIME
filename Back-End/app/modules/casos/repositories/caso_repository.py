@@ -1,9 +1,11 @@
 """Repositorio para operaciones CRUD de casos."""
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from datetime import datetime, timedelta
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
+
+if TYPE_CHECKING:
+    from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.shared.repositories.base import BaseRepository
 from app.modules.casos.models.caso import Caso
@@ -14,13 +16,80 @@ from app.shared.schemas.common import EstadoCasoEnum
 class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
     """Repositorio para operaciones CRUD de casos."""
     
-    def __init__(self, database: AsyncIOMotorDatabase):
+    def __init__(self, database: Any):
         super().__init__(database, "casos", Caso)
+
+    def _normalize_boolean_fields_for_write(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Sobrescribir método para casos: NO agregar campos is_active/isActive"""
+        # Para casos, no queremos campos de estado activo
+        return data
+
+    async def create(self, obj_in: CasoCreate) -> Caso:
+        """Crear un nuevo caso SIN campos is_active/isActive"""
+        if hasattr(obj_in, 'model_dump'):
+            obj_data = obj_in.model_dump(by_alias=False)
+        else:
+            obj_data = obj_in.dict(by_alias=False)
+        
+        obj_data.setdefault("fecha_creacion", datetime.utcnow())
+        obj_data["fecha_actualizacion"] = datetime.utcnow()
+        
+        # NO agregar campos is_active/isActive para casos
+        # Eliminar estos campos si vienen en los datos
+        obj_data.pop("is_active", None)
+        obj_data.pop("isActive", None)
+        
+        try:
+            result = await self.collection.insert_one(obj_data)
+            created_obj = await self.collection.find_one({"_id": result.inserted_id})
+            if created_obj:
+                # Limpiar campos duplicados antes de crear el modelo
+                created_obj.pop("is_active", None)
+                created_obj.pop("isActive", None)
+                return self.model_class(**created_obj)
+            else:
+                raise ValueError("Failed to create document")
+        except Exception as e:
+            raise e
+
+    def _clean_active_fields(self, document: Dict[str, Any]) -> Dict[str, Any]:
+        """Limpiar campos is_active/isActive de documentos de casos"""
+        if document:
+            document.pop("is_active", None)
+            document.pop("isActive", None)
+        return document
+
+    async def get(self, id: str) -> Optional[Caso]:
+        """Obtener caso por ID sin campos is_active/isActive"""
+        if not ObjectId.is_valid(id):
+            return None
+        
+        document = await self.collection.find_one({"_id": ObjectId(id)})
+        if document:
+            document = self._clean_active_fields(document)
+            return self.model_class(**document)
+        return None
+
+    async def get_multi(
+        self, 
+        skip: int = 0, 
+        limit: int = 100, 
+        filters: Optional[Dict[str, Any]] = None
+    ) -> List[Caso]:
+        """Obtener múltiples casos sin campos is_active/isActive"""
+        # No usar normalización de filtros booleanos para casos
+        query = filters.copy() if filters else {}
+        cursor = self.collection.find(query).skip(skip).limit(limit)
+        documents = await cursor.to_list(length=limit)
+        return [self.model_class(**self._clean_active_fields(doc)) for doc in documents]
     
     async def get_by_codigo(self, caso_code: str) -> Optional[Caso]:
         """Obtener caso por código."""
         document = await self.collection.find_one({"caso_code": caso_code})
-        return self.model_class(**document) if document else None
+        if document:
+            document = self._clean_active_fields(document)
+            return self.model_class(**document)
+        return None
     
     async def get_by_caso_code(self, caso_code: str) -> Optional[Caso]:
         """Alias para get_by_codigo - Obtener caso por código."""
@@ -66,7 +135,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         query = self._build_search_query(search_params)
         cursor = self.collection.find(query).skip(skip).limit(limit).sort("fecha_creacion", -1)
         documents = await cursor.to_list(length=limit)
-        return [self.model_class(**doc) for doc in documents]
+        return [self.model_class(**self._clean_active_fields(doc)) for doc in documents]
     
     async def get_casos_by_patologo(self, patologo_codigo: str, skip: int = 0, limit: int = 100) -> List[Caso]:
         """Obtener casos asignados a un patólogo específico."""
@@ -85,14 +154,14 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             "estado": {"$nin": self._get_estados_finalizados()}
         }
         documents = await self.collection.find(query).sort("fecha_creacion", 1).to_list(length=None)
-        return [self.model_class(**doc) for doc in documents]
+        return [self.model_class(**self._clean_active_fields(doc)) for doc in documents]
     
     async def get_casos_sin_patologo(self, skip: int = 0, limit: int = 100) -> List[Caso]:
         """Obtener casos sin patólogo asignado."""
         query = {"$or": [{"patologo_asignado": {"$exists": False}}, {"patologo_asignado": None}]}
         cursor = self.collection.find(query).skip(skip).limit(limit).sort("fecha_creacion", 1)
         documents = await cursor.to_list(length=limit)
-        return [self.model_class(**doc) for doc in documents]
+        return [self.model_class(**self._clean_active_fields(doc)) for doc in documents]
     
     
     async def asignar_patologo(self, caso_id: str, patologo_info: dict) -> Optional[Caso]:
@@ -237,9 +306,10 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             'caso_code': ("caso_code", "regex"),
             'paciente_code': ("paciente.paciente_code", "exact"),
             'paciente_nombre': ("paciente.nombre", "regex"),
-            'medico_nombre': ("medico_solicitante.nombre", "regex"),
+            'medico_nombre': ("medico_solicitante", "regex"),
             'patologo_codigo': ("patologo_asignado.codigo", "exact"),
-            'estado': ("estado", "enum_value")
+            'estado': ("estado", "enum_value"),
+            'prioridad': ("prioridad", "enum_value")
         }
         
         for param, (field, search_type) in field_mappings.items():
@@ -279,7 +349,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
                 {"caso_code": {"$regex": search_params.query, "$options": "i"}},
                 {"paciente.nombre": {"$regex": search_params.query, "$options": "i"}},
                 {"paciente.paciente_code": {"$regex": search_params.query, "$options": "i"}},
-                {"medico_solicitante.nombre": {"$regex": search_params.query, "$options": "i"}}
+                {"medico_solicitante": {"$regex": search_params.query, "$options": "i"}}
             ]
         
         return query
@@ -289,7 +359,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         query = {field: value}
         cursor = self.collection.find(query).skip(skip).limit(limit).sort("fecha_creacion", -1)
         documents = await cursor.to_list(length=limit)
-        return [self.model_class(**doc) for doc in documents]
+        return [self.model_class(**self._clean_active_fields(doc)) for doc in documents]
 
     async def get_by_paciente_code(self, paciente_code: str, skip: int = 0, limit: int = 100) -> List[Caso]:
         """Obtener casos por código del paciente."""
@@ -297,7 +367,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
     
     def _get_estados_finalizados(self) -> List[str]:
         """Obtener lista de estados considerados como finalizados."""
-        return [EstadoCasoEnum.COMPLETADO.value, EstadoCasoEnum.CANCELADO.value]
+        return [EstadoCasoEnum.COMPLETADO.value]
     
     def _get_stats_field_name(self, estado: str) -> str:
         """Obtener nombre del campo en estadísticas según el estado."""
@@ -305,8 +375,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             EstadoCasoEnum.EN_PROCESO.value: "casos_en_proceso",
             EstadoCasoEnum.POR_FIRMAR.value: "casos_por_firmar",
             EstadoCasoEnum.POR_ENTREGAR.value: "casos_por_entregar",
-            EstadoCasoEnum.COMPLETADO.value: "casos_completados",
-            EstadoCasoEnum.CANCELADO.value: "casos_cancelados"
+            EstadoCasoEnum.COMPLETADO.value: "casos_completados"
         }
         return estado_mapping.get(estado, "casos_otros")
     
@@ -329,7 +398,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         cursor = self.collection.find(query).sort("fecha_creacion", 1)
         documents = await cursor.to_list(length=None)  # Sin límite
         
-        return [self.model_class(**doc) for doc in documents]
+        return [self.model_class(**self._clean_active_fields(doc)) for doc in documents]
     
     async def get_casos_por_fecha_rango(self, fecha_inicio: datetime, fecha_fin: datetime) -> List[Caso]:
         """Obtener todos los casos en un rango de fechas específico."""
@@ -345,7 +414,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         cursor = self.collection.find(query).sort("fecha_creacion", 1)
         documents = await cursor.to_list(length=None)  # Sin límite
         
-        return [self.model_class(**doc) for doc in documents]
+        return [self.model_class(**self._clean_active_fields(doc)) for doc in documents]
 
     async def get_casos_por_entrega_rango(self, fecha_inicio: datetime, fecha_fin: datetime) -> List[Caso]:
         """Obtener todos los casos cuya fecha_entrega esté dentro del rango especificado."""
@@ -359,7 +428,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             "patologo_asignado": 1
         }).sort("fecha_entrega", 1)
         documents = await cursor.to_list(length=None)
-        return [self.model_class(**doc) for doc in documents]
+        return [self.model_class(**self._clean_active_fields(doc)) for doc in documents]
 
     async def get_oportunidad_por_mes_agregado(self, año: int) -> List[float]:
         """Calcular % de oportunidad por mes del año via agregación en MongoDB."""

@@ -1,8 +1,10 @@
 """Servicio para la lógica de negocio de casos."""
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, TYPE_CHECKING
 from datetime import datetime
-from motor.motor_asyncio import AsyncIOMotorDatabase
+
+if TYPE_CHECKING:
+    from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.modules.casos.repositories.caso_repository import CasoRepository
 from app.modules.casos.repositories.consecutivo_repository import ConsecutivoRepository
@@ -26,7 +28,7 @@ from app.shared.schemas.common import EstadoCasoEnum
 class CasoService:
     """Servicio para la gestión de casos."""
     
-    def __init__(self, database: AsyncIOMotorDatabase):
+    def __init__(self, database: Any):
         self.repository = CasoRepository(database)
         self.consecutivo_repository = ConsecutivoRepository(database)
     
@@ -38,7 +40,7 @@ class CasoService:
         caso_dict = caso_data.model_dump()
         caso_dict.update({
             "caso_code": caso_code,
-            "creado_por": usuario_id,
+            "ingresado_por": usuario_id,
             "actualizado_por": usuario_id
         })
         
@@ -54,7 +56,7 @@ class CasoService:
         
         caso_dict = caso_data.model_dump()
         caso_dict.update({
-            "creado_por": usuario_id,
+            "ingresado_por": usuario_id,
             "actualizado_por": usuario_id
         })
         
@@ -248,7 +250,7 @@ class CasoService:
             raise NotFoundError(f"Caso con código {CasoCode} no encontrado")
 
         resultado_dict = resultado_data.model_dump(exclude_unset=True)
-        resultado_dict["fecha_resultado"] = datetime.utcnow()
+    # Se elimina control de fecha_resultado interno
 
         # Si el caso está en estado EN_PROCESO y se está guardando un resultado,
         # cambiar el estado a POR_FIRMAR
@@ -299,16 +301,12 @@ class CasoService:
         
         resultado_actualizado = caso.resultado.model_copy()
         
-        # Marcar el resultado como firmado
-        resultado_actualizado.firmado = True
-        resultado_actualizado.fecha_firma = datetime.utcnow()
-        
         # Solo cambiar a "Por entregar" si el caso actual está en "Por firmar"
         nuevo_estado = EstadoCasoEnum.POR_ENTREGAR if caso.estado == EstadoCasoEnum.POR_FIRMAR else caso.estado
         
         update_data = {
             "resultado": resultado_actualizado.model_dump(),
-            "fecha_firma": datetime.utcnow(),
+            "fecha_firma": datetime.utcnow(),  # sólo a nivel de caso
             "estado": nuevo_estado,
             "actualizado_por": patologo_codigo,
             "fecha_actualizacion": datetime.utcnow()
@@ -349,9 +347,7 @@ class CasoService:
         if diagnostico_cieo:
             resultado_actualizado.diagnostico_cieo = diagnostico_cieo
         
-        # Marcar el resultado como firmado
-        resultado_actualizado.firmado = True
-        resultado_actualizado.fecha_firma = datetime.utcnow()
+        # Firma: únicamente se registra fecha_firma a nivel de caso
         
         # Solo cambiar a "Por entregar" si el caso actual está en "Por firmar"
         nuevo_estado = EstadoCasoEnum.POR_ENTREGAR if caso.estado == EstadoCasoEnum.POR_FIRMAR else caso.estado
@@ -616,11 +612,10 @@ class CasoService:
     def _validar_transicion_estado(self, estado_actual: EstadoCasoEnum, nuevo_estado: EstadoCasoEnum) -> bool:
         """Validar si una transición de estado es válida."""
         transiciones_validas = {
-            EstadoCasoEnum.EN_PROCESO: [EstadoCasoEnum.POR_FIRMAR, EstadoCasoEnum.CANCELADO],
-            EstadoCasoEnum.POR_FIRMAR: [EstadoCasoEnum.POR_ENTREGAR, EstadoCasoEnum.CANCELADO],
-            EstadoCasoEnum.POR_ENTREGAR: [EstadoCasoEnum.COMPLETADO, EstadoCasoEnum.CANCELADO],
-            EstadoCasoEnum.COMPLETADO: [],
-            EstadoCasoEnum.CANCELADO: [EstadoCasoEnum.EN_PROCESO]
+            EstadoCasoEnum.EN_PROCESO: [EstadoCasoEnum.POR_FIRMAR],
+            EstadoCasoEnum.POR_FIRMAR: [EstadoCasoEnum.POR_ENTREGAR],
+            EstadoCasoEnum.POR_ENTREGAR: [EstadoCasoEnum.COMPLETADO],
+            EstadoCasoEnum.COMPLETADO: []
         }
         
         return nuevo_estado in transiciones_validas.get(estado_actual, [])
