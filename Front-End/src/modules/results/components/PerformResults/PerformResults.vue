@@ -135,15 +135,15 @@
           :inline="true"
           :auto-close="false"
           data-notification="success"
-          @close="closeNotification"
+          @close="closeAndClearNotification"
         >
           <template v-if="notification.type === 'success'" #content>
             <div class="relative p-4 sm:p-5 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div class="space-y-4">
                 <div class="text-center pb-3 border-b border-gray-200">
                   <div class="inline-block">
-                    <p class="font-semibold text-gray-900 text-base">Resumen de cortes guardados</p>
-                    <p class="text-gray-500 text-sm">Caso {{ caseDetails?.caso_code || sampleId }}</p>
+                    <p class="font-semibold text-gray-900 text-base">Resumen de resultados guardados</p>
+                    <p class="text-gray-500 text-sm">{{ savedCaseCode || caseDetails?.caso_code || props.sampleId }}</p>
                   </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -300,6 +300,8 @@ const savedContent = ref({
   micro: '',
   diagnosis: ''
 })
+// Guardar el código del caso que se acaba de guardar para mostrar en la notificación
+const savedCaseCode = ref('')
 
 const isValidCodigoFormat = (codigo: string | undefined | null): boolean => {
   if (!codigo || typeof codigo !== 'string' || codigo.trim() === '') return false
@@ -489,22 +491,20 @@ async function handleSaveAction() {
         micro: currentState.micro,
         diagnosis: currentState.diagnosis
       }
+      // Guardar el código del caso para que la notificación lo muestre incluso si limpiamos el caso
+      savedCaseCode.value = currentState.caseCode || ''
       
       // Mostrar notificación apropiada
       if (currentState.isComplete) {
         showSuccess('¡Caso completado!', `El caso ${currentState.caseCode} ha sido completado y está listo para firma.`, 0)
       } else {
-        // Crear resumen usando estado capturado
-        const summary = createContentSummary(currentState)
-        const message = summary.length > 0 
-          ? `Se guardó el progreso del caso ${currentState.caseCode}:\n\n${summary.join('\n')}`
-          : `Se guardó el progreso del caso ${currentState.caseCode} correctamente.`
-        showSuccess('¡Progreso guardado!', message, 0)
+        // Mostrar solo título de éxito al guardar el progreso (sin mensaje detallado)
+        showSuccess('¡Progreso guardado!', '', 0)
       }
       
-      // Programar limpieza para el próximo tick
-      await nextTick()
-      clearFormAfterSave()
+  // Programar limpieza para el próximo tick
+  await nextTick()
+  clearFormAfterSave()
     } else {
       const action = currentState.isComplete ? 'completar el caso para firma' : 'guardar el progreso'
       showError('Error al procesar', errorMessage?.value || `No se pudo ${action}.`, 0)
@@ -515,25 +515,12 @@ async function handleSaveAction() {
   }
 }
 
-// Función separada para crear el resumen del contenido
-function createContentSummary(state: any): string[] {
-  const summary = []
-  
-  const methodText = state.method.join(', ')
-  if (methodText.length > 0) {
-    summary.push(`Método: ${methodText.substring(0, 50)}${methodText.length > 50 ? '...' : ''}`)
-  }
-  if (state.macro.trim()) {
-    summary.push(`Macro: ${state.macro.trim().substring(0, 50)}${state.macro.length > 50 ? '...' : ''}`)
-  }
-  if (state.micro.trim()) {
-    summary.push(`Micro: ${state.micro.trim().substring(0, 50)}${state.micro.length > 50 ? '...' : ''}`)
-  }
-  if (state.diagnosis.trim()) {
-    summary.push(`Diagnóstico: ${state.diagnosis.trim().substring(0, 50)}${state.diagnosis.length > 50 ? '...' : ''}`)
-  }
-  
-  return summary
+// (Removed detailed content summary - not needed when saving simple notification)
+
+// Cerrar notificación y limpiar código de caso guardado
+function closeAndClearNotification() {
+  closeNotification()
+  savedCaseCode.value = ''
 }
 
 // Función separada para limpiar el formulario
