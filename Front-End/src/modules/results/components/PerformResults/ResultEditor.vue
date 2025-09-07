@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { FormTextarea } from '@/shared/components/forms'
-import MethodSection from './MethodSection.vue'
+import MethodSection from '../Shared/MethodSection.vue'
 
 type EditorSectionKey = 'method' | 'macro' | 'micro' | 'diagnosis'
 const props = defineProps<{ 
