@@ -3,7 +3,7 @@ import { API_CONFIG } from '@/core/config/api.config'
 import type { UpdateCaseResponse } from '@/modules/cases/types/api'
 
 export interface UpsertResultadoRequest {
-  metodo?: string
+  metodo?: string[]
   resultado_macro?: string
   resultado_micro?: string
   diagnostico?: string

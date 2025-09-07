@@ -209,10 +209,10 @@ import { DiseaseList } from '@/shared/components/List'
 import DocsIcon from '@/assets/icons/DocsIcon.vue'
 import WarningIcon from '@/assets/icons/WarningIcon.vue'
 import ErrorIcon from '@/assets/icons/ErrorIcon.vue'
-import ResultEditor from '../PerformResults/ResultEditor.vue'
-import PatientInfoCard from '../PerformResults/PatientInfoCard.vue'
-import CaseDetailsCard from '../PerformResults/CaseDetailsCard.vue'
-import PreviousCaseDetailsModal from '../PerformResults/PreviousCaseDetailsModal.vue'
+import ResultEditor from '../Shared/ResultEditor.vue'
+import PatientInfoCard from '../Shared/PatientInfoCard.vue'
+import CaseDetailsCard from '../Shared/CaseDetailsCard.vue'
+import PreviousCaseDetailsModal from '../Shared/PreviousCaseDetailsModal.vue'
 import ComplementaryTestsSection from './ComplementaryTestsSection.vue'
 import { usePerformResults } from '../../composables/usePerformResults'
 import casesApiService from '@/modules/cases/services/casesApi.service'
@@ -677,7 +677,7 @@ async function handleSign() {
     } : undefined
 
     const requestData = {
-      metodo: sections.value?.method || '',
+      metodo: sections.value?.method || [],
       resultado_macro: sections.value?.macro || '',
       resultado_micro: sections.value?.micro || '',
       diagnostico: sections.value?.diagnosis || '',
@@ -755,9 +755,15 @@ const handlePrimaryDiseaseCIEOChange = (disease: Disease | null) => {
 }
 
 // Función para actualizar el contenido de la sección activa
-const updateSectionContent = (value: string) => {
+const updateSectionContent = (value: string | string[]) => {
   if (sections.value) {
-    sections.value[activeSection.value] = value
+    if (activeSection.value === 'method') {
+      // Para la sección method, esperamos un array
+      sections.value[activeSection.value] = Array.isArray(value) ? value : []
+    } else {
+      // Para otras secciones, esperamos string
+      sections.value[activeSection.value] = Array.isArray(value) ? '' : value
+    }
   }
 }
 
@@ -813,7 +819,7 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
     
     const diagnosticoCie10 = getDiagnosisData()
     const resultData = {
-      metodo: sections.value.method || '',
+      metodo: sections.value.method || [],
       resultado_macro: sections.value.macro || '',
       resultado_micro: sections.value.micro || '',
       diagnostico: sections.value.diagnosis || '',

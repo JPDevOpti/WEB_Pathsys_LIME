@@ -541,7 +541,7 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 if estado_final in [EstadoCasoEnum.POR_FIRMAR, EstadoCasoEnum.POR_ENTREGAR, EstadoCasoEnum.COMPLETADO]:
                     from app.modules.casos.models.caso import ResultadoInfo as ModelResultadoInfo
                     resultado_data = ModelResultadoInfo(
-                        metodo="Histopatología",
+                        metodo=["Histopatología"],
                         resultado_macro="Muestra procesada correctamente. Tejido de características normales.",
                         resultado_micro="Arquitectura conservada. Sin alteraciones significativas observadas.",
                         diagnostico=random.choice([

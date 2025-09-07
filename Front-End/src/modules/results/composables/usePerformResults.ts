@@ -39,8 +39,8 @@ export function usePerformResults(sampleId: string) {
   const selectedTemplateId = ref<string | undefined>(undefined)
   type EditorSectionKey = 'method' | 'macro' | 'micro' | 'diagnosis'
   const activeSection = ref<EditorSectionKey>('method')
-  const sections = ref<{ method: string; macro: string; micro: string; diagnosis: string }>({
-    method: '',
+  const sections = ref<{ method: string[]; macro: string; micro: string; diagnosis: string }>({
+    method: [],
     macro: '',
     micro: '',
     diagnosis: ''
@@ -59,7 +59,7 @@ export function usePerformResults(sampleId: string) {
   // Validaciones de campos requeridos para completar (marcar como "Por firmar")
   const missingFields = computed<string[]>(() => {
     const faltantes: string[] = []
-    if (!sections.value.method.trim()) faltantes.push('Método')
+    if (!sections.value.method.length || sections.value.method.every(m => !m.trim())) faltantes.push('Método')
     if (!sections.value.macro.trim()) faltantes.push('Corte Macro')
     if (!sections.value.micro.trim()) faltantes.push('Corte Micro')
     if (!sections.value.diagnosis.trim()) faltantes.push('Diagnóstico')
@@ -69,7 +69,7 @@ export function usePerformResults(sampleId: string) {
   // Para guardar progreso - siempre se puede guardar si hay algún contenido
   const canSaveProgress = computed<boolean>(() => {
     return !!(
-      sections.value.method.trim() ||
+      (sections.value.method.length && sections.value.method.some(m => m.trim())) ||
       sections.value.macro.trim() ||
       sections.value.micro.trim() ||
       sections.value.diagnosis.trim()
@@ -155,8 +155,23 @@ export function usePerformResults(sampleId: string) {
       }
       // Si en el futuro deseamos precargar secciones desde beCase.resultado, se mapea aquí
       if (beCase.resultado) {
+        const metodoData = (beCase.resultado as any)?.metodo
+        let methodArray: string[] = []
+        
+        if (Array.isArray(metodoData)) {
+          methodArray = metodoData
+        } else if (typeof metodoData === 'string' && metodoData.trim()) {
+          methodArray = [metodoData.trim()]
+        }
+
+        // Normalizar entradas para que coincidan con los option.value
+        try {
+          const { normalizeMethod } = await import('@/shared/data/methods')
+          methodArray = methodArray.map(m => normalizeMethod(m))
+        } catch (e) { /* ignore */ }
+        
         sections.value = {
-          method: (beCase.resultado as any)?.metodo || '',
+          method: methodArray,
           macro: (beCase.resultado as any)?.resultado_macro || '',
           micro: (beCase.resultado as any)?.resultado_micro || '',
           diagnosis: (beCase.resultado as any)?.diagnostico || ''
@@ -206,7 +221,19 @@ export function usePerformResults(sampleId: string) {
     attachments.value = attachments.value.filter(a => a.id !== attachmentId)
   }
 
-  async function onSaveDraft() {
+    // Función helper para convertir array de métodos a string
+  function formatMethodsForBackend(methods: string[] | null | undefined): string {
+    if (!methods || !Array.isArray(methods)) return ''
+    const validMethods = methods.filter(m => m && typeof m === 'string' && m.trim())
+    if (validMethods.length === 0) return ''
+    if (validMethods.length === 1) {
+      return `Método utilizado: ${validMethods[0]}.`
+    } else {
+      return `Métodos utilizados: ${validMethods.join(', ')}.`
+    }
+  }
+
+  async function onSaveDraft(): Promise<boolean> {
     validationMessage.value = null
     saving.value = true
     try {
@@ -231,14 +258,16 @@ export function usePerformResults(sampleId: string) {
       } : undefined
 
       const requestData = {
-        metodo: sections.value.method,
-        resultado_macro: sections.value.macro,
-        resultado_micro: sections.value.micro,
-        diagnostico: sections.value.diagnosis,
+        metodo: sections.value?.method || [],
+        resultado_macro: sections.value?.macro || '',
+        resultado_micro: sections.value?.micro || '',
+        diagnostico: sections.value?.diagnosis || '',
         observaciones: undefined,
         diagnostico_cie10: diagnosticoCie10,
         diagnostico_cieo: diagnosticoCIEO
       }
+      
+      console.log('Enviando datos al backend:', requestData)
       
       await resultsApiService.upsertResultado(sample.value.id, requestData)
       lastSavedAt.value = new Date().toISOString()
@@ -280,14 +309,16 @@ export function usePerformResults(sampleId: string) {
       } : undefined
 
       const requestData = {
-        metodo: sections.value.method,
-        resultado_macro: sections.value.macro,
-        resultado_micro: sections.value.micro,
-        diagnostico: sections.value.diagnosis,
+        metodo: sections.value?.method || [],
+        resultado_macro: sections.value?.macro || '',
+        resultado_micro: sections.value?.micro || '',
+        diagnostico: sections.value?.diagnosis || '',
         observaciones: undefined,
         diagnostico_cie10: diagnosticoCie10,
         diagnostico_cieo: diagnosticoCIEO
       }
+      
+      console.log('Enviando datos de completion al backend:', requestData)
       
       // Guardar resultado y marcar como completado (Por firmar)
       await resultsApiService.upsertResultado(sample.value.id, requestData)
@@ -338,9 +369,22 @@ export function usePerformResults(sampleId: string) {
   }
 
   // Computed para editar la sección activa desde un solo editor
-  const sectionContent = computed<string>({
-    get: () => sections.value[activeSection.value],
-    set: (val: string) => { sections.value[activeSection.value] = val }
+  const sectionContent = computed({
+    get: () => {
+      const value = sections.value[activeSection.value]
+      if (activeSection.value === 'method') {
+        // Para método, convertir array a string para compatibilidad
+        return Array.isArray(value) ? value : []
+      }
+      return value as string
+    },
+    set: (val: string | string[]) => { 
+      if (activeSection.value === 'method') {
+        sections.value.method = Array.isArray(val) ? val : []
+      } else {
+        (sections.value as any)[activeSection.value] = typeof val === 'string' ? val : ''
+      }
+    }
   })
 
   // buildFullContent eliminado en limpieza de plantillas
@@ -353,7 +397,9 @@ export function usePerformResults(sampleId: string) {
     parts.push(`<h2 style=\"margin:0 0 8px 0\">Informe de Resultado</h2>`)
     parts.push(`<div><strong>Caso:</strong> ${sample.value?.id} (${sample.value?.type})</div>`)
     parts.push('<hr/>')
-    if (sections.value.method.trim()) parts.push(sectionHtml('Método', sections.value.method))
+    if (sections.value.method.length && sections.value.method.some(m => m.trim())) {
+      parts.push(sectionHtml('Método', formatMethodsForBackend(sections.value.method)))
+    }
     if (sections.value.macro.trim()) parts.push(sectionHtml('Corte Macro', sections.value.macro))
     if (sections.value.micro.trim()) parts.push(sectionHtml('Corte Micro', sections.value.micro))
     if (sections.value.diagnosis.trim()) parts.push(sectionHtml('Diagnóstico', sections.value.diagnosis))
@@ -361,7 +407,7 @@ export function usePerformResults(sampleId: string) {
   }
 
   function onClear() {
-    sections.value = { method: '', macro: '', micro: '', diagnosis: '' }
+    sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
     // no tocar adjuntos ni plantilla seleccionada para no perder contexto
     validationMessage.value = null
     errorMessage.value = null
@@ -369,7 +415,7 @@ export function usePerformResults(sampleId: string) {
 
   // Función para limpiar el formulario después de guardar/firmar exitosamente
   function clearAfterSuccess() {
-    sections.value = { method: '', macro: '', micro: '', diagnosis: '' }
+    sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
     activeSection.value = 'method'
     validationMessage.value = null
     errorMessage.value = null

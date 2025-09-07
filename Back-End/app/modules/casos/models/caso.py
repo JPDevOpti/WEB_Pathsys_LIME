@@ -94,7 +94,7 @@ class DiagnosticoCIEO(BaseModel):
 
 class ResultadoInfo(BaseModel):
     """Información de resultados del caso."""
-    metodo: Optional[str] = None
+    metodo: Optional[List[str]] = Field(default_factory=list, description="Lista de métodos utilizados")
     resultado_macro: Optional[str] = None
     resultado_micro: Optional[str] = None
     diagnostico: Optional[str] = None

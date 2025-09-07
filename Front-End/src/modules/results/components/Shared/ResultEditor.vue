@@ -20,7 +20,7 @@
       <!-- Sección de métodos cuando la pestaña activa es 'method' -->
       <div v-if="activeSection === 'method'" class="h-full">
         <MethodSection
-          :model-value="modelValue"
+          :model-value="Array.isArray(modelValue) ? modelValue : []"
           @update:model-value="$emit('update:modelValue', $event)"
         />
       </div>
@@ -28,7 +28,7 @@
       <!-- Textarea para otras secciones -->
       <FormTextarea 
         v-else
-        :model-value="modelValue" 
+        :model-value="typeof modelValue === 'string' ? modelValue : ''" 
         @update:model-value="$emit('update:modelValue', $event)" 
         class="w-full h-full resize-none transition-colors"
         :class="getTextareaClasses()"
@@ -46,15 +46,15 @@
 
 <script setup lang="ts">
 import { FormTextarea } from '@/shared/components/forms'
-import MethodSection from './MethodSection.vue'
+import MethodSection from '../PerformResults/MethodSection.vue'
 
 type EditorSectionKey = 'method' | 'macro' | 'micro' | 'diagnosis'
 const props = defineProps<{ 
-  modelValue: string, 
+  modelValue: string | string[], 
   activeSection: EditorSectionKey,
-  sections?: { method: string; macro: string; micro: string; diagnosis: string }
+  sections?: { method: string[]; macro: string; micro: string; diagnosis: string }
 }>()
-defineEmits<{ (e: 'update:modelValue', value: string): void, (e: 'update:activeSection', value: EditorSectionKey): void }>()
+defineEmits<{ (e: 'update:modelValue', value: string | string[]): void, (e: 'update:activeSection', value: EditorSectionKey): void }>()
 
 const tabs: Array<{ key: EditorSectionKey, label: string }> = [
   { key: 'method', label: 'Método' },

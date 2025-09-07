@@ -52,7 +52,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-4 bg-gray-50 rounded-xl p-4">
+          <div class="grid grid-cols-4 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
               <p class="text-sm text-gray-500">Fecha de Creación</p>
               <p class="text-base font-medium text-gray-900">{{ caseItem?.receivedAt ? formatDate(caseItem.receivedAt) : 'N/A' }}</p>
@@ -60,6 +60,10 @@
             <div>
               <p class="text-sm text-gray-500">Fecha de Firma</p>
               <p class="text-base font-medium text-gray-900">{{ caseItem?.deliveredAt ? formatDate(caseItem.deliveredAt) : 'Pendiente' }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">Prioridad</p>
+              <p class="text-base font-medium text-gray-900">{{ caseItem?.priority || 'Normal' }}</p>
             </div>
             <div>
               <p class="text-sm text-gray-500">Patólogo Asignado</p>

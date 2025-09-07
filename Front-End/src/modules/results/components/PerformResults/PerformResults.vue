@@ -96,7 +96,7 @@
         <div v-if="casoEncontrado" class="flex-1 flex flex-col min-h-0 mt-0">
           <ResultEditor
             class="flex-1 min-h-0"
-            :model-value="sections[activeSection]"
+            :model-value="activeSection === 'method' ? (Array.isArray(sections[activeSection]) ? [...sections[activeSection]] : []) : sections[activeSection]"
             @update:model-value="updateSectionContent"
             :active-section="activeSection"
             @update:activeSection="activeSection = $event"
@@ -123,51 +123,51 @@
             :errors="validationMessage ? [validationMessage] : []"
           />
           <ErrorMessage v-if="errorMessage" class="mt-2" :message="errorMessage" />
-          
-          <!-- Notificación de éxito -->
-          <Notification
-            class="mt-3"
-            :visible="notification.visible"
-            :type="notification.type"
-            :title="notification.title"
-            :message="notification.message"
-            :inline="true"
-            :auto-close="false"
-            data-notification="success"
-            @close="closeNotification"
-          >
-            <template v-if="notification.type === 'success'" #content>
-              <div class="relative p-4 sm:p-5 bg-white border border-gray-200 rounded-lg shadow-sm">
-                <div class="space-y-4">
-                  <div class="text-center pb-3 border-b border-gray-200">
-                    <div class="inline-block">
-                      <p class="font-semibold text-gray-900 text-base">Resumen de cortes guardados</p>
-                      <p class="text-gray-500 text-sm">Caso {{ caseDetails?.caso_code || sampleId }}</p>
-                    </div>
+        </div>
+        
+        <!-- Notificación de éxito - Siempre visible independientemente del estado del caso -->
+        <Notification
+          class="mt-3"
+          :visible="notification.visible"
+          :type="notification.type"
+          :title="notification.title"
+          :message="notification.message"
+          :inline="true"
+          :auto-close="false"
+          data-notification="success"
+          @close="closeNotification"
+        >
+          <template v-if="notification.type === 'success'" #content>
+            <div class="relative p-4 sm:p-5 bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div class="space-y-4">
+                <div class="text-center pb-3 border-b border-gray-200">
+                  <div class="inline-block">
+                    <p class="font-semibold text-gray-900 text-base">Resumen de cortes guardados</p>
+                    <p class="text-gray-500 text-sm">Caso {{ caseDetails?.caso_code || sampleId }}</p>
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <h5 class="font-medium text-gray-700 mb-1">Método</h5>
-                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.method || '—' }}</div>
-                    </div>
-                    <div>
-                      <h5 class="font-medium text-gray-700 mb-1">Corte Macro</h5>
-                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.macro || '—' }}</div>
-                    </div>
-                    <div>
-                      <h5 class="font-medium text-gray-700 mb-1">Corte Micro</h5>
-                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.micro || '—' }}</div>
-                    </div>
-                    <div>
-                      <h5 class="font-medium text-gray-700 mb-1">Diagnóstico</h5>
-                      <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.diagnosis || '—' }}</div>
-                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <h5 class="font-medium text-gray-700 mb-1">Método</h5>
+                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.method.length > 0 ? savedContent.method.join(', ') : '—' }}</div>
+                  </div>
+                  <div>
+                    <h5 class="font-medium text-gray-700 mb-1">Corte Macro</h5>
+                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.macro || '—' }}</div>
+                  </div>
+                  <div>
+                    <h5 class="font-medium text-gray-700 mb-1">Corte Micro</h5>
+                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.micro || '—' }}</div>
+                  </div>
+                  <div>
+                    <h5 class="font-medium text-gray-700 mb-1">Diagnóstico</h5>
+                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.diagnosis || '—' }}</div>
                   </div>
                 </div>
               </div>
-            </template>
-          </Notification>
-        </div>
+            </div>
+          </template>
+        </Notification>
       </ComponentCard>
 
       <!-- Paneles laterales - Siempre visibles -->
@@ -203,16 +203,16 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ComponentCard } from '@/shared/components'
 import { ErrorMessage, ValidationAlert } from '@/shared/components/feedback'
 import { FormInputField } from '@/shared/components/forms'
 import { SearchButton, ClearButton, SaveButton, PreviewButton } from '@/shared/components/buttons'
-import ResultEditor from './ResultEditor.vue'
-import PatientInfoCard from './PatientInfoCard.vue'
-import CaseDetailsCard from './CaseDetailsCard.vue'
-import PreviousCaseDetailsModal from './PreviousCaseDetailsModal.vue'
+import ResultEditor from '../Shared/ResultEditor.vue'
+import PatientInfoCard from '../Shared/PatientInfoCard.vue'
+import CaseDetailsCard from '../Shared/CaseDetailsCard.vue'
+import PreviousCaseDetailsModal from '../Shared/PreviousCaseDetailsModal.vue'
 // import AttachmentsPanel from './AttachmentsPanel.vue'
 import Notification from '@/shared/components/feedback/Notification.vue'
 import PreviewModal from './PreviewModal.vue'
@@ -237,8 +237,7 @@ const {
   initialize, previousCases, sections,
   canSaveProgress, canComplete,
   // addAttachment, removeAttachment,
-  onSaveDraft, onCompleteForSigning, closePreview, onClear,
-  clearAfterSuccess,
+  onSaveDraft, onCompleteForSigning, closePreview,
   loadCaseByCode,
   getDiagnosisData,
   hasDiseaseCIEO,
@@ -296,7 +295,7 @@ const selectedPreviousCase = ref<any>(null)
 
 // Estado para almacenar el contenido guardado para mostrar en la notificación
 const savedContent = ref({
-  method: '',
+  method: [] as string[],
   macro: '',
   micro: '',
   diagnosis: ''
@@ -408,12 +407,19 @@ const buscarCaso = async () => {
 
 const limpiarBusqueda = () => {
   codigoCaso.value = ''
-  casoEncontrado.value = false
+  casoEncontrado.value = false  // Siempre establecer a false
   searchError.value = ''
   casoInfo.value = null
   
-  // Limpiar completamente los datos del composable
-  onClear()
+  // Limpiar solo los datos del caso, pero mantener la notificación
+  // Limpiar datos del composable manualmente sin usar onClear()
+  patient.value = null
+  caseDetails.value = null
+  previousCases.value = []
+  
+  // Limpiar secciones del editor
+  sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
+  activeSection.value = 'method'
   
   // NO cerrar la notificación - se mantiene visible
 }
@@ -426,7 +432,10 @@ const limpiarBusqueda = () => {
 const { notification, showSuccess, showError, closeNotification } = useNotifications()
 
   function handleClearResults() {
-    onClear()
+    // Limpiar solo las secciones del editor, pero mantener la notificación
+    sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
+    activeSection.value = 'method'
+    
     // NO cerrar la notificación - se mantiene visible
   }
 
@@ -455,45 +464,97 @@ const { notification, showSuccess, showError, closeNotification } = useNotificat
   }
 
 async function handleSaveAction() {
-  // Capturar el contenido antes de que se limpie
-  savedContent.value = {
-    method: sections.value?.method || '',
+  // Evitar múltiples ejecuciones
+  if (saving.value) return
+  
+  // Capturar todo el estado INMEDIATAMENTE para evitar cambios durante la ejecución
+  const currentState = {
+    method: Array.isArray(sections.value?.method) ? [...sections.value.method] : [],
     macro: sections.value?.macro || '',
     micro: sections.value?.micro || '',
-    diagnosis: sections.value?.diagnosis || ''
+    diagnosis: sections.value?.diagnosis || '',
+    isComplete: canComplete.value,
+    caseCode: caseDetails?.value?.caso_code || ''
   }
   
-  // Decidir qué acción tomar según si está completo o no
-  const ok = canComplete.value ? await onCompleteForSigning() : await onSaveDraft()
-  
-  if (ok) {
-    const code = caseDetails?.value?.caso_code || ''
+  try {
+    // Ejecutar la operación de guardado
+    const success = currentState.isComplete ? await onCompleteForSigning() : await onSaveDraft()
     
-    if (canComplete.value) {
-      // Acción de completar para firma
-      showSuccess('¡Caso completado!', `El caso ${code} ha sido completado y está listo para firma.`, 0)
+    if (success) {
+      // Actualizar savedContent una sola vez
+      savedContent.value = {
+        method: currentState.method,
+        macro: currentState.macro,
+        micro: currentState.micro,
+        diagnosis: currentState.diagnosis
+      }
+      
+      // Mostrar notificación apropiada
+      if (currentState.isComplete) {
+        showSuccess('¡Caso completado!', `El caso ${currentState.caseCode} ha sido completado y está listo para firma.`, 0)
+      } else {
+        // Crear resumen usando estado capturado
+        const summary = createContentSummary(currentState)
+        const message = summary.length > 0 
+          ? `Se guardó el progreso del caso ${currentState.caseCode}:\n\n${summary.join('\n')}`
+          : `Se guardó el progreso del caso ${currentState.caseCode} correctamente.`
+        showSuccess('¡Progreso guardado!', message, 0)
+      }
+      
+      // Programar limpieza para el próximo tick
+      await nextTick()
+      clearFormAfterSave()
     } else {
-      // Acción de guardar progreso
-      const contentSummary = []
-      if (savedContent.value.method.trim()) contentSummary.push(`Método: ${savedContent.value.method.trim().substring(0, 50)}${savedContent.value.method.length > 50 ? '...' : ''}`)
-      if (savedContent.value.macro.trim()) contentSummary.push(`Macro: ${savedContent.value.macro.trim().substring(0, 50)}${savedContent.value.macro.length > 50 ? '...' : ''}`)
-      if (savedContent.value.micro.trim()) contentSummary.push(`Micro: ${savedContent.value.micro.trim().substring(0, 50)}${savedContent.value.micro.length > 50 ? '...' : ''}`)
-      if (savedContent.value.diagnosis.trim()) contentSummary.push(`Diagnóstico: ${savedContent.value.diagnosis.trim().substring(0, 50)}${savedContent.value.diagnosis.length > 50 ? '...' : ''}`)
-      
-      const detailMessage = contentSummary.length > 0 
-        ? `Se guardó el progreso del caso ${code}:\n\n${contentSummary.join('\n')}`
-        : `Se guardó el progreso del caso ${code} correctamente.`
-      
-      showSuccess('¡Progreso guardado!', detailMessage, 0)
+      const action = currentState.isComplete ? 'completar el caso para firma' : 'guardar el progreso'
+      showError('Error al procesar', errorMessage?.value || `No se pudo ${action}.`, 0)
     }
-    
-    // Limpiar el formulario después de un pequeño delay
-    setTimeout(() => {
-      clearAfterSuccess()
-    }, 100)
-  } else {
-    const action = canComplete.value ? 'completar el caso para firma' : 'guardar el progreso'
-    showError('Error al procesar', errorMessage?.value || `No se pudo ${action}.`, 0)
+  } catch (error) {
+    console.error('Error en handleSaveAction:', error)
+    showError('Error inesperado', 'Ocurrió un error inesperado al procesar la solicitud.', 0)
+  }
+}
+
+// Función separada para crear el resumen del contenido
+function createContentSummary(state: any): string[] {
+  const summary = []
+  
+  const methodText = state.method.join(', ')
+  if (methodText.length > 0) {
+    summary.push(`Método: ${methodText.substring(0, 50)}${methodText.length > 50 ? '...' : ''}`)
+  }
+  if (state.macro.trim()) {
+    summary.push(`Macro: ${state.macro.trim().substring(0, 50)}${state.macro.length > 50 ? '...' : ''}`)
+  }
+  if (state.micro.trim()) {
+    summary.push(`Micro: ${state.micro.trim().substring(0, 50)}${state.micro.length > 50 ? '...' : ''}`)
+  }
+  if (state.diagnosis.trim()) {
+    summary.push(`Diagnóstico: ${state.diagnosis.trim().substring(0, 50)}${state.diagnosis.length > 50 ? '...' : ''}`)
+  }
+  
+  return summary
+}
+
+// Función separada para limpiar el formulario
+function clearFormAfterSave() {
+  // Limpiar en orden específico para evitar dependencias circulares
+  sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
+  activeSection.value = 'method'
+  validationMessage.value = null
+  errorMessage.value = null
+  
+  // Limpiar datos del buscador
+  codigoCaso.value = ''
+  searchError.value = ''
+  casoInfo.value = null
+  patient.value = null
+  caseDetails.value = null
+  previousCases.value = []
+  
+  // Emitir evento para limpiar el buscador en otros componentes
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('clear-search'))
   }
 }
 
@@ -514,9 +575,21 @@ const ejecutarBusquedaAutomatica = async () => {
 // Estas funciones ya no se usan en Transcribir Resultados
 
 // Función para actualizar el contenido de la sección activa
-const updateSectionContent = (value: string) => {
+const updateSectionContent = (value: string | string[]) => {
   if (sections.value) {
-    sections.value[activeSection.value] = value
+    // Crear una nueva copia del objeto para evitar mutaciones directas
+    const newSections = { ...sections.value }
+    
+    if (activeSection.value === 'method') {
+      // Para la sección method, esperamos un array
+      newSections[activeSection.value] = Array.isArray(value) ? [...value] : []
+    } else {
+      // Para otras secciones, esperamos string
+      newSections[activeSection.value] = Array.isArray(value) ? '' : value
+    }
+    
+    // Asignar la nueva referencia
+    sections.value = newSections
   }
 }
 

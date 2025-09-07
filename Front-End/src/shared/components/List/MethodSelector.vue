@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 // Props
 interface Props {
@@ -57,6 +57,8 @@ interface Props {
   required?: boolean
   disabled?: boolean
   errorMessage?: string
+  // Opciones externas para permitir mostrar valores dinámicos
+  options?: Array<{ value: string; label: string }>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -65,7 +67,8 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Seleccionar método...',
   required: false,
   disabled: false,
-  errorMessage: ''
+  errorMessage: '',
+  options: undefined
 })
 
 // Emits
@@ -79,12 +82,17 @@ const selectRef = ref<HTMLSelectElement>()
 const selectedMethod = ref(props.modelValue)
 
 // Métodos predefinidos (lista actualizada)
-const methods = ref([
+const defaultMethods = [
   { value: 'hematoxilina-eosina', label: 'Hematoxilina-Eosina' },
   { value: 'inmunohistoquimica-polimero-peroxidasa', label: 'Inmunohistoquimica: Polímero-Peroxidasa' },
   { value: 'coloraciones-especiales', label: 'Coloraciones especiales' },
   { value: 'inmunofluorescencia-metodo-directo', label: 'Inmunoflurescencia: método directo' }
-])
+]
+
+// Usar opciones externas si se proporcionan, sino la lista por defecto
+const methods = computed(() => {
+  return (props.options && props.options.length) ? props.options : defaultMethods
+})
 
 // Computed
 const errorString = computed(() => {
@@ -93,17 +101,26 @@ const errorString = computed(() => {
   return ''
 })
 
-// Methods
 const handleMethodChange = () => {
   const selectedMethodObj = methods.value.find(m => m.value === selectedMethod.value)
   emit('update:modelValue', selectedMethod.value)
   emit('method-selected', selectedMethodObj || null)
 }
 
-// Watch modelValue changes
 onMounted(() => {
-  if (props.modelValue !== selectedMethod.value) {
-    selectedMethod.value = props.modelValue
+  if (props.modelValue !== selectedMethod.value) selectedMethod.value = props.modelValue
+})
+
+watch(() => props.modelValue, (nv) => {
+  if (nv !== selectedMethod.value) selectedMethod.value = nv
+})
+
+// Si las opciones cambian y el valor actual ya no existe, mantenerlo visible si fue pasado como prop
+watch(() => props.options, (opts) => {
+  const optList = (opts && opts.length) ? opts : defaultMethods
+  if (selectedMethod.value && !optList.find(m => m.value === selectedMethod.value)) {
+    // Emitir selected con null para que el padre pueda reaccionar si lo desea
+    emit('method-selected', null)
   }
 })
 
