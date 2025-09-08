@@ -21,6 +21,7 @@ export interface Case {
   status: string
   receivedAt: string
   deliveredAt: string
+  signedAt?: string  // Nueva: fecha de firma específica
   tests: string[]
   pathologist?: string
   notes?: string

@@ -87,9 +87,8 @@ export function useCaseList() {
                bk.caso_code || 
                `case-${Math.random().toString(36).substr(2, 9)}`
     const receivedAt = getDate(bk.fecha_creacion)
-  // Cambio: ahora 'deliveredAt' refleja la fecha de firma (fecha_firma) y NO la fecha de entrega.
-  // La fecha de entrega original (fecha_entrega) se ignora para cálculos y visualización principales.
-  const deliveredAt = getDate(bk.fecha_firma) || getDate(bk.resultado?.fecha_resultado)
+    const deliveredAt = getDate(bk.fecha_entrega)  // Fecha de entrega real
+    const signedAt = getDate(bk.fecha_firma)       // Fecha de firma específica
 
     // aplanar pruebas como "code - name" expandidas por cantidad
     const flatTests: string[] = []
@@ -153,6 +152,7 @@ export function useCaseList() {
       status: finalStatus,
       receivedAt,
       deliveredAt: finalDeliveredAt,
+      signedAt,  // Nueva: fecha de firma específica
       tests: flatTests,
       pathologist: bk.patologo_asignado?.nombre || '',
       notes: bk.observaciones_generales || '',

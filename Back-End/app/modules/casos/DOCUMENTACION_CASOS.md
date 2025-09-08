@@ -76,7 +76,7 @@ app/modules/casos/
     "nombre": "string"
   } | null,
   "resultado": {
-    "metodo": "string|null",
+    "metodo": "string[]|null",
     "resultado_macro": "string|null",
     "resultado_micro": "string|null",
     "diagnostico": "string|null",
@@ -144,7 +144,7 @@ app/modules/casos/
     "nombre": "string"
   } | null,
   "resultado": {
-    "metodo": "string|null",
+    "metodo": "string[]|null",
     "resultado_macro": "string|null",
     "resultado_micro": "string|null",
     "diagnostico": "string|null",
@@ -241,7 +241,7 @@ app/modules/casos/
 
 ```json
 {
-  "metodo": "string|null",
+  "metodo": "string[]|null",
   "resultado_macro": "string|null",
   "resultado_micro": "string|null",
   "diagnostico": "string|null",
@@ -256,6 +256,8 @@ app/modules/casos/
   "observaciones": "string|null"
 }
 ```
+
+Nota: desde la última actualización del módulo, el campo "metodo" se maneja como un arreglo de strings (string[]) para soportar múltiples métodos por caso. En solicitudes y respuestas API, envíe/reciba un array de valores normalizados.
 
 ---
 

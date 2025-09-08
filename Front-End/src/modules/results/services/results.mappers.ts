@@ -53,7 +53,13 @@ export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
     entidad_info: beCase.entidad_info
       ? { codigo: beCase.entidad_info.codigo, nombre: beCase.entidad_info.nombre }
       : undefined,
-    servicio: (beCase as any).servicio
+    servicio: (beCase as any).servicio,
+    resultado: (beCase as any).resultado ? {
+      diagnostico: ((beCase as any).resultado)?.diagnostico || '',
+      diagnostico_cie10: ((beCase as any).resultado)?.diagnostico_cie10 || null,
+      diagnostico_cieo: ((beCase as any).resultado)?.diagnostico_cieo || null,
+      observaciones: ((beCase as any).resultado)?.observaciones || null
+    } : undefined
   }
 }
 

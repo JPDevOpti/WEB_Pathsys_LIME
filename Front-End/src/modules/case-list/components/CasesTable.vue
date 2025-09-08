@@ -194,7 +194,7 @@
             <td class="px-2 py-3 text-center">
               <div class="flex flex-col items-center gap-1">
                 <p class="text-gray-800 text-xs">{{ formatDate(c.receivedAt) }}</p>
-                <p v-if="c.deliveredAt" class="text-gray-600 text-xs">{{ formatDate(c.deliveredAt) }}</p>
+                <p v-if="c.signedAt" class="text-gray-600 text-xs">{{ formatDate(c.signedAt) }}</p>
                 <p v-else class="text-gray-400 text-xs">Pendiente</p>
               </div>
             </td>
@@ -337,9 +337,9 @@
                 {{ elapsedDays(c) }} días
               </p>
             </div>
-            <div v-if="c.deliveredAt">
+            <div v-if="c.signedAt">
               <p class="text-gray-500">Fecha firma</p>
-              <p class="text-gray-800 font-medium">{{ formatDate(c.deliveredAt) }}</p>
+              <p class="text-gray-800 font-medium">{{ formatDate(c.signedAt) }}</p>
             </div>
           </div>
 

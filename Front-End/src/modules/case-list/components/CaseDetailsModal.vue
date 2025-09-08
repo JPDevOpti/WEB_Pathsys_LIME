@@ -59,7 +59,7 @@
             </div>
             <div>
               <p class="text-sm text-gray-500">Fecha de Firma</p>
-              <p class="text-base font-medium text-gray-900">{{ caseItem?.deliveredAt ? formatDate(caseItem.deliveredAt) : 'Pendiente' }}</p>
+              <p class="text-base font-medium text-gray-900">{{ (caseItem?.signedAt || caseItem?.deliveredAt) ? formatDate((caseItem?.signedAt || caseItem?.deliveredAt) as string) : 'Pendiente' }}</p>
             </div>
             <div>
               <p class="text-sm text-gray-500">Prioridad</p>

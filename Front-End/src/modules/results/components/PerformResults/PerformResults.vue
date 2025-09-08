@@ -125,8 +125,7 @@
           <ErrorMessage v-if="errorMessage" class="mt-2" :message="errorMessage" />
         </div>
         
-        <!-- Notificación de éxito - Siempre visible independientemente del estado del caso -->
-        <Notification
+        <ResultsActionNotification
           class="mt-3"
           :visible="notification.visible"
           :type="notification.type"
@@ -134,40 +133,11 @@
           :message="notification.message"
           :inline="true"
           :auto-close="false"
-          data-notification="success"
+          :case-code="savedCaseCode || caseDetails?.caso_code || props.sampleId"
+          :saved-content="savedContent"
+          context="save"
           @close="closeAndClearNotification"
-        >
-          <template v-if="notification.type === 'success'" #content>
-            <div class="relative p-4 sm:p-5 bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div class="space-y-4">
-                <div class="text-center pb-3 border-b border-gray-200">
-                  <div class="inline-block">
-                    <p class="font-semibold text-gray-900 text-base">Resumen de resultados guardados</p>
-                    <p class="text-gray-500 text-sm">{{ savedCaseCode || caseDetails?.caso_code || props.sampleId }}</p>
-                  </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <h5 class="font-medium text-gray-700 mb-1">Método</h5>
-                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.method.length > 0 ? savedContent.method.join(', ') : '—' }}</div>
-                  </div>
-                  <div>
-                    <h5 class="font-medium text-gray-700 mb-1">Corte Macro</h5>
-                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.macro || '—' }}</div>
-                  </div>
-                  <div>
-                    <h5 class="font-medium text-gray-700 mb-1">Corte Micro</h5>
-                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.micro || '—' }}</div>
-                  </div>
-                  <div>
-                    <h5 class="font-medium text-gray-700 mb-1">Diagnóstico</h5>
-                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.diagnosis || '—' }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-        </Notification>
+        />
       </ComponentCard>
 
       <!-- Paneles laterales - Siempre visibles -->
@@ -215,6 +185,7 @@ import CaseDetailsCard from '../Shared/CaseDetailsCard.vue'
 import PreviousCaseDetailsModal from '../Shared/PreviousCaseDetailsModal.vue'
 // import AttachmentsPanel from './AttachmentsPanel.vue'
 import Notification from '@/shared/components/feedback/Notification.vue'
+import ResultsActionNotification from '../Shared/ResultsActionNotification.vue'
 import PreviewModal from '../Shared/PreviewModal.vue'
 import { usePerformResults } from '../../composables/usePerformResults'
 import { useNotifications } from '@/modules/cases/composables/useNotifications'
@@ -459,9 +430,7 @@ const { notification, showSuccess, showError, closeNotification } = useNotificat
       },
       generatedAt: new Date().toISOString()
     }
-    try {
-      sessionStorage.setItem('results_preview_payload', JSON.stringify(payload))
-    } catch {}
+    try { sessionStorage.setItem('results_preview_payload', JSON.stringify(payload)) } catch {}
     router.push({ name: 'results-preview' })
   }
 
@@ -496,15 +465,13 @@ async function handleSaveAction() {
       
       // Mostrar notificación apropiada
       if (currentState.isComplete) {
-        showSuccess('¡Caso completado!', `El caso ${currentState.caseCode} ha sido completado y está listo para firma.`, 0)
+        showSuccess('Caso listo para firmar', `El caso ${currentState.caseCode} ha sido completado y está listo para firma.`, 0)
       } else {
         // Mostrar solo título de éxito al guardar el progreso (sin mensaje detallado)
         showSuccess('¡Progreso guardado!', '', 0)
       }
       
-  // Programar limpieza para el próximo tick
-  await nextTick()
-  clearFormAfterSave()
+  // Mantener los datos visibles tras guardar/completar
     } else {
       const action = currentState.isComplete ? 'completar el caso para firma' : 'guardar el progreso'
       showError('Error al procesar', errorMessage?.value || `No se pudo ${action}.`, 0)

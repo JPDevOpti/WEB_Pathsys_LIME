@@ -630,7 +630,7 @@ class CasoService:
     
     def _to_response(self, caso: Caso) -> CasoResponse:
         """Convertir modelo de caso a respuesta."""
-        caso_dict = caso.model_dump(by_alias=True)
+        caso_dict = caso.model_dump(by_alias=True, mode='json')
         caso_dict["id"] = str(caso.id)
         return CasoResponse(**caso_dict)
 

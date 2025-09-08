@@ -1,8 +1,10 @@
 <template>
   <div class="pdf-footer">
-    <div class="footer-text">Los informes de resultados, las placas y bloques de estudios anatomopatológicos se archivan por 15 años</div>
-    <div class="footer-line"></div>
-    <div class="footer-page">Página {{ currentPage || 1 }} de {{ totalPages || 1 }}</div>
+    <div class="footer-content">
+      <div class="footer-text">Los informes de resultados, las placas y bloques de estudios anatomopatológicos se archivan por 15 años</div>
+      <div class="footer-separator"></div>
+      <div class="footer-pagination">Página {{ currentPage || 1 }} de {{ totalPages || 1 }}</div>
+    </div>
   </div>
 </template>
 
@@ -17,25 +19,36 @@ const props = defineProps<{
 
 <style scoped>
 .pdf-footer {
-  margin-top: 20px;
-  text-align: center;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .footer-text {
   font-size: 12px;
-  margin-bottom: 8px;
   text-align: center;
+  color: #374151;
+  line-height: 1.3;
 }
 
-.footer-line {
-  border-top: 1px solid #000;
-  margin: 8px 0;
+.footer-separator {
+  border-top: 1px solid #374151;
+  width: 100%;
+  margin: 0.25rem 0;
 }
 
-.footer-page {
+.footer-pagination {
   text-align: right;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 12px;
-  margin-top: 4px;
+  color: #111827;
+  width: 100%;
 }
 </style>

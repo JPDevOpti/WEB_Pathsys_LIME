@@ -41,10 +41,11 @@ const signaturesReady = ref(false)
 
 onMounted(() => {
   try {
-    const localRaw = localStorage.getItem('results_preview_payload')
-    const sessionRaw = !localRaw ? sessionStorage.getItem('results_preview_payload') : null
-    const raw = localRaw || sessionRaw
+    const sessionRaw = sessionStorage.getItem('results_preview_payload')
+    const localRaw = !sessionRaw ? localStorage.getItem('results_preview_payload') : null
+    const raw = sessionRaw || localRaw
     payload.value = raw ? JSON.parse(raw) : null
+    if (payload.value) normalizePayload(payload.value)
   } catch (error) {
     payload.value = null
   }
@@ -61,18 +62,13 @@ async function downloadPdf() {
   try {
     isDownloading.value = true
     await nextTick()
-    
-    // Esperar a que las firmas estén cargadas
-    if (!signaturesReady.value) {
-      console.log('⏳ Esperando a que las firmas se carguen...')
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    }
-    
-    // Usar directamente el contenedor de preview sin clonar
-    const targetElement = previewContainer.value?.querySelector('.print-content') as HTMLElement
-    if (!targetElement) {
-      throw new Error('No se encontró el contenido para exportar')
-    }
+    // Pequeña espera para asegurar que el DOM interno se haya renderizado
+    if (!signaturesReady.value) await new Promise(r => setTimeout(r, 300))
+    // Selección robusta del contenido a exportar
+    let targetElement = previewContainer.value?.querySelector('.print-content') as HTMLElement | null
+    if (!targetElement) targetElement = (previewContainer.value?.firstElementChild as HTMLElement) || null
+    if (!targetElement) targetElement = previewContainer.value as HTMLElement | null
+    if (!targetElement) throw new Error('No se encontró el contenedor de previsualización para exportar')
     
     // Limpiar estilos que puedan causar problemas de alineación
     const originalStyles = {
@@ -92,7 +88,7 @@ async function downloadPdf() {
     
     // Limpiar estilos de todos los elementos hijos que puedan causar hojas en blanco
     const allPages = targetElement.querySelectorAll('.report-page')
-    allPages.forEach((page, index) => {
+    allPages.forEach((page) => {
       const pageElement = page as HTMLElement
       pageElement.style.margin = '0'
       pageElement.style.marginBottom = '0'
@@ -122,7 +118,7 @@ async function downloadPdf() {
         useCORS: true, 
         allowTaint: true,
         backgroundColor: '#ffffff',
-        logging: true,
+        logging: false,
         removeContainer: false,
         x: 0, // Posición X inicial
         y: 0, // Posición Y inicial
@@ -176,6 +172,50 @@ async function downloadPdf() {
   } finally {
     isDownloading.value = false
   }
+}
+
+// Normalizar payload: asegurar method como array y methodText para compatibilidad
+function normalizePayload(p: any) {
+  const normalizeOne = (obj: any) => {
+    if (!obj) return
+    if (obj.sections) {
+      const m = obj.sections.method
+      if (Array.isArray(m)) obj.sections.method = m
+      else if (typeof m === 'string' && m.trim()) obj.sections.method = [m.trim()]
+      else obj.sections.method = []
+      ;(obj.sections as any).methodText = obj.sections.method.length ? obj.sections.method.join(', ') : ''
+    }
+    // Normalizar diagnósticos y completar desde backend si faltan
+    obj.diagnosis = obj.diagnosis || {}
+    // CIE-10: aceptar estructura {primary:{codigo,nombre}} o {codigo,nombre}
+    if (obj.diagnosis.cie10 && typeof obj.diagnosis.cie10 === 'object') {
+      const src = obj.diagnosis.cie10
+      const codigo = src?.primary?.codigo || src?.codigo
+      const nombre = src?.primary?.nombre || src?.nombre
+      obj.diagnosis.cie10 = (codigo || nombre) ? { codigo, nombre } : undefined
+    }
+    if (!obj.diagnosis.cie10 && obj.caseDetails?.resultado?.diagnostico_cie10) {
+      const d = obj.caseDetails.resultado.diagnostico_cie10
+      if (d) obj.diagnosis.cie10 = { codigo: d.codigo, nombre: d.nombre }
+    }
+    if (obj.diagnosis.cieo && typeof obj.diagnosis.cieo === 'object') {
+      const src = obj.diagnosis.cieo
+      const codigo = src?.primary?.codigo || src?.codigo
+      const nombre = src?.primary?.nombre || src?.nombre
+      obj.diagnosis.cieo = (codigo || nombre) ? { codigo, nombre } : undefined
+    }
+    if (!obj.diagnosis.cieo && obj.caseDetails?.resultado?.diagnostico_cieo) {
+      const d = obj.caseDetails.resultado.diagnostico_cieo
+      obj.diagnosis.cieo = d ? { codigo: d.codigo, nombre: d.nombre } : undefined
+    }
+    // Si no hay diagnosis.formatted, no lo generamos desde CIE; priorizamos diagnóstico libre
+    if (!obj.diagnosis.formatted) {
+      const freeDx = obj.sections?.diagnosis || obj.caseDetails?.resultado?.diagnostico || ''
+      if (freeDx) obj.diagnosis.formatted = '' // mantener libre separado y no sobreescribir
+    }
+  }
+  if (p?.cases && Array.isArray(p.cases)) p.cases.forEach((c: any) => normalizeOne(c))
+  else normalizeOne(p)
 }
 </script>
 

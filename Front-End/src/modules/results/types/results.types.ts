@@ -103,6 +103,12 @@ export interface CaseDetails {
   actualizado_por?: string
   entidad_info?: CaseEntidadInfo
   servicio?: string
+  resultado?: {
+    diagnostico?: string
+    diagnostico_cie10?: { codigo: string; nombre: string } | null
+    diagnostico_cieo?: { codigo: string; nombre: string } | null
+    observaciones?: string | null
+  }
 }
 
 

@@ -396,7 +396,7 @@ export function useBatchDownload() {
             servicio: undefined,
             estado: c.status || '',
             fecha_ingreso: c.receivedAt || '',
-            fecha_firma: c.deliveredAt || null,
+            fecha_firma: (c as any).signedAt || c.deliveredAt || null,
             fecha_actualizacion: new Date().toISOString(),
             observaciones_generales: '',
             is_active: true,

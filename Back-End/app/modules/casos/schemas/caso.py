@@ -138,6 +138,12 @@ class CasoBase(BaseModel):
         
         return caso_code
 
+    class Config:
+        from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
+
 class CasoCreateRequest(BaseModel):
     """Modelo para crear un nuevo caso - SIN código (se genera automáticamente)"""
     paciente: PacienteInfo = Field(..., description="Información del paciente")
