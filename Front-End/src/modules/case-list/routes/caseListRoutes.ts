@@ -16,6 +16,14 @@ export const caseListRoutes: RouteRecordRaw[] = [
     meta: {
       title: 'Casos Anteriores'
     }
+  },
+  {
+    path: '/preview-multiple',
+    name: 'case-list.preview-multiple',
+    component: () => import('../views/MultiplePreviewView.vue'),
+    meta: {
+      title: 'Vista Previa Múltiple'
+    }
   }
 ]
 

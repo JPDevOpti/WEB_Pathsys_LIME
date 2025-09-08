@@ -1,8 +1,12 @@
 import type { Case } from '../types/case.types'
 import JSZip from 'jszip'
 import html2pdf from 'html2pdf.js'
+import { useMultiplePDFPreview } from './useMultiplePDFPreview'
 
 export function useBatchDownload() {
+  
+  // Usar el composable específico para vista previa múltiple
+  const multiplePDFPreview = useMultiplePDFPreview()
   
   // Función para generar PDF de un caso individual
   async function generateCasePDF(c: Case): Promise<Blob> {
@@ -346,99 +350,16 @@ export function useBatchDownload() {
     }
   }
   
-  // Función para previsualizar múltiples casos usando el mismo flujo que PreviewReportView
+  // Función para previsualizar múltiples casos usando el nuevo componente
   function previewMultipleCases(cases: Case[]): void {
     try {
-      if (cases.length === 0) {
-        return
-      }
+      if (cases.length === 0) return
       
-      // Crear payload para múltiples casos (similar a previewCase en CurrentCasesListView)
-      const payload = {
-        multipleCases: true,
-        cases: cases.map((c, index) => ({
-          sampleId: c.caseCode || c.id,
-          patient: {
-            document: c.patient?.dni || '',
-            fullName: c.patient?.fullName || '',
-            age: c.patient?.age || '',
-            gender: c.patient?.sex || '',
-            entity: c.entity || ''
-          },
-                      caseDetails: {
-              caso_code: c.caseCode || c.id || '',
-            fecha_creacion: c.receivedAt || '',
-            fecha_entrega: c.deliveredAt || '',
-            patologo_asignado: c.pathologist ? { nombre: c.pathologist } : undefined,
-            medico_solicitante: c.requester ? { nombre: c.requester } : undefined,
-            entidad_info: c.entity ? { nombre: c.entity } : undefined,
-            muestras: Array.isArray(c.subsamples) ? c.subsamples.map((s: any) => ({
-              region_cuerpo: s.bodyRegion,
-              pruebas: Array.isArray(s.tests) ? s.tests.map((t: any) => ({
-                id: t.id,
-                nombre: t.name || t.id
-              })) : []
-                          })) : [],
-              paciente: {
-              codigo: c.patient?.id || '',
-              nombre: c.patient?.fullName || '',
-              edad: c.patient?.age || 0,
-              sexo: c.patient?.sex || '',
-              entidad_info: c.entity ? {
-                codigo: '',
-                nombre: c.entity
-              } : undefined,
-              tipo_atencion: '',
-              cedula: c.patient?.dni || '',
-              observaciones: '',
-              fecha_actualizacion: new Date().toISOString()
-            },
-            servicio: undefined,
-            estado: c.status || '',
-            fecha_ingreso: c.receivedAt || '',
-            fecha_firma: (c as any).signedAt || c.deliveredAt || null,
-            fecha_actualizacion: new Date().toISOString(),
-            observaciones_generales: '',
-            is_active: true,
-            actualizado_por: 'sistema'
-          },
-          sections: {
-            method: c.result?.method || '',
-            macro: c.result?.macro || '',
-            micro: c.result?.micro || '',
-            diagnosis: c.result?.diagnosis || ''
-          },
-          diagnosis: {
-            cie10: c.result?.diagnostico_cie10 ? {
-              primary: c.result.diagnostico_cie10,
-              formatted: c.result.diagnostico_cie10?.codigo && c.result.diagnostico_cie10?.nombre 
-                ? `${c.result.diagnostico_cie10.codigo} - ${c.result.diagnostico_cie10.nombre}`
-                : ''
-            } : undefined,
-            cieo: c.result?.diagnostico_cieo ? {
-              primary: c.result.diagnostico_cieo,
-              formatted: c.result.diagnostico_cieo?.codigo && c.result.diagnostico_cieo?.nombre 
-                ? `${c.result.diagnostico_cieo.codigo} - ${c.result.diagnostico_cieo.nombre}`
-                : ''
-            } : undefined,
-            formatted: c.result?.diagnostico_cie10?.codigo && c.result?.diagnostico_cie10?.nombre 
-              ? `${c.result.diagnostico_cie10.codigo} - ${c.result.diagnostico_cie10.nombre}`
-              : (c.result?.diagnosis || '')
-          },
-          generatedAt: new Date().toISOString()
-        })),
-        generatedAt: new Date().toISOString()
-      }
-      
-      // Guardar en localStorage para que PreviewReportView lo consuma (compartido entre pestañas)
-      localStorage.setItem('results_preview_payload', JSON.stringify(payload))
-      
-      // Navegar a la vista de previsualización en la misma pestaña primero
-      // para verificar que funciona, luego podemos cambiar a nueva pestaña
-      window.location.href = '/results/preview'
+      // Usar el nuevo composable para vista previa múltiple
+      multiplePDFPreview.previewMultipleCases(cases)
       
     } catch (error) {
-      console.error('Error preparando previsualización:', error)
+      console.error('Error en previsualización múltiple:', error)
       throw error
     }
   }

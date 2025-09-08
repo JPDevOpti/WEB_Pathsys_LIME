@@ -23,31 +23,34 @@
       </div>
     </div>
 
-    <div v-if="hasData" class="pdf-preview-container">
-      <div v-if="isMultiple" class="print-content">
-        <div
-          v-for="(item, index) in props.payload?.cases || []"
-          :key="`m-${index}`"
-          class="bg-white mx-auto shadow-sm border border-gray-200 report-page"
-          :style="pageStyle"
-        >
-          <div class="page-header" style="overflow:hidden;">
-            <PDFReportHeader :case-item="item" />
-            <PDFReportPatientData :case-item="item" :recibido-numero="recibidoNumero(item.caseDetails?.CasoCode || item.sampleId)" />
-          </div>
+    <div v-if="hasData" class="pdf-preview-container" :class="{ 'multi': isMultiple }">
+      <div v-if="isMultiple" class="print-content multi">
+        <template v-for="(bundle, i) in casesPages" :key="`bundle-${i}`">
+          <div v-if="i>0" class="case-separator"></div>
+          <div
+            v-for="(page, pageIndex) in bundle.pages"
+            :key="`case-${i}-page-${pageIndex}`"
+            class="bg-white mx-auto shadow-sm border border-gray-200 report-page"
+            :style="pageStyle"
+          >
+            <div class="page-header" :style="{ height: `${bundle.headerPx}px`, maxHeight: `${bundle.headerPx}px`, overflow: 'hidden', background: 'white', position: 'relative', zIndex: 10 }">
+              <PDFReportHeader :case-item="bundle.item" />
+              <PDFReportPatientData :case-item="bundle.item" :recibido-numero="recibidoNumero(bundle.item.caseDetails?.CasoCode || bundle.item.sampleId)" />
+            </div>
 
-          <div class="page-body">
-            <PDFReportPatientBlock :case-item="item" />
-          </div>
+            <div class="page-body" :style="{ height: `${page.isFirstPage ? bundle.availableFirstPx : bundle.availableContPx}px`, maxHeight: `${page.isFirstPage ? bundle.availableFirstPx : bundle.availableContPx}px`, overflow: 'hidden', position: 'relative', zIndex: 5 }">
+              <div v-html="page.content" class="dynamic-content"></div>
+            </div>
 
-          <div class="page-signature">
-            <PDFReportSignature :case-item="item" />
-          </div>
+            <div v-if="page.isLastPage" class="page-signature" :style="{ height: `${bundle.signaturePx}px`, maxHeight: `${bundle.signaturePx}px`, overflow: 'hidden', background: 'white', position: 'relative', zIndex: 10 }">
+              <PDFReportSignature :case-item="bundle.item" />
+            </div>
 
-          <div class="page-footer">
-            <PDFReportFooter :current-page="index + 1" :total-pages="props.payload?.cases?.length || 1" />
+            <div class="page-footer" :style="{ height: `${bundle.footerPx}px`, maxHeight: `${bundle.footerPx}px`, overflow: 'hidden', background: 'white', position: 'relative', zIndex: 10 }">
+              <PDFReportFooter :current-page="pageIndex + 1" :total-pages="bundle.pages.length" />
+            </div>
           </div>
-        </div>
+        </template>
       </div>
 
       <div v-else class="print-content">
@@ -182,6 +185,7 @@ const measureBodyRef = ref<HTMLDivElement | null>(null)
 const measureHeaderRef = ref<HTMLDivElement | null>(null)
 const measureFooterRef = ref<HTMLDivElement | null>(null)
 const measureSignatureRef = ref<HTMLDivElement | null>(null)
+const measureItem = ref<any>(null)
 
 const availableFirstPx = ref(0)
 const availableContPx = ref(0)
@@ -190,11 +194,13 @@ const headerPx = ref(0)
 const footerPx = ref(0)
 const pages = ref<Array<{ content: any, isFirstPage: boolean }>>([])
 const needsPagination = ref(false)
+const casesPages = ref<Array<{ item: any, pages: Array<{content:any,isFirstPage:boolean,isLastPage:boolean}>, headerPx:number, footerPx:number, signaturePx:number, availableFirstPx:number, availableContPx:number }>>([])
 
 onMounted(async () => {
   await nextTick()
   calculatePageMetrics()
   checkContentOverflow()
+  if (isMultiple.value) await computeAllCases()
 })
 
 // Recalcular cuando cambien los datos
@@ -202,6 +208,7 @@ watch(() => props.payload, async () => {
   await nextTick()
   calculatePageMetrics()
   checkContentOverflow()
+  if (isMultiple.value) await computeAllCases()
 }, { deep: true })
 
 function calculatePageMetrics() {
@@ -360,6 +367,91 @@ function splitContentIntoPages(content: string, totalHeight: number) {
   pages.value = result.length > 0 ? result : [{ content, isFirstPage: true }]
 }
 
+// ===== MODO MULTIPLE =====
+function formatBodyContentForItem(item: any): string {
+  const sections = [
+    { title: 'MUESTRA:', content: buildSamplesText(item.caseDetails?.muestras) },
+    { title: 'MÉTODO UTILIZADO', content: getMethodText(item.sections) || '—' },
+    { title: 'DESCRIPCIÓN MACROSCÓPICA', content: item.sections?.macro || '—' },
+    { title: 'DESCRIPCIÓN MICROSCÓPICA', content: item.sections?.micro || '—' },
+    { title: 'DIAGNÓSTICO', content: getDiagnosisText(item.sections, item.diagnosis) || '—' },
+    { title: 'CIE-10', content: `${(item.diagnosis?.cie10?.primary?.codigo || item.diagnosis?.cie10?.codigo) ?? '—'}${(item.diagnosis?.cie10?.primary?.nombre || item.diagnosis?.cie10?.nombre) ? ` - ${item.diagnosis?.cie10?.primary?.nombre || item.diagnosis?.cie10?.nombre}` : ''}` },
+    { title: 'CIE-O', content: `${item.diagnosis?.cieo?.codigo ?? '—'}${item.diagnosis?.cieo?.nombre ? ` - ${item.diagnosis.cieo.nombre}` : ''}` }
+  ]
+  return sections.map(s => `
+    <div class="section-item" style="margin-bottom: 12px;">
+      <h3 style="font-weight: 600; margin-bottom: 4px; font-size: 12px; color: #374151;">${s.title}</h3>
+      <div style="white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; color: #111827;">${s.content}</div>
+    </div>
+  `).join('')
+}
+
+async function computePagesForItem(item: any) {
+  measureItem.value = item
+  await nextTick()
+  // calcular métricas para este item
+  calculatePageMetrics()
+  const content = formatBodyContentForItem(item)
+  if (!measureBodyRef.value) return {
+    item,
+    pages: [],
+    headerPx: headerPx.value,
+    footerPx: footerPx.value,
+    signaturePx: signaturePx.value,
+    availableFirstPx: availableFirstPx.value,
+    availableContPx: availableContPx.value
+  } as { item: any; pages: Array<{content:any,isFirstPage:boolean,isLastPage:boolean}>; headerPx:number; footerPx:number; signaturePx:number; availableFirstPx:number; availableContPx:number }
+  measureBodyRef.value.innerHTML = content
+  const totalHeight = measureBodyRef.value.scrollHeight
+  const bundlePages: Array<{content:any,isFirstPage:boolean,isLastPage:boolean}> = []
+  if (totalHeight <= availableFirstPx.value) {
+    bundlePages.push({ content, isFirstPage: true, isLastPage: true })
+  } else {
+    // dividir similar a splitContentIntoPages
+    const sections = content.split('<div class="section-item"').filter(s => s.trim()).map(s => `<div class="section-item"${s}`)
+    let firstContent = ''
+    let acc = 0
+    for (const sec of sections) {
+      measureBodyRef.value.innerHTML = firstContent + sec
+      const h = measureBodyRef.value.scrollHeight
+      if (h <= availableFirstPx.value) { firstContent += sec; acc = h } else { break }
+    }
+    bundlePages.push({ content: firstContent, isFirstPage: true, isLastPage: false })
+    const remaining = sections.join('')?.replace(firstContent, '') || ''
+    const parts = remaining.split('<div class="section-item"').filter(s => s.trim()).map(s => `<div class="section-item"${s}`)
+    let current = ''
+    let currentH = 0
+    for (const part of parts) {
+      measureBodyRef.value.innerHTML = current + part
+      const h = measureBodyRef.value.scrollHeight
+      if (h <= availableContPx.value) { current += part; currentH = h } else {
+        if (current) bundlePages.push({ content: current, isFirstPage: false, isLastPage: false })
+        current = part
+        currentH = h
+      }
+    }
+    if (current) bundlePages.push({ content: current, isFirstPage: false, isLastPage: true })
+  }
+  return {
+    item,
+    pages: bundlePages,
+    headerPx: headerPx.value,
+    footerPx: footerPx.value,
+    signaturePx: signaturePx.value,
+    availableFirstPx: availableFirstPx.value,
+    availableContPx: availableContPx.value
+  } as { item: any; pages: Array<{content:any,isFirstPage:boolean,isLastPage:boolean}>; headerPx:number; footerPx:number; signaturePx:number; availableFirstPx:number; availableContPx:number }
+}
+
+async function computeAllCases() {
+  casesPages.value = []
+  const list = props.payload?.cases || []
+  for (const item of list) {
+    const bundle = await computePagesForItem(item)
+    casesPages.value.push(bundle)
+  }
+}
+
 function buildSamplesText(samples: any[] | undefined): string {
   if (!samples || samples.length === 0) return '—'
   return samples.map(s => `${s.region_cuerpo}: ${s.pruebas?.map((p: any) => 
@@ -393,6 +485,7 @@ function recibidoNumero(casoCode?: string): string {
 </script>
 
 <style>
+.case-separator { page-break-before: always; break-before: page; height: 0; margin: 0; }
 .pdf-preview-container { background-color: #f9fafb; border-radius: 0; border: 0; padding: 0; margin: 0; height: 11in; display: flex; justify-content: center; align-items: flex-start; }
 .report-page { 
   width: 8.5in !important; 
