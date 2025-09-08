@@ -161,16 +161,14 @@
           <div class="mt-3 flex flex-wrap items-center gap-3 justify-end">
             <ClearButton :disabled="loading" @click="handleClearResults" />
             <PreviewButton :disabled="loading" @click="goToPreview" />
-            <SaveButton
-              :disabled="loading || !canSave || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned)"
-              :loading="signing" :text="'Firmar'" :loading-text="'Firmando...'" @click="handleSign" />
+            <button
+              :disabled="loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned)"
+              :class="['px-4 py-2 text-sm font-medium rounded-md', loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700']"
+              @click="handleSign"
+            >
+              {{ signing ? 'Firmando...' : 'Firmar' }}
+            </button>
           </div>
-
-          <!-- Notificación de firma exitosa -->
-          <Notification class="mt-3" :visible="notification.visible" :type="notification.type"
-            :title="notification.title" :message="notification.message" :inline="true" :auto-close="false"
-            data-notification="success"
-            @close="closeNotification" />
         </div>
       </ComponentCard>
 
@@ -190,6 +188,55 @@
       </div>
     </div>
 
+    <!-- Notificación de firma exitosa - Fuera del grid pero con el ancho de la columna principal -->
+    <div class="grid gap-6 items-start grid-cols-1 lg:grid-cols-3">
+      <div class="lg:col-span-2">
+        <Notification
+          v-if="notification.visible"
+          class="mt-6"
+          :visible="notification.visible"
+          :type="notification.type"
+          :title="notification.title"
+          :message="notification.message"
+          :inline="true"
+          :auto-close="false"
+          data-notification="success"
+          @close="closeNotification"
+        >
+          <template v-if="notification.type === 'success'" #content>
+            <div class="relative p-4 sm:p-5 bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div class="space-y-4">
+                <div class="text-center pb-3 border-b border-gray-200">
+                  <div class="inline-block">
+                    <p class="font-semibold text-gray-900 text-base">Resumen de resultados firmados</p>
+                    <p class="text-gray-500 text-sm">{{ savedCaseCode || caseDetails?.caso_code || props.sampleId }}</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <h5 class="font-medium text-gray-700 mb-1">Método</h5>
+                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.method?.length > 0 ? savedContent.method.join(', ') : '—' }}</div>
+                  </div>
+                  <div>
+                    <h5 class="font-medium text-gray-700 mb-1">Corte Macro</h5>
+                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.macro || '—' }}</div>
+                  </div>
+                  <div>
+                    <h5 class="font-medium text-gray-700 mb-1">Corte Micro</h5>
+                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.micro || '—' }}</div>
+                  </div>
+                  <div>
+                    <h5 class="font-medium text-gray-700 mb-1">Diagnóstico</h5>
+                    <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ savedContent.diagnosis || '—' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Notification>
+      </div>
+    </div>
+
     <PreviousCaseDetailsModal
       v-if="selectedPreviousCase"
       :case-item="selectedPreviousCase"
@@ -204,7 +251,7 @@ import { useRouter } from 'vue-router'
 import { ComponentCard } from '@/shared/components'
 import { ErrorMessage, ValidationAlert } from '@/shared/components/feedback'
 import { FormInputField } from '@/shared/components/forms'
-import { SearchButton, ClearButton, SaveButton, PreviewButton } from '@/shared/components/buttons'
+import { SearchButton, ClearButton, PreviewButton } from '@/shared/components/buttons'
 import { DiseaseList } from '@/shared/components/List'
 import DocsIcon from '@/assets/icons/DocsIcon.vue'
 import WarningIcon from '@/assets/icons/WarningIcon.vue'
@@ -226,7 +273,6 @@ import resultsApiService from '../../services/resultsApiService'
 import casoAprobacionService from '@/modules/cases/services/casoAprobacionApi.service'
 import type { PruebaComplementaria } from '@/modules/cases/services/casoAprobacionApi.service'
 
-// Tipo para las pruebas complementarias del componente
 interface ComplementaryTestItem {
   code: string
   name: string
@@ -239,45 +285,11 @@ interface Props {
 }
 const props = defineProps<Props>()
 
-// Composable para resultados
-const {
-  loading,
-  patient, caseDetails,
-  activeSection, sectionContent,
-  errorMessage, validationMessage,
-  previewData, isPreviewOpen, isDirty,
-  initialize, previousCases, sections,
-  missingFields, canSave,
-  onSaveDraft, closePreview, onClear, clearAfterSuccess,
-  loadCaseByCode,
-  // CIEO diagnosis
-  primaryDiseaseCIEO,
-  hasDiseaseCIEO,
-  showCIEODiagnosis,
-  setPrimaryDiseaseCIEO,
-  clearPrimaryDiseaseCIEO,
-  toggleCIEODiagnosis
-} = usePerformResults(props.sampleId)
-
-// Composable para permisos y autenticación
+const { loading, patient, caseDetails, activeSection, errorMessage, validationMessage, initialize, previousCases, sections, loadCaseByCode, primaryDiseaseCIEO, hasDiseaseCIEO, showCIEODiagnosis, setPrimaryDiseaseCIEO, clearPrimaryDiseaseCIEO } = usePerformResults(props.sampleId)
 const { isPatologo } = usePermissions()
 const authStore = useAuthStore()
-
-// Composable para notificaciones
 const { notification, showSuccess, showError, closeNotification } = useNotifications()
-
-// Disease Diagnosis composable
-const {
-  primaryDisease,
-  hasDisease,
-  setPrimaryDisease,
-  clearPrimaryDisease,
-  clearDiagnosis,
-  formatDiagnosisForReport,
-  getDiagnosisData,
-  validateDiagnosis
-} = useDiseaseDiagnosis()
-
+const { primaryDisease, hasDisease, setPrimaryDisease, clearDiagnosis, formatDiagnosisForReport, getDiagnosisData, validateDiagnosis } = useDiseaseDiagnosis()
 const router = useRouter()
 
 onMounted(() => {
@@ -318,6 +330,16 @@ const hasBeenSigned = ref(false)
 // Estado para pruebas complementarias
 const needsComplementaryTests = ref(false)
 const complementaryTestsDetails = ref('')
+
+// Estado para almacenar el contenido guardado para mostrar en la notificación
+const savedContent = ref({
+  method: [] as string[],
+  macro: '',
+  micro: '',
+  diagnosis: ''
+})
+// Guardar el código del caso que se acaba de guardar para mostrar en la notificación
+const savedCaseCode = ref('')
 
 // Computed para verificar si el usuario logueado es el patólogo asignado
 const isAssignedPathologist = computed(() => {
@@ -371,21 +393,6 @@ const normalizeStatus = (status: string): string => {
 
   // Convertir a mayúsculas y reemplazar espacios con guiones bajos
   return status.toUpperCase().replace(/\s+/g, '_')
-}
-
-// Función para convertir estados de BD a formato legible
-const getReadableStatus = (status: string): string => {
-  const normalizedStatus = normalizeStatus(status)
-  const statusMap: Record<string, string> = {
-    'EN_PROCESO': 'En Proceso',
-  // 'Por Entregar' deprecado -> usar 'Requiere cambios'
-  'POR_ENTREGAR': 'Requiere cambios',
-    'POR_FIRMAR': 'Por Firmar',
-    'COMPLETADO': 'Completado',
-    'PENDIENTE': 'Pendiente',
-    'CANCELADO': 'Cancelado'
-  }
-  return statusMap[normalizedStatus] || status
 }
 
 // Computed para verificar si el caso está en un estado válido para firmar
@@ -576,8 +583,12 @@ const limpiarBusqueda = () => {
   searchError.value = ''
   hasBeenSigned.value = false // Resetear el estado de firma
   
-  // Limpiar completamente los datos del composable
-  onClear()
+  // Limpiar los datos del caso manualmente sin usar onClear()
+  sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
+  activeSection.value = 'method'
+  patient.value = null
+  caseDetails.value = null
+  previousCases.value = []
   
   // Limpiar diagnósticos cuando se limpia la búsqueda
   clearDiagnosis()
@@ -589,9 +600,12 @@ const limpiarBusqueda = () => {
 
 // Acciones
 function handleClearResults() {
-  onClear()
+  // Limpiar solo las secciones del editor y diagnósticos, pero mantener la notificación
+  sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
+  activeSection.value = 'method'
   clearDiagnosis()
   clearPrimaryDiseaseCIEO()
+  showCIEODiagnosis.value = false
   // NO cerrar la notificación - se mantiene visible
 }
 
@@ -686,28 +700,36 @@ async function handleSign() {
       diagnostico_cieo: diagnosticoCIEO
     }
 
+    console.log('📤 Datos que se envían al backend:', requestData)
+
     // Llamar al endpoint de firma que cambia el estado
     const response = await resultsApiService.firmarResultado(casoCode, requestData, patologoCodigo)
 
     if (response) {
-      // Forzar estado a COMPLETADO (el backend antes dejaba 'Por entregar')
-      try {
-        await resultsApiService.cambiarEstadoResultado(casoCode, 'COMPLETADO')
-        if (caseDetails.value) caseDetails.value.estado = 'COMPLETADO'
-      } catch (e) {
-        // Si falla el cambio explícito, continuar si el backend ya devolvió estado correcto
-        if (caseDetails.value && caseDetails.value.estado !== 'COMPLETADO') {
-          // Último recurso: ajustar localmente
-          caseDetails.value.estado = 'COMPLETADO'
-        }
+      // El backend ya cambia el estado automáticamente cuando se firma
+      // Actualizar el estado local basado en la respuesta del servidor
+      if (caseDetails.value && response.estado) {
+        caseDetails.value.estado = response.estado
       }
 
+      // Guardar los datos para mostrar en la notificación
+      savedContent.value = {
+        method: sections.value?.method || [],
+        macro: sections.value?.macro || '',
+        micro: sections.value?.micro || '',
+        diagnosis: sections.value?.diagnosis || ''
+      }
+      savedCaseCode.value = casoCode
+
+      console.log('🎉 Firmado exitosamente, mostrando notificación...')
       // Mostrar notificación de éxito con nuevo texto
       showSuccess(
         '¡Resultado firmado!',
-        `El caso ${casoCode} ha sido firmado y marcado como Completado.`,
+        `El caso ${casoCode} ha sido firmado y está listo para entregar.`,
         0
       )
+      
+      console.log('📋 Estado de notificación:', notification)
 
       // Limpiar mensajes de validación
       validationMessage.value = ''
@@ -715,8 +737,8 @@ async function handleSign() {
       // Marcar que el caso ha sido firmado para ocultar alertas
       hasBeenSigned.value = true
 
-      // Limpiar el formulario después de firmar exitosamente
-      clearAfterSuccess()
+      // Limpiar el formulario después de firmar exitosamente (sin afectar notificaciones)
+      clearFormAfterSign()
 
       // NO redirigir automáticamente al PDF
       // El usuario puede hacer clic en "Previsualizar" si desea ver el PDF
@@ -765,6 +787,25 @@ const updateSectionContent = (value: string | string[]) => {
       sections.value[activeSection.value] = Array.isArray(value) ? '' : value
     }
   }
+}
+
+// Función para limpiar el formulario después de firmar exitosamente (sin afectar notificaciones)
+function clearFormAfterSign() {
+  // Limpiar secciones del editor
+  sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
+  activeSection.value = 'method'
+  validationMessage.value = ''
+  errorMessage.value = ''
+  
+  // Limpiar diagnósticos
+  clearDiagnosis()
+  clearPrimaryDiseaseCIEO()
+  showCIEODiagnosis.value = false
+  
+  // NO limpiar el buscador ni los datos del caso - mantener el estado para que el usuario pueda ver
+  // que el caso fue firmado exitosamente y la notificación permanezca visible
+  
+  // NO cerrar la notificación - se mantiene visible
 }
 
 // Función para manejar el clic en casos anteriores
@@ -837,7 +878,7 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
     // Obtener código del patólogo actual
     const patologoCodigo = authStore.user?.id || 'unknown'
     
-    // PASO 1: Firmar el resultado (esto cambia el estado del caso a "completado")
+    // PASO 1: Firmar el resultado (esto cambia el estado del caso a "Por entregar")
     console.log('1️⃣ Firmando caso original...')
     await resultsApiService.firmarResultado(
       caseDetails.value.caso_code,
@@ -845,7 +886,19 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
       patologoCodigo
     )
     
-    console.log('✅ Caso original firmado')
+    // PASO 1.5: Cuando se solicitan pruebas complementarias, el caso debe marcarse como COMPLETADO
+    console.log('1️⃣.5 Marcando caso como completado para pruebas complementarias...')
+    try {
+      await resultsApiService.cambiarEstadoResultado(caseDetails.value.caso_code, 'COMPLETADO')
+      if (caseDetails.value) caseDetails.value.estado = 'COMPLETADO'
+    } catch (e) {
+      // Si falla el cambio explícito, ajustar localmente
+      if (caseDetails.value) {
+        caseDetails.value.estado = 'COMPLETADO'
+      }
+    }
+    
+    console.log('✅ Caso original firmado y marcado como completado')
 
     // PASO 2: Recargar los datos del caso completado
     console.log('2️⃣ Recargando datos del caso completado...')
@@ -879,6 +932,15 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
     console.log('✅ Caso aprobacion response:', response)
 
     if (response) {
+      // Guardar los datos para mostrar en la notificación
+      savedContent.value = {
+        method: sections.value?.method || [],
+        macro: sections.value?.macro || '',
+        micro: sections.value?.micro || '',
+        diagnosis: sections.value?.diagnosis || ''
+      }
+      savedCaseCode.value = casoCompletado.caso_code
+
       showSuccess(
         '¡Caso completado y solicitud creada!',
         `El caso ${casoCompletado.caso_code} ha sido firmado y completado. Se ha creado una solicitud de aprobación para las pruebas complementarias que está pendiente de autorización administrativa.`,
@@ -888,6 +950,9 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
       // Limpiar el formulario después de crear la solicitud
       needsComplementaryTests.value = false
       complementaryTestsDetails.value = ''
+      
+      // Limpiar el formulario después de firmar exitosamente (sin afectar notificaciones)
+      clearFormAfterSign()
     }
     
   } catch (error: any) {

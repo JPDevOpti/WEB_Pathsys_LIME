@@ -37,6 +37,7 @@ export interface Case {
     micro?: string
     diagnosis?: string
     resultDate?: string
+    observaciones?: string
     // Campos adicionales para diagnósticos
     diagnostico_cie10?: {
       codigo: string

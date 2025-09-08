@@ -151,8 +151,7 @@ const statusOptions = [
   { value: '', label: 'Todos' },
   { value: 'En proceso', label: 'En proceso' },
   { value: 'Por firmar', label: 'Por firmar' },
-  // Reemplazado 'Por entregar' por 'Requiere cambios'
-  { value: 'Requiere cambios', label: 'Requiere cambios' },
+  { value: 'Por entregar', label: 'Por entregar' },
   { value: 'Completado', label: 'Completado' }
 ]
 

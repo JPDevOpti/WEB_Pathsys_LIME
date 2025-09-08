@@ -240,7 +240,7 @@
                   </svg>
                 </button>
                 <button
-                  v-if="['Por firmar','Requiere cambios'].includes(c.status)"
+                  v-if="['Por firmar','Por entregar'].includes(c.status)"
                   class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                   @click.stop="handleValidate(c)"
                   :title="c.status === 'Por firmar' ? 'Realizar validación del informe' : 'Validar'"
@@ -398,7 +398,7 @@
               Realizar
             </button>
             <button
-              v-if="['Por firmar','Requiere cambios'].includes(c.status)"
+              v-if="['Por firmar','Por entregar'].includes(c.status)"
               class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
               @click.stop="handleValidate(c)"
             >
@@ -810,7 +810,7 @@ function calculateBusinessDays(startDate: string, endDate?: string): number {
 
 function statusLabel(c: Case): string {
   const days = elapsedDays(c)
-  if (c.status === 'Requiere cambios') return 'Requiere cambios'
+  if (c.status === 'Por entregar') return 'Por entregar'
   // Ajustado para días hábiles: más de 4 días hábiles (1 semana laboral) es urgente
   if (days > 4 && c.status !== 'Completado') return 'URGENTE'
   return c.status
@@ -818,13 +818,10 @@ function statusLabel(c: Case): string {
 
 function statusClass(c: Case): string {
   const days = elapsedDays(c)
-  if (c.status === 'Requiere cambios') return 'bg-red-50 text-red-700 font-semibold'
+  if (c.status === 'Por entregar') return 'bg-red-50 text-red-700 font-semibold'
   // Ajustado para días hábiles: más de 4 días hábiles (1 semana laboral) es urgente
   if (days > 4 && c.status !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
   if (c.status === 'Por firmar') return 'bg-yellow-50 text-yellow-700'
-  // 'Por entregar' ha sido deprecado y reemplazado por 'Requiere cambios'.
-  // Mantenemos compatibilidad visual si aún llega el valor antiguo desde el backend.
-  if (c.status === 'Por entregar') return 'bg-red-50 text-red-700 font-semibold'
   if (c.status === 'En proceso') return 'bg-blue-50 text-blue-700'
   if (c.status === 'Completado') return 'bg-green-50 text-green-700'
   return ''

@@ -120,15 +120,15 @@ export function useCaseList() {
     const mapStatus = (s?: string): string => {
       const v = String(s || '').toLowerCase()
       if (v.includes('firmar')) return 'Por firmar'
-  if (v.includes('entregar')) return 'Requiere cambios' // 'Por entregar' deprecado
+      if (v.includes('entregar')) return 'Por entregar'
       if (v.includes('complet')) return 'Completado'
-      if (v.includes('cambio')) return 'Requiere cambios'
+      if (v.includes('cambio')) return 'Por entregar' // Reemplazar "Requiere cambios" por "Por entregar"
       if (v.includes('pend') || !v) return 'En proceso'
       return s || 'En proceso'
     }
 
     const finalStatus = mapStatus(bk.estado)
-  const finalDeliveredAt = finalStatus === 'Requiere cambios' ? '' : deliveredAt
+    const finalDeliveredAt = finalStatus === 'Por entregar' ? '' : deliveredAt
 
     return {
       id,
@@ -165,13 +165,16 @@ export function useCaseList() {
       // Campo entregado_a para registro de entrega
       entregado_a: (bk as any).entregado_a || undefined,
       result: {
-        method: bk.resultado?.metodo || '',
+        method: Array.isArray(bk.resultado?.metodo) 
+          ? bk.resultado.metodo.join(', ') 
+          : (bk.resultado?.metodo || ''),
         macro: bk.resultado?.resultado_macro || '',
         micro: bk.resultado?.resultado_micro || '',
         diagnosis: bk.resultado?.diagnostico || '',
         resultDate: getDate(bk.resultado?.fecha_resultado),
         diagnostico_cie10: (bk.resultado as any)?.diagnostico_cie10 || null,
         diagnostico_cieo: (bk.resultado as any)?.diagnostico_cieo || null,
+        observaciones: (bk.resultado as any)?.observaciones || '',
       },
       subsamples,
     }
@@ -289,9 +292,9 @@ export function useCaseList() {
         let newStatus = action
         if (action === 'en-proceso') newStatus = 'En proceso'
         if (action === 'por-firmar') newStatus = 'Por firmar'
-  if (action === 'por-entregar') newStatus = 'Requiere cambios' // compatibilidad con acciones anteriores
+        if (action === 'por-entregar') newStatus = 'Por entregar'
         if (action === 'completado') newStatus = 'Completado'
-        if (action === 'requiere-cambios') newStatus = 'Requiere cambios'
+        if (action === 'requiere-cambios') newStatus = 'Por entregar' // Eliminar estado "Requiere cambios"
         return { ...c, status: newStatus }
       }
       return c

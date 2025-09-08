@@ -9,7 +9,7 @@ export interface BackendCase {
     nombre?: string
     edad?: number
     sexo?: string
-    entidad_info?: { codigo?: string; nombre?: string }
+    entidad_info?: { id?: string; nombre?: string } // Corrección: id en lugar de codigo
     tipo_atencion?: string
     cedula?: string
     observaciones?: string
@@ -32,11 +32,14 @@ export interface BackendCase {
   is_active?: boolean
   actualizado_por?: string
   resultado?: {
-    metodo?: string
+    metodo?: string[] | string // Array de strings según nuevo modelo backend
     resultado_macro?: string
     resultado_micro?: string
     diagnostico?: string
     fecha_resultado?: { $date?: string } | string
+    diagnostico_cie10?: { codigo?: string; nombre?: string } | null
+    diagnostico_cieo?: { codigo?: string; nombre?: string } | null
+    observaciones?: string
   }
   patologo_asignado?: { codigo?: string; nombre?: string }
 }

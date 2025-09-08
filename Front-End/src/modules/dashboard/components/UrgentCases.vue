@@ -169,7 +169,7 @@
                       </svg>
                     </button>
                     <button
-                      v-if="['Por firmar','Requiere cambios'].includes(caso.estado)"
+                      v-if="['Por firmar','Por entregar'].includes(caso.estado)"
                       class="p-1 sm:p-1.5 rounded-md hover:bg-green-50 text-green-700"
                       @click.stop="handleValidate(caso)"
                       :title="caso.estado === 'Por firmar' ? 'Realizar validación del informe' : 'Validar'"
@@ -288,7 +288,7 @@
                   Realizar
                 </button>
                 <button
-                  v-if="['Por firmar','Requiere cambios'].includes(caso.estado)"
+                  v-if="['Por firmar','Por entregar'].includes(caso.estado)"
                   class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors text-xs font-medium"
                   @click.stop="handleValidate(caso)"
                 >
@@ -549,14 +549,14 @@ function getTestTooltip(tests: string[], code: string, count: number): string {
 
 function statusLabel(caso: CasoUrgente): string {
   const days = caso.dias_en_sistema
-  if (caso.estado === 'Requiere cambios') return 'Requiere cambios'
+  if (caso.estado === 'Por entregar') return 'Por entregar'
   if (days > 6 && caso.estado !== 'Completado') return 'URGENTE'
   return caso.estado
 }
 
 function statusClass(caso: CasoUrgente): string {
   const days = caso.dias_en_sistema
-  if (caso.estado === 'Requiere cambios') return 'bg-red-50 text-red-700 font-semibold'
+  if (caso.estado === 'Por entregar') return 'bg-red-50 text-red-700 font-semibold'
   if (days > 6 && caso.estado !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
   if (caso.estado === 'Por firmar') return 'bg-yellow-50 text-yellow-700'
   // 'Por entregar' deprecado -> tratar como 'Requiere cambios'
