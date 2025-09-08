@@ -68,7 +68,6 @@ defineProps<{
 }>()
 
 const formatDate = (dateString?: string | Date): string => {
-  console.log('PDFReportHeader - formatDate recibido:', dateString)
   if (!dateString) return '—'
   try {
     const date = new Date(dateString)

@@ -55,6 +55,34 @@
               </div>
             </div>
           </div>
+
+          <!-- Sección de pruebas complementarias solicitadas -->
+          <div v-if="props.complementaryTests && props.complementaryTests.length" class="pt-2 border-t border-gray-200">
+            <h5 class="text-sm font-medium text-gray-700 mb-2">Pruebas Complementarias Solicitadas</h5>
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <div class="flex items-center gap-2 mb-2">
+                <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span class="text-orange-800 font-medium text-sm">Se requieren pruebas adicionales para completar el diagnóstico</span>
+              </div>
+              <div class="space-y-2">
+                <div v-for="(test, index) in props.complementaryTests" :key="index" class="flex justify-between items-center bg-white border border-orange-200 rounded p-2 text-sm">
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">{{ test.codigo }}</span>
+                    <span class="text-gray-900">{{ test.nombre || test.codigo }}</span>
+                  </div>
+                  <div class="text-gray-600">
+                    <span class="text-xs">Cant:</span> {{ test.cantidad || 1 }}
+                  </div>
+                </div>
+              </div>
+              <div v-if="props.complementaryTestsReason" class="mt-3 pt-2 border-t border-orange-200">
+                <p class="text-xs text-gray-600 mb-1">Motivo de la solicitud:</p>
+                <p class="text-sm text-gray-900 bg-white border border-orange-200 rounded p-2">{{ props.complementaryTestsReason }}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </template>
@@ -79,6 +107,8 @@ const props = withDefaults(defineProps<{
   savedContent: { method: string[]; macro: string; micro: string; diagnosis: string }
   context?: ContextType
   diagnoses?: { cie10?: { codigo: string; nombre: string }, cieo?: { codigo: string; nombre: string } }
+  complementaryTests?: Array<{ codigo: string; nombre: string; cantidad: number }>
+  complementaryTestsReason?: string
 }>(), {
   inline: true,
   autoClose: false,

@@ -38,7 +38,6 @@ async def create_patologo(
 ):
     """Crear un nuevo patólogo"""
     try:
-        logger.info(f"Creando nuevo patólogo: {patologo.patologo_code}")
         return await patologo_service.create_patologo(patologo)
     except ConflictError as e:
         logger.warning(f"Conflicto al crear patólogo: {str(e)}")
@@ -60,7 +59,6 @@ async def get_patologos(
     Obtener lista de patólogos con paginación
     """
     try:
-        logger.info(f"Obteniendo patólogos - skip: {skip}, limit: {limit}")
         return await patologo_service.get_patologos(skip=skip, limit=limit)
     except Exception as e:
         logger.error(f"Error inesperado obteniendo patólogos: {str(e)}")
@@ -88,7 +86,6 @@ async def search_patologos(
             is_active=is_active,
             observaciones=None
         )
-        logger.info(f"Buscando patólogos - skip: {skip}, limit: {limit}, is_active: {is_active}")
         return await patologo_service.search_patologos(search_params=search_params, skip=skip, limit=limit)
     except Exception as e:
         logger.error(f"Error inesperado buscando patólogos: {str(e)}")
@@ -114,7 +111,6 @@ async def search_active_patologos(
             is_active=None,
             observaciones=None
         )
-        logger.info(f"Buscando patólogos activos - skip: {skip}, limit: {limit}")
         return await patologo_service.search_active_patologos(search_params=search_params, skip=skip, limit=limit)
     except Exception as e:
         logger.error(f"Error inesperado buscando patólogos activos: {str(e)}")
@@ -140,7 +136,6 @@ async def search_all_patologos_including_inactive(
             is_active=None,
             observaciones=None
         )
-        logger.info(f"Buscando todos los patólogos incluyendo inactivos - skip: {skip}, limit: {limit}")
         return await patologo_service.search_all_patologos_including_inactive(search_params=search_params, skip=skip, limit=limit)
     except Exception as e:
         logger.error(f"Error inesperado buscando todos los patólogos: {str(e)}")
@@ -159,7 +154,6 @@ async def get_patologo_info_for_assignment(
     Obtener información completa del patólogo incluyendo firma para asignación a casos
     """
     try:
-        logger.info(f"Obteniendo información completa de patólogo: {patologo_code}")
         return await patologo_service.get_patologo_info_for_assignment(patologo_code)
     except NotFoundError as e:
         logger.warning(f"Patólogo no encontrado para info: {patologo_code}")
@@ -175,7 +169,6 @@ async def get_patologo(
 ):
     """Obtener un patólogo específico por código o _id."""
     try:
-        logger.info(f"Buscando patólogo por identificador: {identifier}")
         return await patologo_service.get_patologo_by_code_or_id(identifier)
     except NotFoundError as e:
         logger.warning(f"Patólogo no encontrado: {identifier}")
@@ -192,7 +185,6 @@ async def update_patologo(
 ):
     """Actualizar un patólogo por código"""
     try:
-        logger.info(f"Actualizando patólogo: {patologo_code}")
         return await patologo_service.update_patologo(patologo_code, patologo_data)
     except NotFoundError as e:
         logger.warning(f"Patólogo no encontrado para actualizar: {patologo_code}")
@@ -214,7 +206,6 @@ async def delete_patologo(
 ):
     """Eliminar un patólogo por código (soft delete)"""
     try:
-        logger.info(f"Eliminando patólogo: {patologo_code}")
         await patologo_service.delete_patologo(patologo_code)
         return {"message": f"Patólogo con código {patologo_code} ha sido eliminado correctamente"}
     except NotFoundError as e:
@@ -235,7 +226,6 @@ async def toggle_estado(
 ):
     """Cambiar el estado activo/inactivo de un patólogo por código"""
     try:
-        logger.info(f"Cambiando estado de patólogo: {patologo_code} a {estado_data.is_active}")
         return await patologo_service.toggle_estado(patologo_code, estado_data.is_active)
     except NotFoundError as e:
         logger.warning(f"Patólogo no encontrado para cambiar estado: {patologo_code}")
@@ -254,7 +244,6 @@ async def get_firma(
 ):
     """Obtener solo la firma digital de un patólogo (código o id)."""
     try:
-        logger.info(f"Obteniendo firma de patólogo: {identifier}")
         pat = await patologo_service.get_patologo_by_code_or_id(identifier)
         return {
             "patologo_code": pat.patologo_code,
@@ -275,7 +264,6 @@ async def update_firma(
 ):
     """Actualizar la firma digital de un patólogo (código o id)."""
     try:
-        logger.info(f"Actualizando firma de patólogo: {identifier}")
         # Resolver a código real
         pat = await patologo_service.get_patologo_by_code_or_id(identifier)
         return await patologo_service.update_firma(pat.patologo_code, firma_data.firma)

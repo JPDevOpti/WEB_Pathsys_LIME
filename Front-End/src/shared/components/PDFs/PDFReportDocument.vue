@@ -24,18 +24,18 @@
           </table>
         </div>
         <div class="patient-info text-xs space-y-0.5 mb-4">
-          <div><strong>Documento de identidad:</strong> {{ caseData.patient?.document || caseData.caseDetails?.paciente?.cedula || '—' }}</div>
-          <div><strong>Paciente:</strong> {{ caseData.patient?.fullName || caseData.caseDetails?.paciente?.nombre || '—' }}</div>
+          <div><strong class="inline-label">Documento de identidad:</strong><span class="label-value">{{ caseData.patient?.document || caseData.caseDetails?.paciente?.cedula || '—' }}</span></div>
+          <div><strong class="inline-label">Paciente:</strong><span class="label-value">{{ caseData.patient?.fullName || caseData.caseDetails?.paciente?.nombre || '—' }}</span></div>
           <div>
-            <strong>Edad:</strong> {{ caseData.caseDetails?.paciente?.edad ?? '—' }}
-            <span class="ml-4"><strong>Sexo:</strong> {{ caseData.caseDetails?.paciente?.sexo || '—' }}</span>
+            <strong class="inline-label">Edad:</strong><span class="label-value">{{ caseData.caseDetails?.paciente?.edad ?? '—' }}</span>
+            <span class="ml-4"><strong class="inline-label">Sexo:</strong><span class="label-value">{{ caseData.caseDetails?.paciente?.sexo || '—' }}</span></span>
           </div>
           <div>
-            <strong>Institución:</strong> {{ caseData.caseDetails?.entidad_info?.nombre || caseData.patient?.entity || '—' }}
-            <span class="ml-4"><strong>Servicio:</strong> {{ caseData.caseDetails?.servicio || '—' }}</span>
-            <span class="ml-4"><strong>Recibido N°:</strong> {{ recibidoNumero(caseData.caseDetails?.CasoCode || caseData.sampleId) || '—' }}</span>
+            <strong class="inline-label">Institución:</strong><span class="label-value">{{ caseData.caseDetails?.entidad_info?.nombre || caseData.patient?.entity || '—' }}</span>
+            <span class="ml-4"><strong class="inline-label">Servicio:</strong><span class="label-value">{{ caseData.caseDetails?.servicio || '—' }}</span></span>
+            <span class="ml-4"><strong class="inline-label">Recibido N°:</strong><span class="label-value">{{ recibidoNumero(caseData.caseDetails?.CasoCode || caseData.sampleId) || '—' }}</span></span>
           </div>
-          <div><strong>Médico Solicitante:</strong> {{ caseData.caseDetails?.medico_solicitante?.nombre || '—' }}</div>
+          <div><strong class="inline-label">Médico Solicitante:</strong><span class="label-value">{{ caseData.caseDetails?.medico_solicitante?.nombre || '—' }}</span></div>
         </div>
       </div>
       <div ref="measureFooterRef" style="width:7.5in; box-sizing:border-box;">
@@ -177,18 +177,18 @@
             </table>
           </div>
           <div class="patient-info text-xs space-y-0.5 mb-4">
-            <div><strong>Documento de identidad:</strong> {{ caseData.patient?.document || caseData.caseDetails?.paciente?.cedula || '—' }}</div>
-            <div><strong>Paciente:</strong> {{ caseData.patient?.fullName || caseData.caseDetails?.paciente?.nombre || '—' }}</div>
+            <div><strong class="inline-label">Documento de identidad:</strong><span class="label-value">{{ caseData.patient?.document || caseData.caseDetails?.paciente?.cedula || '—' }}</span></div>
+            <div><strong class="inline-label">Paciente:</strong><span class="label-value">{{ caseData.patient?.fullName || caseData.caseDetails?.paciente?.nombre || '—' }}</span></div>
             <div>
-              <strong>Edad:</strong> {{ caseData.caseDetails?.paciente?.edad ?? '—' }}
-              <span class="ml-4"><strong>Sexo:</strong> {{ caseData.caseDetails?.paciente?.sexo || '—' }}</span>
+              <strong class="inline-label">Edad:</strong><span class="label-value">{{ caseData.caseDetails?.paciente?.edad ?? '—' }}</span>
+              <span class="ml-4"><strong class="inline-label">Sexo:</strong><span class="label-value">{{ caseData.caseDetails?.paciente?.sexo || '—' }}</span></span>
             </div>
             <div>
-              <strong>Institución:</strong> {{ caseData.caseDetails?.entidad_info?.nombre || caseData.patient?.entity || '—' }}
-              <span class="ml-4"><strong>Servicio:</strong> {{ caseData.caseDetails?.servicio || '—' }}</span>
-              <span class="ml-4"><strong>Recibido N°:</strong> {{ recibidoNumero(caseData.caseDetails?.CasoCode || caseData.sampleId) || '—' }}</span>
+              <strong class="inline-label">Institución:</strong><span class="label-value">{{ caseData.caseDetails?.entidad_info?.nombre || caseData.patient?.entity || '—' }}</span>
+              <span class="ml-4"><strong class="inline-label">Servicio:</strong><span class="label-value">{{ caseData.caseDetails?.servicio || '—' }}</span></span>
+              <span class="ml-4"><strong class="inline-label">Recibido N°:</strong><span class="label-value">{{ recibidoNumero(caseData.caseDetails?.CasoCode || caseData.sampleId) || '—' }}</span></span>
             </div>
-            <div><strong>Médico Solicitante:</strong> {{ caseData.caseDetails?.medico_solicitante?.nombre || '—' }}</div>
+            <div><strong class="inline-label">Médico Solicitante:</strong><span class="label-value">{{ caseData.caseDetails?.medico_solicitante?.nombre || '—' }}</span></div>
           </div>
         </div>
 
@@ -238,10 +238,11 @@ const footerPx = ref(0)
 const availableFirstPx = ref(0)
 const availableContPx = ref(0)
 
+// Página interna mide 10in de alto útil + 1in de padding total (0.5in arriba y abajo) = 11in exactos Carta
 const pageStyle = computed(() => ({
   width: '7.5in',
-  minHeight: '10in',
-  maxHeight: '10in',
+  minHeight: '11in',
+  maxHeight: '11in',
   margin: '0 auto',
   padding: '0.5in',
   boxSizing: 'border-box' as const,
@@ -299,15 +300,19 @@ function getDiagnosisText(
 
 function calculatePageMetrics() {
   if (!measureHeaderRef.value || !measureFooterRef.value) return
-  
-  const pageHeightPx = 10 * 96
-  const paddingPx = 0.5 * 96 * 2
-  
+
+  // Altura interna disponible (11in total - 1in padding = 10in de contenido bruto)
+  const totalPagePx = 11 * 96
+  const paddingPx = 0.5 * 96 * 2 // 1in
+  const contentAreaPx = totalPagePx - paddingPx // 10in
+
   headerPx.value = measureHeaderRef.value.scrollHeight
   footerPx.value = measureFooterRef.value.scrollHeight
-  
-  availableFirstPx.value = pageHeightPx - paddingPx - headerPx.value - footerPx.value
-  availableContPx.value = pageHeightPx - paddingPx - headerPx.value
+
+  // Dejar un margen de seguridad de 4px para evitar corte inferior por rounding de html2canvas
+  const safety = 4
+  availableFirstPx.value = contentAreaPx - headerPx.value - footerPx.value - safety
+  availableContPx.value = contentAreaPx - headerPx.value - safety
 }
 
 function formatBodyContent(): string {
@@ -442,8 +447,8 @@ watch(() => props.caseData, () => {
 
 .report-page {
   width: 7.5in;
-  min-height: 10in;
-  max-height: 10in;
+  min-height: 11in;
+  max-height: 11in;
   margin: 0 auto;
   padding: 0.5in;
   box-sizing: border-box;
@@ -476,6 +481,16 @@ watch(() => props.caseData, () => {
 .dynamic-content {
   font-size: 12px;
   line-height: 1.4;
+}
+
+.inline-label {
+  display: inline-block;
+  margin-right: 2px; /* asegura espacio tras los dos puntos */
+}
+
+.label-value {
+  display: inline;
+  padding-left: 1px; /* micro separación visual */
 }
 
 .print-hidden {

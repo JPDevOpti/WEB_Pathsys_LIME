@@ -1,0 +1,55 @@
+/* Estilos globales específicos para impresión y generación de PDF (html2pdf) */
+
+/* Declaración del tamaño de página Carta en impresión nativa */
+@page {
+  size: Letter; /* 8.5in x 11in */
+  margin: 0; /* Márgenes controlados por padding interno de cada página */
+}
+
+/* Suavizado tipográfico y render consistente */
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
+/* Contenedor raíz de páginas PDF */
+.pdf-container, .pdf-root {
+  font-family: 'Outfit', 'Inter', 'Roboto', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  line-height: 1.25;
+  color: #111;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Forzar consistencia en cada página exportada */
+.pdf-container .report-page {
+  width: 8.5in !important;
+  height: 11in !important;
+  position: relative;
+  overflow: visible !important;
+  background: #fff;
+  page-break-after: always;
+  break-after: page;
+}
+
+.pdf-container .report-page:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* Evitar cortes de tablas, firmas o bloques críticos */
+.avoid-break,
+.signature-block,
+.diagnosis-block,
+.table-wrapper {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Quitar sombras/bordes decorativos en PDF si existieran */
+@media print {
+  .no-print { display: none !important; }
+  .pdf-container .report-page { box-shadow: none !important; border: none !important; }
+}

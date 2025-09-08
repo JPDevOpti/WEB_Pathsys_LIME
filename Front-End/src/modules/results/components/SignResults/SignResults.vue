@@ -102,9 +102,10 @@
           <ComplementaryTestsSection
             :initial-needs-tests="needsComplementaryTests"
             :initial-details="complementaryTestsDetails"
+            :caso-original="caseDetails?.caso_code || codigoCaso"
             @needs-tests-change="handleNeedsTestsChange"
             @details-change="handleDetailsChange"
-            @sign-with-changes="handleSignWithChanges"
+            @create-approval-request="handleCreateApprovalRequest"
           />
 
           <ValidationAlert :visible="!!validationMessage" class="mt-2"
@@ -192,8 +193,10 @@
             cie10: (hasDisease && primaryDisease) ? { codigo: primaryDisease.codigo, nombre: primaryDisease.nombre } : undefined,
             cieo: (hasDiseaseCIEO && primaryDiseaseCIEO) ? { codigo: primaryDiseaseCIEO.codigo, nombre: primaryDiseaseCIEO.nombre } : undefined
           }"
+          :complementary-tests="requestedComplementaryTests"
+          :complementary-tests-reason="requestedComplementaryTestsReason"
           context="sign"
-          @close="closeNotification"
+          @close="handleNotificationClose"
         />
       </ComponentCard>
 
@@ -248,8 +251,8 @@ import { profileApiService } from '@/modules/profile/services/profileApiService'
 import type { Disease } from '@/shared/services/disease.service'
 import ResultsActionNotification from '../Shared/ResultsActionNotification.vue'
 import resultsApiService from '../../services/resultsApiService'
-import casoAprobacionService from '@/modules/cases/services/casoAprobacionApi.service'
-import type { PruebaComplementaria } from '@/modules/cases/services/casoAprobacionApi.service'
+import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
+import type { PruebaComplementaria } from '@/modules/results/services/casoAprobacion.service'
 
 interface Props {
   sampleId: string
@@ -662,76 +665,47 @@ const handleDetailsChange = (value: string) => {
   complementaryTestsDetails.value = value
 }
 
-// Flujo para firmar caso y crear solicitud de pruebas complementarias
-const handleSignWithChanges = async (data: { details: string; tests: { code: string; name: string; quantity: number }[] }) => {
+// Estado para almacenar las pruebas complementarias solicitadas para la notificación
+const requestedComplementaryTests = ref<PruebaComplementaria[]>([])
+const requestedComplementaryTestsReason = ref('')
+
+// Crear solicitud de aprobación (sin lógica de firma ni CIE-10 aquí)
+const handleCreateApprovalRequest = async (payload: { caso_original: string; motivo: string; pruebas_complementarias: PruebaComplementaria[] }) => {
   try {
-    if (!caseDetails.value) {
-      showError('Error al crear solicitud', 'No se encontraron los detalles del caso.', 0)
-      return
-    }
-    if (!canUserSign.value) {
-      showError('No autorizado', 'Solo el patólogo asignado al caso o un administrador pueden solicitar pruebas complementarias.', 0)
-      return
-    }
-    const diagnosticoCie10 = getDiagnosisData()
-    const resultData = {
-      metodo: sections.value.method || [],
-      resultado_macro: sections.value.macro || '',
-      resultado_micro: sections.value.micro || '',
-      diagnostico: sections.value.diagnosis || '',
-      observaciones: '',
-      diagnostico_cie10: diagnosticoCie10?.primary ? {
-        codigo: diagnosticoCie10.primary.codigo,
-        nombre: diagnosticoCie10.primary.nombre
-      } : undefined,
-      diagnostico_cieo: primaryDiseaseCIEO.value ? {
-        codigo: primaryDiseaseCIEO.value.codigo,
-        nombre: primaryDiseaseCIEO.value.nombre
-      } : undefined
-    }
-    const patologoCodigo = authStore.user?.id || 'unknown'
-    // 1. Firmar el resultado
-    await resultsApiService.firmarResultado(caseDetails.value.caso_code, resultData, patologoCodigo)
-    // 2. Marcar caso como completado para pruebas complementarias
-    try {
-      await resultsApiService.cambiarEstadoResultado(caseDetails.value.caso_code, 'COMPLETADO')
-      if (caseDetails.value) caseDetails.value.estado = 'COMPLETADO'
-    } catch (e) {
-      if (caseDetails.value) caseDetails.value.estado = 'COMPLETADO'
-    }
-    // 3. Recargar datos del caso completado
-    const casoCompletado = await casesApiService.getCaseByCode(caseDetails.value.caso_code)
-    if (!casoCompletado) {
-      throw new Error('No se pudo obtener el caso completado')
-    }
-    // 4. Crear solicitud de aprobación para pruebas complementarias
-    const pruebasComplementarias: PruebaComplementaria[] = data.tests.map(test => ({
-      codigo: test.code,
-      nombre: test.name,
-      cantidad: test.quantity || 1,
-      observaciones: ''
-    }))
-    const response = await casoAprobacionService.createFromSignature(
-      casoCompletado.caso_code,
-      pruebasComplementarias,
-      data.details,
-      authStore.user?.id || getCurrentUserName() || 'unknown_user'
-    )
+    if (!payload?.caso_original || !/^[0-9]{4}-[0-9]{5}$/.test(payload.caso_original)) throw new Error('Código de caso inválido')
+    if (!payload?.motivo?.trim()) throw new Error('Motivo requerido')
+    if (!payload?.pruebas_complementarias?.length) throw new Error('Debe seleccionar al menos una prueba')
+    
+    const response = await casoAprobacionService.createCasoAprobacion({
+      caso_original: payload.caso_original,
+      motivo: payload.motivo.trim(),
+      pruebas_complementarias: payload.pruebas_complementarias.map(p => ({ codigo: p.codigo, nombre: p.nombre || p.codigo, cantidad: p.cantidad || 1 }))
+    })
+    
     if (response) {
+      // Guardar el contenido actual del formulario para la notificación
       setSavedFromSections()
-      savedCaseCode.value = casoCompletado.caso_code
-      showSuccess(
-        '¡Caso completado y solicitud creada!',
-        `El caso ${casoCompletado.caso_code} ha sido firmado y completado. Se ha creado una solicitud de aprobación para las pruebas complementarias que está pendiente de autorización administrativa.`,
-        8000
-      )
+      savedCaseCode.value = payload.caso_original
+      
+      // Guardar las pruebas complementarias solicitadas para la notificación
+      requestedComplementaryTests.value = payload.pruebas_complementarias
+      requestedComplementaryTestsReason.value = payload.motivo.trim()
+      
+      showSuccess('Solicitud de aprobación creada', `Se creó la solicitud de pruebas complementarias para ${payload.caso_original}.`, 0)
       needsComplementaryTests.value = false
       complementaryTestsDetails.value = ''
-      clearFormAfterSign()
     }
   } catch (error: any) {
-    showError('Error al procesar solicitud', error.message || 'No se pudo completar el caso y crear la solicitud de aprobación.', 0)
+    showError('Error al crear solicitud', error.message || 'No se pudo crear la solicitud de aprobación.', 0)
   }
+}
+
+// Función para cerrar notificación y limpiar pruebas complementarias
+const handleNotificationClose = () => {
+  closeNotification()
+  // Limpiar pruebas complementarias para que no se muestren en próximas notificaciones
+  requestedComplementaryTests.value = []
+  requestedComplementaryTestsReason.value = ''
 }
 
 

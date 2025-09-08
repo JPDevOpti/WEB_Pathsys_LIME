@@ -27,3 +27,6 @@
 @import './vendor/fullcalendar.css';
 @import './vendor/swiper.css';
 @import './vendor/datepicker.css';
+
+/* Estilos de impresión y generación de PDF */
+@import './print.css';

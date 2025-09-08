@@ -62,6 +62,10 @@ async function downloadPdf() {
   try {
     isDownloading.value = true
     await nextTick()
+    // Esperar que fuentes estén listas (mejor soporte de caracteres acentuados)
+    if (document?.fonts?.ready) {
+      try { await document.fonts.ready } catch {}
+    }
     // Pequeña espera para asegurar que el DOM interno se haya renderizado
     if (!signaturesReady.value) await new Promise(r => setTimeout(r, 300))
     // Selección robusta del contenido a exportar
@@ -110,30 +114,29 @@ async function downloadPdf() {
       : `informe_${payload.value?.sampleId || 'caso'}.pdf`
 
     const options = {
-      margin: [0, 0, 0, 0], // Sin márgenes para evitar hojas en blanco
+      margin: [0, 0, 0, 0],
       filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 1.5, 
-        useCORS: true, 
+      image: { type: 'png', quality: 1 },
+      html2canvas: {
+        scale: 2.2,        // Mayor resolución (≈ 210–220 DPI efectivos)
+        useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
-        removeContainer: false,
-        x: 0, // Posición X inicial
-        y: 0, // Posición Y inicial
-        scrollX: 0, // Sin scroll horizontal
-        scrollY: 0, // Sin scroll vertical
-        width: undefined, // Usar ancho natural
-        height: undefined, // Usar altura natural
-        windowWidth: 816, // Ancho Carta en píxeles (8.5in * 96dpi)
-        windowHeight: 1056 // Alto Carta en píxeles (11in * 96dpi)
+        letterRendering: true,
+        removeContainer: true,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 816,
+        windowHeight: 1056
       },
-      jsPDF: { 
-        unit: 'in', 
-        format: 'letter', 
+      jsPDF: {
+        unit: 'pt',        // Puntos para mejor precisión tipográfica
+        format: 'letter',
         orientation: 'portrait',
-        compress: true,
+        compress: false,   // Evita artefactos en textos/firma
         putOnlyUsedFonts: true
       }
     }

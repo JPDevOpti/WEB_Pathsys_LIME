@@ -33,14 +33,11 @@ interface CaseItem {
   }
 }
 
-const props = defineProps<{
+defineProps<{
   caseItem?: CaseItem
 }>()
 
-// DEBUG: Log para ver qué datos llegan
-console.log('PDFReportSignature - caseItem:', props.caseItem)
-console.log('PDFReportSignature - patologo_asignado:', props.caseItem?.caseDetails?.patologo_asignado)
-console.log('PDFReportSignature - firma:', props.caseItem?.caseDetails?.patologo_asignado?.firma)
+// Logs de depuración eliminados
 </script>
 
 <style scoped>

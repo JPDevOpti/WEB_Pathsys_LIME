@@ -53,7 +53,7 @@
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
-                  <span class="text-sm font-medium text-gray-900">Caso #{{ caseItem.id }}</span>
+                  <span class="text-sm font-medium text-gray-900">Caso {{ caseItem.caseCode }}</span>
                   <span 
                     :class="[
                       'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
@@ -164,10 +164,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive } from 'vue'
+import { computed, ref } from 'vue'
 import { ComponentCard, FormInputField, BaseButton, PathologistList, SearchButton } from '@/shared/components'
 import CaseApprovalDetailsModal from '../../cases/components/CaseApprovalDetailsModal.vue'
 import type { CaseApprovalDetails } from '../../cases/types/case-approval.types'
+import casoAprobacionService, { CasoAprobacionResponse, CasoAprobacionSearch } from '@/modules/cases/services/casoAprobacionApi.service'
+// Nota: Los campos solicitado_por, costo y observaciones se han eliminado del modelo
+// - solicitado_por: Se obtiene automáticamente del usuario autenticado
+// - costo y observaciones: Eliminados de PruebaComplementaria por requerimiento
 
 // ============================================================================
 // INTERFACES Y TIPOS
@@ -175,16 +179,17 @@ import type { CaseApprovalDetails } from '../../cases/types/case-approval.types'
 
 interface CaseToApprove {
   id: string
+  caseCode: string
   patientName: string
   pathologistName: string
-  pathologistId: string
+  pathologistId?: string
   description?: string
   createdAt: string
   updatedAt: string
-  status?: 'pendiente' | 'gestionando' | 'aprobado' | 'rechazado'
-  approving?: boolean
-  rejecting?: boolean
-  managing?: boolean
+  status: 'pendiente' | 'gestionando' | 'aprobado' | 'rechazado'
+  approving: boolean
+  rejecting: boolean
+  managing: boolean
 }
 
 // ============================================================================
@@ -193,87 +198,86 @@ interface CaseToApprove {
 
 const searchTerm = ref('')
 const selectedPathologist = ref('')
+const loading = ref(false)
+const errorMessage = ref('')
+const cases = ref<CaseToApprove[]>([])
+const total = ref(0)
+const skip = ref(0)
+const limit = ref(20)
 
-// Datos de ejemplo (en producción vendrían del backend)
-const cases = reactive<CaseToApprove[]>([
-  {
-    id: 'CASE-001',
-    patientName: 'María González López',
-    pathologistName: 'Dr. Carlos Rodríguez',
-    pathologistId: 'path-001',
-    description: 'Biopsia de mama derecha - evaluación de lesión sospechosa',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-16T14:20:00Z',
-    status: 'pendiente',
-    approving: false,
-    rejecting: false,
-    managing: false
-  },
-  {
-    id: 'CASE-002',
-    patientName: 'Juan Pérez Martínez',
-    pathologistName: 'Dra. Ana García',
-    pathologistId: 'path-002',
-    description: 'Citología de ganglio linfático - posible linfoma',
-    createdAt: '2024-01-16T09:15:00Z',
-    updatedAt: '2024-01-16T16:45:00Z',
-    status: 'gestionando',
-    approving: false,
-    rejecting: false,
-    managing: false
-  },
-  {
-    id: 'CASE-003',
-    patientName: 'Carmen Silva Ruiz',
-    pathologistName: 'Dr. Miguel Torres',
-    pathologistId: 'path-003',
-    description: 'Análisis histopatológico de piel - lesión pigmentada',
-    createdAt: '2024-01-17T08:00:00Z',
-    updatedAt: '2024-01-17T10:15:00Z',
-    status: 'pendiente',
+// const authStore = useAuthStore()
+
+const normalizeId = (raw: any): string => {
+  if (!raw) return ''
+  if (typeof raw === 'string') return raw
+  if (typeof raw === 'object' && ('$oid' in raw)) return (raw as any).$oid as string
+  return ''
+}
+
+const mapBackendCase = (c: CasoAprobacionResponse): CaseToApprove => {
+  const backendId = c.id || normalizeId((c as any)._id)
+  return {
+    id: backendId,
+    caseCode: c.caso_aprobacion,
+    patientName: c.paciente?.nombre || 'Sin paciente',
+    pathologistName: c.patologo_asignado?.nombre || 'Sin patólogo',
+    pathologistId: c.patologo_asignado?.codigo,
+    description: c.aprobacion_info?.motivo,
+    createdAt: c.fecha_creacion,
+    updatedAt: c.fecha_actualizacion,
+    status: c.estado_aprobacion,
     approving: false,
     rejecting: false,
     managing: false
   }
-])
+}
+
+const fetchCases = async () => {
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    const term = (searchTerm.value || '').trim()
+    const isAprobCode = term.startsWith('A-')
+    const searchPayload: CasoAprobacionSearch = {
+      query: term || undefined,
+      paciente_nombre: term || undefined,
+      caso_aprobacion: isAprobCode ? term : undefined,
+      caso_code: !isAprobCode && term ? term : undefined,
+      estado_aprobacion: undefined
+    }
+  const respData = await casoAprobacionService.searchCasosActive(searchPayload, skip.value, limit.value)
+  const dataList: CasoAprobacionResponse[] = respData?.data || []
+  total.value = respData?.total || dataList.length
+    cases.value = dataList.map(mapBackendCase)
+  } catch (e: any) {
+    errorMessage.value = e.message || 'Error cargando casos'
+  } finally {
+    loading.value = false
+  }
+}
+
+fetchCases()
 
 // ============================================================================
 // FUNCIONES DE FILTRADO
 // ============================================================================
 
-const handlePathologistFilter = (pathologist: any) => {
+const handlePathologistFilter = async (pathologist: any) => {
   selectedPathologist.value = pathologist?.id || ''
+  skip.value = 0
+  await fetchCases()
 }
 
-const handleSearch = () => {
-  // Punto de extensión: aquí podrías disparar una llamada al backend si el filtrado fuera server-side
-  console.log('Ejecutar búsqueda con término:', searchTerm.value)
+const handleSearch = async () => {
+  skip.value = 0
+  await fetchCases()
 }
 
 // ============================================================================
 // COMPUTED PROPERTIES
 // ============================================================================
 
-const filteredCases = computed(() => {
-  let filtered = cases
-
-  if (searchTerm.value) {
-    const term = searchTerm.value.toLowerCase()
-    filtered = filtered.filter(caseItem => 
-      caseItem.id.toLowerCase().includes(term) ||
-      caseItem.patientName.toLowerCase().includes(term) ||
-      caseItem.pathologistName.toLowerCase().includes(term)
-    )
-  }
-
-  if (selectedPathologist.value) {
-    filtered = filtered.filter(caseItem => 
-      caseItem.pathologistId === selectedPathologist.value
-    )
-  }
-
-  return filtered
-})
+const filteredCases = computed(() => cases.value)
 
 // ============================================================================
 // FUNCIONES
@@ -290,24 +294,18 @@ const formatDate = (dateString: string): string => {
 }
 
 const viewCase = (caseId: string): void => {
-  const c = cases.find(ca => ca.id === caseId)
+  const c = cases.value.find(ca => ca.id === caseId)
   if (!c) return
   selectedCaseDetails.value = mapCaseToDetails(c)
 }
 
 const manageCase = async (caseId: string): Promise<void> => {
-  const caseItem = cases.find(c => c.id === caseId)
+  const caseItem = cases.value.find(c => c.id === caseId)
   if (!caseItem) return
-
   caseItem.managing = true
   try {
-    // Aquí se implementaría la llamada al backend para poner en gestión
-    console.log('Gestionando caso:', caseId)
-    await new Promise(resolve => setTimeout(resolve, 1500)) // Simulación
-    
-    // Cambiar estado a gestionando
-    caseItem.status = 'gestionando'
-    caseItem.updatedAt = new Date().toISOString()
+    await casoAprobacionService.gestionarCaso(caseId)
+    await fetchCases()
   } catch (error) {
     console.error('Error al gestionar caso:', error)
   } finally {
@@ -316,24 +314,12 @@ const manageCase = async (caseId: string): Promise<void> => {
 }
 
 const approveCase = async (caseId: string): Promise<void> => {
-  const caseItem = cases.find(c => c.id === caseId)
+  const caseItem = cases.value.find(c => c.id === caseId)
   if (!caseItem) return
-
   caseItem.approving = true
   try {
-    // Aquí se implementaría la llamada al backend para aprobar
-    console.log('Aprobando caso:', caseId)
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulación
-    
-    // Cambiar estado a aprobado
-    caseItem.status = 'aprobado'
-    caseItem.updatedAt = new Date().toISOString()
-    
-    // Remover el caso de la lista (en producción se actualizaría el estado)
-    const index = cases.findIndex(c => c.id === caseId)
-    if (index > -1) {
-      cases.splice(index, 1)
-    }
+    await casoAprobacionService.aprobarCaso(caseId)
+    await fetchCases()
   } catch (error) {
     console.error('Error al aprobar caso:', error)
   } finally {
@@ -342,24 +328,12 @@ const approveCase = async (caseId: string): Promise<void> => {
 }
 
 const rejectCase = async (caseId: string): Promise<void> => {
-  const caseItem = cases.find(c => c.id === caseId)
+  const caseItem = cases.value.find(c => c.id === caseId)
   if (!caseItem) return
-
   caseItem.rejecting = true
   try {
-    // Aquí se implementaría la llamada al backend para rechazar
-    console.log('Rechazando caso:', caseId)
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulación
-    
-    // Cambiar estado a rechazado
-    caseItem.status = 'rechazado'
-    caseItem.updatedAt = new Date().toISOString()
-    
-    // Remover el caso de la lista (en producción se actualizaría el estado)
-    const index = cases.findIndex(c => c.id === caseId)
-    if (index > -1) {
-      cases.splice(index, 1)
-    }
+    await casoAprobacionService.rechazarCaso(caseId)
+    await fetchCases()
   } catch (error) {
     console.error('Error al rechazar caso:', error)
   } finally {
@@ -382,17 +356,14 @@ const closeModal = () => {
 
 const mapCaseToDetails = (c: CaseToApprove): CaseApprovalDetails => ({
   id: c.id,
-  caseCode: c.id,
-  status: c.status || 'pendiente',
+  caseCode: c.caseCode,
+  status: c.status,
   description: c.description,
   createdAt: c.createdAt,
   updatedAt: c.updatedAt,
-  patient: { id: 'N/A', fullName: c.patientName },
+  patient: { id: c.patientName, fullName: c.patientName },
   pathologist: c.pathologistName,
-  newAssignedTests: [
-    { id: 'TEST-NEW-01', name: 'Inmunohistoquímica Panel A', quantity: 1 },
-    { id: 'TEST-NEW-02', name: 'PCR Especial', quantity: 2 }
-  ]
+  newAssignedTests: [] // Se puede poblar con c.pruebas complementarias si se necesita
 })
 
 const approveFromModal = async (c: CaseApprovalDetails) => {

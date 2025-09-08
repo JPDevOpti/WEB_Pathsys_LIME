@@ -26,9 +26,19 @@ export function useBatchDownload() {
         const options = {
           margin: [10, 10, 10, 10],
           filename: `caso_${c.caseCode || c.id}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          image: { type: 'png', quality: 1 },
+          html2canvas: {
+            scale: 2.2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            letterRendering: true,
+            removeContainer: true,
+            windowWidth: 816,
+            windowHeight: 1056
+          },
+          jsPDF: { unit: 'pt', format: 'letter', orientation: 'portrait', compress: false, putOnlyUsedFonts: true }
         }
         
         html2pdf()

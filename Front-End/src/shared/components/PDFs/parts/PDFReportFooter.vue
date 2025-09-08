@@ -9,9 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
-const props = defineProps<{
+defineProps<{
   currentPage?: number
   totalPages?: number
 }>()
@@ -22,6 +20,8 @@ const props = defineProps<{
   width: 100%;
   margin-top: auto;
   padding-top: 1rem;
+  padding-bottom: 0.35rem; /* espacio extra inferior para evitar corte */
+  box-sizing: border-box;
 }
 
 .footer-content {
@@ -50,5 +50,6 @@ const props = defineProps<{
   font-size: 12px;
   color: #111827;
   width: 100%;
+  padding-bottom: 2px; /* micro margen para html2canvas */
 }
 </style>
