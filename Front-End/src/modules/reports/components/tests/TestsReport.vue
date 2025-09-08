@@ -4,19 +4,41 @@
     <ComponentCard title="Reporte de pruebas realizadas" description="Seleccione período, entidad y estado para generar el informe.">
 
       
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <FormSelect v-model="selectedMonth" label="Mes" :options="monthOptions" placeholder="Seleccione mes" />
-        <FormSelect v-model="selectedYear" label="Año" :options="yearOptions" placeholder="Seleccione año" />
-        <EntityList 
-          v-model="selectedEntity" 
-          label="Entidad" 
-          placeholder="Buscar y seleccionar entidad..."
-          @entity-selected="handleEntitySelected"
-          @load-error="handleEntityLoadError"
-        />
-        <div class="flex items-end gap-2">
-          <SaveButton :loading="isLoading" :disabled="!selectedMonth || !selectedYear || !backendConnected" :text="isLoading ? 'Generando...' : 'Generar Informe'" @click="generateReport" />
-          <ClearButton @click="clearSelection">
+      <div class="flex flex-wrap items-end gap-4">
+        <!-- Mes -->
+        <div class="flex-auto sm:flex-1 md:flex-none md:w-48">
+          <FormSelect v-model="selectedMonth" label="Mes" :options="monthOptions" placeholder="Seleccione mes" />
+        </div>
+        
+        <!-- Año -->
+        <div class="flex-auto sm:flex-1 md:flex-none md:w-48">
+          <FormSelect v-model="selectedYear" label="Año" :options="yearOptions" placeholder="Seleccione año" />
+        </div>
+        
+        <!-- Entidad (más amplia) -->
+        <div class="w-full md:flex-1 min-w-[200px]">
+          <EntityList 
+            v-model="selectedEntity" 
+            label="Entidad" 
+            placeholder="Buscar y seleccionar entidad..."
+            class="w-full"
+            @entity-selected="handleEntitySelected"
+            @load-error="handleEntityLoadError"
+          />
+        </div>
+        
+        <!-- Botones (ancho fijo, sin encogerse) -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <SaveButton 
+            :loading="isLoading" 
+            :disabled="!selectedMonth || !selectedYear || !backendConnected" 
+            :text="isLoading ? 'Generando...' : 'Generar Informe'" 
+            @click="generateReport" 
+          />
+          <ClearButton 
+            @click="clearSelection" 
+            class="flex-none whitespace-nowrap"
+          >
             <template #icon><RefreshIcon class="w-4 h-4 mr-2" /></template>
             Limpiar
           </ClearButton>

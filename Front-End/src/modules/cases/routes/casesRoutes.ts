@@ -44,7 +44,7 @@ export const casesRoutes: RouteRecordRaw[] = [
       {
         path: 'to-approve',
         name: 'cases-to-approve',
-        component: () => import('../views/CasesToApproveView.vue'),
+        component: () => import('../../case-list/views/CasesToApproveView.vue'),
         meta: {
           title: 'Casos por Aprobar',
           requiresAuth: true

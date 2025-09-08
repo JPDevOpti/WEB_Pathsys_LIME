@@ -24,6 +24,14 @@ export const caseListRoutes: RouteRecordRaw[] = [
     meta: {
       title: 'Vista Previa Múltiple'
     }
+  },
+  {
+    path: '/cases/to-approve',
+    name: 'case-list.to-approve',
+    component: () => import('../views/CasesToApproveView.vue'),
+    meta: {
+      title: 'Casos por Aprobar'
+    }
   }
 ]
 

@@ -3,20 +3,9 @@
     <div class="signature-section">
       <div class="signature-container">
         <div class="signature-content">
-          <!-- Espacio SIEMPRE reservado para la firma (ARRIBA) -->
+          <!-- Espacio para la firma (ARRIBA). Si no hay firma, queda vacío sin marcador. -->
           <div class="signature-space">
-            <img 
-              v-if="caseItem?.caseDetails?.patologo_asignado?.firma" 
-              :src="caseItem.caseDetails.patologo_asignado.firma" 
-              alt="Firma del Patólogo" 
-              class="signature-image"
-            />
-            <div 
-              v-else 
-              class="signature-placeholder"
-            >
-              <span class="placeholder-text">Firma</span>
-            </div>
+            <img v-if="caseItem?.caseDetails?.patologo_asignado?.firma" :src="caseItem.caseDetails.patologo_asignado.firma" alt="Firma del Patólogo" class="signature-image" />
           </div>
           <!-- Línea de firma -->
           <div class="signature-line"></div>
@@ -104,23 +93,7 @@ defineProps<{
   mix-blend-mode: multiply;
 }
 
-.signature-placeholder {
-  width: 350px;
-  height: 100px;
-  border: 1px solid #ddd;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
-  font-size: 11px;
-  text-align: center;
-}
-
-.placeholder-text {
-  opacity: 0.7;
-  font-style: italic;
-}
+/* Sin placeholder visual cuando no hay firma */
 
 .signature-text {
   font-size: 12px;

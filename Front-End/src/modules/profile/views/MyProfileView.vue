@@ -365,6 +365,19 @@ const handleSignatureChange = async (payload: { file: File | null; previewUrl: s
       }
     }
 
+    // Sincronizar con el store para que otras vistas (p.ej. SignResults) detecten la firma
+    try {
+      const auth = useAuthStore()
+      if (auth.user) {
+        ;(auth.user as any).firma = payload.previewUrl || ''
+        ;(auth.user as any).firma_url = payload.previewUrl || ''
+        ;(auth.user as any).signatureUrl = payload.previewUrl || ''
+        ;(auth.user as any).firmaDigital = payload.previewUrl || ''
+      }
+      try { localStorage.setItem('signature_url', payload.previewUrl || '') } catch {}
+      try { sessionStorage.setItem('signature_url', payload.previewUrl || '') } catch {}
+    } catch {}
+
     // Mostrar mensaje de éxito
     showSuccessMessage()
   } catch (error) {

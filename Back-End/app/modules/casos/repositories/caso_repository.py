@@ -1241,7 +1241,10 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         
         # Agregar filtro de entidad si se especifica
         if entity:
-            pipeline[0]["$match"]["paciente.entidad_info.codigo"] = entity
+            pipeline[0]["$match"]["$or"] = [
+                {"paciente.entidad_info.codigo": entity},
+                {"paciente.entidad_info.id": entity}
+            ]
         
         # Continuar con el pipeline
         pipeline.extend([
@@ -1332,7 +1335,10 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         
         # Agregar filtro de entidad si se especifica
         if entity:
-            pipeline[0]["$match"]["paciente.entidad_info.codigo"] = entity
+            pipeline[0]["$match"]["$or"] = [
+                {"paciente.entidad_info.codigo": entity},
+                {"paciente.entidad_info.id": entity}
+            ]
         
         # Continuar con el pipeline
         pipeline.extend([

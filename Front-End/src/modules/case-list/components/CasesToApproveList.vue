@@ -166,8 +166,8 @@
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
 import { ComponentCard, FormInputField, BaseButton, PathologistList, SearchButton } from '@/shared/components'
-import CaseApprovalDetailsModal from './CaseApprovalDetailsModal.vue'
-import type { CaseApprovalDetails } from '../types/case-approval.types'
+import CaseApprovalDetailsModal from '../../cases/components/CaseApprovalDetailsModal.vue'
+import type { CaseApprovalDetails } from '../../cases/types/case-approval.types'
 
 // ============================================================================
 // INTERFACES Y TIPOS

@@ -92,8 +92,14 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """Actualizar documento por ID"""
         if not ObjectId.is_valid(id):
             return None
-        
-        update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True, by_alias=False)
+        # Soportar tanto modelos Pydantic como diccionarios simples
+        if hasattr(obj_in, 'model_dump'):
+            update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True, by_alias=False)
+        elif isinstance(obj_in, dict):
+            # Clonar para no mutar referencia externa y filtrar None
+            update_data = {k: v for k, v in obj_in.items() if v is not None}
+        else:
+            update_data = {}
         if update_data:
             update_data["fecha_actualizacion"] = datetime.utcnow()
             update_data = self._normalize_boolean_fields_for_write(update_data)

@@ -29,6 +29,23 @@
           </div>
         </div>
 
+        <!-- Advertencia de falta de firma -->
+        <div v-if="isPathologistWithoutSignature" class="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-r-lg">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <WarningIcon class="h-5 w-5 text-yellow-500" />
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-bold">Firma digital no configurada</p>
+              <p class="text-sm mt-1">
+                No puedes firmar resultados porque no has subido tu firma digital. Por favor, ve a 
+                <router-link to="/profile" class="font-medium underline hover:text-yellow-900">tu perfil</router-link> 
+                para configurarla.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div class="bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-200 mb-4">
           <h3 class="text-sm font-semibold text-gray-700 mb-3">
             Buscar Caso
@@ -153,8 +170,8 @@
             <ClearButton :disabled="loading" @click="handleClearResults" />
             <PreviewButton :disabled="loading" @click="goToPreview" />
             <button
-              :disabled="loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned)"
-              :class="['px-4 py-2 text-sm font-medium rounded-md', loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700']"
+              :disabled="loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature"
+              :class="['px-4 py-2 text-sm font-medium rounded-md', (loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700']"
               @click="handleSign"
             >
               {{ signing ? 'Firmando...' : 'Firmar' }}
@@ -227,6 +244,7 @@ import { useDiseaseDiagnosis } from '@/shared/composables/useDiseaseDiagnosis'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useAuthStore } from '@/stores/auth.store'
 import { useNotifications } from '@/modules/cases/composables/useNotifications'
+import { profileApiService } from '@/modules/profile/services/profileApiService'
 import type { Disease } from '@/shared/services/disease.service'
 import ResultsActionNotification from '../Shared/ResultsActionNotification.vue'
 import resultsApiService from '../../services/resultsApiService'
@@ -251,6 +269,26 @@ onMounted(() => {
   initialize()
   if (props.autoSearch && props.sampleId) ejecutarBusquedaAutomatica()
   window.addEventListener('clear-search', handleClearSearch)
+  // Refrescar firma del patólogo desde backend si no está en memoria
+  try {
+    const email = authStore.user?.email
+    if (authStore.user?.rol === 'patologo' && email) {
+      const current = (authStore.user as any).firma || (authStore.user as any).firma_url || (authStore.user as any).signatureUrl || (authStore.user as any).firmaDigital
+      if (!current) {
+        profileApiService.getByRoleAndEmail('patologo', email).then((pb: any) => {
+          const firma = pb?.firma || ''
+          if (firma) {
+            ;(authStore.user as any).firma = firma
+            ;(authStore.user as any).firma_url = firma
+            ;(authStore.user as any).signatureUrl = firma
+            ;(authStore.user as any).firmaDigital = firma
+            try { localStorage.setItem('signature_url', firma) } catch {}
+            try { sessionStorage.setItem('signature_url', firma) } catch {}
+          }
+        }).catch(() => {})
+      }
+    }
+  } catch {}
 })
 onUnmounted(() => window.removeEventListener('clear-search', handleClearSearch))
 
@@ -296,6 +334,18 @@ const canUserSign = computed(() => {
   if (authStore.user.rol === 'administrador') return true
   if (authStore.user.rol === 'patologo') return isAssignedPathologist.value
   return false
+})
+
+// Patólogo sin firma digital configurada
+const isPathologistWithoutSignature = computed(() => {
+  if (!authStore.user) return false
+  if (authStore.user.rol !== 'patologo') return false
+  let firma = (authStore.user as any).firma || (authStore.user as any).firma_url || (authStore.user as any).signatureUrl || (authStore.user as any).firmaDigital
+  if (!firma) {
+    try { firma = localStorage.getItem('signature_url') || firma } catch {}
+    try { firma = sessionStorage.getItem('signature_url') || firma } catch {}
+  }
+  return !firma || (typeof firma === 'string' && firma.trim() === '')
 })
 
 // Solo los patólogos requieren que el caso tenga un patólogo asignado
@@ -423,12 +473,29 @@ const buscarCaso = async () => {
     casoEncontrado.value = true
     await loadCaseByCode(codigoCaso.value.trim())
     await loadExistingDiagnosis(data)
+    await hydrateAssignedSignature(data)
   } catch (error: any) {
     casoEncontrado.value = false
     searchError.value = error.message || 'Error al buscar el caso'
   } finally {
     isLoadingSearch.value = false
   }
+}
+// Hidratar firma del patólogo asignado desde backend si no está presente en el caso
+const hydrateAssignedSignature = async (caseData: any) => {
+  try {
+    const assigned: any = caseData?.patologo_asignado as any
+    const currentAssigned: any = (caseDetails.value as any)?.patologo_asignado as any
+    const code = assigned?.codigo || currentAssigned?.codigo
+    const hasFirma = assigned?.firma || currentAssigned?.firma
+    if (!code || hasFirma) return
+    const pb = await profileApiService.getPathologistByCode(code)
+    const firmaUrl = (pb as any)?.firma || ''
+    if (firmaUrl) {
+      if (caseData?.patologo_asignado) (caseData.patologo_asignado as any).firma = firmaUrl
+      if (caseDetails.value?.patologo_asignado) (caseDetails.value.patologo_asignado as any).firma = firmaUrl
+    }
+  } catch {}
 }
 
 // Carga diagnósticos existentes del caso (CIE-10 y CIE-O) si ya están firmados

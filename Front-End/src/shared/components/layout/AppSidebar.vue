@@ -404,10 +404,9 @@ const filteredMenuItems = computed(() => {
       name: "Gestión de casos",
       icon: ListIcon,
       subItems: [
-        { name: "Nuevo Caso", path: "/cases/new", pro: false, alwaysVisible: true },
-        { name: "Editar Caso", path: "/cases/edit", pro: false, alwaysVisible: true },
-        { name: "Casos por Aprobar", path: "/cases/to-approve", pro: false, alwaysVisible: false },
-        { name: "Técnicas Complementarias", path: "/cases/technique-complementary", pro: false, alwaysVisible: false },
+        { name: "Nuevo caso", path: "/cases/new", pro: false, alwaysVisible: true },
+        { name: "Editar caso", path: "/cases/edit", pro: false, alwaysVisible: true },
+        { name: "Técnicas complementarias", path: "/cases/technique-complementary", pro: false, alwaysVisible: false },
       ],
       alwaysVisible: true
     },
@@ -416,6 +415,7 @@ const filteredMenuItems = computed(() => {
       icon: TableIcon,
       subItems: [
         { name: "Casos actuales", path: "/cases/current", pro: false, alwaysVisible: true },
+        { name: "Casos por aprobar", path: "/cases/to-approve", pro: false, alwaysVisible: false },
       ],
       alwaysVisible: true
     },
@@ -433,10 +433,10 @@ const filteredMenuItems = computed(() => {
       icon: PieChartIcon,
       name: "Estadísticas",
       subItems: [
-        { name: "Reportes de Oportunidad", path: "/statistics/opportunity", pro: false, alwaysVisible: true },
-        { name: "Reportes de Patólogos", path: "/statistics/pathologists", pro: false, alwaysVisible: true },
-        { name: "Reportes de Entidades", path: "/statistics/entities", pro: false, alwaysVisible: true },
-        { name: "Reportes de Pruebas", path: "/statistics/tests", pro: false, alwaysVisible: true },
+        { name: "Reportes de oportunidad", path: "/statistics/opportunity", pro: false, alwaysVisible: true },
+        { name: "Reportes de patólogos", path: "/statistics/pathologists", pro: false, alwaysVisible: true },
+        { name: "Reportes de entidades", path: "/statistics/entities", pro: false, alwaysVisible: true },
+        { name: "Reportes de pruebas", path: "/statistics/tests", pro: false, alwaysVisible: true },
       ],
       alwaysVisible: true
     },

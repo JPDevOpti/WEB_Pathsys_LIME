@@ -2,10 +2,17 @@
   <div class="space-y-6">
     <!-- Card de selección de período y acciones -->
     <ComponentCard title="Reporte de patólogos" description="Seleccione mes y año para generar el informe.">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <FormSelect v-model="selectedMonth" label="Mes" :options="monthOptions" placeholder="Seleccione mes" />
-        <FormSelect v-model="selectedYear" label="Año" :options="yearOptions" placeholder="Seleccione año" />
-        <div class="flex items-end gap-2">
+      <div class="flex flex-wrap items-end gap-4">
+        <!-- Mes -->
+        <div class="flex-grow sm:flex-grow-0 sm:w-48">
+          <FormSelect v-model="selectedMonth" label="Mes" :options="monthOptions" placeholder="Seleccione mes" />
+        </div>
+        <!-- Año -->
+        <div class="flex-grow sm:flex-grow-0 sm:w-48">
+          <FormSelect v-model="selectedYear" label="Año" :options="yearOptions" placeholder="Seleccione año" />
+        </div>
+        <!-- Botones -->
+        <div class="flex items-center gap-2 flex-wrap">
           <SaveButton :loading="isLoading" :disabled="!selectedMonth || !selectedYear" :text="isLoading ? 'Generando...' : 'Generar Informe'" @click="generateReport" />
           <ClearButton @click="clearSelection">
             <template #icon><RefreshIcon class="w-4 h-4 mr-2" /></template>

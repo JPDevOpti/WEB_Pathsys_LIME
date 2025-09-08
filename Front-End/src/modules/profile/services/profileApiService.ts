@@ -121,6 +121,15 @@ export const profileApiService = {
     }
   },
 
+  async getPathologistByCode(code: string): Promise<BackendPatologo | undefined> {
+    try {
+      const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`)
+      return (data?.data ?? data) as BackendPatologo
+    } catch {
+      return undefined
+    }
+  },
+
   async updateByRole(role: UserRole, code: string, payload: any) {
     switch (role) {
       case 'patologo':
