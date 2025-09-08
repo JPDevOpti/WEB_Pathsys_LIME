@@ -64,7 +64,7 @@ app/modules/casos/
     }
   ],
   "estado": "string (En proceso|Por firmar|Por entregar|Completado)",
-  "prioridad": "string (Normal|Prioritario|Urgente, default: Normal)",
+  "prioridad": "string (Normal|Prioritario, default: Normal)",
   "oportunidad": "number|null (días hábiles transcurridos al completar el caso, >=0)",
   "entregado_a": "string|null (persona que recibe el caso al ser entregado, <=100 chars)",
   "fecha_creacion": "datetime",
@@ -132,7 +132,7 @@ app/modules/casos/
     }
   ],
   "estado": "string",
-  "prioridad": "string (Normal|Prioritario|Urgente)",
+  "prioridad": "string (Normal|Prioritario)",
   "oportunidad": "number|null (días hábiles transcurridos al completar el caso)",
   "entregado_a": "string|null (persona que recibe el caso al ser entregado)",
   "fecha_creacion": "datetime ISO",
@@ -195,7 +195,7 @@ app/modules/casos/
     }
   ],
   "estado": "string (default: En proceso)",
-  "prioridad": "string (Normal|Prioritario|Urgente, default: Normal)",
+  "prioridad": "string (Normal|Prioritario, default: Normal)",
   "observaciones_generales": "string|null"
 }
 ```
@@ -232,7 +232,7 @@ app/modules/casos/
     }
   ],
   "estado": "string (default: En proceso)",
-  "prioridad": "string (Normal|Prioritario|Urgente, default: Normal)",
+  "prioridad": "string (Normal|Prioritario, default: Normal)",
   "observaciones_generales": "string|null"
 }
 ```
@@ -279,7 +279,7 @@ Nota: desde la última actualización del módulo, el campo "metodo" se maneja c
 - `skip` (int, default: 0)
 - `limit` (int, default: 100, max: 1000)
 - `estado` (string, opcional)
-- `prioridad` (string, opcional: Normal|Prioritario|Urgente)
+- `prioridad` (string, opcional: Normal|Prioritario)
 - `patologo_codigo` (string, opcional)
 - `fecha_desde` (datetime, opcional)
 - `fecha_hasta` (datetime, opcional)
@@ -394,7 +394,7 @@ Nota: desde la última actualización del módulo, el campo "metodo" se maneja c
   "medico_nombre": "string|null",
   "patologo_codigo": "string|null",
   "estado": "EstadoCasoEnum|null",
-  "prioridad": "PrioridadCasoEnum|null (Normal|Prioritario|Urgente)",
+  "prioridad": "PrioridadCasoEnum|null (Normal|Prioritario)",
   "fecha_ingreso_desde": "datetime|null",
   "fecha_ingreso_hasta": "datetime|null",
   "fecha_firma_desde": "datetime|null",

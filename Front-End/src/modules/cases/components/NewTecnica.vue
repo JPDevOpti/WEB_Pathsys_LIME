@@ -68,7 +68,7 @@
           :min="1" 
           :max="10" 
           :required="true" 
-          help-text="Cantidad de submuestras (máximo 10)" 
+          help-text="Cantidad de submuestras" 
           @input="handleNumeroMuestrasChange" 
         />
       </div>

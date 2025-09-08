@@ -117,7 +117,7 @@ export function useCaseForm() {
       return false
     }
 
-    const prioridadesValidas = ['Normal', 'Prioritario', 'Urgente']
+    const prioridadesValidas = ['Normal', 'Prioritario']
     if (!prioridadesValidas.includes(formData.prioridadCaso)) {
       errors.prioridadCaso.push('La prioridad seleccionada no es válida')
       return false

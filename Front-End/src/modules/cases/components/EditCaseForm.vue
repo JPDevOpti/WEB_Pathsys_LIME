@@ -42,22 +42,43 @@
           </div>
 
           <div v-if="caseFound && foundCaseInfo" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center">
-                <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <h4 class="text-sm font-semibold text-green-800">Caso Encontrado y Cargado</h4>
-              </div>
+            <div class="flex items-center mb-4">
+              <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <h4 class="text-sm sm:text-base font-semibold text-green-800">Caso Encontrado y Cargado</h4>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-              <div><span class="font-medium text-green-700">Nombre del Paciente:</span><p class="text-green-800 break-words">{{ foundCaseInfo.paciente?.nombre || 'N/A' }}</p></div>
-              <div><span class="font-medium text-green-700">Cédula del Paciente:</span><p class="text-green-800 font-mono">{{ foundCaseInfo.paciente?.paciente_code || 'N/A' }}</p></div>
-              <div><span class="font-medium text-green-700">Edad:</span><p class="text-green-800">{{ foundCaseInfo.paciente?.edad || 'N/A' }} años</p></div>
-              <div><span class="font-medium text-green-700">Sexo:</span><p class="text-green-800">{{ foundCaseInfo.paciente?.sexo || 'N/A' }}</p></div>
-              <div><span class="font-medium text-green-700">Entidad:</span><p class="text-green-800 break-words">{{ foundCaseInfo.paciente?.entidad_info?.nombre || foundCaseInfo.entidad_info?.nombre || 'N/A' }}</p></div>
-              <div><span class="font-medium text-green-700">Tipo de Atención:</span><p class="text-green-800 break-words">{{ foundCaseInfo.paciente?.tipo_atencion || 'N/A' }}</p></div>
-              <div><span class="font-medium text-green-700">Estado del Caso:</span><p class="text-green-800">{{ foundCaseInfo.estado || 'N/A' }}</p></div>
+            <div class="bg-white border border-green-200 rounded-lg shadow-sm p-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Nombre</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.paciente?.nombre || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Código</p>
+                  <p class="text-gray-900 font-mono font-semibold">{{ foundCaseInfo.paciente?.paciente_code || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Edad</p>
+                  <p class="text-gray-900 font-semibold">{{ (foundCaseInfo.paciente?.edad ?? 'N/A') + (foundCaseInfo.paciente?.edad ? ' años' : '') }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Sexo</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ foundCaseInfo.paciente?.sexo || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Tipo de Atención</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ foundCaseInfo.paciente?.tipo_atencion || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Entidad</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.paciente?.entidad_info?.nombre || foundCaseInfo.entidad_info?.nombre || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1 sm:col-span-2">
+                  <p class="text-gray-600 font-medium">Estado del Caso</p>
+                  <p class="text-gray-900 font-semibold">{{ foundCaseInfo.estado || 'N/A' }}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -83,13 +104,13 @@
         <!-- Campos de fecha de ingreso y prioridad -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <FormInputField v-model="form.fechaIngreso" label="Fecha de Ingreso" type="date" :required="true" help-text="Fecha en que ingresa el caso al sistema" />
-          <FormSelect v-model="form.prioridadCaso" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" help-text="Nivel de urgencia del caso médico" />
+          <FormSelect v-model="form.prioridadCaso" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" help-text="Nivel de urgencia del caso" />
         </div>
 
         <!-- Campos de médico solicitante y servicio -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="form.medicoSolicitante" label="Médico Solicitante" placeholder="Médico que solicita el estudio" :required="true" :max-length="200" />
-          <FormInputField v-model="form.servicio" label="Servicio" placeholder="Procedencia del caso" :required="true" :max-length="100" />
+          <FormInputField v-model="form.medicoSolicitante" label="Médico Solicitante" placeholder="Ejemplo: Alberto Perez" :required="true" :max-length="200" help-text="Medico solicitante del estudio" />
+          <FormInputField v-model="form.servicio" label="Servicio" placeholder="Ejemplo: Medicina Interna" :required="true" :max-length="100" help-text="Área de procedencia del caso" />
         </div>
 
         <!-- Estado y Patólogo en una sola línea -->
@@ -113,16 +134,18 @@
           
           <div class="space-y-6">
             <div v-for="(muestra, muestraIndex) in form.muestras" :key="muestra.numero + '-' + resetKey" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h4 class="font-medium text-gray-700 mb-4">Submuestra {{ muestra.numero }}</h4>
+              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ muestra.numero }}</h4>
               
               <div class="mb-4">
-                <BodyRegionList :key="'region-' + muestraIndex + '-' + resetKey" v-model="muestra.regionCuerpo" :label="`Región del Cuerpo - Submuestra ${muestra.numero}`" placeholder="Buscar región del cuerpo..." :required="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
+                <BodyRegionList :key="'region-' + muestraIndex + '-' + resetKey" v-model="muestra.regionCuerpo" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
               </div>
               
               <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <label class="block text-sm font-medium text-gray-700">Pruebas a Realizar <span class="text-red-500">*</span></label>
-                  <AddButton text="Agregar Prueba" @click="addLocalPruebaToMuestra(muestraIndex)" />
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label class="block text-sm font-medium text-gray-700">Pruebas a realizar</label>
+                  <div class="self-end sm:self-auto">
+                    <AddButton text="Agregar Prueba" @click="addLocalPruebaToMuestra(muestraIndex)" />
+                  </div>
                 </div>
                 
                 <div class="space-y-2">
@@ -134,7 +157,7 @@
                       <FormInputField v-model.number="prueba.cantidad" label="Cantidad" type="number" :min="1" :max="10" placeholder="Cantidad" />
                     </div>
                     <div class="flex items-end justify-center sm:w-10 pb-1">
-                      <RemoveButton v-if="muestra.pruebas.length > 1" @click="removeLocalPruebaFromMuestra(muestraIndex, pruebaIndex)" title="Eliminar prueba" />
+                      <RemoveButton @click="removeLocalPruebaFromMuestra(muestraIndex, pruebaIndex)" title="Eliminar prueba" />
                     </div>
                   </div>
                 </div>
@@ -191,7 +214,7 @@
                   <div class="space-y-3">
                     <div v-for="(muestra, index) in getMuestras()" :key="index" class="border border-gray-200 rounded-lg p-3 bg-gray-50">
                       <div class="flex items-center justify-between mb-2">
-                        <span class="font-medium text-gray-900 text-sm">Submuestra {{ index + 1 }}</span>
+                        <span class="font-medium text-gray-900 text-sm">Submuestra #{{ index + 1 }}</span>
                         <span class="text-sm text-gray-500">{{ getPruebasCount(muestra) }} prueba{{ getPruebasCount(muestra) !== 1 ? 's' : '' }}</span>
                       </div>
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
@@ -300,8 +323,7 @@ const tipoAtencionOptions = [
 
 const prioridadOptions = [
   { value: 'Normal', label: 'Normal' },
-  { value: 'Prioritario', label: 'Prioritario' },
-  { value: 'Urgente', label: 'Urgente' }
+  { value: 'Prioritario', label: 'Prioritario' }
 ]
 
 const estadoOptions = [
@@ -455,7 +477,7 @@ const onSubmit = async () => {
 
     const prioridadToSend = ((): string => {
       const p = form.prioridadCaso || 'Normal'
-      if (['Normal','Prioritario','Urgente'].includes(p)) return p
+      if (['Normal','Prioritario'].includes(p)) return p
       return 'Normal'
     })()
 

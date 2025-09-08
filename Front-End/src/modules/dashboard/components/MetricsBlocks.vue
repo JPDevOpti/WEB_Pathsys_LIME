@@ -152,6 +152,7 @@ import { useDashboard } from '../composables/useDashboard'
 
 const {
   metricas,
+  casosPorMes,
   loadingMetricas: isLoading,
   error,
   cargarMetricas,
@@ -160,19 +161,35 @@ const {
 } = useDashboard()
 
 // Métricas basadas en la documentación del backend
-const pacientesMesActual = computed(() => {
-  return Number(metricas.value?.pacientes?.mes_actual ?? 0)
-})
+const pacientesMesActual = computed(() => Number(metricas.value?.pacientes?.mes_actual ?? 0))
 
+// Porcentaje de pacientes comparando los dos meses inmediatamente anteriores si está disponible
 const pacientesCambio = computed(() => {
+  const mesAnt = Number(metricas.value?.pacientes?.mes_anterior ?? 0)
+  const mesAntAnt = (metricas.value as any)?.pacientes?.mes_anterior_anterior
+  if (typeof mesAntAnt === 'number') {
+    const denom = mesAntAnt === 0 ? 1 : mesAntAnt
+    return Math.round(((mesAnt - mesAntAnt) / denom) * 100)
+  }
   return Number(metricas.value?.pacientes?.cambio_porcentual ?? 0)
 })
 
-const casosMesActual = computed(() => {
-  return Number(metricas.value?.casos?.mes_actual ?? 0)
-})
+const casosMesActual = computed(() => Number(metricas.value?.casos?.mes_actual ?? 0))
 
+// Para casos, si tenemos serie por mes, comparamos los dos meses inmediatamente anteriores
 const casosCambio = computed(() => {
+  const serie = casosPorMes.value?.datos
+  if (Array.isArray(serie) && serie.length === 12) {
+    const now = new Date()
+    const m = now.getMonth() // 0-11
+    if (m >= 2) {
+      const prev1 = serie[m - 1] || 0
+      const prev2 = serie[m - 2] || 0
+      const denom = prev2 === 0 ? 1 : prev2
+      return Math.round(((prev1 - prev2) / denom) * 100)
+    }
+  }
+  // Fallback a cambio_porcentual del backend
   return Number(metricas.value?.casos?.cambio_porcentual ?? 0)
 })
 

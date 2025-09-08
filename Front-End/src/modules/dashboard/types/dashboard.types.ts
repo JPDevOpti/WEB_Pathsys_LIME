@@ -5,8 +5,7 @@
 // Enum para prioridad de casos
 export enum CasePriority {
   Normal = 'Normal',
-  Prioritario = 'Prioritario',
-  Urgente = 'Urgente'
+  Prioritario = 'Prioritario'
 }
 
 // Enum para estados de casos
@@ -114,7 +113,6 @@ export interface FiltrosCasosUrgentes {
 export interface EstadisticasPorPrioridad {
   [CasePriority.Normal]: number
   [CasePriority.Prioritario]: number
-  [CasePriority.Urgente]: number
 }
 
 // Respuesta de la API para casos por mes

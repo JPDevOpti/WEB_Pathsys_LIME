@@ -73,7 +73,7 @@ const buttonClasses = computed(() => {
     success: 'border border-transparent text-white bg-green-600 hover:bg-green-700 focus:ring-green-500 rounded-lg shadow-sm',
     warning: 'border border-transparent text-white bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500 rounded-lg shadow-sm',
     danger: 'border border-transparent text-white bg-red-600 hover:bg-red-700 focus:ring-red-500 rounded-lg shadow-sm',
-    link: 'text-blue-600 hover:text-blue-800 focus:ring-blue-500 rounded'
+    link: 'border border-blue-600 text-blue-600 bg-transparent hover:bg-blue-50 focus:ring-blue-500 rounded-lg'
   }
   
   return `${baseClasses} ${sizeClasses[props.size]} ${variantClasses[props.variant]}`

@@ -204,7 +204,7 @@
                       :class="{
                         'bg-green-50 text-green-700': c.priority === 'Normal',
                         'bg-yellow-50 text-yellow-700': c.priority === 'Prioritario',
-                        'bg-red-50 text-red-700': c.priority === 'Urgente'
+                        'bg-red-50 text-red-700': false
                       }">
                   {{ c.priority }}
                 </span>
@@ -295,7 +295,7 @@
                         :class="{
                           'bg-green-50 text-green-700': c.priority === 'Normal',
                           'bg-yellow-50 text-yellow-700': c.priority === 'Prioritario',
-                          'bg-red-50 text-red-700': c.priority === 'Urgente'
+                          'bg-red-50 text-red-700': false
                         }">
                     {{ c.priority }}
                   </span>
@@ -310,7 +310,7 @@
                     :class="{
                       'bg-green-50 text-green-700': c.priority === 'Normal',
                       'bg-yellow-50 text-yellow-700': c.priority === 'Prioritario',
-                      'bg-red-50 text-red-700': c.priority === 'Urgente'
+                      'bg-red-50 text-red-700': false
                     }">
                 {{ c.priority }}
               </span>

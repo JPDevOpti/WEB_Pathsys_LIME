@@ -6,8 +6,7 @@ export type Gender = typeof GENDER_OPTIONS[keyof typeof GENDER_OPTIONS]
 
 export enum CasePriority {
   NORMAL = 'Normal',
-  PRIORITARIO = 'Prioritario',
-  URGENTE = 'Urgente'
+  PRIORITARIO = 'Prioritario'
 }
 
 export interface EntityInfo {

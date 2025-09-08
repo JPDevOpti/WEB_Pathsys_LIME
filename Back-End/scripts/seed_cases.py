@@ -76,6 +76,18 @@ SERVICIOS_MEDICOS = [
     "Urología", "Dermatología", "Gastroenterología", "Oncología"
 ]
 
+def business_days(start: datetime, end: datetime) -> int:
+    if not start or not end or end < start:
+        return 0
+    days = 0
+    d = start.date()
+    end_d = end.date()
+    while d <= end_d:
+        if d.weekday() < 5:
+            days += 1
+        d += timedelta(days=1)
+    return max(0, days - 1)
+
 def generar_observaciones_caso(region_cuerpo: str, tipo_atencion: str, estado: EstadoCasoEnum, es_reciente: bool) -> str:
     """Genera observaciones realistas para un caso basado en la región del cuerpo, tipo de atención y estado."""
     observaciones_base = [
@@ -288,13 +300,7 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
         fecha_inicio_recientes = today - timedelta(days=10)  # 9 de agosto
         fecha_fin_recientes = today  # 19 de agosto
         
-        print(f"Generando {count} casos:")
-        print(f"  - Casos recientes (últimos 10 días): {casos_recientes_count} ({casos_recientes_count/count*100:.1f}%)")
-        print(f"  - Casos antiguos (completados): {casos_antiguos_count} ({casos_antiguos_count/count*100:.1f}%)")
-        print(f"  - DEBUG: Fecha hoy = {today.strftime('%d/%m/%Y')}")
-        print(f"  - DEBUG: Rango recientes = {fecha_inicio_recientes.strftime('%d/%m/%Y')} a {fecha_fin_recientes.strftime('%d/%m/%Y')}")
-        print(f"  - DEBUG: Estados disponibles = {[e.value for e in EstadoCasoEnum]}")
-        print()
+        print(f"Generando {count} casos (recientes: {casos_recientes_count}, antiguos: {casos_antiguos_count})")
         
         # Fechas para casos antiguos (desde enero hasta hace 11 días)
         max_fecha_antiguos = today - timedelta(days=11)  # 8 de agosto hacia atrás
@@ -347,6 +353,9 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
             if random.random() < 0.8:  # 80% de casos tendrán médico solicitante
                 nombre_medico = random.choice(NOMBRES_MEDICOS)
                 medico_solicitante = nombre_medico
+
+            # Un solo servicio por caso
+            servicio_sel = random.choice(SERVICIOS_MEDICOS)
 
             # Determinar si este caso será reciente o antiguo
             # Los ÚLTIMOS N casos serán recientes (números más altos = fechas más recientes)
@@ -475,20 +484,18 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
             region_principal = muestras[0].region_cuerpo if muestras else "región no especificada"
             observaciones_generadas = generar_observaciones_caso(region_principal, tipo_atencion_valido, estado_final, es_caso_reciente)
             
-            # Determinar prioridad (Normal: 70%, Prioritario: 25%, Urgente: 5%)
+            # Determinar prioridad (Normal: 75%, Prioritario: 25%)
             prioridad_rand = random.random()
-            if prioridad_rand < 0.70:
+            if prioridad_rand < 0.75:
                 prioridad_caso = PrioridadCasoEnum.NORMAL
-            elif prioridad_rand < 0.95:
-                prioridad_caso = PrioridadCasoEnum.PRIORITARIO
             else:
-                prioridad_caso = PrioridadCasoEnum.URGENTE
+                prioridad_caso = PrioridadCasoEnum.PRIORITARIO
             
             # Usar CasoCreateRequest en lugar de CasoCreate (sin CasoCode)
             caso_create = CasoCreateRequest(
                 paciente=paciente_info,
                 medico_solicitante=medico_solicitante,
-                servicio=random.choice(SERVICIOS_MEDICOS),  # Servicio aleatorio
+                servicio=servicio_sel,
                 muestras=muestras,
                 estado=estado_final,
                 prioridad=prioridad_caso,
@@ -565,11 +572,21 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 # Los casos EN_PROCESO no tienen resultado
                 
                 # Crear el caso completo - convertir objetos Pydantic a diccionarios
+                # Campos adicionales según documentación
+                entregado_a_val: Optional[str] = None
+                oportunidad_val: Optional[int] = None
+                if estado_final == EstadoCasoEnum.COMPLETADO and fecha_entrega:
+                    entregado_a_val = random.choice([
+                        "Recepción", "Jefe de Servicio", "Secretaría", "Enfermería", "Archivo Clínico",
+                        "Dr. Receptor", "Dra. Receptora"
+                    ])
+                    oportunidad_val = business_days(fecha_creacion, fecha_entrega)
+
                 caso_completo = Caso(
                     caso_code=caso_code_generado,
                     paciente=paciente_info.model_dump(),
-                    medico_solicitante=medico_solicitante.model_dump() if medico_solicitante else None,
-                    servicio=random.choice(SERVICIOS_MEDICOS),
+                    medico_solicitante=medico_solicitante,
+                    servicio=servicio_sel,
                     muestras=[muestra.model_dump() for muestra in muestras],
                     estado=estado_final,  # ESTADO CORRECTO
                     fecha_creacion=fecha_creacion,
@@ -579,6 +596,8 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                     patologo_asignado=patologo_info.model_dump() if patologo_info else None,
                     resultado=resultado_data.model_dump() if resultado_data else None,
                     observaciones_generales=observaciones_generadas,
+                    entregado_a=entregado_a_val,
+                    oportunidad=oportunidad_val,
                     ingresado_por="seed_script",
                     actualizado_por="seed_script",
                     # Campo activo eliminado

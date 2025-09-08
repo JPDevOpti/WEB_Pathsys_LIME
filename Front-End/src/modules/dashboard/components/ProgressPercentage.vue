@@ -6,7 +6,7 @@
           <h3 class="text-base font-semibold text-gray-800">Oportunidad de atención</h3>
           <p class="mt-1 text-gray-500 text-xs">
             {{ datosOportunidad?.mes_anterior?.nombre || 'Mes anterior' }} - 
-            Porcentaje de casos procesados dentro del tiempo de oportunidad
+            Porcentaje de casos dentro de la oportunidad
           </p>
         </div>
       </div>

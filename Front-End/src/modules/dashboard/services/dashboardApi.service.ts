@@ -78,17 +78,16 @@ class DashboardApiService {
 
   async getMetricasDashboard(): Promise<DashboardMetrics> {
     try {
-      // Según la documentación, solo necesitamos llamar al endpoint de estadísticas de casos
-      // que ya incluye casos_mes_actual, casos_mes_anterior y cambio_porcentual
-      const casosStats = await this.getEstadisticasCasos()
+      const [casosStats, pacientesStats] = await Promise.all([
+        this.getEstadisticasCasos(),
+        this.getEstadisticasPacientes()
+      ])
 
-      // Para pacientes, vamos a asumir que también vienen del mismo endpoint de casos
-      // o crear valores por defecto hasta que se implemente el endpoint de pacientes
       return {
         pacientes: {
-          mes_actual: 0, // Por ahora valores por defecto
-          mes_anterior: 0,
-          cambio_porcentual: 0
+          mes_actual: pacientesStats.pacientes_mes_actual || 0,
+          mes_anterior: pacientesStats.pacientes_mes_anterior || 0,
+          cambio_porcentual: pacientesStats.cambio_porcentual || 0
         },
         casos: {
           mes_actual: casosStats.casos_mes_actual || 0,

@@ -13,7 +13,6 @@ class PrioridadCasoEnum(str, Enum):
     """Enum para los niveles de prioridad de un caso."""
     NORMAL = "Normal"
     PRIORITARIO = "Prioritario"
-    URGENTE = "Urgente"
 
 
 class EntidadInfo(BaseModel):

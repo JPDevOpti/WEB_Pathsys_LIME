@@ -104,6 +104,5 @@ export const TIPOS_ATENCION: SelectOption[] = [
 
 export const PRIORIDADES_CASO: SelectOption[] = [
   { value: 'Normal', label: 'Normal' },
-  { value: 'Prioritario', label: 'Prioritario' },
-  { value: 'Urgente', label: 'Urgente' }
+  { value: 'Prioritario', label: 'Prioritario' }
 ]

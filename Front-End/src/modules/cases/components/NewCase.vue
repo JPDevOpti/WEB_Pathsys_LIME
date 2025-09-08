@@ -30,20 +30,40 @@
 
         <!-- Información del paciente verificado -->
         <div v-if="patientVerified && verifiedPatient" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div class="flex items-center mb-3">
+          <div class="flex items-center mb-4">
             <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <h4 class="text-sm font-semibold text-green-800">Paciente Verificado</h4>
+            <h4 class="text-sm sm:text-base font-semibold text-green-800">Paciente Verificado</h4>
           </div>
           
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-            <div><span class="font-medium text-green-700">Nombre:</span><p class="text-green-800 break-words">{{ verifiedPatient.nombrePaciente }}</p></div>
-            <div><span class="font-medium text-green-700">Código:</span><p class="text-green-800 font-mono">{{ verifiedPatient.pacienteCode }}</p></div>
-            <div><span class="font-medium text-green-700">Edad:</span><p class="text-green-800">{{ verifiedPatient.edad }} años</p></div>
-            <div><span class="font-medium text-green-700">Sexo:</span><p class="text-green-800">{{ verifiedPatient.sexo }}</p></div>
-            <div><span class="font-medium text-green-700">Entidad:</span><p class="text-green-800 break-words">{{ verifiedPatient.entidad }}</p></div>
-            <div><span class="font-medium text-green-700">Tipo de Atención:</span><p class="text-green-800 break-words">{{ verifiedPatient.tipoAtencion }}</p></div>
+          <div class="bg-white border border-green-200 rounded-lg shadow-sm p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div class="space-y-1">
+                <p class="text-gray-600 font-medium">Nombre</p>
+                <p class="text-gray-900 break-words font-semibold">{{ verifiedPatient.nombrePaciente }}</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-gray-600 font-medium">Código</p>
+                <p class="text-gray-900 font-mono font-semibold">{{ verifiedPatient.pacienteCode }}</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-gray-600 font-medium">Edad</p>
+                <p class="text-gray-900 font-semibold">{{ verifiedPatient.edad }} años</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-gray-600 font-medium">Sexo</p>
+                <p class="text-gray-900 font-semibold capitalize">{{ verifiedPatient.sexo }}</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-gray-600 font-medium">Tipo de Atención</p>
+                <p class="text-gray-900 font-semibold capitalize">{{ verifiedPatient.tipoAtencion }}</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-gray-600 font-medium">Entidad</p>
+                <p class="text-gray-900 break-words font-semibold">{{ verifiedPatient.entidad }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -59,18 +79,18 @@
         <!-- Campos de fecha de ingreso y prioridad -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <FormInputField v-model="formData.fechaIngreso" label="Fecha de Ingreso" type="date" :required="true" :errors="errors.fechaIngreso" :warnings="warnings.fechaIngreso" help-text="Fecha en que ingresa el caso al sistema" />
-          <FormSelect v-model="formData.prioridadCaso" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" :error="validationState.hasAttemptedSubmit && !formData.prioridadCaso ? 'La prioridad es obligatoria' : ''" help-text="Nivel de urgencia del caso médico" />
+          <FormSelect v-model="formData.prioridadCaso" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" :error="validationState.hasAttemptedSubmit && !formData.prioridadCaso ? 'La prioridad es obligatoria' : ''" help-text="Nivel de urgencia del caso" />
         </div>
 
         <!-- Campos de médico solicitante y servicio -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="formData.medicoSolicitante" label="Médico Solicitante" placeholder="Médico que solicita el estudio" :required="true" :max-length="200" :error="validationState.hasAttemptedSubmit && !formData.medicoSolicitante ? 'El médico solicitante es obligatorio' : ''" />
-          <FormInputField v-model="formData.servicio" label="Servicio" placeholder="Procedencia del caso" :required="true" :max-length="100" :error="validationState.hasAttemptedSubmit && formData.medicoSolicitante && !formData.servicio ? 'El servicio es obligatorio cuando se especifica un médico' : ''" />
+          <FormInputField v-model="formData.medicoSolicitante" label="Médico Solicitante" placeholder="Ejemplo: Alberto Perez" :required="true" :max-length="200" help-text="Medico solicitante del estudio" :error="validationState.hasAttemptedSubmit && !formData.medicoSolicitante ? 'El médico solicitante es obligatorio' : ''" />
+          <FormInputField v-model="formData.servicio" label="Servicio" placeholder="Ejemplo: Medicina Interna" :required="true" :max-length="100" help-text="Área de procedencia del caso" :error="validationState.hasAttemptedSubmit && formData.medicoSolicitante && !formData.servicio ? 'El servicio es obligatorio cuando se especifica un médico' : ''" />
         </div>
 
         <!-- Campo de número de muestras -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="formData.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="10" :required="true" :errors="errors.numeroMuestras" :warnings="warnings.numeroMuestras" help-text="Cantidad de submuestras para este caso (máximo 10)" @input="handleNumeroMuestrasChange" />
+          <FormInputField v-model="formData.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="10" :required="true" :errors="errors.numeroMuestras" :warnings="warnings.numeroMuestras" help-text="Cantidad de submuestras para este caso" @input="handleNumeroMuestrasChange" />
         </div>
 
         <!-- Sección de información de submuestras -->
@@ -82,30 +102,32 @@
           
           <div class="space-y-6">
             <div v-for="(muestra, muestraIndex) in formData.muestras" :key="muestra.numero" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h4 class="font-medium text-gray-700 mb-4">Submuestra {{ muestra.numero }}</h4>
+              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ muestra.numero }}</h4>
               
               <!-- Selección de región del cuerpo -->
               <div class="mb-4">
-                <BodyRegionList v-model="muestra.regionCuerpo" :label="`Región del Cuerpo - Submuestra ${muestra.numero}`" placeholder="Buscar región del cuerpo..." :required="true" :auto-load="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
+                <BodyRegionList v-model="muestra.regionCuerpo" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" :auto-load="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
               </div>
               
               <!-- Configuración de pruebas -->
               <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <label class="block text-sm font-medium text-gray-700">Pruebas a Realizar <span class="text-red-500">*</span></label>
-                  <AddButton text="Agregar Prueba" @click="addPruebaToMuestra(muestraIndex)" />
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label class="block text-sm font-medium text-gray-700">Pruebas a realizar</label>
+                  <div class="self-end sm:self-auto">
+                    <AddButton text="Agregar Prueba" @click="addPruebaToMuestra(muestraIndex)" />
+                  </div>
                 </div>
                 
                 <div class="space-y-2">
                   <div v-for="(prueba, pruebaIndex) in muestra.pruebas" :key="pruebaIndex" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
                     <div class="flex-1 min-w-0">
-                      <TestList v-model="prueba.code" :label="`Prueba ${pruebaIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${pruebaIndex + 1}...`" :required="true" :auto-load="true" @test-selected="(test) => handleTestSelected(muestraIndex, pruebaIndex, test)" />
+                      <TestList v-model="prueba.code" :label="`Prueba #${pruebaIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${pruebaIndex + 1}...`" :required="true" :auto-load="true" @test-selected="(test) => handleTestSelected(muestraIndex, pruebaIndex, test)" />
                     </div>
                     <div class="w-full sm:w-24">
                       <FormInputField v-model.number="prueba.cantidad" label="Cantidad" type="number" :min="1" :max="10" placeholder="Cantidad" />
                     </div>
                     <div class="flex items-center justify-center sm:justify-start sm:w-10 sm:mt-6">
-                      <RemoveButton v-if="muestra.pruebas.length > 1" @click="removePruebaFromMuestra(muestraIndex, pruebaIndex)" title="Eliminar prueba" />
+                      <RemoveButton @click="removePruebaFromMuestra(muestraIndex, pruebaIndex)" title="Eliminar prueba" />
                     </div>
                   </div>
                 </div>
@@ -217,16 +239,7 @@ import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList, TestList, BodyRegionList } from '@/shared/components/List'
 import { PlusIcon, UserCircleIcon, TaskIcon } from '@/assets/icons'
 
-/**
- * Componente NewCase actualizado según la documentación del backend v1.0
- * 
- * Cambios principales:
- * - Agregado campo de prioridad del caso (Normal, Prioritario, Urgente)
- * - Valores de tipo de atención actualizados (Ambulatorio, Hospitalizado)
- * - Estructura de API alineada con esquemas del backend
- * - Campo medico_solicitante como string directo
- * - Validaciones mejoradas para todos los campos
- */
+
 
 // Referencias del DOM y estado local
 const notificationContainer = ref<HTMLElement | null>(null)
@@ -250,8 +263,7 @@ const tipoAtencionOptions = [
 
 const prioridadOptions = [
   { value: 'Normal', label: 'Normal' },
-  { value: 'Prioritario', label: 'Prioritario' },
-  { value: 'Urgente', label: 'Urgente' }
+  { value: 'Prioritario', label: 'Prioritario' }
 ]
 
 // Validación de errores del formulario
