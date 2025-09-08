@@ -8,8 +8,8 @@ from app.shared.models.base import PyObjectId
 
 
 class EstadoAprobacionEnum(str, Enum):
-    PENDIENTE = "pendiente"
-    GESTIONANDO = "gestionando"
+    SOLICITUD_HECHA = "solicitud_hecha"
+    PENDIENTE_APROBACION = "pendiente_aprobacion"
     APROBADO = "aprobado"
     RECHAZADO = "rechazado"
 
@@ -34,7 +34,7 @@ class AprobacionInfo(BaseModel):
 
 class CasoAprobacion(BaseModel):
     caso_original: str = Field(..., description="Código del caso original (YYYY-NNNNN)")
-    estado_aprobacion: EstadoAprobacionEnum = Field(default=EstadoAprobacionEnum.PENDIENTE)
+    estado_aprobacion: EstadoAprobacionEnum = Field(default=EstadoAprobacionEnum.SOLICITUD_HECHA)
     pruebas_complementarias: List[PruebaComplementariaInfo] = Field(..., description="Pruebas complementarias solicitadas")
     aprobacion_info: AprobacionInfo = Field(..., description="Información del proceso de aprobación")
     fecha_creacion: datetime = Field(default_factory=datetime.utcnow)

@@ -1,6 +1,6 @@
 """Repositorio para casos de aprobación"""
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -26,6 +26,12 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
     async def find_by_caso_original(self, caso_original: str) -> Optional[CasoAprobacion]:
         doc = await self.collection.find_one({"caso_original": caso_original})
         return CasoAprobacion(**doc) if doc else None
+
+    async def find_by_caso_original_with_id(self, caso_original: str) -> Tuple[Optional[dict], Optional[CasoAprobacion]]:
+        doc = await self.collection.find_one({"caso_original": caso_original})
+        if doc:
+            return doc, CasoAprobacion(**doc)
+        return None, None
 
     async def _build_search_query(self, search_params: CasoAprobacionSearch) -> Dict[str, Any]:
         q: Dict[str, Any] = {}
@@ -69,7 +75,7 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
             "estado_aprobacion": nuevo_estado.value,
             "fecha_actualizacion": datetime.utcnow()
         }
-        if nuevo_estado == EstadoAprobacionEnum.GESTIONANDO:
+        if nuevo_estado == EstadoAprobacionEnum.PENDIENTE_APROBACION:
             update_data["aprobacion_info.gestionado_por"] = usuario_id
             update_data["aprobacion_info.fecha_gestion"] = datetime.utcnow()
             if comentarios: update_data["aprobacion_info.comentarios_gestion"] = comentarios
@@ -80,15 +86,25 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
         result = await self.collection.update_one({"_id": ObjectId(caso_id)}, {"$set": update_data})
         return result.modified_count > 0
 
+    async def update_pruebas_complementarias(self, caso_id: str, pruebas_complementarias: list) -> Optional[CasoAprobacion]:
+        update_data = {
+            "pruebas_complementarias": pruebas_complementarias,
+            "fecha_actualizacion": datetime.utcnow()
+        }
+        result = await self.collection.update_one({"_id": ObjectId(caso_id)}, {"$set": update_data})
+        if result.modified_count > 0:
+            return await self.get(caso_id)
+        return None
+
     async def get_stats(self) -> Dict[str, Any]:
         pipeline = [{"$group": {"_id": "$estado_aprobacion", "count": {"$sum": 1}}}]
         res = await self.collection.aggregate(pipeline).to_list(length=None)
-        stats = {"total_casos": 0, "casos_pendientes": 0, "casos_gestionando": 0, "casos_aprobados": 0, "casos_rechazados": 0}
+        stats = {"total_casos": 0, "casos_solicitud_hecha": 0, "casos_pendientes_aprobacion": 0, "casos_aprobados": 0, "casos_rechazados": 0}
         for it in res:
             estado, count = it.get("_id"), it.get("count", 0)
             stats["total_casos"] += count
-            if estado == EstadoAprobacionEnum.PENDIENTE.value: stats["casos_pendientes"] = count
-            elif estado == EstadoAprobacionEnum.GESTIONANDO.value: stats["casos_gestionando"] = count
+            if estado == EstadoAprobacionEnum.SOLICITUD_HECHA.value: stats["casos_solicitud_hecha"] = count
+            elif estado == EstadoAprobacionEnum.PENDIENTE_APROBACION.value: stats["casos_pendientes_aprobacion"] = count
             elif estado == EstadoAprobacionEnum.APROBADO.value: stats["casos_aprobados"] = count
             elif estado == EstadoAprobacionEnum.RECHAZADO.value: stats["casos_rechazados"] = count
         return stats

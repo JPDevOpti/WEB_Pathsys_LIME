@@ -59,8 +59,8 @@ class CasoAprobacionSearch(BaseModel):
 
 class CasoAprobacionStats(BaseModel):
     total_casos: int = 0
-    casos_pendientes: int = 0
-    casos_gestionando: int = 0
+    casos_solicitud_hecha: int = 0
+    casos_pendientes_aprobacion: int = 0
     casos_aprobados: int = 0
     casos_rechazados: int = 0
 

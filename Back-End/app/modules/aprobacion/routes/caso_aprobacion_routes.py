@@ -126,6 +126,36 @@ async def update_caso_aprobacion(
     return create_response(data=caso, message="Caso de aprobación actualizado exitosamente")
 
 
+@router.patch("/caso/{caso_original}/pruebas", response_model=ResponseModel[CasoAprobacionResponse])
+async def update_pruebas_complementarias(
+    caso_original: str,
+    request_data: dict,
+    current_user: AuthUser = Depends(get_current_user),
+    service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
+):
+    try:
+        pruebas_complementarias = request_data.get("pruebas_complementarias", [])
+        if not pruebas_complementarias:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Debe proporcionar al menos una prueba complementaria")
+        
+        # Validar que las pruebas tengan la estructura correcta
+        for prueba in pruebas_complementarias:
+            if not all(key in prueba for key in ["codigo", "nombre", "cantidad"]):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cada prueba debe tener codigo, nombre y cantidad")
+            if not isinstance(prueba["cantidad"], int) or prueba["cantidad"] < 1 or prueba["cantidad"] > 20:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La cantidad debe ser un número entre 1 y 20")
+        
+        usuario_id = current_user.id
+        caso = await service.update_pruebas_complementarias_by_caso_original(caso_original, pruebas_complementarias, usuario_id)
+        if not caso:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Caso de aprobación no encontrado")
+        return create_response(data=caso, message="Pruebas complementarias actualizadas exitosamente")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
 @router.delete("/{caso_id}", response_model=ResponseModel[dict])
 async def delete_caso_aprobacion(
     caso_id: str,

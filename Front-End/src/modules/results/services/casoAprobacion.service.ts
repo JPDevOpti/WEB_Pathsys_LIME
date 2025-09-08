@@ -14,7 +14,7 @@ export interface CasoAprobacionCreate {
 
 export interface CasoAprobacionResponse {
   caso_original: string
-  estado_aprobacion: 'pendiente' | 'gestionando' | 'aprobado' | 'rechazado'
+  estado_aprobacion: 'solicitud_hecha' | 'pendiente_aprobacion' | 'aprobado' | 'rechazado'
   pruebas_complementarias: PruebaComplementaria[]
   aprobacion_info: {
     solicitado_por: string
@@ -131,6 +131,12 @@ class CasoAprobacionService {
   async deleteCasoAprobacion(id: string): Promise<boolean> {
     const response = await apiClient.delete(`${this.baseUrl}/${id}`)
     return (response.data?.data ?? response.data)?.deleted === true
+  }
+
+  async updatePruebasComplementarias(casoOriginal: string, pruebas: PruebaComplementaria[]): Promise<CasoAprobacionResponse> {
+    const response = await apiClient.patch(`${this.baseUrl}/caso/${casoOriginal}/pruebas`, { pruebas_complementarias: pruebas })
+    const payload = response.data?.data ?? response.data
+    return this.sanitize(payload)
   }
 
   async getEstadisticas(): Promise<any> {

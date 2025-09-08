@@ -43,7 +43,7 @@ class CasoAprobacionService:
         aprobacion_info = AprobacionInfo(solicitado_por=usuario_id, motivo=caso_data.motivo)
         nuevo = CasoAprobacion(
             caso_original=caso_data.caso_original,
-            estado_aprobacion=EstadoAprobacionEnum.PENDIENTE,
+            estado_aprobacion=EstadoAprobacionEnum.SOLICITUD_HECHA,
             pruebas_complementarias=caso_data.pruebas_complementarias,
             aprobacion_info=aprobacion_info,
             creado_por=usuario_id
@@ -67,7 +67,7 @@ class CasoAprobacionService:
         return [self._map(c) for c in cs]
 
     async def gestionar_caso(self, caso_id: str, usuario_id: str, comentarios: Optional[str] = None) -> Optional[CasoAprobacionResponse]:
-        ok = await self.repository.update_estado(caso_id, EstadoAprobacionEnum.GESTIONANDO, usuario_id, comentarios)
+        ok = await self.repository.update_estado(caso_id, EstadoAprobacionEnum.PENDIENTE_APROBACION, usuario_id, comentarios)
         return await self.get_caso_by_id(caso_id) if ok else None
 
     async def aprobar_caso(self, caso_id: str, usuario_id: str, comentarios: Optional[str] = None) -> Optional[CasoAprobacionResponse]:
@@ -83,6 +83,35 @@ class CasoAprobacionService:
         updated = await self.repository.update(caso_id, caso_data)
         return self._map(updated) if updated else None
 
+    async def update_pruebas_complementarias(self, caso_id: str, pruebas_complementarias: list, usuario_id: str) -> Optional[CasoAprobacionResponse]:
+        # Verificar que el caso existe y está en estado correcto para edición
+        caso = await self.repository.get(caso_id)
+        if not caso:
+            return None
+        
+        # Solo permitir edición si está en estado "solicitud_hecha"
+        if caso.estado_aprobacion != EstadoAprobacionEnum.SOLICITUD_HECHA:
+            raise ValueError("Solo se pueden editar las pruebas cuando el caso está en estado 'solicitud_hecha'")
+        
+        # Actualizar las pruebas complementarias
+        updated = await self.repository.update_pruebas_complementarias(caso_id, pruebas_complementarias)
+        return self._map(updated) if updated else None
+
+    async def update_pruebas_complementarias_by_caso_original(self, caso_original: str, pruebas_complementarias: list, usuario_id: str) -> Optional[CasoAprobacionResponse]:
+        # Buscar el caso por caso_original y obtener tanto el documento como el objeto
+        caso_doc, caso = await self.repository.find_by_caso_original_with_id(caso_original)
+        if not caso or not caso_doc:
+            return None
+        
+        # Solo permitir edición si está en estado "solicitud_hecha"
+        if caso.estado_aprobacion != EstadoAprobacionEnum.SOLICITUD_HECHA:
+            raise ValueError("Solo se pueden editar las pruebas cuando el caso está en estado 'solicitud_hecha'")
+        
+        # Actualizar las pruebas complementarias usando el _id del documento
+        case_id = str(caso_doc['_id'])
+        updated = await self.repository.update_pruebas_complementarias(case_id, pruebas_complementarias)
+        return self._map(updated) if updated else None
+
     async def delete_caso(self, caso_id: str) -> bool:
         return await self.repository.delete(caso_id)
 
@@ -90,8 +119,8 @@ class CasoAprobacionService:
         raw = await self.repository.get_stats()
         return CasoAprobacionStats(
             total_casos=raw.get("total_casos", 0),
-            casos_pendientes=raw.get("casos_pendientes", 0),
-            casos_gestionando=raw.get("casos_gestionando", 0),
+            casos_solicitud_hecha=raw.get("casos_solicitud_hecha", 0),
+            casos_pendientes_aprobacion=raw.get("casos_pendientes_aprobacion", 0),
             casos_aprobados=raw.get("casos_aprobados", 0),
             casos_rechazados=raw.get("casos_rechazados", 0)
         )
