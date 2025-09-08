@@ -16,11 +16,12 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
     async def create(self, obj_in: CasoAprobacion) -> CasoAprobacion:
         data = obj_in.model_dump(by_alias=False) if hasattr(obj_in, 'model_dump') else obj_in
         data.setdefault("fecha_creacion", datetime.utcnow())
-        data["fecha_actualizacion"] = datetime.utcnow()
         data.pop("is_active", None)
         data.pop("isActive", None)
+        data.pop("id", None)  # Remover id si existe para que MongoDB genere el _id
         result = await self.collection.insert_one(data)
         created = await self.collection.find_one({"_id": result.inserted_id})
+        created['id'] = str(created['_id'])  # Agregar el id
         return CasoAprobacion(**created)
 
     async def find_by_caso_original(self, caso_original: str) -> Optional[CasoAprobacion]:
@@ -39,10 +40,6 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
             q["caso_original"] = {"$regex": search_params.caso_original, "$options": "i"}
         if search_params.estado_aprobacion:
             q["estado_aprobacion"] = search_params.estado_aprobacion.value
-        if search_params.solicitado_por:
-            q["aprobacion_info.solicitado_por"] = {"$regex": search_params.solicitado_por, "$options": "i"}
-        if search_params.aprobado_por:
-            q["aprobacion_info.aprobado_por"] = {"$regex": search_params.aprobado_por, "$options": "i"}
         if search_params.fecha_solicitud_desde or search_params.fecha_solicitud_hasta:
             f: Dict[str, Any] = {}
             if search_params.fecha_solicitud_desde: f["$gte"] = search_params.fecha_solicitud_desde
@@ -59,7 +56,11 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
         q = await self._build_search_query(search_params)
         cursor = self.collection.find(q).skip(skip).limit(limit).sort("fecha_creacion", -1)
         docs = await cursor.to_list(length=limit)
-        return [CasoAprobacion(**d) for d in docs]
+        result = []
+        for d in docs:
+            d['id'] = str(d['_id'])  # Agregar el id al documento
+            result.append(CasoAprobacion(**d))
+        return result
 
     async def count(self, search_params: CasoAprobacionSearch) -> int:
         q = await self._build_search_query(search_params)
@@ -68,29 +69,26 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
     async def get_by_estado(self, estado: EstadoAprobacionEnum, limit: int = 50) -> List[CasoAprobacion]:
         cursor = self.collection.find({"estado_aprobacion": estado.value}).limit(limit).sort("fecha_creacion", -1)
         docs = await cursor.to_list(length=limit)
-        return [CasoAprobacion(**d) for d in docs]
+        result = []
+        for d in docs:
+            d['id'] = str(d['_id'])  # Agregar el id al documento
+            result.append(CasoAprobacion(**d))
+        return result
 
-    async def update_estado(self, caso_id: str, nuevo_estado: EstadoAprobacionEnum, usuario_id: str, comentarios: Optional[str] = None) -> bool:
-        update_data: Dict[str, Any] = {
-            "estado_aprobacion": nuevo_estado.value,
-            "fecha_actualizacion": datetime.utcnow()
-        }
+    async def update_estado(self, caso_id: str, nuevo_estado: EstadoAprobacionEnum) -> bool:
+        update_data = {"estado_aprobacion": nuevo_estado.value}
         if nuevo_estado == EstadoAprobacionEnum.PENDIENTE_APROBACION:
-            update_data["aprobacion_info.gestionado_por"] = usuario_id
             update_data["aprobacion_info.fecha_gestion"] = datetime.utcnow()
-            if comentarios: update_data["aprobacion_info.comentarios_gestion"] = comentarios
-        elif nuevo_estado in [EstadoAprobacionEnum.APROBADO, EstadoAprobacionEnum.RECHAZADO]:
-            update_data["aprobacion_info.aprobado_por"] = usuario_id
-            update_data["aprobacion_info.fecha_aprobacion"] = datetime.utcnow()
-            if comentarios: update_data["aprobacion_info.comentarios_aprobacion"] = comentarios
+        result = await self.collection.update_one({"_id": ObjectId(caso_id)}, {"$set": update_data})
+        return result.modified_count > 0
+
+    async def update_fecha_aprobacion(self, caso_id: str) -> bool:
+        update_data = {"aprobacion_info.fecha_aprobacion": datetime.utcnow()}
         result = await self.collection.update_one({"_id": ObjectId(caso_id)}, {"$set": update_data})
         return result.modified_count > 0
 
     async def update_pruebas_complementarias(self, caso_id: str, pruebas_complementarias: list) -> Optional[CasoAprobacion]:
-        update_data = {
-            "pruebas_complementarias": pruebas_complementarias,
-            "fecha_actualizacion": datetime.utcnow()
-        }
+        update_data = {"pruebas_complementarias": pruebas_complementarias}
         result = await self.collection.update_one({"_id": ObjectId(caso_id)}, {"$set": update_data})
         if result.modified_count > 0:
             return await self.get(caso_id)

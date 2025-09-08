@@ -51,14 +51,10 @@
                 {{ getStatusLabel(approvalCase.estado_aprobacion) }}
               </span>
             </div>
-            <div class="grid grid-cols-2 gap-4 mt-3">
+            <div class="mt-3">
               <div>
                 <p class="text-sm text-gray-500">Fecha de solicitud</p>
                 <p class="font-medium text-gray-900">{{ formatDate(approvalCase.fecha_creacion) }}</p>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500">Última actualización</p>
-                <p class="font-medium text-gray-900">{{ formatDate(approvalCase.fecha_actualizacion) }}</p>
               </div>
             </div>
           </div>
@@ -86,7 +82,15 @@
                 </div>
                 <div>
                   <p class="text-sm text-gray-500">Fecha de ingreso</p>
-                  <p class="font-medium text-gray-900">{{ formatDate(originalCase.fecha_ingreso) }}</p>
+                  <p class="font-medium text-gray-900">{{ 
+                    formatDate(
+                      originalCase.fecha_ingreso || 
+                      originalCase.fechaIngreso || 
+                      originalCase.fecha_creacion || 
+                      originalCase.createdAt ||
+                      originalCase.fecha_registro
+                    ) 
+                  }}</p>
                 </div>
               </div>
 
@@ -144,6 +148,80 @@
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <!-- Resultados del caso original -->
+              <div v-if="originalCase.resultados || originalCase.diagnosticos || originalCase.conclusion">
+                <h5 class="text-sm font-medium text-gray-700 mb-2">Resultados del Caso Original</h5>
+                <div class="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+                  
+                  <!-- Descripción macroscópica -->
+                  <div v-if="originalCase.resultados?.descripcion_macroscopica">
+                    <h6 class="text-sm font-medium text-gray-600 mb-1">Descripción Macroscópica</h6>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                      <p class="text-sm text-gray-900 whitespace-pre-line">{{ originalCase.resultados.descripcion_macroscopica }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Descripción microscópica -->
+                  <div v-if="originalCase.resultados?.descripcion_microscopica">
+                    <h6 class="text-sm font-medium text-gray-600 mb-1">Descripción Microscópica</h6>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                      <p class="text-sm text-gray-900 whitespace-pre-line">{{ originalCase.resultados.descripcion_microscopica }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Diagnósticos -->
+                  <div v-if="originalCase.diagnosticos && originalCase.diagnosticos.length">
+                    <h6 class="text-sm font-medium text-gray-600 mb-2">Diagnósticos</h6>
+                    <div class="space-y-2">
+                      <div v-for="(diagnostico, index) in originalCase.diagnosticos" :key="index" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div class="flex flex-wrap gap-2 mb-2">
+                          <span v-if="diagnostico.cie10_codigo" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            CIE-10: {{ diagnostico.cie10_codigo }}
+                          </span>
+                          <span v-if="diagnostico.cieo_codigo" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                            CIE-O: {{ diagnostico.cieo_codigo }}
+                          </span>
+                        </div>
+                        <p v-if="diagnostico.descripcion" class="text-sm text-gray-900">{{ diagnostico.descripcion }}</p>
+                        <p v-if="diagnostico.cie10_descripcion" class="text-xs text-gray-600 mt-1">{{ diagnostico.cie10_descripcion }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Conclusión -->
+                  <div v-if="originalCase.resultados?.conclusion || originalCase.conclusion">
+                    <h6 class="text-sm font-medium text-gray-600 mb-1">Conclusión</h6>
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <p class="text-sm text-gray-900 whitespace-pre-line">{{ originalCase.resultados?.conclusion || originalCase.conclusion }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Método utilizado -->
+                  <div v-if="originalCase.resultados?.metodo">
+                    <h6 class="text-sm font-medium text-gray-600 mb-1">Método Utilizado</h6>
+                    <div class="bg-gray-50 rounded-lg p-2">
+                      <p class="text-sm text-gray-900">{{ originalCase.resultados.metodo }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Estado de resultados -->
+                  <div v-if="originalCase.resultados?.estado">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-medium text-gray-600">Estado de resultados:</span>
+                      <span :class="[
+                        'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
+                        originalCase.resultados.estado === 'firmado' ? 'bg-green-100 text-green-800' :
+                        originalCase.resultados.estado === 'borrador' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      ]">
+                        {{ originalCase.resultados.estado }}
+                      </span>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -238,47 +316,12 @@
             </div>
           </div>
 
-          <!-- Información de gestión (si existe) -->
-          <div v-if="approvalCase.aprobacion_info && (approvalCase.aprobacion_info.gestionado_por || approvalCase.aprobacion_info.aprobado_por)" class="bg-gray-50 rounded-xl p-4">
-            <h4 class="text-lg font-medium text-gray-900 mb-3">Información de Gestión</h4>
-            <div class="space-y-3">
-              <div v-if="approvalCase.aprobacion_info.gestionado_por">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <p class="text-sm text-gray-500">Gestionado por</p>
-                    <p class="font-medium text-gray-900">{{ approvalCase.aprobacion_info.gestionado_por }}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500">Fecha de gestión</p>
-                    <p class="font-medium text-gray-900">{{ approvalCase.aprobacion_info.fecha_gestion ? formatDate(approvalCase.aprobacion_info.fecha_gestion) : 'N/A' }}</p>
-                  </div>
-                </div>
-                <div v-if="approvalCase.aprobacion_info.comentarios_gestion" class="mt-2">
-                  <p class="text-sm text-gray-500">Comentarios de gestión</p>
-                  <div class="bg-white border border-gray-200 rounded-lg p-2 mt-1">
-                    <p class="text-sm text-gray-900">{{ approvalCase.aprobacion_info.comentarios_gestion }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="approvalCase.aprobacion_info.aprobado_por">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <p class="text-sm text-gray-500">Aprobado por</p>
-                    <p class="font-medium text-gray-900">{{ approvalCase.aprobacion_info.aprobado_por }}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-500">Fecha de aprobación</p>
-                    <p class="font-medium text-gray-900">{{ approvalCase.aprobacion_info.fecha_aprobacion ? formatDate(approvalCase.aprobacion_info.fecha_aprobacion) : 'N/A' }}</p>
-                  </div>
-                </div>
-                <div v-if="approvalCase.aprobacion_info.comentarios_aprobacion" class="mt-2">
-                  <p class="text-sm text-gray-500">Comentarios de aprobación</p>
-                  <div class="bg-white border border-gray-200 rounded-lg p-2 mt-1">
-                    <p class="text-sm text-gray-900">{{ approvalCase.aprobacion_info.comentarios_aprobacion }}</p>
-                  </div>
-                </div>
-              </div>
+          <!-- Información de aprobación (si existe) -->
+          <div v-if="approvalCase.aprobacion_info && approvalCase.aprobacion_info.fecha_aprobacion" class="bg-gray-50 rounded-xl p-4">
+            <h4 class="text-lg font-medium text-gray-900 mb-3">Información de Aprobación</h4>
+            <div>
+              <p class="text-sm text-gray-500">Fecha de aprobación</p>
+              <p class="font-medium text-gray-900">{{ formatDate(approvalCase.aprobacion_info.fecha_aprobacion) }}</p>
             </div>
           </div>
         </div>
@@ -424,7 +467,6 @@ const canEditTests = computed(() => {
   return props.approvalCase?.estado_aprobacion === 'solicitud_hecha'
 })
 
-
 // Watchers
 watch(() => props.approvalCase, (newCase) => {
   if (newCase) {
@@ -436,20 +478,43 @@ watch(() => props.approvalCase, (newCase) => {
   }
 }, { immediate: true })
 
-
 // Funciones utilitarias
-const formatDate = (dateString: string | null | undefined): string => {
-  if (!dateString) return 'N/A'
+const formatDate = (dateValue: any): string => {
+  if (!dateValue) return 'N/A'
+  
   try {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    let dateToFormat: Date
+    
+    // Si es un objeto con $date (formato MongoDB)
+    if (typeof dateValue === 'object' && dateValue.$date) {
+      dateToFormat = new Date(dateValue.$date)
+    }
+    // Si es un string o número
+    else if (typeof dateValue === 'string' || typeof dateValue === 'number') {
+      dateToFormat = new Date(dateValue)
+    }
+    // Si ya es un objeto Date
+    else if (dateValue instanceof Date) {
+      dateToFormat = dateValue
+    }
+    else {
+      return 'Formato no válido'
+    }
+    
+    // Verificar si la fecha es válida
+    if (isNaN(dateToFormat.getTime())) {
+      return 'Fecha inválida'
+    }
+    
+    return dateToFormat.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     })
-  } catch {
-    return dateString
+  } catch (error) {
+    return 'Error de formato'
   }
 }
 
@@ -533,7 +598,6 @@ const saveTestChanges = async () => {
     
     // Obtener el caso_original
     const casoOriginal = props.approvalCase?.caso_original || ''
-    console.log('🔧 Updating case with caso_original:', casoOriginal)
     
     if (!casoOriginal) {
       alert('Error: No se pudo obtener el código del caso original')
@@ -554,7 +618,6 @@ const saveTestChanges = async () => {
     emit('tests-updated', editedTests.value)
     
   } catch (error) {
-    console.error('Error al guardar cambios en las pruebas:', error)
     alert('Error al guardar los cambios. Intente nuevamente.')
   }
 }

@@ -19,14 +19,7 @@ class CasoAprobacionCreate(BaseModel):
 class CasoAprobacionUpdate(BaseModel):
     estado_aprobacion: Optional[EstadoAprobacionEnum] = None
     pruebas_complementarias: Optional[List[PruebaComplementariaInfo]] = None
-    gestionado_por: Optional[str] = None
-    fecha_gestion: Optional[datetime] = None
-    comentarios_gestion: Optional[str] = Field(None, max_length=1000)
-    aprobado_por: Optional[str] = None
     fecha_aprobacion: Optional[datetime] = None
-    comentarios_aprobacion: Optional[str] = Field(None, max_length=1000)
-    actualizado_por: Optional[str] = None
-    fecha_actualizacion: Optional[datetime] = Field(default_factory=datetime.utcnow)
 
 
 class CasoAprobacionResponse(BaseModel):
@@ -36,8 +29,6 @@ class CasoAprobacionResponse(BaseModel):
     pruebas_complementarias: List[PruebaComplementariaInfo] = Field(..., description="Pruebas complementarias")
     aprobacion_info: AprobacionInfo = Field(..., description="Información del proceso")
     fecha_creacion: datetime = Field(..., description="Fecha de creación")
-    fecha_actualizacion: datetime = Field(..., description="Fecha de actualización")
-    creado_por: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -46,8 +37,6 @@ class CasoAprobacionResponse(BaseModel):
 class CasoAprobacionSearch(BaseModel):
     caso_original: Optional[str] = Field(None, description="Código del caso original")
     estado_aprobacion: Optional[EstadoAprobacionEnum] = None
-    solicitado_por: Optional[str] = Field(None, description="Usuario solicitante")
-    aprobado_por: Optional[str] = Field(None, description="Usuario aprobador")
     fecha_solicitud_desde: Optional[datetime] = None
     fecha_solicitud_hasta: Optional[datetime] = None
     fecha_aprobacion_desde: Optional[datetime] = None

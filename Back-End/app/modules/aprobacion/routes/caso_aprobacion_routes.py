@@ -73,40 +73,35 @@ async def get_casos_by_estado(
 @router.patch("/{caso_id}/gestionar", response_model=ResponseModel[CasoAprobacionResponse])
 async def gestionar_caso(
     caso_id: str,
-    comentarios: Optional[str] = None,
     current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
-    usuario_id = current_user.id
-    caso = await service.gestionar_caso(caso_id, usuario_id, comentarios)
+    caso = await service.gestionar_caso(caso_id)
     if not caso:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Caso de aprobación no encontrado")
     return create_response(data=caso, message="Caso marcado como en gestión exitosamente")
 
 
-@router.patch("/{caso_id}/aprobar", response_model=ResponseModel[CasoAprobacionResponse])
+@router.patch("/{caso_id}/aprobar")
 async def aprobar_caso(
     caso_id: str,
-    comentarios: Optional[str] = None,
     current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
-    usuario_id = current_user.id
-    caso = await service.aprobar_caso(caso_id, usuario_id, comentarios)
-    if not caso:
+    result = await service.aprobar_caso(caso_id)
+    if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Caso de aprobación no encontrado")
-    return create_response(data=caso, message="Caso aprobado exitosamente")
+    # result: { aprobacion: CasoAprobacionResponse, nuevo_caso: Caso }
+    return {"success": True, "message": "Caso aprobado y nuevo caso creado", "data": result}
 
 
 @router.patch("/{caso_id}/rechazar", response_model=ResponseModel[CasoAprobacionResponse])
 async def rechazar_caso(
     caso_id: str,
-    comentarios: Optional[str] = None,
     current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
-    usuario_id = current_user.id
-    caso = await service.rechazar_caso(caso_id, usuario_id, comentarios)
+    caso = await service.rechazar_caso(caso_id)
     if not caso:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Caso de aprobación no encontrado")
     return create_response(data=caso, message="Caso rechazado exitosamente")
@@ -119,8 +114,7 @@ async def update_caso_aprobacion(
     current_user: AuthUser = Depends(get_current_user),
     service: CasoAprobacionService = Depends(get_caso_aprobacion_service)
 ):
-    usuario_id = current_user.id
-    caso = await service.update_caso(caso_id, caso_data, usuario_id)
+    caso = await service.update_caso(caso_id, caso_data)
     if not caso:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Caso de aprobación no encontrado")
     return create_response(data=caso, message="Caso de aprobación actualizado exitosamente")
@@ -145,8 +139,7 @@ async def update_pruebas_complementarias(
             if not isinstance(prueba["cantidad"], int) or prueba["cantidad"] < 1 or prueba["cantidad"] > 20:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La cantidad debe ser un número entre 1 y 20")
         
-        usuario_id = current_user.id
-        caso = await service.update_pruebas_complementarias_by_caso_original(caso_original, pruebas_complementarias, usuario_id)
+        caso = await service.update_pruebas_complementarias_by_caso_original(caso_original, pruebas_complementarias)
         if not caso:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Caso de aprobación no encontrado")
         return create_response(data=caso, message="Pruebas complementarias actualizadas exitosamente")

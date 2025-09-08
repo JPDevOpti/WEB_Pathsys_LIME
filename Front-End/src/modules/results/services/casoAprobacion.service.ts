@@ -42,6 +42,11 @@ export interface CasoAprobacionSearch {
   fecha_aprobacion_hasta?: string
 }
 
+export interface CasoAprobacionApproveResult {
+  aprobacion: CasoAprobacionResponse
+  nuevo_caso?: any | null
+}
+
 class CasoAprobacionService {
   private readonly baseUrl = '/aprobacion'
   private sanitize<T extends Record<string, any>>(obj: T): CasoAprobacionResponse {
@@ -110,20 +115,23 @@ class CasoAprobacionService {
     return (payload || []).map((i: any) => this.sanitize(i))
   }
 
-  async gestionarCaso(id: string, comentarios?: string): Promise<CasoAprobacionResponse> {
-    const response = await apiClient.patch(`${this.baseUrl}/${id}/gestionar`, {}, { params: comentarios ? { comentarios } : {} })
+  async gestionarCaso(id: string): Promise<CasoAprobacionResponse> {
+    const response = await apiClient.patch(`${this.baseUrl}/${id}/gestionar`)
     const payload = response.data?.data ?? response.data
     return this.sanitize(payload)
   }
 
-  async aprobarCaso(id: string, comentarios?: string): Promise<CasoAprobacionResponse> {
-    const response = await apiClient.patch(`${this.baseUrl}/${id}/aprobar`, {}, { params: comentarios ? { comentarios } : {} })
+  async aprobarCaso(id: string): Promise<CasoAprobacionApproveResult> {
+    const response = await apiClient.patch(`${this.baseUrl}/${id}/aprobar`)
     const payload = response.data?.data ?? response.data
-    return this.sanitize(payload)
+    // payload: { aprobacion, nuevo_caso }
+    const aprobacion = this.sanitize(payload?.aprobacion || payload)
+    const nuevo_caso = payload?.nuevo_caso || null
+    return { aprobacion, nuevo_caso }
   }
 
-  async rechazarCaso(id: string, comentarios?: string): Promise<CasoAprobacionResponse> {
-    const response = await apiClient.patch(`${this.baseUrl}/${id}/rechazar`, {}, { params: comentarios ? { comentarios } : {} })
+  async rechazarCaso(id: string): Promise<CasoAprobacionResponse> {
+    const response = await apiClient.patch(`${this.baseUrl}/${id}/rechazar`)
     const payload = response.data?.data ?? response.data
     return this.sanitize(payload)
   }

@@ -78,8 +78,8 @@
                     <p class="font-medium">{{ caseItem.caseCode }}</p>
                   </div>
                   <div>
-                    <p class="text-sm text-gray-600">Pruebas Solicitadas</p>
-                    <p class="font-medium">{{ getCaseTestsCount(caseItem) }}</p>
+                    <p class="text-sm text-gray-600">Patólogo Asignado</p>
+                    <p class="font-medium">{{ getPathologistName(caseItem) }}</p>
                   </div>
                   <div>
                     <p class="text-sm text-gray-600">Fecha de Solicitud</p>
@@ -197,6 +197,21 @@
     @confirm="confirmApproveCase"
     @cancel="cancelConfirm"
   />
+
+  <!-- Notificación de caso creado tras aprobar -->
+  <CaseCreatedToast v-model="createdToastVisible" :case-data="createdCase" />
+
+  <!-- Dialog de confirmación para rechazar -->
+  <ConfirmDialog
+    v-model="showConfirmReject"
+    title="Confirmar rechazo"
+    :message="`¿Desea rechazar la solicitud de pruebas complementarias para el caso ${confirmData?.caseCode}?`"
+    confirm-text="Sí, rechazar"
+    cancel-text="Cancelar"
+    :loading-confirm="confirmData?.loading || false"
+    @confirm="confirmRejectCase"
+    @cancel="cancelConfirm"
+  />
 </template>
 
 <script setup lang="ts">
@@ -204,6 +219,7 @@ import { computed, ref } from 'vue'
 import { ComponentCard, FormInputField, BaseButton, PathologistList, SearchButton } from '@/shared/components'
 import ConfirmDialog from '@/shared/components/feedback/ConfirmDialog.vue'
 import CaseApprovalDetailsModal from './CaseApprovalDetailsModal.vue'
+import CaseCreatedToast from './CaseCreatedToast.vue'
 import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
 import type { CasoAprobacionResponse, CasoAprobacionSearch } from '@/modules/results/services/casoAprobacion.service'
 // Componente actualizado para trabajar con solicitudes de pruebas complementarias
@@ -253,15 +269,24 @@ const normalizeId = (raw: any): string => {
 
 const mapBackendCase = (c: CasoAprobacionResponse): CaseToApprove => {
   const backendId = (c as any).id || normalizeId((c as any)._id)
+  
+  // Obtener información del patólogo del caso original (ahora viene directamente en la respuesta)
+  const patologoAsignado = (c.aprobacion_info as any)?.patologo_asignado
+  let pathologistName = 'Pendiente'
+  
+  if (patologoAsignado && patologoAsignado.nombre) {
+    pathologistName = patologoAsignado.nombre
+  }
+  
   return {
     id: backendId,
     caseCode: c.caso_original,
-    patientName: `Caso ${c.caso_original}`, // No tenemos info del paciente directamente
-    pathologistName: 'Patólogo Solicitante', // No tenemos info del patólogo directamente  
-    pathologistId: c.aprobacion_info?.solicitado_por,
+    patientName: `Caso ${c.caso_original}`,
+    pathologistName: pathologistName,
+    pathologistId: '',
     description: c.aprobacion_info?.motivo || 'Sin motivo especificado',
     createdAt: c.fecha_creacion,
-    updatedAt: c.fecha_actualizacion,
+    updatedAt: c.fecha_creacion, // Usar fecha_creacion para ambos campos
     status: c.estado_aprobacion,
     approving: false,
     rejecting: false,
@@ -277,8 +302,7 @@ const fetchCases = async () => {
     const term = (searchTerm.value || '').trim()
     const searchPayload: CasoAprobacionSearch = {
       caso_original: term || undefined,
-      estado_aprobacion: undefined, // Obtener todos los estados
-      solicitado_por: selectedPathologist.value || undefined
+      estado_aprobacion: undefined // Obtener todos los estados
     }
     
     const respData = await casoAprobacionService.searchCasos(searchPayload, skip.value, limit.value)
@@ -329,16 +353,15 @@ const formatDate = (dateString: string): string => {
   })
 }
 
-const getCaseTestsCount = (caseItem: CaseToApprove): string => {
-  if (!caseItem.complementaryTests || caseItem.complementaryTests.length === 0) {
-    return 'Sin pruebas'
-  }
-  const totalTests = caseItem.complementaryTests.reduce((sum, test) => sum + (test.cantidad || 1), 0)
-  return `${caseItem.complementaryTests.length} tipos (${totalTests} total)`
-}
-
 const getCaseTests = (caseItem: CaseToApprove) => {
   return caseItem.complementaryTests || []
+}
+
+const getPathologistName = (caseItem: CaseToApprove): string => {
+  // Retornar el nombre del patólogo si está disponible, sino "Pendiente"
+  return caseItem.pathologistName && caseItem.pathologistName !== 'Pendiente' 
+    ? caseItem.pathologistName 
+    : 'Pendiente'
 }
 
 const viewCase = async (caseId: string): Promise<void> => {
@@ -358,18 +381,15 @@ const viewCase = async (caseId: string): Promise<void> => {
       estado_aprobacion: localCase.status as any,
       pruebas_complementarias: localCase.complementaryTests,
       aprobacion_info: {
-        solicitado_por: localCase.pathologistId || '',
-        fecha_solicitud: localCase.createdAt,
         motivo: localCase.description || '',
-        gestionado_por: null,
-        fecha_gestion: null,
-        aprobado_por: null,
-        fecha_aprobacion: null,
-        comentarios_aprobacion: null,
-        comentarios_gestion: null
+        patologo_asignado: localCase.pathologistName !== 'Pendiente' ? {
+          codigo: '',
+          nombre: localCase.pathologistName,
+          firma: null
+        } : null,
+        fecha_aprobacion: null
       },
-      fecha_creacion: localCase.createdAt,
-      fecha_actualizacion: localCase.updatedAt
+      fecha_creacion: localCase.createdAt
     } as any as CasoAprobacionResponse
   }
 }
@@ -411,7 +431,7 @@ const confirmManageCase = async (): Promise<void> => {
   caseItem.managing = true
   
   try {
-    await casoAprobacionService.gestionarCaso(confirmData.value.caseId, 'Solicitud revisada y pasada a pendiente de aprobación')
+    await casoAprobacionService.gestionarCaso(confirmData.value.caseId)
     await fetchCases()
     showConfirmManage.value = false
   } catch (error) {
@@ -425,17 +445,15 @@ const confirmManageCase = async (): Promise<void> => {
 // Ejecutar aprobación después de confirmación
 const confirmApproveCase = async (): Promise<void> => {
   if (!confirmData.value) return
-  
   const caseItem = cases.value.find(c => c.id === confirmData.value!.caseId)
   if (!caseItem) return
-  
   confirmData.value.loading = true
   caseItem.approving = true
-  
   try {
-    await casoAprobacionService.aprobarCaso(confirmData.value.caseId, 'Pruebas complementarias aprobadas')
+    const { aprobacion, nuevo_caso } = await casoAprobacionService.aprobarCaso(confirmData.value.caseId)
     await fetchCases()
     showConfirmApprove.value = false
+    if (nuevo_caso) showSuccessNotification(nuevo_caso)
   } catch (error) {
     console.error('Error al aprobar caso:', error)
   } finally {
@@ -444,25 +462,53 @@ const confirmApproveCase = async (): Promise<void> => {
   }
 }
 
+// Ejecutar rechazo después de confirmación
+const confirmRejectCase = async (): Promise<void> => {
+  if (!confirmData.value) return
+  
+  const caseItem = cases.value.find(c => c.id === confirmData.value!.caseId)
+  if (!caseItem) return
+  
+  confirmData.value.loading = true
+  caseItem.rejecting = true
+  
+  try {
+    await casoAprobacionService.rechazarCaso(confirmData.value.caseId)
+    await fetchCases()
+    showConfirmReject.value = false
+    
+    // Si el modal está abierto para este caso, cerrarlo
+    if (selectedApprovalCase.value && (selectedApprovalCase.value as any).id === confirmData.value.caseId) {
+      closeModal()
+    }
+  } catch (error) {
+    console.error('Error al rechazar caso:', error)
+    alert('Error al rechazar el caso. Por favor intente nuevamente.')
+  } finally {
+    caseItem.rejecting = false
+    confirmData.value.loading = false
+  }
+}
+
 // Cancelar confirmación
 const cancelConfirm = (): void => {
   showConfirmManage.value = false
   showConfirmApprove.value = false
+  showConfirmReject.value = false
   confirmData.value = null
 }
 
+// Mostrar dialog de confirmación para rechazar
 const rejectCase = async (caseId: string): Promise<void> => {
   const caseItem = cases.value.find(c => c.id === caseId)
   if (!caseItem) return
-  caseItem.rejecting = true
-  try {
-    await casoAprobacionService.rechazarCaso(caseId, 'Caso rechazado')
-    await fetchCases()
-  } catch (error) {
-    console.error('Error al rechazar caso:', error)
-  } finally {
-    caseItem.rejecting = false
+  
+  confirmData.value = {
+    caseId: caseId,
+    caseCode: caseItem.caseCode,
+    loading: false
   }
+  showConfirmReject.value = true
 }
 
 // ============================================================================
@@ -473,6 +519,7 @@ const selectedApprovalCase = ref<CasoAprobacionResponse | null>(null)
 // Estado para diálogos de confirmación
 const showConfirmManage = ref(false)
 const showConfirmApprove = ref(false)
+const showConfirmReject = ref(false)
 const confirmData = ref<{ caseId: string; caseCode: string; loading: boolean } | null>(null)
 
 const closeModal = () => {
@@ -486,7 +533,7 @@ const approveFromModal = async (caseId: string) => {
   
   caseItem.approving = true
   try {
-    await casoAprobacionService.aprobarCaso(caseId, 'Pruebas complementarias aprobadas')
+    await casoAprobacionService.aprobarCaso(caseId)
     await fetchCases()
     closeModal()
   } catch (error) {
@@ -498,8 +545,7 @@ const approveFromModal = async (caseId: string) => {
 
 const rejectFromModal = async (caseId: string) => {
   await rejectCase(caseId)
-  closeModal()
-  await fetchCases()
+  // El cierre del modal se maneja en confirmRejectCase
 }
 
 const manageFromModal = async (caseId: string) => {
@@ -509,7 +555,7 @@ const manageFromModal = async (caseId: string) => {
   
   caseItem.managing = true
   try {
-    await casoAprobacionService.gestionarCaso(caseId, 'Solicitud revisada y pasada a pendiente de aprobación')
+    await casoAprobacionService.gestionarCaso(caseId)
     await fetchCases()
     closeModal()
   } catch (error) {
@@ -534,6 +580,23 @@ const handleTestsUpdated = async (updatedTests: Array<{ codigo: string; nombre: 
   // Refrescar la lista completa para asegurar consistencia
   await fetchCases()
 }
+
+const createdCase = ref<any | null>(null)
+const createdToastVisible = ref(false)
+
+const showSuccessNotification = (caseData: any) => {
+  createdCase.value = caseData
+  createdToastVisible.value = true
+}
+
+const formatDateDisplay = (value: string | undefined | null): string => {
+  if (!value) return ''
+  const date = new Date(String(value))
+  if (isNaN(date.getTime())) return String(value)
+  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date)
+}
+
+const createdCaseFecha = computed(() => '')
 
 
 </script>

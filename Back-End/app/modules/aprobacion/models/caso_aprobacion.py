@@ -20,25 +20,27 @@ class PruebaComplementariaInfo(BaseModel):
     cantidad: int = Field(default=1, ge=1, le=20, description="Cantidad de pruebas")
 
 
+class PatologoAsignadoInfo(BaseModel):
+    """Información del patólogo asignado al caso original"""
+    codigo: str = Field(..., description="Código del patólogo")
+    nombre: str = Field(..., description="Nombre completo del patólogo")
+    firma: Optional[str] = Field(None, description="URL de la firma digital")
+
 class AprobacionInfo(BaseModel):
-    solicitado_por: str = Field(..., description="Usuario que solicita la aprobación")
     fecha_solicitud: datetime = Field(default_factory=datetime.utcnow, description="Fecha de solicitud")
     motivo: str = Field(..., max_length=1000, description="Motivo de la solicitud")
-    aprobado_por: Optional[str] = Field(None, description="Usuario que aprueba/rechaza")
+    patologo_asignado: Optional[PatologoAsignadoInfo] = Field(None, description="Información del patólogo del caso original")
     fecha_aprobacion: Optional[datetime] = Field(None, description="Fecha de aprobación/rechazo")
-    comentarios_aprobacion: Optional[str] = Field(None, max_length=1000, description="Comentarios del aprobador")
-    gestionado_por: Optional[str] = Field(None, description="Usuario que gestiona el caso")
-    fecha_gestion: Optional[datetime] = Field(None, description="Fecha de inicio de gestión")
-    comentarios_gestion: Optional[str] = Field(None, max_length=1000, description="Comentarios de gestión")
+    fecha_gestion: Optional[datetime] = Field(None, description="Fecha en la que se marcó como pendiente de aprobación")
 
 
 class CasoAprobacion(BaseModel):
+    id: Optional[str] = Field(None, description="ID único del documento")
     caso_original: str = Field(..., description="Código del caso original (YYYY-NNNNN)")
     estado_aprobacion: EstadoAprobacionEnum = Field(default=EstadoAprobacionEnum.SOLICITUD_HECHA)
     pruebas_complementarias: List[PruebaComplementariaInfo] = Field(..., description="Pruebas complementarias solicitadas")
     aprobacion_info: AprobacionInfo = Field(..., description="Información del proceso de aprobación")
     fecha_creacion: datetime = Field(default_factory=datetime.utcnow)
-    fecha_actualizacion: datetime = Field(default_factory=datetime.utcnow)
 
     @validator('pruebas_complementarias')
     def _validate_pruebas(cls, v):

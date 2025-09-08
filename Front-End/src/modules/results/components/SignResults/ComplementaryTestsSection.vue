@@ -75,7 +75,6 @@
       <!-- Botón para crear solicitud de aprobación -->
       <div class="flex justify-end flex-col items-end">
         <SaveButton
-          :disabled="!isReadyToSign"
           :loading="signingWithChanges"
           text="Crear Solicitud de Aprobación"
           loading-text="Creando solicitud..."
@@ -89,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { FormCheckbox, FormTextarea, FormInputField } from '@/shared/components/forms'
 import { SaveButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { TestList } from '@/shared/components/List'
@@ -158,29 +157,10 @@ const validate = (): boolean => {
     return false
   }
   
-  // Validar longitud del motivo
-  if (complementaryTestsDetails.value.trim().length < 10) {
-    descriptionError.value = 'El motivo debe tener al menos 10 caracteres.'
-    return false
-  }
   
   return true
 }
 
-const isReadyToSign = computed<boolean>(() => {
-  // Verificar que hay al menos una prueba válida
-  const hasValidTests = tests.value.some(t => 
-    t.codigo && t.codigo.trim() !== '' && 
-    t.nombre && t.nombre.trim() !== '' && 
-    t.cantidad && t.cantidad >= 1 && t.cantidad <= 20
-  )
-  
-  // Verificar que hay motivo válido (al menos 10 caracteres)
-  const hasValidReason = complementaryTestsDetails.value.trim() !== '' && 
-                          complementaryTestsDetails.value.trim().length >= 10
-  
-  return hasValidTests && hasValidReason
-})
 
 // Manipulación de pruebas
 const addTest = () => {
@@ -240,8 +220,8 @@ const handleNeedsTestsChange = (value: boolean) => {
 
 const handleDetailsChange = (value: string) => {
   complementaryTestsDetails.value = value
-  // Limpiar error si el motivo empieza a tener contenido válido
-  if (value.trim().length >= 10) {
+  // Limpiar error si el motivo tiene contenido
+  if (value.trim().length > 0) {
     descriptionError.value = ''
   }
   emit('details-change', value)
@@ -281,10 +261,6 @@ const handleSignWithChanges = async () => {
     }
     
     const motivoFinal = complementaryTestsDetails.value.trim()
-    if (motivoFinal.length < 10) {
-      descriptionError.value = 'El motivo debe tener al menos 10 caracteres.'
-      return
-    }
     
     // Emit los datos validados
     emit('create-approval-request', {
