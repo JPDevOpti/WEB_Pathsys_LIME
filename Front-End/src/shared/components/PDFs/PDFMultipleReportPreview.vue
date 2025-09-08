@@ -162,6 +162,7 @@ interface CaseItem {
     }
     patologo_asignado?: {
       nombre?: string
+  firma?: string
     }
   }
   sections?: {
@@ -277,7 +278,8 @@ function convertCaseToCaseItem(caseData: Case): CaseItem {
         nombre: caseData.requester
       },
       patologo_asignado: {
-        nombre: caseData.pathologist || 'No asignado'
+  nombre: caseData.pathologist || 'No asignado',
+  firma: (caseData as any)?.patologo_asignado?.firma || (caseData as any)?.patologo_asignado?.signature || undefined
       }
     },
     sections: {

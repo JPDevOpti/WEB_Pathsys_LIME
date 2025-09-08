@@ -81,6 +81,7 @@ class PatologoInfo(BaseModel):
     """Información del patólogo asignado"""
     codigo: str = Field(..., description="Código único del patólogo")
     nombre: str = Field(..., description="Nombre completo del patólogo")
+    firma: Optional[str] = Field(None, description="Firma digital del patólogo")
 
     class Config:
         populate_by_name = True

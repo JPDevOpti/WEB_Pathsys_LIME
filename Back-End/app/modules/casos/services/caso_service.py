@@ -188,13 +188,162 @@ class CasoService:
         if caso.estado == EstadoCasoEnum.COMPLETADO:
             raise BadRequestError("No se pueden asignar patólogos a casos completados")
         
+        # Normalizar datos del patólogo: si el campo codigo parece ser un ObjectId (24 hex) buscar patólogo real
         patologo_dict = patologo_info.model_dump()
+        try:
+            from bson import ObjectId
+            if patologo_dict.get("codigo") and len(patologo_dict["codigo"]) == 24 and all(c in '0123456789abcdef' for c in patologo_dict["codigo"].lower()):
+                # Intentar buscar patólogo por _id
+                from app.modules.patologos.repositories.patologo_repository import PatologoRepository
+                from app.modules.patologos.services.patologo_service import PatologoService
+                from app.shared.services.user_management import UserManagementService
+                pat_repo = PatologoRepository(self.repository.database if hasattr(self.repository, 'database') else self.repository.db)
+                user_mgmt = UserManagementService(self.repository.database if hasattr(self.repository, 'database') else self.repository.db)
+                pat_service = PatologoService(pat_repo, user_mgmt)
+                # Buscar manualmente en la colección por _id
+                raw = await pat_repo.collection.find_one({"_id": ObjectId(patologo_dict["codigo"])})
+                if raw:
+                    # Reemplazar campos correctos
+                    patologo_dict["codigo"] = raw.get("patologo_code", patologo_dict["codigo"])
+                    patologo_dict["nombre"] = raw.get("patologo_name", patologo_dict.get("nombre"))
+                    patologo_dict["firma"] = raw.get("firma") or patologo_dict.get("firma")
+        except Exception:
+            pass
+        # Si falta firma pero tenemos codigo normalizado, intentar completarla
+        if patologo_dict.get("codigo") and not patologo_dict.get("firma"):
+            try:
+                from app.modules.patologos.repositories.patologo_repository import PatologoRepository
+                from app.modules.patologos.services.patologo_service import PatologoService
+                from app.shared.services.user_management import UserManagementService
+                pat_repo = PatologoRepository(self.repository.database if hasattr(self.repository, 'database') else self.repository.db)
+                user_mgmt = UserManagementService(self.repository.database if hasattr(self.repository, 'database') else self.repository.db)
+                pat_service = PatologoService(pat_repo, user_mgmt)
+                pat = await pat_service.get_by_code(patologo_dict["codigo"]) if hasattr(pat_service, 'get_by_code') else None
+                if pat and getattr(pat, 'firma', None):
+                    patologo_dict['firma'] = pat.firma
+            except Exception:
+                pass
         caso_actualizado = await self.repository.asignar_patologo_por_caso_code(CasoCode, patologo_dict)
         
         if not caso_actualizado:
             raise BadRequestError("No se pudo asignar el patólogo")
         
         return self._to_response(caso_actualizado)
+    
+    async def asignar_patologo_por_codigo(
+        self, 
+        CasoCode: str, 
+        patologo_codigo: str, 
+        usuario_id: str
+    ) -> CasoResponse:
+        """Asignar patólogo a un caso obteniendo automáticamente su información completa incluyendo firma."""
+        from app.modules.patologos.services.patologo_service import PatologoService
+        from app.modules.patologos.repositories.patologo_repository import PatologoRepository
+        from app.shared.services.user_management import UserManagementService
+        
+        # Obtener la información completa del patólogo
+        patologo_repository = PatologoRepository(self.repository.db)
+        user_management_service = UserManagementService(self.repository.db)
+        patologo_service = PatologoService(patologo_repository, user_management_service)
+        
+        try:
+            patologo_info_dict = await patologo_service.get_patologo_info_for_assignment(patologo_codigo)
+            patologo_info = PatologoInfo(**patologo_info_dict)
+            return await self.asignar_patologo_por_caso_code(CasoCode, patologo_info, usuario_id)
+        except NotFoundError as e:
+            raise NotFoundError(f"Patólogo con código {patologo_codigo} no encontrado")
+    
+    async def sincronizar_firma_patologo(self, CasoCode: str) -> CasoResponse:
+        """Sincronizar la firma del patólogo asignado a un caso."""
+        caso = await self.repository.get_by_caso_code(CasoCode)
+        if not caso:
+            raise NotFoundError(f"Caso con código {CasoCode} no encontrado")
+        
+        if not caso.patologo_asignado:
+            raise BadRequestError("El caso no tiene un patólogo asignado")
+        
+        from app.modules.patologos.services.patologo_service import PatologoService
+        from app.modules.patologos.repositories.patologo_repository import PatologoRepository
+        from app.shared.services.user_management import UserManagementService
+        
+        # Obtener la información actualizada del patólogo
+        patologo_repository = PatologoRepository(self.repository.db)
+        user_management_service = UserManagementService(self.repository.db)
+        patologo_service = PatologoService(patologo_repository, user_management_service)
+        
+        try:
+            patologo_info_dict = await patologo_service.get_patologo_info_for_assignment(caso.patologo_asignado.codigo)
+            
+            # Actualizar la información del patólogo en el caso
+            caso_actualizado = await self.repository.asignar_patologo_por_caso_code(CasoCode, patologo_info_dict)
+            
+            if not caso_actualizado:
+                raise BadRequestError("No se pudo sincronizar la información del patólogo")
+            
+            return self._to_response(caso_actualizado)
+            
+        except NotFoundError as e:
+            raise NotFoundError(f"Patólogo con código {caso.patologo_asignado.codigo} no encontrado")
+    
+    async def sincronizar_firmas_patologos_masivo(self) -> Dict[str, Any]:
+        """Sincronizar las firmas de todos los patólogos asignados en todos los casos."""
+        from app.modules.patologos.services.patologo_service import PatologoService
+        from app.modules.patologos.repositories.patologo_repository import PatologoRepository
+        from app.shared.services.user_management import UserManagementService
+        
+        # Obtener todos los casos con patólogos asignados
+        casos_con_patologos = await self.repository.collection.find({
+            "patologo_asignado": {"$exists": True, "$ne": None}
+        }).to_list(length=None)
+        
+        patologo_repository = PatologoRepository(self.repository.db)
+        user_management_service = UserManagementService(self.repository.db)
+        patologo_service = PatologoService(patologo_repository, user_management_service)
+        
+        casos_actualizados = 0
+        casos_con_error = 0
+        errores = []
+        
+        for caso_doc in casos_con_patologos:
+            try:
+                if caso_doc.get("patologo_asignado") and caso_doc["patologo_asignado"].get("codigo"):
+                    patologo_codigo = caso_doc["patologo_asignado"]["codigo"]
+                    
+                    # Verificar si ya tiene firma
+                    current_firma = caso_doc["patologo_asignado"].get("firma")
+                    if current_firma:
+                        continue  # Ya tiene firma, saltar
+                    
+                    # Obtener información actualizada del patólogo
+                    patologo_info_dict = await patologo_service.get_patologo_info_for_assignment(patologo_codigo)
+                    
+                    # Actualizar en la base de datos
+                    await self.repository.collection.update_one(
+                        {"_id": caso_doc["_id"]},
+                        {"$set": {
+                            "patologo_asignado": patologo_info_dict,
+                            "fecha_actualizacion": datetime.utcnow()
+                        }}
+                    )
+                    casos_actualizados += 1
+                    
+            except Exception as e:
+                casos_con_error += 1
+                errores.append({
+                    "caso_id": str(caso_doc.get("_id", "unknown")),
+                    "caso_code": caso_doc.get("caso_code", "unknown"),
+                    "error": str(e)
+                })
+        
+        return {
+            "mensaje": "Sincronización masiva completada",
+            "casos_actualizados": casos_actualizados,
+            "casos_con_error": casos_con_error,
+            "total_casos_procesados": len(casos_con_patologos),
+            "errores": errores[:10]  # Solo los primeros 10 errores
+        }
+    
+    
     
     async def desasignar_patologo_por_caso_code(
         self, 
@@ -629,7 +778,7 @@ class CasoService:
         return nuevo_estado in transiciones_validas.get(estado_actual, [])
     
     def _to_response(self, caso: Caso) -> CasoResponse:
-        """Convertir modelo de caso a respuesta."""
+        """Convertir modelo de caso a respuesta (sin IO adicional)."""
         caso_dict = caso.model_dump(by_alias=True, mode='json')
         caso_dict["id"] = str(caso.id)
         return CasoResponse(**caso_dict)

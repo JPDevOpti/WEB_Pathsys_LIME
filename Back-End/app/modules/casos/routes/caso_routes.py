@@ -318,6 +318,33 @@ async def asignar_patologo(
     """Asignar patólogo a un caso por código de caso."""
     return await caso_service.asignar_patologo_por_caso_code(caso_code, patologo_info, "sistema")
 
+@router.put("/caso-code/{caso_code}/asignar-patologo-por-codigo", response_model=CasoResponse)
+@handle_exceptions
+async def asignar_patologo_por_codigo(
+    caso_code: str,
+    patologo_codigo: str = Query(..., description="Código del patólogo a asignar"),
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Asignar patólogo a un caso usando solo el código del patólogo (obtiene información completa automáticamente)."""
+    return await caso_service.asignar_patologo_por_codigo(caso_code, patologo_codigo, "sistema")
+
+@router.put("/caso-code/{caso_code}/sincronizar-firma-patologo", response_model=CasoResponse)
+@handle_exceptions
+async def sincronizar_firma_patologo(
+    caso_code: str,
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Sincronizar la firma del patólogo asignado a un caso."""
+    return await caso_service.sincronizar_firma_patologo(caso_code)
+
+@router.put("/sincronizar-firmas-patologos")
+@handle_exceptions
+async def sincronizar_firmas_patologos_masivo(
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Sincronizar las firmas de todos los patólogos asignados en todos los casos."""
+    return await caso_service.sincronizar_firmas_patologos_masivo()
+
 
 @router.delete("/caso-code/{caso_code}/desasignar-patologo", response_model=CasoResponse)
 @handle_exceptions

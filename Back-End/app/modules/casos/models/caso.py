@@ -70,6 +70,7 @@ class PatologoInfo(BaseModel):
     """Información del patólogo asignado."""
     codigo: str = Field(..., max_length=50)
     nombre: str = Field(..., max_length=200)
+    firma: Optional[str] = Field(None, description="Firma digital del patólogo")
 
 
 class TipoResultadoEnum(str, Enum):

@@ -54,6 +54,7 @@ import CaseDetailsModal from '../components/CaseDetailsModal.vue'
 
 import { useCaseList } from '../composables/useCaseList'
 import { useExcelExport } from '../composables/useExcelExport'
+import { signatureService } from '@/shared/services/signatureService'
 
 const pageTitle = 'Casos Actuales'
 
@@ -136,6 +137,31 @@ onUnmounted(() => {
 })
 
 function previewCase(c: any) {
+  // DEBUG: Ver datos originales del caso
+  console.log('CurrentCasesListView - caso original:', c)
+  console.log('CurrentCasesListView - patologo_asignado original:', c.patologo_asignado)
+  console.log('CurrentCasesListView - pathologist:', c.pathologist)
+  
+  navigateToPreview(c)
+}
+
+async function navigateToPreview(c: any) {
+  
+  // Obtener la firma del patólogo si existe el código
+  let patologoFirma = undefined
+  const patologoCode = c.patologo_asignado?.codigo || c.pathologist?.codigo || c.patologo_asignado?.patologo_code
+  
+  if (patologoCode) {
+    try {
+      patologoFirma = await signatureService.getSignature(patologoCode)
+      console.log('CurrentCasesListView - firma obtenida para código', patologoCode, ':', patologoFirma ? 'ENCONTRADA' : 'NO ENCONTRADA')
+    } catch (error) {
+      console.warn('CurrentCasesListView - error obteniendo firma del patólogo:', error)
+    }
+  } else {
+    console.log('CurrentCasesListView - no se encontró código de patólogo para obtener firma')
+  }
+  
   const payload = {
     sampleId: c.caseCode || c.caso_code || c.id,
     patient: {
@@ -150,7 +176,14 @@ function previewCase(c: any) {
       fecha_creacion: c.receivedAt || (c as any).fecha_creacion || '',
       fecha_entrega: c.deliveredAt || (c as any).fecha_entrega || '',
       fecha_firma: (c as any).signedAt || c.deliveredAt || (c as any).fecha_firma || null,
-      patologo_asignado: c.pathologist ? { nombre: c.pathologist } : c.patologo_asignado || undefined,
+      patologo_asignado: c.pathologist ? { 
+        nombre: c.pathologist,
+        // Buscar firma en múltiples posibles ubicaciones
+        firma: (c as any).patologo_asignado?.firma || (c as any).pathologist_signature || (c as any).firma || undefined
+      } : (c.patologo_asignado ? {
+        ...c.patologo_asignado,
+        firma: (c.patologo_asignado as any)?.firma || (c as any).pathologist_signature || (c as any).firma || undefined
+      } : undefined),
       medico_solicitante: c.requester ? { nombre: c.requester } : c.medico_solicitante || undefined,
       entidad_info: c.patient?.entity ? { nombre: c.patient.entity } : c.paciente?.entidad_info || undefined,
       muestras: Array.isArray(c.subsamples) ? c.subsamples.map((s: any) => ({
@@ -207,7 +240,11 @@ function previewCase(c: any) {
       fecha_creacion: payload.caseDetails.fecha_creacion,
       fecha_entrega: payload.caseDetails.fecha_entrega,
       fecha_firma: payload.caseDetails.fecha_firma,
-      patologo_asignado: payload.caseDetails.patologo_asignado,
+      patologo_asignado: payload.caseDetails.patologo_asignado ? {
+        ...payload.caseDetails.patologo_asignado,
+        // Usar la firma obtenida del API, con fallbacks a los datos originales
+        firma: patologoFirma || (payload.caseDetails.patologo_asignado as any).firma || (payload.caseDetails.patologo_asignado as any).signature || (payload.caseDetails.patologo_asignado as any).image || undefined
+      } : undefined,
       medico_solicitante: payload.caseDetails.medico_solicitante,
       entidad_info: payload.caseDetails.entidad_info,
       muestras: payload.caseDetails.muestras,
@@ -227,8 +264,7 @@ function previewCase(c: any) {
       },
       servicio: c.servicio || c.paciente?.servicio || undefined,
       estado: c.status || c.estado || '',
-      fecha_ingreso: c.receivedAt || (c as any).fecha_creacion || '',
-      fecha_firma: (c as any).signedAt || c.deliveredAt || (c as any).fecha_firma || null,
+  fecha_ingreso: c.receivedAt || (c as any).fecha_creacion || '',
       fecha_actualizacion: c.patient?.updatedAt || c.paciente?.fecha_actualizacion || new Date().toISOString(),
       observaciones_generales: c.notes || c.observaciones_generales || '',
       is_active: c.is_active ?? true,
@@ -238,6 +274,12 @@ function previewCase(c: any) {
     diagnosis: payload.diagnosis,
     generatedAt: payload.generatedAt
   }
+  
+  // DEBUG: Ver payload final antes de guardarlo
+  console.log('CurrentCasesListView - payload final completo:', completePayload)
+  console.log('CurrentCasesListView - patologo_asignado en payload final:', completePayload.caseDetails.patologo_asignado)
+  console.log('CurrentCasesListView - firma en payload final:', completePayload.caseDetails.patologo_asignado?.firma)
+  
   try {
     sessionStorage.setItem('results_preview_payload', JSON.stringify(completePayload))
   } catch { }

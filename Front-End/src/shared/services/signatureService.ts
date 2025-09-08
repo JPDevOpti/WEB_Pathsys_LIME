@@ -1,61 +1,88 @@
 import apiClient from '@/core/config/axios.config'
-import { API_CONFIG, buildApiUrl } from '@/core/config/api.config'
+import { API_CONFIG } from '@/core/config/api.config'
 
-export interface PatologoFirma {
-  _id: {
-    $oid: string
-  }
-  patologoName: string
-  InicialesPatologo: string
-  patologoCode: string
-  PatologoEmail: string
-  registro_medico: string
-  isActive: boolean
-  firma: string
-  observaciones: string
-  fecha_creacion: {
-    $date: string
-  }
-  fecha_actualizacion: {
-    $date: string
-  }
-  id: string
+export interface PatologoSignatureResponse {
+  patologo_code: string
+  firma: string | null
 }
 
+/**
+ * Servicio específico para obtener firmas de patólogos usando el endpoint dedicado
+ */
 class SignatureService {
   private signatureCache = new Map<string, string>()
 
-    /**
-   * Obtiene la firma de un patólogo por su código
+  /**
+   * Obtiene solo la firma de un patólogo por su código usando el endpoint específico
+   * @param patologoCode - Código del patólogo
+   * @returns Promise con la firma o null si no existe
    */
   async getSignature(patologoCode: string): Promise<string | null> {
     try {
+      console.log(`SignatureService - obteniendo firma para patólogo: ${patologoCode}`)
+      
       // Verificar cache primero
       if (this.signatureCache.has(patologoCode)) {
-        return this.signatureCache.get(patologoCode) || null
+        const cachedSignature = this.signatureCache.get(patologoCode) || null
+        console.log(`SignatureService - firma encontrada en cache para ${patologoCode}`)
+        return cachedSignature
       }
 
-      // Buscar en el backend
-      const url = buildApiUrl(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${patologoCode}`)
-      const response = await apiClient.get<any>(url)
+      // Usar el nuevo endpoint específico para firmas
+      const response = await apiClient.get<PatologoSignatureResponse>(
+        `${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${patologoCode}/firma`
+      )
       
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null
-        }
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+      console.log(`SignatureService - respuesta del endpoint firma:`, response)
       
-      const patologo = response.data
+      // Extraer los datos de la respuesta de axios
+      const data = (response as any).data || response
+      const firma = data.firma
       
-      if (patologo && patologo.firma && patologo.firma.length > 0) {
+      if (firma && firma.length > 0) {
         // Guardar en cache
-        this.signatureCache.set(patologoCode, patologo.firma)
-        return patologo.firma
+        this.signatureCache.set(patologoCode, firma)
+        console.log(`SignatureService - firma encontrada y guardada en cache para ${patologoCode}`)
+        return firma
       }
       
+      console.log(`SignatureService - no se encontró firma para patólogo ${patologoCode}`)
       return null
-    } catch (error) {
+      
+    } catch (error: any) {
+      console.warn(`SignatureService - error obteniendo firma para patólogo ${patologoCode}:`, error)
+      
+      // Si es un 404, el patólogo no existe o no tiene firma
+      if (error.response?.status === 404) {
+        console.warn(`SignatureService - patólogo ${patologoCode} no encontrado o sin firma`)
+        return null
+      }
+      
+      // Para otros errores, retornamos null pero logueamos el error
+      console.error(`SignatureService - error inesperado:`, error)
+      return null
+    }
+  }
+
+  /**
+   * Obtiene la respuesta completa del endpoint de firma (incluye código y firma)
+   * @param patologoCode - Código del patólogo
+   * @returns Promise con la respuesta completa o null
+   */
+  async getSignatureData(patologoCode: string): Promise<PatologoSignatureResponse | null> {
+    try {
+      console.log(`SignatureService - obteniendo datos de firma para patólogo: ${patologoCode}`)
+      
+      const response = await apiClient.get<PatologoSignatureResponse>(
+        `${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${patologoCode}/firma`
+      )
+      
+      const data = (response as any).data || response
+      console.log(`SignatureService - datos de firma obtenidos para ${patologoCode}:`, data)
+      
+      return data
+    } catch (error: any) {
+      console.warn(`SignatureService - error obteniendo datos de firma para patólogo ${patologoCode}:`, error)
       return null
     }
   }
@@ -65,19 +92,20 @@ class SignatureService {
    */
   clearCache(): void {
     this.signatureCache.clear()
+    console.log('SignatureService - cache de firmas limpiado')
   }
 
   /**
    * Obtiene múltiples firmas de una vez
    */
-  async getMultipleFirmas(emails: string[]): Promise<Map<string, string>> {
+  async getMultipleSignatures(patologoCodes: string[]): Promise<Map<string, string>> {
     const firmas = new Map<string, string>()
     
     await Promise.all(
-      emails.map(async (email) => {
-        const firma = await this.getSignature(email)
+      patologoCodes.map(async (code) => {
+        const firma = await this.getSignature(code)
         if (firma) {
-          firmas.set(email, firma)
+          firmas.set(code, firma)
         }
       })
     )

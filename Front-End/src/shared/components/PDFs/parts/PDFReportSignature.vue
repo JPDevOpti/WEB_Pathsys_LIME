@@ -5,7 +5,12 @@
         <div class="signature-content">
           <!-- Espacio para la firma (ARRIBA). Si no hay firma, queda vacío sin marcador. -->
           <div class="signature-space">
-            <img v-if="caseItem?.caseDetails?.patologo_asignado?.firma" :src="caseItem.caseDetails.patologo_asignado.firma" alt="Firma del Patólogo" class="signature-image" />
+            <template v-if="caseItem?.caseDetails?.patologo_asignado?.firma">
+              <img :src="caseItem.caseDetails.patologo_asignado.firma" alt="firma" class="signature-image" />
+            </template>
+            <template v-else>
+              <span class="no-signature-text">SIN FIRMA</span>
+            </template>
           </div>
           <!-- Línea de firma -->
           <div class="signature-line"></div>
@@ -28,9 +33,14 @@ interface CaseItem {
   }
 }
 
-defineProps<{
+const props = defineProps<{
   caseItem?: CaseItem
 }>()
+
+// DEBUG: Log para ver qué datos llegan
+console.log('PDFReportSignature - caseItem:', props.caseItem)
+console.log('PDFReportSignature - patologo_asignado:', props.caseItem?.caseDetails?.patologo_asignado)
+console.log('PDFReportSignature - firma:', props.caseItem?.caseDetails?.patologo_asignado?.firma)
 </script>
 
 <style scoped>
@@ -91,6 +101,13 @@ defineProps<{
   object-fit: contain;
   background: transparent !important;
   mix-blend-mode: multiply;
+}
+
+.no-signature-text {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #888;
+  font-style: italic;
 }
 
 /* Sin placeholder visual cuando no hay firma */

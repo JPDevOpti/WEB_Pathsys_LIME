@@ -150,22 +150,38 @@ async def search_all_patologos_including_inactive(
 
 
 
-@router.get("/{patologo_code}", response_model=PatologoResponse)
-async def get_patologo(
+@router.get("/{patologo_code}/info", response_model=Dict[str, Any])
+async def get_patologo_info_for_assignment(
     patologo_code: str = Path(..., description="Código del patólogo"),
     patologo_service: PatologoService = Depends(get_patologo_service)
 ):
     """
-    Obtener un patólogo específico por código
+    Obtener información completa del patólogo incluyendo firma para asignación a casos
     """
     try:
-        logger.info(f"Buscando patólogo por código: {patologo_code}")
-        return await patologo_service.get_patologo(patologo_code)
+        logger.info(f"Obteniendo información completa de patólogo: {patologo_code}")
+        return await patologo_service.get_patologo_info_for_assignment(patologo_code)
     except NotFoundError as e:
-        logger.warning(f"Patólogo no encontrado: {patologo_code}")
+        logger.warning(f"Patólogo no encontrado para info: {patologo_code}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        logger.error(f"Error inesperado obteniendo patólogo {patologo_code}: {str(e)}")
+        logger.error(f"Error inesperado obteniendo info de patólogo {patologo_code}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
+
+@router.get("/{identifier}", response_model=PatologoResponse)
+async def get_patologo(
+    identifier: str = Path(..., description="Código o ObjectId del patólogo"),
+    patologo_service: PatologoService = Depends(get_patologo_service)
+):
+    """Obtener un patólogo específico por código o _id."""
+    try:
+        logger.info(f"Buscando patólogo por identificador: {identifier}")
+        return await patologo_service.get_patologo_by_code_or_id(identifier)
+    except NotFoundError as e:
+        logger.warning(f"Patólogo no encontrado: {identifier}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error inesperado obteniendo patólogo {identifier}: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.put("/{patologo_code}", response_model=PatologoResponse)
@@ -231,22 +247,44 @@ async def toggle_estado(
         logger.error(f"Error inesperado cambiando estado de patólogo {patologo_code}: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
-@router.put("/{patologo_code}/firma", response_model=PatologoResponse)
+@router.get("/{identifier}/firma")
+async def get_firma(
+    identifier: str,
+    patologo_service: PatologoService = Depends(get_patologo_service)
+):
+    """Obtener solo la firma digital de un patólogo (código o id)."""
+    try:
+        logger.info(f"Obteniendo firma de patólogo: {identifier}")
+        pat = await patologo_service.get_patologo_by_code_or_id(identifier)
+        return {
+            "patologo_code": pat.patologo_code,
+            "firma": pat.firma
+        }
+    except NotFoundError as e:
+        logger.warning(f"Patólogo no encontrado para obtener firma: {identifier}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error inesperado obteniendo firma de patólogo {identifier}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
+
+@router.put("/{identifier}/firma", response_model=PatologoResponse)
 async def update_firma(
-    patologo_code: str,
+    identifier: str,
     firma_data: PatologoFirmaUpdate,
     patologo_service: PatologoService = Depends(get_patologo_service)
 ):
-    """Actualizar la firma digital de un patólogo"""
+    """Actualizar la firma digital de un patólogo (código o id)."""
     try:
-        logger.info(f"Actualizando firma de patólogo: {patologo_code}")
-        return await patologo_service.update_firma(patologo_code, firma_data.firma)
+        logger.info(f"Actualizando firma de patólogo: {identifier}")
+        # Resolver a código real
+        pat = await patologo_service.get_patologo_by_code_or_id(identifier)
+        return await patologo_service.update_firma(pat.patologo_code, firma_data.firma)
     except NotFoundError as e:
-        logger.warning(f"Patólogo no encontrado para actualizar firma: {patologo_code}")
+        logger.warning(f"Patólogo no encontrado para actualizar firma: {identifier}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except BadRequestError as e:
-        logger.warning(f"Error al actualizar firma de patólogo {patologo_code}: {str(e)}")
+        logger.warning(f"Error al actualizar firma de patólogo {identifier}: {str(e)}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        logger.error(f"Error inesperado actualizando firma de patólogo {patologo_code}: {str(e)}")
+        logger.error(f"Error inesperado actualizando firma de patólogo {identifier}: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")

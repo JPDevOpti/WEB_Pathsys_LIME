@@ -100,6 +100,26 @@ class PatologoService:
         if not patologo:
             raise NotFoundError("Patólogo no encontrado")
         return self._to_response(patologo)
+
+    async def get_patologo_by_id(self, patologo_id: str) -> PatologoResponse:
+        """Obtener un patólogo por su ObjectId"""
+        patologo = await self.patologo_repository.get(patologo_id)
+        if not patologo:
+            raise NotFoundError("Patólogo no encontrado")
+        return self._to_response(patologo)
+
+    async def get_patologo_by_code_or_id(self, identifier: str) -> PatologoResponse:
+        """Obtener patólogo aceptando código o ObjectId (24 hex)."""
+        # Intentar por código primero
+        patologo = await self.patologo_repository.get_by_codigo(identifier)
+        if patologo:
+            return self._to_response(patologo)
+        # Intentar por ObjectId si tiene longitud 24 y es hex
+        if len(identifier) == 24 and all(c in '0123456789abcdef' for c in identifier.lower()):
+            patologo = await self.patologo_repository.get(identifier)
+            if patologo:
+                return self._to_response(patologo)
+        raise NotFoundError("Patólogo no encontrado")
     
     async def get_patologos(
         self, 
@@ -261,6 +281,25 @@ class PatologoService:
 
     
 
+    
+    async def get_by_code(self, patologo_code: str) -> Optional[Patologo]:
+        """Obtener patólogo por código (método directo)"""
+        return await self.patologo_repository.get_by_codigo(patologo_code)
+    
+    async def get_patologo_info_for_assignment(self, patologo_code: str) -> dict:
+        """Obtener información del patólogo para asignación a casos incluyendo firma"""
+        # Soportar código o id
+        patologo = await self.patologo_repository.get_by_codigo(patologo_code)
+        if not patologo and len(patologo_code) == 24 and all(c in '0123456789abcdef' for c in patologo_code.lower()):
+            patologo = await self.patologo_repository.get(patologo_code)
+        if not patologo:
+            raise NotFoundError("Patólogo no encontrado")
+        
+        return {
+            "codigo": patologo.patologo_code,
+            "nombre": patologo.patologo_name,
+            "firma": patologo.firma if patologo.firma else None
+        }
     
     def _to_response(self, patologo: Patologo) -> PatologoResponse:
         """Convertir modelo a esquema de respuesta"""

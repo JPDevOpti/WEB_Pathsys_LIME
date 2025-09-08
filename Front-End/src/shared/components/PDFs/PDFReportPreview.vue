@@ -173,7 +173,13 @@ const hasData = computed(() => {
 const singleCaseObject = computed<PreviewCaseItem>(() => ({
   sampleId: props.payload?.sampleId,
   patient: props.payload?.patient,
-  caseDetails: props.payload?.caseDetails,
+  caseDetails: props.payload?.caseDetails ? {
+    ...props.payload.caseDetails,
+    patologo_asignado: props.payload.caseDetails.patologo_asignado ? {
+      ...props.payload.caseDetails.patologo_asignado,
+      firma: (props.payload.caseDetails.patologo_asignado as any).firma || (props.payload.caseDetails.patologo_asignado as any).signature || (props.payload.caseDetails.patologo_asignado as any).image || undefined
+    } : undefined
+  } : undefined,
   sections: props.payload?.sections || undefined,
   diagnosis: props.payload?.diagnosis || undefined,
   generatedAt: props.payload?.generatedAt,
@@ -409,25 +415,23 @@ async function computePagesForItem(item: any) {
   } else {
     // dividir similar a splitContentIntoPages
     const sections = content.split('<div class="section-item"').filter(s => s.trim()).map(s => `<div class="section-item"${s}`)
-    let firstContent = ''
-    let acc = 0
+  let firstContent = ''
     for (const sec of sections) {
       measureBodyRef.value.innerHTML = firstContent + sec
       const h = measureBodyRef.value.scrollHeight
-      if (h <= availableFirstPx.value) { firstContent += sec; acc = h } else { break }
+  if (h <= availableFirstPx.value) { firstContent += sec } else { break }
     }
     bundlePages.push({ content: firstContent, isFirstPage: true, isLastPage: false })
     const remaining = sections.join('')?.replace(firstContent, '') || ''
     const parts = remaining.split('<div class="section-item"').filter(s => s.trim()).map(s => `<div class="section-item"${s}`)
-    let current = ''
-    let currentH = 0
+  let current = ''
     for (const part of parts) {
       measureBodyRef.value.innerHTML = current + part
       const h = measureBodyRef.value.scrollHeight
-      if (h <= availableContPx.value) { current += part; currentH = h } else {
+  if (h <= availableContPx.value) { current += part } else {
         if (current) bundlePages.push({ content: current, isFirstPage: false, isLastPage: false })
         current = part
-        currentH = h
+  // continue
       }
     }
     if (current) bundlePages.push({ content: current, isFirstPage: false, isLastPage: true })
@@ -600,7 +604,7 @@ function recibidoNumero(casoCode?: string): string {
 }
 @media print {
   @page { size: letter; margin: 0 !important; }
-  * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   html, body { margin: 0 !important; padding: 0 !important; height: auto !important; }
   .print-hidden { display: none !important; }
   .pdf-preview-container { background: transparent !important; border: none !important; padding: 0 !important; margin: 0 !important; height: auto !important; min-height: auto !important; display: block !important; width: 100% !important; }
@@ -612,7 +616,7 @@ function recibidoNumero(casoCode?: string): string {
   .report-page table { border-collapse: collapse !important; width: 100% !important; }
   .report-page table td { border: 1px solid #d1d5db !important; vertical-align: top !important; }
   .report-page img { box-shadow: none !important; display: block !important; }
-  .report-page img[alt*="firma"], .report-page img[alt*="Firma"] { background: transparent !important; mix-blend-mode: multiply !important; -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+  .report-page img[alt*="firma"], .report-page img[alt*="Firma"] { background: transparent !important; mix-blend-mode: multiply !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
 </style>
 
