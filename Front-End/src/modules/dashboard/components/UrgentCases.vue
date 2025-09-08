@@ -107,12 +107,7 @@
                       :title="getTestTooltip(caso.pruebas, g.code, g.count)"
                     >
                       <span class="truncate test-code">{{ extractTestCode(g.code) }}</span>
-                      <span
-                        v-if="g.count > 1"
-                        class="ml-1 inline-flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-100 text-blue-600 text-[9px] sm:text-[10px] font-bold flex-shrink-0"
-                      >
-                        {{ g.count }}
-                      </span>
+                      <sub v-if="g.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[9px] sm:text-[10px] text-blue-600 font-bold">{{ g.count }}</sub>
                     </span>
                     <span
                       v-if="groupTests(caso.pruebas).length > 3"
@@ -140,7 +135,7 @@
                 <td class="px-1 sm:px-2 py-2 sm:py-3 text-center">
                   <div class="flex gap-1 justify-center min-w-[100px] sm:min-w-[120px]">
                     <button
-                      class="p-1 sm:p-1.5 rounded-md hover:bg-green-50 text-green-700"
+                      class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                       @click.stop="() => emit('show-details', caso)"
                       title="Ver detalles"
                     >
@@ -149,7 +144,7 @@
                       </svg>
                     </button>
                     <button
-                      class="p-1 sm:p-1.5 rounded-md hover:bg-green-50 text-green-700"
+                      class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                       @click.stop="handleEdit(caso)"
                       title="Editar caso"
                     >
@@ -160,7 +155,7 @@
                     </button>
                     <button
                       v-if="caso.estado === 'En proceso'"
-                      class="p-1 sm:p-1.5 rounded-md hover:bg-green-50 text-green-700"
+                      class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                       @click.stop="handlePerform(caso)"
                       title="Realizar resultados"
                     >
@@ -170,7 +165,7 @@
                     </button>
                     <button
                       v-if="['Por firmar','Por entregar'].includes(caso.estado)"
-                      class="p-1 sm:p-1.5 rounded-md hover:bg-green-50 text-green-700"
+                      class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                       @click.stop="handleValidate(caso)"
                       :title="caso.estado === 'Por firmar' ? 'Realizar validación del informe' : 'Validar'"
                     >
@@ -239,12 +234,7 @@
                     :title="getTestTooltip(caso.pruebas, g.code, g.count)"
                   >
                     <span class="truncate max-w-[50px] sm:max-w-[60px] test-code">{{ extractTestCode(g.code) }}</span>
-                    <span
-                      v-if="g.count > 1"
-                      class="ml-1 inline-flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-100 text-blue-600 text-[9px] sm:text-[10px] font-bold flex-shrink-0"
-                    >
-                      {{ g.count }}
-                    </span>
+                    <sub v-if="g.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[9px] sm:text-[10px] text-blue-600 font-bold">{{ g.count }}</sub>
                   </span>
                   <span
                     v-if="groupTests(caso.pruebas).length > 4"
@@ -258,7 +248,7 @@
 
               <div class="flex gap-1 sm:gap-2 pt-2 border-t border-gray-100">
                 <button
-                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-xs font-medium"
+                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
                   @click.stop="() => emit('show-details', caso)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,7 +258,7 @@
                   <span class="xs:hidden">Ver</span>
                 </button>
                 <button
-                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-xs font-medium"
+                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
                   @click.stop="handleEdit(caso)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,7 +269,7 @@
                 </button>
                 <button
                   v-if="caso.estado === 'En proceso'"
-                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-xs font-medium"
+                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
                   @click.stop="handlePerform(caso)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,7 +279,7 @@
                 </button>
                 <button
                   v-if="['Por firmar','Por entregar'].includes(caso.estado)"
-                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors text-xs font-medium"
+                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
                   @click.stop="handleValidate(caso)"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

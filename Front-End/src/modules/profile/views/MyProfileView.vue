@@ -171,7 +171,11 @@ const loadUserProfile = async () => {
       profileApiService.getByRoleAndEmail('auxiliar', email).catch(() => undefined)
     ])
 
-    const effectiveRole: UserRole = p ? 'patologo' : r ? 'residente' : a ? 'auxiliar' : role
+    const hasPatologo = !!(p && (p as any)?.patologoCode)
+    const hasResidente = !!(r && (r as any)?.residenteCode)
+    const hasAuxiliar = !!(a && (a as any)?.auxiliarCode)
+
+    const effectiveRole: UserRole = hasPatologo ? 'patologo' : hasResidente ? 'residente' : hasAuxiliar ? 'auxiliar' : role
 
     if (effectiveRole === 'patologo') {
       const pb = p as BackendPatologo | undefined
@@ -182,7 +186,7 @@ const loadUserProfile = async () => {
         phone: '',
         role: 'patologo',
         roleSpecificData: {
-          iniciales: pb?.InicialesPatologo || '',
+          iniciales: (pb as any)?.InicialesPatologo || (pb as any)?.iniciales || '',
           registroMedico: pb?.registro_medico || '',
           firmaUrl: pb?.firma || '',
           observaciones: pb?.observaciones || ''
@@ -200,7 +204,7 @@ const loadUserProfile = async () => {
         phone: '',
         role: 'residente',
         roleSpecificData: {
-          iniciales: rb?.InicialesResidente || '',
+          iniciales: (rb as any)?.InicialesResidente || (rb as any)?.iniciales || (rb as any)?.inicialesResidente || '',
           registroMedico: rb?.registro_medico || '',
           observaciones: rb?.observaciones || ''
         }

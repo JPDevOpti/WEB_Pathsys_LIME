@@ -10,7 +10,7 @@
             :class="{ 'hover:border-blue-300': isEditable }"
           >
             <div class="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-700">
-              <component :is="getRoleIcon(user.role)" class="w-10 h-10 sm:w-12 sm:h-12" />
+              <component :is="getRoleIcon(normalizedRole)" class="w-10 h-10 sm:w-12 sm:h-12" />
             </div>
           </div>
           
@@ -35,17 +35,9 @@
           <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
             <span 
               class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-              :class="getRoleStyles(user.role)"
+              :class="getRoleStyles(normalizedRole)"
             >
-              {{ getRoleLabel(user.role) }}
-            </span>
-            
-            <span 
-              v-if="user.isActive"
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
-            >
-              <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span>
-              Activo
+              {{ getRoleLabel(normalizedRole) }}
             </span>
           </div>
 
@@ -79,11 +71,23 @@ interface Props {
   isEditable?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   isEditable: true
 })
 
 defineEmits<{ edit: [] }>()
+
+// Normalización defensiva del rol para evitar mostrar etiquetas incorrectas
+const normalizeRole = (role: string): UserRole => {
+  const r = String(role || '').toLowerCase()
+  if ([ 'admin', 'administrator' ].includes(r)) return 'admin'
+  if ([ 'patologo', 'pathologist', 'patólogo' ].includes(r)) return 'patologo'
+  if ([ 'residente', 'resident' ].includes(r)) return 'residente'
+  if ([ 'auxiliar', 'assistant', 'auxiliary' ].includes(r)) return 'auxiliar'
+  return 'auxiliar'
+}
+import { computed } from 'vue'
+const normalizedRole = computed(() => normalizeRole((props as any).user?.role))
 
 const getRoleLabel = (role: UserRole): string => {
   const roleLabels: Record<UserRole, string> = {

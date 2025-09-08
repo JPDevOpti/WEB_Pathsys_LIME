@@ -126,15 +126,12 @@
                         <span
                           v-for="(g, idx) in getTestsLayout(c).organized.column1"
                           :key="`col1-${idx}`"
-                          class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border text-nowrap relative min-w-0 flex-shrink-0"
+                          class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0"
                           :title="getTestTooltip(c.tests, g.code, g.count)"
                         >
-                          <span class="truncate test-code">{{ g.code }}</span>
-                          <span
-                            v-if="g.count > 1"
-                            class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
-                          >
-                            {{ g.count }}
+                          <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
+                            <span class="truncate test-code">{{ g.code }}</span>
+                            <sub v-if="g.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[10px] text-blue-600 font-bold">{{ g.count }}</sub>
                           </span>
                         </span>
                       </div>
@@ -143,15 +140,12 @@
                         <span
                           v-for="(g, idx) in getTestsLayout(c).organized.column2"
                           :key="`col2-${idx}`"
-                          class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border text-nowrap relative min-w-0 flex-shrink-0"
+                          class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0"
                           :title="getTestTooltip(c.tests, g.code, g.count)"
                         >
-                          <span class="truncate test-code">{{ g.code }}</span>
-                          <span
-                            v-if="g.count > 1"
-                            class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
-                          >
-                            {{ g.count }}
+                          <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
+                            <span class="truncate test-code">{{ g.code }}</span>
+                            <sub v-if="g.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[10px] text-blue-600 font-bold">{{ g.count }}</sub>
                           </span>
                         </span>
                       </div>
@@ -159,16 +153,11 @@
                     
                     <!-- Elemento del medio si hay número impar -->
                     <div v-if="getTestsLayout(c).organized.middle" class="flex justify-center">
-                      <span
-                        class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border text-nowrap relative min-w-0 flex-shrink-0"
-                        :title="getTestTooltip(c.tests, getTestsLayout(c).organized.middle!.code, getTestsLayout(c).organized.middle!.count)"
-                      >
-                        <span class="truncate test-code">{{ getTestsLayout(c).organized.middle!.code }}</span>
-                        <span
-                          v-if="getTestsLayout(c).organized.middle!.count > 1"
-                          class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
-                        >
-                          {{ getTestsLayout(c).organized.middle!.count }}
+                      <span class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0"
+                            :title="getTestTooltip(c.tests, getTestsLayout(c).organized.middle!.code, getTestsLayout(c).organized.middle!.count)">
+                        <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
+                          <span class="truncate test-code">{{ getTestsLayout(c).organized.middle!.code }}</span>
+                          <sub v-if="getTestsLayout(c).organized.middle!.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[10px] text-blue-600 font-bold">{{ getTestsLayout(c).organized.middle!.count }}</sub>
                         </span>
                       </span>
                     </div>
@@ -350,15 +339,12 @@
               <span
                 v-for="(g, idx) in groupTests(c.tests).slice(0, 6)"
                 :key="idx"
-                class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0 flex-shrink-0"
+                class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0"
                 :title="getTestTooltip(c.tests, g.code, g.count)"
               >
-                <span class="truncate test-code">{{ g.code }}</span>
-                <span
-                  v-if="g.count > 1"
-                  class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex-shrink-0"
-                >
-                  {{ g.count }}
+                <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
+                  <span class="truncate test-code">{{ g.code }}</span>
+                  <sub v-if="g.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[10px] text-blue-600 font-bold">{{ g.count }}</sub>
                 </span>
               </span>
               <span
@@ -809,18 +795,11 @@ function calculateBusinessDays(startDate: string, endDate?: string): number {
 // - Sábado ingresado → Martes: 1 día hábil completado (lunes completado)
 
 function statusLabel(c: Case): string {
-  const days = elapsedDays(c)
-  if (c.status === 'Por entregar') return 'Por entregar'
-  // Ajustado para días hábiles: más de 4 días hábiles (1 semana laboral) es urgente
-  if (days > 4 && c.status !== 'Completado') return 'URGENTE'
   return c.status
 }
 
 function statusClass(c: Case): string {
-  const days = elapsedDays(c)
   if (c.status === 'Por entregar') return 'bg-red-50 text-red-700 font-semibold'
-  // Ajustado para días hábiles: más de 4 días hábiles (1 semana laboral) es urgente
-  if (days > 4 && c.status !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
   if (c.status === 'Por firmar') return 'bg-yellow-50 text-yellow-700'
   if (c.status === 'En proceso') return 'bg-blue-50 text-blue-700'
   if (c.status === 'Completado') return 'bg-green-50 text-green-700'

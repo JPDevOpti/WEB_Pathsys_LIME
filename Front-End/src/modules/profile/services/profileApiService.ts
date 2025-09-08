@@ -52,7 +52,7 @@ export const profileApiService = {
     switch (role) {
       case 'patologo': {
         const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/search`, {
-          params: { q: email, limit: 1 }
+          params: { PatologoEmail: email, limit: 1 }
         })
         return pickFirstFromUnknown(data) as BackendPatologo | undefined
       }
