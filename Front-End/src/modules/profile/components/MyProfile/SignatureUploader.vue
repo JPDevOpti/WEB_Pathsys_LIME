@@ -1,5 +1,9 @@
 <template>
-  <ComponentCard title="Firma Digital" description="Sube tu imagen de firma para usarla en reportes médicos y documentos oficiales">
+  <ComponentCard
+    v-if="isPatologo"
+    title="Firma Digital"
+    description="Sube tu imagen de firma para usarla en reportes médicos y documentos oficiales"
+  >
     <div
       class="border border-dashed border-gray-300 rounded-xl bg-gray-50 p-6 md:p-8 hover:border-blue-500 transition-colors"
       @dragover.prevent="onDragOver"
@@ -62,6 +66,8 @@
       </div>
     </div>
   </ComponentCard>
+  <!-- Si por algún motivo se intenta montar sin rol patólogo, no renderizamos nada -->
+  <template v-else></template>
 </template>
 
 <script setup lang="ts">
@@ -70,11 +76,16 @@ import { ComponentCard } from '@/shared/components/common'
 
 interface Props {
   currentUrl?: string
+  userRole?: string // rol del usuario autenticado
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  currentUrl: ''
+  currentUrl: '',
+  userRole: ''
 })
+
+// Solo permitir funcionamiento si es patólogo
+const isPatologo = computed(() => props.userRole?.toLowerCase() === 'patologo')
 
 const emit = defineEmits<{
   change: [payload: { file: File | null; previewUrl: string | null }]
@@ -87,7 +98,7 @@ const selectedFile = ref<File | null>(null)
 const previewUrl = ref<string | null>(null)
 
 // Inicializar con la URL actual si existe
-if (props.currentUrl) {
+if (props.currentUrl && isPatologo.value) {
   previewUrl.value = props.currentUrl
 }
 
@@ -95,11 +106,11 @@ watch(
   () => props.currentUrl,
   (val) => {
     // Si hay una URL válida y no hay archivo seleccionado, mostrar la firma existente
-    if (val && !selectedFile.value) {
+    if (val && !selectedFile.value && isPatologo.value) {
       previewUrl.value = val
     }
     // Si no hay URL y no hay archivo seleccionado, limpiar la vista previa
-    else if (!val && !selectedFile.value) {
+    else if ((!val || !isPatologo.value) && !selectedFile.value) {
       previewUrl.value = null
     }
   },
@@ -131,6 +142,7 @@ const onFileChange = (event: Event) => {
 }
 
 const handleFile = (file: File) => {
+  if (!isPatologo.value) return
   const isValidType = ['image/png', 'image/jpeg', 'image/svg+xml'].includes(file.type)
   const isValidSize = file.size <= 1024 * 1024 // 1MB
   
@@ -160,6 +172,7 @@ const handleFile = (file: File) => {
 }
 
 const remove = () => {
+  if (!isPatologo.value) return
   selectedFile.value = null
   previewUrl.value = null
   if (fileInput.value) fileInput.value.value = ''
@@ -196,7 +209,9 @@ const handleImageLoad = (event: Event) => {
 }
 
 const emitChange = () => {
-  emit('change', { file: selectedFile.value, previewUrl: previewUrl.value })
+  if (isPatologo.value) {
+    emit('change', { file: selectedFile.value, previewUrl: previewUrl.value })
+  }
 }
 </script>
 

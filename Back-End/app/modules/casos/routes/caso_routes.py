@@ -451,7 +451,10 @@ async def obtener_estadisticas_entidades_mensual(
     entity: Optional[str] = Query(None, description="Nombre de la entidad (opcional)"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener estadísticas de entidades por mes/año con distribución de ambulatorios y hospitalizados."""
+    """Obtener estadísticas de entidades por mes/año con distribución de ambulatorios y hospitalizados.
+
+    Nota: Se revirtió parámetro experimental 'all_states' para mantener la firma original.
+    """
     return await caso_service.obtener_estadisticas_entidades_mensual(month, year, entity)
 
 

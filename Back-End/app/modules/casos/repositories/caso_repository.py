@@ -785,96 +785,63 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         
         # Si se especifica una entidad, agregar el filtro
         if entity and entity.strip():
-            match_filter["paciente.entidad_info.codigo"] = entity.strip()
+            # Permitir que 'entity' sea el código antiguo (codigo) o el nuevo (id)
+            match_filter["$or"] = [
+                {"paciente.entidad_info.codigo": entity.strip()},
+                {"paciente.entidad_info.id": entity.strip()}
+            ]
         
         # Si se filtra por entidad específica, usar pipeline diferente
         if entity and entity.strip():
             # Pipeline para entidad específica - no agrupar por entidad
             pipeline = [
-                {
-                    "$match": match_filter
-                },
-                {
-                    "$group": {
-                        "_id": None,  # No agrupar por entidad
-                        "codigo_entidad": {"$first": "$paciente.entidad_info.codigo"},
-                        "nombre_entidad": {"$first": "$paciente.entidad_info.nombre"},
-                        "total_casos": {"$sum": 1},
-                        "ambulatorios": {
-                            "$sum": {
-                                "$cond": [
-                                    {"$eq": ["$paciente.tipo_atencion", "Ambulatorio"]},
-                                    1,
-                                    0
-                                ]
-                            }
-                        },
-                        "hospitalizados": {
-                            "$sum": {
-                                "$cond": [
-                                    {"$eq": ["$paciente.tipo_atencion", "Hospitalizado"]},
-                                    1,
-                                    0
-                                ]
-                            }
-                        }
-                    }
-                },
-                {
-                    "$project": {
-                        "_id": 0,
-                        "nombre": "$nombre_entidad",
-                        "codigo": "$codigo_entidad",
-                        "ambulatorios": 1,
-                        "hospitalizados": 1,
-                        "total": "$total_casos"
-                    }
-                }
+                {"$match": match_filter},
+                # Normalizar código de entidad (usar codigo si existe, si no id)
+                {"$addFields": {
+                    "_entidad_codigo": {"$ifNull": ["$paciente.entidad_info.codigo", "$paciente.entidad_info.id"]},
+                    "_entidad_nombre": "$paciente.entidad_info.nombre"
+                }},
+                {"$group": {
+                    "_id": None,
+                    "codigo_entidad": {"$first": "$_entidad_codigo"},
+                    "nombre_entidad": {"$first": "$_entidad_nombre"},
+                    "total_casos": {"$sum": 1},
+                    "ambulatorios": {"$sum": {"$cond": [{"$eq": ["$paciente.tipo_atencion", "Ambulatorio"]}, 1, 0]}},
+                    "hospitalizados": {"$sum": {"$cond": [{"$eq": ["$paciente.tipo_atencion", "Hospitalizado"]}, 1, 0]}}
+                }},
+                {"$project": {
+                    "_id": 0,
+                    "nombre": "$nombre_entidad",
+                    "codigo": "$codigo_entidad",
+                    "ambulatorios": 1,
+                    "hospitalizados": 1,
+                    "total": "$total_casos"
+                }}
             ]
         else:
             # Pipeline original para todas las entidades
             pipeline = [
-                {
-                    "$match": match_filter
-                },
-                {
-                    "$group": {
-                        "_id": "$paciente.entidad_info.codigo",  # Agrupar por código en lugar de nombre
-                        "nombre_entidad": {"$first": "$paciente.entidad_info.nombre"},
-                        "total_casos": {"$sum": 1},
-                        "ambulatorios": {
-                            "$sum": {
-                                "$cond": [
-                                    {"$eq": ["$paciente.tipo_atencion", "Ambulatorio"]},
-                                    1,
-                                    0
-                                ]
-                            }
-                        },
-                        "hospitalizados": {
-                            "$sum": {
-                                "$cond": [
-                                    {"$eq": ["$paciente.tipo_atencion", "Hospitalizado"]},
-                                    1,
-                                    0
-                                ]
-                            }
-                        }
-                    }
-                },
-                {
-                    "$project": {
-                        "_id": 0,
-                        "nombre": "$nombre_entidad",
-                        "codigo": "$_id",  # El código es el _id del grupo
-                        "ambulatorios": 1,
-                        "hospitalizados": 1,
-                        "total": "$total_casos"
-                    }
-                },
-                {
-                    "$sort": {"total": -1}
-                }
+                {"$match": match_filter},
+                {"$addFields": {
+                    "_entidad_codigo": {"$ifNull": ["$paciente.entidad_info.codigo", "$paciente.entidad_info.id"]},
+                    "_entidad_nombre": "$paciente.entidad_info.nombre"
+                }},
+                {"$group": {
+                    "_id": "$_entidad_codigo",
+                    "nombre_entidad": {"$first": "$_entidad_nombre"},
+                    "total_casos": {"$sum": 1},
+                    "ambulatorios": {"$sum": {"$cond": [{"$eq": ["$paciente.tipo_atencion", "Ambulatorio"]}, 1, 0]}},
+                    "hospitalizados": {"$sum": {"$cond": [{"$eq": ["$paciente.tipo_atencion", "Hospitalizado"]}, 1, 0]}}
+                }},
+                {"$project": {
+                    "_id": 0,
+                    "nombre": "$nombre_entidad",
+                    "codigo": "$_id",
+                    "ambulatorios": 1,
+                    "hospitalizados": 1,
+                    "total": "$total_casos"
+                }},
+                {"$sort": {"total": -1}}
             ]
         
         # Ejecutar la agregación
@@ -913,11 +880,42 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         
         # Si se especifica una entidad, agregar el filtro al pipeline de tiempo
         if entity and entity.strip():
-            pipeline_tiempo[0]["$match"]["paciente.entidad_info.codigo"] = entity.strip()
+            pipeline_tiempo[0]["$match"]["$or"] = [
+                {"paciente.entidad_info.codigo": entity.strip()},
+                {"paciente.entidad_info.id": entity.strip()}
+            ]
         
         tiempo_result = await self.collection.aggregate(pipeline_tiempo).to_list(length=1)
         tiempo_promedio = tiempo_result[0]["tiempo_promedio"] if tiempo_result else 0
         
+        # -------------------------------------------------------------
+        # Incluir entidades activas sin casos (solo si no se filtra una entidad específica)
+        # -------------------------------------------------------------
+        if not (entity and entity.strip()):
+            try:
+                entidades_catalogo_cursor = self.database["entidades"].find(
+                    {"$or": [{"is_active": True}, {"isActive": True}]},
+                    {"entidad_code": 1, "entidad_name": 1, "_id": 0}
+                )
+                entidades_catalogo = await entidades_catalogo_cursor.to_list(length=None)
+                codigos_presentes = {e["codigo"] for e in result}
+                for ent in entidades_catalogo:
+                    code = ent.get("entidad_code")
+                    name = ent.get("entidad_name")
+                    if code and code not in codigos_presentes:
+                        result.append({
+                            "nombre": name or code,
+                            "codigo": code,
+                            "ambulatorios": 0,
+                            "hospitalizados": 0,
+                            "total": 0
+                        })
+                # Mantener orden: primero con total desc, luego los cero en orden alfabético
+                result = sorted(result, key=lambda x: (-x["total"], x["nombre"]))
+            except Exception:
+                # Falla silenciosa para no romper estadísticas principales
+                pass
+
         return {
             "entities": result,
             "summary": {
@@ -1025,7 +1023,10 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         pipeline_basicas = [
             {
                 "$match": {
-                    "paciente.entidad_info.codigo": entidad,
+                    "$or": [
+                        {"paciente.entidad_info.codigo": entidad},
+                        {"paciente.entidad_info.id": entidad}
+                    ],
                     "fecha_creacion": {"$gte": fecha_inicio, "$lte": fecha_fin}
                 }
             },
@@ -1060,7 +1061,10 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         pipeline_tiempos = [
             {
                 "$match": {
-                    "paciente.entidad_info.codigo": entidad,
+                    "$or": [
+                        {"paciente.entidad_info.codigo": entidad},
+                        {"paciente.entidad_info.id": entidad}
+                    ],
                     "fecha_creacion": {"$gte": fecha_inicio, "$lte": fecha_fin},
                     "fecha_entrega": {"$exists": True, "$ne": None}
                 }

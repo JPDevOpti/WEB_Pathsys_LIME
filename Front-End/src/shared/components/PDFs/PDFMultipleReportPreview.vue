@@ -21,28 +21,25 @@
       No hay casos para previsualizar.
     </div>
 
-    <!-- Elementos de medición ocultos (siempre montados cuando hay datos) -->
-    <div v-if="hasData" class="print-hidden" style="position:absolute; left:-10000px; top:0; opacity:0; pointer-events:none; overflow:visible;">
-      <div ref="measureBodyRef" style="width:7.5in; font-size:12px; line-height:1.4; white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere;"></div>
-      <div ref="measureHeaderRef" style="width:7.5in; box-sizing:border-box;">
-        <div v-if="measureItem || firstCaseItem">
-          <PDFReportHeader :case-item="(measureItem || firstCaseItem) as any" />
-          <PDFReportPatientData 
-            :case-item="(measureItem || firstCaseItem) as any" 
-            :recibido-numero="recibidoNumero((measureItem || firstCaseItem)?.caseDetails?.CasoCode || (measureItem || firstCaseItem)?.sampleId)" 
-          />
+    <!-- PDF Preview Content -->
+    <div v-if="hasData && !isLoading" class="pdf-multiple-container">
+      <!-- Elementos de medición ocultos -->
+      <div class="print-hidden" style="position:absolute; left:-10000px; top:0; opacity:0; pointer-events:none; overflow:visible;">
+        <div ref="measureBodyRef" style="width:7.5in; font-size:12px; line-height:1.4; white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere;"></div>
+        <div ref="measureHeaderRef" style="width:7.5in; box-sizing:border-box;">
+          <div v-if="firstCaseItem">
+            <PDFReportHeader :case-item="firstCaseItem" />
+            <PDFReportPatientData :case-item="firstCaseItem" :recibido-numero="recibidoNumero(firstCaseItem?.caseDetails?.CasoCode || firstCaseItem?.sampleId)" />
+          </div>
+        </div>
+        <div ref="measureFooterRef" style="width:7.5in; box-sizing:border-box;">
+          <PDFReportFooter :current-page="1" :total-pages="1" />
+        </div>
+        <div ref="measureSignatureRef" style="width:7.5in; box-sizing:border-box;">
+          <PDFReportSignature v-if="firstCaseItem" :case-item="firstCaseItem" />
         </div>
       </div>
-      <div ref="measureFooterRef" style="width:7.5in; box-sizing:border-box;">
-        <PDFReportFooter :current-page="1" :total-pages="1" />
-      </div>
-      <div ref="measureSignatureRef" style="width:7.5in; box-sizing:border-box;">
-        <PDFReportSignature v-if="measureItem || firstCaseItem" :case-item="(measureItem || firstCaseItem) as any" />
-      </div>
-    </div>
 
-    <!-- PDF Preview Content -->
-    <div v-if="hasData" class="pdf-multiple-container">
       <!-- Contenido principal con todos los casos -->
       <div class="print-content multiple-cases">
         <template v-for="(caseBundle, caseIndex) in processedCases" :key="`case-bundle-${caseIndex}`">
@@ -56,9 +53,8 @@
               :class="{ 'print-break-before': pageIndex > 0 }"
               :style="pageStyle"
             >
-              <!-- Header solo en primera página del caso -->
+              <!-- Header (en todas las páginas para modo múltiple) -->
               <div 
-                v-if="page.isFirstPage"
                 class="page-header" 
                 :style="{ 
                   height: `${caseBundle.headerPx}px`, 
@@ -80,13 +76,9 @@
               <div 
                 class="page-body" 
                 :style="{ 
-                  height: `${page.isFirstPage 
-                    ? (page.isLastPage ? caseBundle.availableSinglePx : caseBundle.availableFirstPx) 
-                    : (page.isLastPage ? (caseBundle.availableContPx - caseBundle.signaturePx) : caseBundle.availableContPx)}px`, 
-                  maxHeight: `${page.isFirstPage 
-                    ? (page.isLastPage ? caseBundle.availableSinglePx : caseBundle.availableFirstPx) 
-                    : (page.isLastPage ? (caseBundle.availableContPx - caseBundle.signaturePx) : caseBundle.availableContPx)}px`, 
-                  overflow: 'visible', 
+                  height: `${page.isFirstPage ? caseBundle.availableFirstPx : caseBundle.availableContPx}px`, 
+                  maxHeight: `${page.isFirstPage ? caseBundle.availableFirstPx : caseBundle.availableContPx}px`, 
+                  overflow: 'hidden', 
                   position: 'relative', 
                   zIndex: 5 
                 }"
@@ -218,8 +210,22 @@ const measureFooterRef = ref<HTMLElement>()
 const measureSignatureRef = ref<HTMLElement>()
 
 // Interfaces
-interface PageInfo { content: string; isFirstPage: boolean; isLastPage: boolean }
-interface CaseBundle { item: Case; caseItem: CaseItem; pages: PageInfo[]; headerPx: number; footerPx: number; signaturePx: number; availableFirstPx: number; availableContPx: number; availableSinglePx: number }
+interface PageInfo {
+  content: string
+  isFirstPage: boolean
+  isLastPage: boolean
+}
+
+interface CaseBundle {
+  item: Case
+  caseItem: CaseItem  // Para compatibilidad con componentes PDF
+  pages: PageInfo[]
+  headerPx: number
+  footerPx: number
+  signaturePx: number
+  availableFirstPx: number
+  availableContPx: number
+}
 
 // Computed
 const hasData = computed(() => props.cases && props.cases.length > 0)
@@ -229,7 +235,7 @@ const firstCaseItem = computed(() => firstCase.value ? convertCaseToCaseItem(fir
 const pageStyle = computed(() => ({
   width: '8.5in',
   height: '11in', 
-  padding: '0.5in 0.5in 0.5in 0.5in',
+  padding: '0.5in 0.5in 0.4in 0.5in',
   boxSizing: 'border-box' as const,
   color: '#111827',
   overflow: 'hidden' as const,
@@ -333,133 +339,210 @@ function recibidoNumero(caseCode: string | undefined): string {
   return parts.slice(1).join('-')
 }
 
-// --- Nueva lógica precisa de paginado multi (no solapamientos) ---
-const measureItem = ref<any>(null)
+async function processAllCases() {
+  if (!hasData.value) return
 
-interface MetricBundle {
-  innerHeight: number
-  headerPx: number
-  footerPx: number
-  signaturePx: number
-  singleBody: number
-  firstMultiBody: number
-  contBody: number
-  lastBody: number
+  isLoading.value = true
+  error.value = null
+  
+  try {
+    await nextTick()
+    
+    // Procesar cada caso individualmente
+    const bundles: CaseBundle[] = []
+    
+    for (const caseItem of props.cases) {
+      const bundle = await processSingleCase(caseItem)
+      if (bundle) {
+        bundles.push(bundle)
+      }
+    }
+    
+    processedCases.value = bundles
+  } catch (err) {
+    console.error('Error processing cases:', err)
+    error.value = err instanceof Error ? err.message : 'Error desconocido'
+  } finally {
+    isLoading.value = false
+  }
 }
 
-function calculateAccurateMetrics(): MetricBundle {
-  const DPI = 96
-  const pageHeight = 11 * DPI
-  const padding = 0.5 * DPI
-  const innerHeight = pageHeight - (padding * 2)
-  const headerPx = measureHeaderRef.value?.scrollHeight || Math.round(2.5 * DPI * 0.8)
-  const footerPx = measureFooterRef.value?.scrollHeight || Math.round(1.0 * DPI * 0.6)
-  const signaturePx = 160
-  const singleBody = Math.max(0, innerHeight - headerPx - footerPx - signaturePx)
-  const firstMultiBody = Math.max(0, innerHeight - headerPx - footerPx)
-  const contBody = Math.max(0, innerHeight - footerPx)
-  const lastBody = Math.max(0, innerHeight - footerPx - signaturePx)
-  return { innerHeight, headerPx, footerPx, signaturePx, singleBody, firstMultiBody, contBody, lastBody }
+async function processSingleCase(caseItem: Case): Promise<CaseBundle | null> {
+  try {
+    await nextTick()
+    
+    // Convertir Case a CaseItem para compatibilidad
+    const caseItemConverted = convertCaseToCaseItem(caseItem)
+    
+    // Obtener dimensiones de elementos fijos
+    const dimensions = await getMeasurements()
+    
+    // Generar contenido del caso usando el CaseItem convertido
+    const content = generateCaseContent(caseItemConverted)
+    
+    // Paginar el contenido
+    const pages = await paginateContent(content, dimensions)
+    
+    return {
+      item: caseItem,
+      caseItem: caseItemConverted,
+      pages,
+      headerPx: dimensions.headerPx,
+      footerPx: dimensions.footerPx,
+      signaturePx: dimensions.signaturePx,
+      availableFirstPx: dimensions.availableFirstPx,
+      availableContPx: dimensions.availableContPx
+    }
+  } catch (err) {
+    console.error(`Error processing case ${caseItem.id}:`, err)
+    return null
+  }
 }
 
-function formatBodyContentForItem(item: any): string {
+async function getMeasurements() {
+  await nextTick()
+  
+  // TAMAÑO CARTA EXACTO: 8.5" x 11" (como en el componente original)
+  const pageHeight = 11 * 96 // 11 pulgadas = 1056px
+  const padding = 0.5 * 96 // 0.5 pulgadas = 48px arriba y abajo
+  
+  // Altura disponible para contenido = 11" - 1" padding = 10" = 960px
+  const availableHeight = pageHeight - (padding * 2)
+  
+  // Medir componentes fijos
+  const headerEl = measureHeaderRef.value
+  const footerEl = measureFooterRef.value
+  
+  const headerPx = headerEl?.scrollHeight || Math.round(2.5 * 96 * 0.8)
+  const footerPx = footerEl?.scrollHeight || Math.round(1.0 * 96 * 0.6)
+  const signaturePx = 160 // Altura fija de 160px para la firma (siempre igual)
+  
+  // Espacio disponible para BODY en primera página
+  // Para modo múltiple: 960px - header - footer - signature
+  const availableFirstPx = Math.max(200, availableHeight - headerPx - footerPx - signaturePx)
+  
+  // Espacio disponible para BODY en páginas de continuación  
+  // Para modo múltiple: 960px - header - footer (todas tienen header)
+  const availableContPx = Math.max(400, availableHeight - headerPx - footerPx)
+  
+  return {
+    headerPx,
+    footerPx,
+    signaturePx,
+    availableFirstPx,
+    availableContPx
+  }
+}
+
+function generateCaseContent(caseItem: CaseItem): string {
   const sections = [
-    { title: 'MUESTRA:', content: buildSamplesText(item.caseDetails?.muestras) },
-    { title: 'MÉTODO UTILIZADO', content: getMethodText(item.sections) || '—' },
-    { title: 'DESCRIPCIÓN MACROSCÓPICA', content: item.sections?.macro || '—' },
-    { title: 'DESCRIPCIÓN MICROSCÓPICA', content: item.sections?.micro || '—' },
-    { title: 'DIAGNÓSTICO', content: getDiagnosisText(item.sections, item.diagnosis) || '—' },
-    { title: 'CIE-10', content: `${(item.diagnosis?.cie10?.primary?.codigo || item.diagnosis?.cie10?.codigo) ?? '—'}${(item.diagnosis?.cie10?.primary?.nombre || item.diagnosis?.cie10?.nombre) ? ` - ${item.diagnosis?.cie10?.primary?.nombre || item.diagnosis?.cie10?.nombre}` : ''}` },
-    { title: 'CIE-O', content: `${item.diagnosis?.cieo?.codigo ?? '—'}${item.diagnosis?.cieo?.nombre ? ` - ${item.diagnosis.cieo.nombre}` : ''}` }
+    { title: 'MUESTRA', content: buildSamplesText(caseItem.caseDetails?.muestras) },
+    { title: 'MÉTODO UTILIZADO', content: getMethodText(caseItem.sections) || '—' },
+    { title: 'DESCRIPCIÓN MACROSCÓPICA', content: caseItem.sections?.macro || '—' },
+    { title: 'DESCRIPCIÓN MICROSCÓPICA', content: caseItem.sections?.micro || '—' },
+    { title: 'DIAGNÓSTICO', content: getDiagnosisText(caseItem.sections, caseItem.diagnosis) || '—' },
+    { title: 'CIE-10', content: `${(caseItem.diagnosis?.cie10?.primary?.codigo || caseItem.diagnosis?.cie10?.codigo) ?? '—'}${(caseItem.diagnosis?.cie10?.primary?.nombre || caseItem.diagnosis?.cie10?.nombre) ? ` - ${caseItem.diagnosis?.cie10?.primary?.nombre || caseItem.diagnosis?.cie10?.nombre}` : ''}` },
+    { title: 'CIE-O', content: `${caseItem.diagnosis?.cieo?.codigo ?? '—'}${caseItem.diagnosis?.cieo?.nombre ? ` - ${caseItem.diagnosis.cieo.nombre}` : ''}` }
   ]
   return sections.map(s => `
-    <div class="section-item">
-      <h3>${s.title}</h3>
-      <div>${s.content}</div>
+    <div class="section-item" style="margin-bottom: 12px;">
+      <h3 style="font-weight: 600; margin-bottom: 4px; font-size: 12px; color: #374151;">${s.title}</h3>
+      <div style="white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; color: #111827;">${s.content}</div>
     </div>
   `).join('')
 }
 
-async function computePagesForItem(item: any) {
-  measureItem.value = item
-  await nextTick()
-  const metrics = calculateAccurateMetrics()
-  const content = formatBodyContentForItem(item)
-  if (!measureBodyRef.value) return { item, caseItem: item, pages: [], headerPx: metrics.headerPx, footerPx: metrics.footerPx, signaturePx: metrics.signaturePx, availableFirstPx: metrics.firstMultiBody, availableContPx: metrics.contBody, availableSinglePx: metrics.singleBody } as CaseBundle
+async function paginateContent(content: string, dimensions: any): Promise<PageInfo[]> {
+  if (!measureBodyRef.value) {
+    return [{
+      content,
+      isFirstPage: true,
+      isLastPage: true
+    }]
+  }
+  
+  // Medir el contenido
   measureBodyRef.value.innerHTML = content
   const totalHeight = measureBodyRef.value.scrollHeight
-  const pages: Array<{content:any,isFirstPage:boolean,isLastPage:boolean}> = []
-  const safety = 20
-  // SINGLE PAGE
-  if (totalHeight <= (metrics.singleBody - safety)) {
-    pages.push({ content, isFirstPage: true, isLastPage: true })
-    return { item, caseItem: item, pages, headerPx: metrics.headerPx, footerPx: metrics.footerPx, signaturePx: metrics.signaturePx, availableFirstPx: metrics.firstMultiBody, availableContPx: metrics.contBody, availableSinglePx: metrics.singleBody } as CaseBundle
+  
+  const maxFirstPageHeight = dimensions.availableFirstPx - 20 // Margen de seguridad
+  const maxContinuationHeight = dimensions.availableContPx - 20
+  
+  if (totalHeight <= maxFirstPageHeight) {
+    // Todo cabe en una página
+    return [{
+      content,
+      isFirstPage: true,
+      isLastPage: true
+    }]
   }
-  // MULTI: dividir por secciones como en el componente de uno solo
+  
+  // Dividir el contenido por section-items (como en el componente original)
   const sections = content.split('<div class="section-item"').filter(s => s.trim()).map(s => `<div class="section-item"${s}`)
-  let idx = 0
-  // Primera página: capacidad sin firma
-  let firstPageContent = ''
-  while (idx < sections.length) {
-    const candidate = firstPageContent + sections[idx]
-    measureBodyRef.value.innerHTML = candidate
-    if (measureBodyRef.value.scrollHeight <= (metrics.firstMultiBody - safety)) { firstPageContent = candidate; idx++ } else break
-  }
-  pages.push({ content: firstPageContent, isFirstPage: true, isLastPage: false })
-  // Continuaciones
-  while (idx < sections.length) {
-    // decidir si esta página será la última según el alto de lo restante
-    const remainingJoin = sections.slice(idx).join('')
-    measureBodyRef.value.innerHTML = remainingJoin
-    const remainingTotal = measureBodyRef.value.scrollHeight
-    const isLastPageNow = remainingTotal <= (metrics.lastBody - safety)
-    const capacity = (isLastPageNow ? (metrics.lastBody - safety) : (metrics.contBody - safety))
-    let pageContent = ''
-    let started = idx
-    while (idx < sections.length) {
-      const candidate = pageContent + sections[idx]
-      measureBodyRef.value.innerHTML = candidate
-      if (measureBodyRef.value.scrollHeight <= capacity) { pageContent = candidate; idx++ } else break
+  let firstContent = ''
+  
+  // Simular cada sección para medir su altura en la primera página
+  for (const sec of sections) {
+    measureBodyRef.value.innerHTML = firstContent + sec
+    const h = measureBodyRef.value.scrollHeight
+    if (h <= maxFirstPageHeight) { 
+      firstContent += sec
+    } else { 
+      break 
     }
-    // seccion gigante, fragmentar
-    if (!pageContent && idx < sections.length) {
-      const part = sections[idx]
-      const temp = document.createElement('div')
-      temp.innerHTML = part
-      const inner = temp.querySelector('.section-item') as HTMLElement
-      const blocks = Array.from(inner?.childNodes || [])
-      for (const block of blocks) {
-        const html = (block as HTMLElement).outerHTML || (block as HTMLElement).textContent || ''
-        const candidate = pageContent + html
-        measureBodyRef.value.innerHTML = candidate
-        if (measureBodyRef.value.scrollHeight <= capacity) pageContent = candidate
-        else break
+  }
+  
+  const result: PageInfo[] = []
+  
+  // Primera página
+  result.push({ 
+    content: firstContent, 
+    isFirstPage: true, 
+    isLastPage: false 
+  })
+  
+  // Contenido restante
+  const remaining = sections.join('')?.replace(firstContent, '') || ''
+  if (remaining.trim()) {
+    const parts = remaining.split('<div class="section-item"').filter(s => s.trim()).map(s => `<div class="section-item"${s}`)
+    let current = ''
+    
+    for (const part of parts) {
+      measureBodyRef.value.innerHTML = current + part
+      const h = measureBodyRef.value.scrollHeight
+      if (h <= maxContinuationHeight) { 
+        current += part
+      } else {
+        if (current) {
+          result.push({ 
+            content: current, 
+            isFirstPage: false, 
+            isLastPage: false 
+          })
+        }
+        current = part
       }
-      if (!pageContent) pageContent = part
-      else idx++
     }
-    pages.push({ content: pageContent, isFirstPage: false, isLastPage: isLastPageNow && (idx >= sections.length) })
+    
+    if (current) {
+      result.push({ 
+        content: current, 
+        isFirstPage: false, 
+        isLastPage: true 
+      })
+    }
   }
-  if (pages.length) pages[pages.length - 1].isLastPage = true
-  return { item, caseItem: item, pages, headerPx: metrics.headerPx, footerPx: metrics.footerPx, signaturePx: metrics.signaturePx, availableFirstPx: metrics.firstMultiBody, availableContPx: metrics.contBody, availableSinglePx: metrics.singleBody } as CaseBundle
-}
-
-async function processAllCases() {
-  if (!hasData.value) return
-  isLoading.value = true
-  error.value = null
-  try {
-    await nextTick()
-    const bundles: CaseBundle[] = []
-    for (const c of props.cases) {
-      const converted = convertCaseToCaseItem(c)
-      const bundle = await computePagesForItem(converted)
-      bundles.push({ ...bundle, item: c, caseItem: converted })
-    }
-    processedCases.value = bundles
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Error desconocido'
-  } finally { isLoading.value = false }
+  
+  // Marcar la última página como isLastPage
+  if (result.length > 0) {
+    result[result.length - 1].isLastPage = true
+  }
+  
+  return result.length > 0 ? result : [{
+    content,
+    isFirstPage: true,
+    isLastPage: true
+  }]
 }
 
 // Watchers
@@ -504,10 +587,6 @@ onMounted(() => {
 .report-page {
   margin-bottom: 1.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  padding: 0.5in 0.5in 0.4in 0.5in;
-  box-sizing: border-box;
 }
 
 .page-header,
@@ -517,9 +596,8 @@ onMounted(() => {
 }
 
 .page-body {
-  flex-shrink: 0;
+  flex-grow: 1;
   overflow: hidden;
-  position: relative;
 }
 
 .dynamic-content {
@@ -532,8 +610,7 @@ onMounted(() => {
 }
 
 .dynamic-content .section-item {
-  margin: 0 0 10px 0;
-  padding: 0;
+  margin-bottom: 12px;
 }
 
 .dynamic-content .section-item h3 {
@@ -561,7 +638,6 @@ onMounted(() => {
     border: none !important;
     margin: 0 !important;
     break-inside: avoid;
-  padding: 0.5in 0.5in 0.4in 0.5in !important;
   }
   
   .print-break-before {

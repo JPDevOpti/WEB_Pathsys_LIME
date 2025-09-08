@@ -51,22 +51,69 @@ export const profileApiService = {
   async getByRoleAndEmail(role: UserRole, email: string) {
     switch (role) {
       case 'patologo': {
+        // Backend de patólogos no expone filtro directo por email; usamos q=email y luego filtramos localmente
         const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/search`, {
-          params: { PatologoEmail: email, limit: 1 }
+          params: { q: email, limit: 5 }
         })
-        return pickFirstFromUnknown(data) as BackendPatologo | undefined
+        let raw = pickFirstFromUnknown(data)
+        // Intentar encontrar coincidencia exacta de email si la estructura retornada contiene lista
+        if (Array.isArray((data as any)?.patologos)) {
+          const exact = (data as any).patologos.find((p: any) => (p.patologo_email || p.PatologoEmail) === email)
+          if (exact) raw = exact
+        }
+        if (!raw) return undefined
+        // Normalizamos sólo si vienen campos en snake_case
+        const mapped = {
+          patologoName: raw.patologo_name || raw.patologoName,
+          InicialesPatologo: raw.iniciales_patologo || raw.InicialesPatologo || raw.iniciales,
+            patologoCode: raw.patologo_code || raw.patologoCode,
+          PatologoEmail: raw.patologo_email || raw.PatologoEmail,
+          registro_medico: raw.registro_medico,
+          firma: raw.firma,
+          observaciones: raw.observaciones,
+          isActive: typeof raw.is_active === 'boolean' ? raw.is_active : raw.isActive,
+          fecha_creacion: raw.fecha_creacion,
+          fecha_actualizacion: raw.fecha_actualizacion
+        } as BackendPatologo
+        return mapped
       }
       case 'residente': {
+        // BACKEND espera 'residente_email' (snake_case). Antes se enviaba 'ResidenteEmail' y no filtraba correctamente.
         const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.RESIDENTS}/search`, {
-          params: { ResidenteEmail: email, limit: 1 }
+          params: { residente_email: email, limit: 1 }
         })
-        return pickFirstFromUnknown(data) as BackendResidente | undefined
+        const raw = pickFirstFromUnknown(data)
+        if (!raw) return undefined
+        const mapped = {
+          residenteName: raw.residente_name || raw.residenteName,
+          InicialesResidente: raw.iniciales_residente || raw.InicialesResidente || raw.iniciales,
+          residenteCode: raw.residente_code || raw.residenteCode,
+          ResidenteEmail: raw.residente_email || raw.ResidenteEmail,
+          registro_medico: raw.registro_medico,
+          observaciones: raw.observaciones,
+          isActive: typeof raw.is_active === 'boolean' ? raw.is_active : raw.isActive,
+          fecha_creacion: raw.fecha_creacion,
+          fecha_actualizacion: raw.fecha_actualizacion
+        } as BackendResidente
+        return mapped
       }
       case 'auxiliar': {
+        // Backend espera auxiliar_email (snake_case)
         const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.AUXILIARIES}/search`, {
-          params: { AuxiliarEmail: email }
+          params: { auxiliar_email: email, limit: 5 }
         })
-        return pickFirstFromUnknown(data) as BackendAuxiliar | undefined
+        const raw = pickFirstFromUnknown(data)
+        if (!raw) return undefined
+        const mapped = {
+          auxiliarName: raw.auxiliar_name || raw.auxiliarName,
+          auxiliarCode: raw.auxiliar_code || raw.auxiliarCode,
+          AuxiliarEmail: raw.auxiliar_email || raw.AuxiliarEmail,
+          observaciones: raw.observaciones,
+          isActive: typeof raw.is_active === 'boolean' ? raw.is_active : raw.isActive,
+          fecha_creacion: raw.fecha_creacion,
+          fecha_actualizacion: raw.fecha_actualizacion
+        } as BackendAuxiliar
+        return mapped
       }
       case 'admin':
       default:
@@ -77,11 +124,37 @@ export const profileApiService = {
   async updateByRole(role: UserRole, code: string, payload: any) {
     switch (role) {
       case 'patologo':
-        return apiClient.put(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`, payload)
+        // Mapear a snake_case si viene en camel/Pascal
+        const patoPayload = {
+          patologo_name: payload.patologoName || payload.patologo_name,
+          iniciales_patologo: payload.InicialesPatologo || payload.iniciales_patologo || payload.iniciales,
+          patologo_email: payload.PatologoEmail || payload.patologo_email,
+          registro_medico: payload.registro_medico,
+          observaciones: payload.observaciones
+        }
+        return apiClient.put(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`, patoPayload)
       case 'residente':
-        return apiClient.put(`${API_CONFIG.ENDPOINTS.RESIDENTS}/${code}`, payload)
+        // Asegurar que exista code; si viene vacío no se debe intentar PUT raíz
+        if (!code) throw new Error('No se pudo determinar el código del residente para actualizar')
+        const resPayload = {
+          residente_name: payload.residenteName || payload.residente_name,
+          iniciales_residente: payload.InicialesResidente || payload.iniciales_residente || payload.iniciales,
+          residente_email: payload.ResidenteEmail || payload.residente_email,
+          registro_medico: payload.registro_medico,
+          observaciones: payload.observaciones,
+          // Permitir opcionalmente cambio de estado o password si se incluyen
+          ...(payload.is_active !== undefined ? { is_active: payload.is_active } : {}),
+          ...(payload.isActive !== undefined ? { is_active: payload.isActive } : {}),
+          ...(payload.password ? { password: payload.password } : {})
+        }
+        return apiClient.put(`${API_CONFIG.ENDPOINTS.RESIDENTS}/${code}`, resPayload)
       case 'auxiliar':
-        return apiClient.put(`${API_CONFIG.ENDPOINTS.AUXILIARIES}/${code}`, payload)
+        const auxPayload = {
+          auxiliar_name: payload.auxiliarName || payload.auxiliar_name,
+          auxiliar_email: payload.AuxiliarEmail || payload.auxiliar_email,
+          observaciones: payload.observaciones
+        }
+        return apiClient.put(`${API_CONFIG.ENDPOINTS.AUXILIARIES}/${code}`, auxPayload)
       default:
         return null
     }

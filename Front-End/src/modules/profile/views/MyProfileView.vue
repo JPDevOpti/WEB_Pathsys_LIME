@@ -34,6 +34,7 @@
           <!-- Firma Digital - Solo para Patólogos -->
           <SignatureUploader
             v-if="userProfile.role === 'patologo'"
+            :user-role="userProfile.role"
             :current-url="userProfile.roleSpecificData?.firmaUrl"
             @change="handleSignatureChange"
           />
@@ -164,21 +165,29 @@ const loadUserProfile = async () => {
       updatedAt: new Date()
     }
 
-    // Intentar detectar el rol efectivo por existencia en colecciones
-    const [p, r, a] = await Promise.all([
-      profileApiService.getByRoleAndEmail('patologo', email).catch(() => undefined),
+    // Intentar detectar el rol efectivo priorizando colecciones con búsqueda fiable por email
+    const [residenteData, auxiliarData] = await Promise.all([
       profileApiService.getByRoleAndEmail('residente', email).catch(() => undefined),
       profileApiService.getByRoleAndEmail('auxiliar', email).catch(() => undefined)
     ])
+    let patologoData = undefined
+    if (!residenteData && !auxiliarData) {
+      patologoData = await profileApiService.getByRoleAndEmail('patologo', email).catch(() => undefined)
+    }
 
-    const hasPatologo = !!(p && (p as any)?.patologoCode)
-    const hasResidente = !!(r && (r as any)?.residenteCode)
-    const hasAuxiliar = !!(a && (a as any)?.auxiliarCode)
+    const hasResidente = !!(residenteData && (residenteData as any).residenteCode)
+    const hasAuxiliar = !!(auxiliarData && (auxiliarData as any).auxiliarCode)
+    const hasPatologo = !!(patologoData && (patologoData as any).patologoCode)
 
-    const effectiveRole: UserRole = hasPatologo ? 'patologo' : hasResidente ? 'residente' : hasAuxiliar ? 'auxiliar' : role
+    // Determinar rol efectivo: respetar coincidencias únicas; si múltiples, priorizar patólogo sólo si fue explícito en token
+    let effectiveRole: UserRole
+    if (hasResidente) effectiveRole = 'residente'
+    else if (hasAuxiliar) effectiveRole = 'auxiliar'
+    else if (hasPatologo) effectiveRole = 'patologo'
+    else effectiveRole = role
 
     if (effectiveRole === 'patologo') {
-      const pb = p as BackendPatologo | undefined
+      const pb = patologoData as BackendPatologo | undefined
       userProfile.value = {
         ...base,
         document: '',
@@ -196,7 +205,7 @@ const loadUserProfile = async () => {
     }
 
     if (effectiveRole === 'residente') {
-      const rb = r as BackendResidente | undefined
+      const rb = residenteData as BackendResidente | undefined
       userProfile.value = {
         ...base,
         document: '',
@@ -213,7 +222,7 @@ const loadUserProfile = async () => {
     }
 
     if (effectiveRole === 'auxiliar') {
-      const ab = a as BackendAuxiliar | undefined
+      const ab = auxiliarData as BackendAuxiliar | undefined
       userProfile.value = {
         ...base,
         document: '',
@@ -258,7 +267,7 @@ const handleProfileUpdate = async (formData: ProfileEditPayload) => {
     isSaving.value = true
     editErrors.value = []
     
-    // TODO: conectar a backend según role. Por ahora, solo actualizamos nombre/email locales cuando aplique.
+  // Integración backend por rol: se obtienen datos por email y luego se hace PUT usando el código detectado.
     if (userProfile.value) {
       if (formData.role === 'admin') {
         userProfile.value.firstName = formData.firstName
