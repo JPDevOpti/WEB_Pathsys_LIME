@@ -11,12 +11,19 @@
     >
       <div class="w-full max-w-3xl bg-white rounded-xl shadow-xl overflow-hidden">
         <!-- Header -->
-        <div class="px-4 py-3 border-b border-gray-100 flex items-start gap-3">
-          <div class="flex-1">
-            <h3 class="text-sm font-semibold text-gray-900">¡Caso Creado Exitosamente!</h3>
-            <p class="text-xs text-gray-500 mt-0.5">{{ createdCaseFecha }}</p>
+        <div class="px-4 py-3 border-b border-green-200 bg-green-50 flex items-start gap-3">
+          <div class="flex items-center gap-2 flex-1">
+            <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-green-900">¡Caso Creado Exitosamente!</h3>
+              <p class="text-xs text-green-600 mt-0.5">{{ createdCaseFecha }}</p>
+            </div>
           </div>
-          <button @click="onClose" class="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+          <button @click="onClose" class="text-green-400 hover:text-green-600" aria-label="Cerrar">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -25,7 +32,7 @@
         <div class="p-4 sm:p-5">
           <div class="text-center pb-3 border-b border-gray-200">
             <div class="inline-block">
-              <p class="font-mono font-bold text-2xl text-gray-900 mb-1">{{ caseData?.caso_code || caseData?.codigo }}</p>
+              <p class="font-mono font-bold text-2xl text-green-700 mb-1">{{ caseData?.caso_code || caseData?.codigo }}</p>
             </div>
           </div>
 
@@ -80,8 +87,8 @@
         </div>
 
         <!-- Footer -->
-        <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
-          <button type="button" class="inline-flex justify-center items-center px-4 py-2 rounded-md text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" @click="onClose">Cerrar</button>
+        <div class="px-4 py-3 bg-green-50 border-t border-green-200 flex justify-end">
+          <button type="button" class="inline-flex justify-center items-center px-4 py-2 rounded-md text-sm font-medium border border-green-300 bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500" @click="onClose">Cerrar</button>
         </div>
       </div>
     </div>

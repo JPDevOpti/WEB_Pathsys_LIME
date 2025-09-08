@@ -8,34 +8,25 @@
 
     <div class="space-y-6">
       <!-- Filtros de búsqueda -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Solicitud</label>
-          <div class="flex gap-2">
-            <div class="flex-1">
-              <FormInputField 
-                v-model="searchTerm" 
-                :label="undefined" 
-                placeholder="Código del caso (ej: 2025-01009)" 
-                :max-length="100" 
-                @keyup.enter="handleSearch"
-              />
-            </div>
-            <SearchButton 
-              text="Buscar" 
-              size="md" 
-              variant="primary" 
-              @click="handleSearch" 
+      <div class="max-w-md">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Solicitud</label>
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <FormInputField 
+              v-model="searchTerm" 
+              :label="undefined" 
+              placeholder="Código del caso (Ejemplo: 2025-00001)" 
+              :max-length="100" 
+              @keyup.enter="handleSearch"
             />
           </div>
+          <SearchButton 
+            text="Buscar" 
+            size="md" 
+            variant="primary" 
+            @click="handleSearch" 
+          />
         </div>
-        <PathologistList 
-          v-model="selectedPathologist" 
-          label="Filtrar por Patólogo" 
-          placeholder="Seleccionar patólogo..." 
-          :required="false" 
-          @pathologist-selected="handlePathologistFilter"
-        />
       </div>
 
       <!-- Lista de casos -->
@@ -163,14 +154,64 @@
           </div>
         </div>
       </div>
+
+      <!-- Paginación -->
+      <div v-if="total > 0" class="px-4 sm:px-5 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <!-- Información de resultados -->
+          <div class="flex items-center gap-2 text-sm text-gray-500">
+            <span>Mostrando</span>
+            <select 
+              :value="itemsPerPage" 
+              @change="handleItemsPerPageChange(Number(($event.target as HTMLSelectElement)?.value))" 
+              class="h-8 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700"
+            >
+              <option :value="5">5</option>
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+              <option :value="total">Todos</option>
+            </select>
+            <span>de {{ total }} resultados</span>
+          </div>
+          
+          <!-- Navegación de páginas -->
+          <div class="flex items-center justify-center gap-2">
+            <button 
+              @click="handlePageChange(currentPage - 1)" 
+              :disabled="currentPage === 1" 
+              class="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            >
+              <span class="hidden sm:inline">Anterior</span>
+              <span class="sm:hidden">←</span>
+            </button>
+            
+            <!-- Información de página -->
+            <div class="flex items-center gap-1 text-sm text-gray-500">
+              <span class="hidden sm:inline">Página</span>
+              <span class="font-medium">{{ currentPage }}</span>
+              <span class="hidden sm:inline">de</span>
+              <span class="hidden sm:inline">{{ totalPages }}</span>
+              <span class="sm:hidden">/ {{ totalPages }}</span>
+            </div>
+            
+            <button 
+              @click="handlePageChange(currentPage + 1)" 
+              :disabled="currentPage === totalPages" 
+              class="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            >
+              <span class="hidden sm:inline">Siguiente</span>
+              <span class="sm:hidden">→</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </ComponentCard>
   <CaseApprovalDetailsModal
     :approval-case="selectedApprovalCase"
     @close="closeModal"
-    @approve="approveFromModal"
-    @reject="rejectFromModal"
-    @manage="manageFromModal"
     @tests-updated="handleTestsUpdated"
   />
   
@@ -216,7 +257,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ComponentCard, FormInputField, BaseButton, PathologistList, SearchButton } from '@/shared/components'
+import { ComponentCard, FormInputField, BaseButton, SearchButton } from '@/shared/components'
 import ConfirmDialog from '@/shared/components/feedback/ConfirmDialog.vue'
 import CaseApprovalDetailsModal from './CaseApprovalDetailsModal.vue'
 import CaseCreatedToast from './CaseCreatedToast.vue'
@@ -250,13 +291,12 @@ interface CaseToApprove {
 // ============================================================================
 
 const searchTerm = ref('')
-const selectedPathologist = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
 const cases = ref<CaseToApprove[]>([])
 const total = ref(0)
-const skip = ref(0)
-const limit = ref(20)
+const currentPage = ref(1)
+const itemsPerPage = ref(20)
 
 // const authStore = useAuthStore()
 
@@ -305,7 +345,10 @@ const fetchCases = async () => {
       estado_aprobacion: undefined // Obtener todos los estados
     }
     
-    const respData = await casoAprobacionService.searchCasos(searchPayload, skip.value, limit.value)
+    // Calcular skip basado en la página actual
+    const calculatedSkip = (currentPage.value - 1) * itemsPerPage.value
+    
+    const respData = await casoAprobacionService.searchCasos(searchPayload, calculatedSkip, itemsPerPage.value)
     const dataList: CasoAprobacionResponse[] = respData?.data || []
     total.value = respData?.total || dataList.length
     cases.value = dataList.map(mapBackendCase)
@@ -322,14 +365,8 @@ fetchCases()
 // FUNCIONES DE FILTRADO
 // ============================================================================
 
-const handlePathologistFilter = async (pathologist: any) => {
-  selectedPathologist.value = pathologist?.id || ''
-  skip.value = 0
-  await fetchCases()
-}
-
 const handleSearch = async () => {
-  skip.value = 0
+  currentPage.value = 1
   await fetchCases()
 }
 
@@ -338,6 +375,19 @@ const handleSearch = async () => {
 // ============================================================================
 
 const filteredCases = computed(() => cases.value)
+
+const totalPages = computed(() => Math.ceil(total.value / itemsPerPage.value))
+
+const handlePageChange = async (page: number) => {
+  currentPage.value = page
+  await fetchCases()
+}
+
+const handleItemsPerPageChange = async (newItemsPerPage: number) => {
+  itemsPerPage.value = newItemsPerPage
+  currentPage.value = 1
+  await fetchCases()
+}
 
 // ============================================================================
 // FUNCIONES
@@ -434,6 +484,11 @@ const confirmManageCase = async (): Promise<void> => {
     await casoAprobacionService.gestionarCaso(confirmData.value.caseId)
     await fetchCases()
     showConfirmManage.value = false
+    
+    // Si el modal está abierto para este caso, cerrarlo
+    if (selectedApprovalCase.value && (selectedApprovalCase.value as any).id === confirmData.value.caseId) {
+      closeModal()
+    }
   } catch (error) {
     console.error('Error al gestionar caso:', error)
   } finally {
@@ -450,10 +505,15 @@ const confirmApproveCase = async (): Promise<void> => {
   confirmData.value.loading = true
   caseItem.approving = true
   try {
-    const { aprobacion, nuevo_caso } = await casoAprobacionService.aprobarCaso(confirmData.value.caseId)
+    const { nuevo_caso } = await casoAprobacionService.aprobarCaso(confirmData.value.caseId)
     await fetchCases()
     showConfirmApprove.value = false
     if (nuevo_caso) showSuccessNotification(nuevo_caso)
+    
+    // Si el modal está abierto para este caso, cerrarlo
+    if (selectedApprovalCase.value && (selectedApprovalCase.value as any).id === confirmData.value.caseId) {
+      closeModal()
+    }
   } catch (error) {
     console.error('Error al aprobar caso:', error)
   } finally {
@@ -526,44 +586,6 @@ const closeModal = () => {
   selectedApprovalCase.value = null
 }
 
-const approveFromModal = async (caseId: string) => {
-  // El modal ya manejó la confirmación, ejecutar directamente
-  const caseItem = cases.value.find(c => c.id === caseId)
-  if (!caseItem) return
-  
-  caseItem.approving = true
-  try {
-    await casoAprobacionService.aprobarCaso(caseId)
-    await fetchCases()
-    closeModal()
-  } catch (error) {
-    console.error('Error al aprobar caso desde modal:', error)
-  } finally {
-    caseItem.approving = false
-  }
-}
-
-const rejectFromModal = async (caseId: string) => {
-  await rejectCase(caseId)
-  // El cierre del modal se maneja en confirmRejectCase
-}
-
-const manageFromModal = async (caseId: string) => {
-  // El modal ya manejó la confirmación, ejecutar directamente
-  const caseItem = cases.value.find(c => c.id === caseId)
-  if (!caseItem) return
-  
-  caseItem.managing = true
-  try {
-    await casoAprobacionService.gestionarCaso(caseId)
-    await fetchCases()
-    closeModal()
-  } catch (error) {
-    console.error('Error al gestionar caso desde modal:', error)
-  } finally {
-    caseItem.managing = false
-  }
-}
 
 const handleTestsUpdated = async (updatedTests: Array<{ codigo: string; nombre: string; cantidad: number }>) => {
   // Actualizar la lista local con las pruebas modificadas
@@ -588,15 +610,6 @@ const showSuccessNotification = (caseData: any) => {
   createdCase.value = caseData
   createdToastVisible.value = true
 }
-
-const formatDateDisplay = (value: string | undefined | null): string => {
-  if (!value) return ''
-  const date = new Date(String(value))
-  if (isNaN(date.getTime())) return String(value)
-  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date)
-}
-
-const createdCaseFecha = computed(() => '')
 
 
 </script>

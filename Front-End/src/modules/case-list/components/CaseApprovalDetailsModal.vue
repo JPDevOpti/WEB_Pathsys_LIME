@@ -342,72 +342,17 @@
               text="Cerrar"
               @click="$emit('close')"
             />
-            <BaseButton
-              v-if="approvalCase.estado_aprobacion === 'solicitud_hecha'"
-              variant="outline"
-              size="md"
-              text="Revisar"
-              :loading="loadingManage"
-              :disabled="loadingApprove || loadingReject || isEditingTests"
-              custom-class="border-orange-600 text-orange-600 hover:bg-orange-50"
-              @click="handleManage"
-            />
-            <BaseButton
-              v-if="approvalCase.estado_aprobacion === 'pendiente_aprobacion'"
-              variant="primary"
-              size="md"
-              text="Aprobar"
-              :loading="loadingApprove"
-              :disabled="loadingReject"
-              custom-class="bg-green-600 hover:bg-green-700 border-green-600"
-              @click="handleApprove"
-            />
-            <BaseButton
-              v-if="approvalCase.estado_aprobacion === 'solicitud_hecha' || approvalCase.estado_aprobacion === 'pendiente_aprobacion'"
-              variant="outline"
-              size="md"
-              text="Rechazar"
-              :loading="loadingReject"
-              :disabled="loadingApprove || loadingManage"
-              custom-class="border-red-600 text-red-600 hover:bg-red-50"
-              @click="handleReject"
-            />
             </div>
           </div>
         </div>
       </div>
     </div>
   </transition>
-
-  <!-- Dialog de confirmación para revisar -->
-  <ConfirmDialog
-    v-model="showConfirmManage"
-    title="Confirmar revisión"
-    :message="`¿Desea marcar la solicitud del caso ${approvalCase?.caso_original} como 'Pendiente de Aprobación'?`"
-    confirm-text="Sí, revisar"
-    cancel-text="Cancelar"
-    :loading-confirm="loadingManage"
-    @confirm="confirmManageAction"
-    @cancel="cancelConfirmAction"
-  />
-
-  <!-- Dialog de confirmación para aprobar -->
-  <ConfirmDialog
-    v-model="showConfirmApprove"
-    title="Confirmar aprobación"
-    :message="`¿Desea aprobar definitivamente la solicitud de pruebas complementarias para el caso ${approvalCase?.caso_original}?`"
-    confirm-text="Sí, aprobar"
-    cancel-text="Cancelar"
-    :loading-confirm="loadingApprove"
-    @confirm="confirmApproveAction"
-    @cancel="cancelConfirmAction"
-  />
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { BaseButton } from '@/shared/components'
-import ConfirmDialog from '@/shared/components/feedback/ConfirmDialog.vue'
 import casesApiService from '@/modules/cases/services/casesApi.service'
 import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
 import type { CasoAprobacionResponse } from '@/modules/results/services/casoAprobacion.service'
@@ -423,9 +368,6 @@ const props = defineProps<Props>()
 // Emits
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'approve', caseId: string): void
-  (e: 'reject', caseId: string): void
-  (e: 'manage', caseId: string): void
   (e: 'tests-updated', tests: Array<{ codigo: string; nombre: string; cantidad: number }>): void
 }>()
 
@@ -433,13 +375,7 @@ const emit = defineEmits<{
 const originalCase = ref<any>(null)
 const loadingOriginalCase = ref(false)
 const originalCaseError = ref('')
-const loadingApprove = ref(false)
-const loadingReject = ref(false)
-const loadingManage = ref(false)
 
-// Estado para diálogos de confirmación
-const showConfirmManage = ref(false)
-const showConfirmApprove = ref(false)
 
 // Estado para edición de pruebas
 const isEditingTests = ref(false)
@@ -528,47 +464,7 @@ const getStatusLabel = (status: string): string => {
   }
 }
 
-// Handlers para mostrar diálogos de confirmación
-const handleManage = async () => {
-  if (!props.approvalCase) return
-  showConfirmManage.value = true
-}
 
-const handleApprove = async () => {
-  if (!props.approvalCase) return
-  showConfirmApprove.value = true
-}
-
-// Acciones confirmadas
-const confirmManageAction = async () => {
-  if (!props.approvalCase) return
-  
-  loadingManage.value = true
-  try {
-    emit('manage', (props.approvalCase as any).id || '')
-  } finally {
-    loadingManage.value = false
-    showConfirmManage.value = false
-  }
-}
-
-const confirmApproveAction = async () => {
-  if (!props.approvalCase) return
-  
-  loadingApprove.value = true
-  try {
-    emit('approve', (props.approvalCase as any).id || '')
-  } finally {
-    loadingApprove.value = false
-    showConfirmApprove.value = false
-  }
-}
-
-// Cancelar confirmaciones
-const cancelConfirmAction = () => {
-  showConfirmManage.value = false
-  showConfirmApprove.value = false
-}
 
 // Funciones para edición de pruebas
 const startEditingTests = () => {
@@ -627,15 +523,6 @@ const cancelTestEditing = () => {
   isEditingTests.value = false
 }
 
-const handleReject = async () => {
-  if (!props.approvalCase) return
-  loadingReject.value = true
-  try {
-    emit('reject', (props.approvalCase as any).id || '')
-  } finally {
-    loadingReject.value = false
-  }
-}
 
 // Ajuste responsivo: respetar ancho del sidebar (colapsado/expandido) y su hover
 const { isExpanded, isMobileOpen, isHovered } = useSidebar()
