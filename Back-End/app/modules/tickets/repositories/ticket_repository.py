@@ -238,6 +238,47 @@ class TicketRepository(BaseRepository[Ticket, TicketCreate, TicketUpdate]):
         except Exception as e:
             raise ValueError(f"Error al obtener tickets del usuario: {str(e)}")
 
+    async def listar_todos_tickets(
+        self, 
+        skip: int = 0, 
+        limit: int = 20,
+        sort_by: str = "fecha_ticket",
+        sort_order: str = "desc"
+    ) -> List[Ticket]:
+        """Listar todos los tickets con paginación y ordenamiento."""
+        try:
+            # Configurar ordenamiento
+            sort_direction = -1 if sort_order.lower() == "desc" else 1
+            sort_criteria = [(sort_by, sort_direction)]
+            
+            # Ejecutar consulta
+            cursor = self.collection.find({}).sort(sort_criteria).skip(skip).limit(limit)
+            documents = await cursor.to_list(length=limit)
+            
+            # Limpiar y convertir a modelos
+            tickets = []
+            for doc in documents:
+                # Limpiar campos no deseados
+                doc.pop("is_active", None)
+                doc.pop("isActive", None)
+                
+                # Verificar que los campos requeridos estén presentes
+                if "ticket_code" not in doc or "created_by" not in doc:
+                    print(f"Warning: Documento con campos faltantes: {doc.get('_id', 'unknown')}")
+                    continue
+                
+                try:
+                    tickets.append(self.model_class(**doc))
+                except Exception as e:
+                    print(f"Error al convertir documento a modelo: {e}")
+                    print(f"Documento problemático: {doc}")
+                    continue
+            
+            return tickets
+            
+        except Exception as e:
+            raise ValueError(f"Error al listar tickets: {str(e)}")
+
     async def inicializar_indices(self):
         """Crear índices para optimizar consultas."""
         await self.collection.create_index("ticket_code", unique=True)  # PRINCIPAL - único

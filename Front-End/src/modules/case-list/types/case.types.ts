@@ -24,6 +24,11 @@ export interface Case {
   signedAt?: string  // Nueva: fecha de firma específica
   tests: string[]
   pathologist?: string
+  patologo_asignado?: {
+    codigo: string
+    nombre: string
+    firma?: string
+  }
   notes?: string
   servicio?: string
   // Nuevo: prioridad del caso (Normal|Prioritario|Urgente)

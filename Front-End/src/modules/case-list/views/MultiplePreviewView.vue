@@ -165,6 +165,11 @@ async function loadCases() {
           signedAt: fullCase.fecha_firma || '',
           tests: (fullCase.muestras || []).flatMap((m: any) => (m.pruebas || []).map((p: any) => p.nombre || p.id)).filter(Boolean),
           pathologist: fullCase.patologo_asignado?.nombre || '',
+          patologo_asignado: fullCase.patologo_asignado ? {
+            codigo: fullCase.patologo_asignado.codigo,
+            nombre: fullCase.patologo_asignado.nombre,
+            firma: fullCase.patologo_asignado.firma
+          } : undefined,
           servicio: fullCase.servicio || '',
           notes: fullCase.observaciones_generales || '',
           priority: fullCase.prioridad || undefined,

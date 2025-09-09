@@ -79,13 +79,9 @@ async def listar_tickets(
     current_user: AuthUser = Depends(get_current_active_user),
     ticket_service: TicketService = Depends(get_ticket_service)
 ):
-    """Listar tickets. Los usuarios ven solo sus tickets, los admins ven todos."""
-    if is_admin(current_user):
-        # Admins ven todos los tickets
-        return await ticket_service.listar_tickets(skip, limit, sort_by, sort_order)
-    else:
-        # Usuarios ven solo sus tickets
-        return await ticket_service.obtener_tickets_usuario(str(current_user.id), skip, limit)
+    """Listar tickets. Todos los usuarios ven todos los tickets."""
+    # Todos los usuarios ven todos los tickets
+    return await ticket_service.listar_tickets(skip, limit, sort_by, sort_order)
 
 
 @router.post("/search", response_model=List[TicketListResponse])
@@ -100,10 +96,7 @@ async def buscar_tickets(
     ticket_service: TicketService = Depends(get_ticket_service)
 ):
     """Búsqueda avanzada de tickets con filtros."""
-    # Si no es admin, filtrar solo por tickets del usuario actual
-    if not is_admin(current_user):
-        search_params.created_by = str(current_user.id)
-    
+    # Todos los usuarios pueden buscar en todos los tickets
     return await ticket_service.buscar_tickets(search_params, skip, limit, sort_by, sort_order)
 
 
@@ -115,10 +108,7 @@ async def contar_tickets(
     ticket_service: TicketService = Depends(get_ticket_service)
 ):
     """Contar tickets que coinciden con los filtros."""
-    # Si no es admin, filtrar solo por tickets del usuario actual
-    if not is_admin(current_user):
-        search_params.created_by = str(current_user.id)
-    
+    # Todos los usuarios pueden contar todos los tickets
     count = await ticket_service.contar_tickets(search_params)
     return {"total": count}
 

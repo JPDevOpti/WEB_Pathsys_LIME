@@ -56,13 +56,29 @@
               <p class="text-sm text-gray-500">Entidad</p>
               <p class="text-base font-medium text-gray-900">{{ caseItem.paciente.entidad_info.nombre || 'No especificada' }}</p>
             </div>
+            <div v-if="caseItem?.servicio">
+              <p class="text-sm text-gray-500">Servicio</p>
+              <p class="text-base font-medium text-gray-900">{{ caseItem.servicio }}</p>
+            </div>
+            <div v-if="caseItem?.prioridad">
+              <p class="text-sm text-gray-500">Prioridad</p>
+              <p class="text-base font-medium text-gray-900 capitalize">{{ caseItem.prioridad }}</p>
+            </div>
+          </div>
+
+          <!-- Observaciones Generales -->
+          <div v-if="caseItem?.observaciones_generales" class="bg-gray-50 rounded-xl p-4">
+            <h5 class="text-sm font-medium text-gray-700 mb-3">Observaciones Generales</h5>
+            <div class="border border-gray-200 rounded-lg p-3 bg-white">
+              <p class="text-sm text-gray-800 break-words">{{ caseItem.observaciones_generales }}</p>
+            </div>
           </div>
 
           <!-- Información temporal y patólogo -->
           <div class="grid grid-cols-3 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
               <p class="text-sm text-gray-500">Fecha de Ingreso</p>
-              <p class="text-base font-medium text-gray-900">{{ caseItem?.fecha_ingreso ? formatDate(caseItem.fecha_ingreso) : 'N/A' }}</p>
+              <p class="text-base font-medium text-gray-900">{{ (caseItem?.fecha_ingreso || caseItem?.fecha_creacion) ? formatDate(caseItem.fecha_ingreso || caseItem.fecha_creacion) : 'N/A' }}</p>
             </div>
             <div v-if="caseItem?.fecha_firma">
               <p class="text-sm text-gray-500">Fecha de Firma</p>
@@ -75,23 +91,6 @@
             <div>
               <p class="text-sm text-gray-500">Patólogo Asignado</p>
               <p class="text-base font-medium text-gray-900">{{ caseItem?.patologo_asignado?.nombre || 'Sin asignar' }}</p>
-            </div>
-          </div>
-
-          <!-- Información adicional del caso -->
-          <div v-if="caseItem?.servicio || caseItem?.observaciones_generales" class="bg-gray-50 rounded-xl p-4 space-y-3">
-            <h5 class="text-sm font-medium text-gray-700">Información Adicional</h5>
-            <div v-if="caseItem.servicio" class="border border-gray-200 rounded-lg p-3 bg-white">
-              <div class="mb-2">
-                <p class="text-sm text-gray-600">Servicio</p>
-              </div>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.servicio }}</p>
-            </div>
-            <div v-if="caseItem.observaciones_generales" class="border border-gray-200 rounded-lg p-3 bg-white">
-              <div class="mb-2">
-                <p class="text-sm text-gray-600">Observaciones Generales</p>
-              </div>
-              <p class="text-sm text-gray-800 break-words">{{ caseItem.observaciones_generales }}</p>
             </div>
           </div>
 
@@ -198,22 +197,21 @@
             </div>
           </div>
 
-          <!-- Información de auditoría -->
-          <div v-if="caseItem?.creado_por || caseItem?.actualizado_por || caseItem?.fecha_actualizacion" class="bg-gray-50 rounded-xl p-4">
-            <h5 class="text-sm font-medium text-gray-700 mb-3">Información de Auditoría</h5>
-            <div class="grid grid-cols-2 gap-4">
-              <div v-if="caseItem.creado_por">
-                <p class="text-sm text-gray-500">Creado por</p>
-                <p class="text-base font-medium text-gray-900">{{ caseItem.creado_por }}</p>
-              </div>
-              <div v-if="caseItem.actualizado_por">
-                <p class="text-sm text-gray-500">Actualizado por</p>
-                <p class="text-base font-medium text-gray-900">{{ caseItem.actualizado_por }}</p>
-              </div>
-              <div v-if="caseItem.fecha_actualizacion">
-                <p class="text-sm text-gray-500">Última actualización</p>
-                <p class="text-base font-medium text-gray-900">{{ formatDate(caseItem.fecha_actualizacion) }}</p>
-              </div>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl">
+          <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <div class="flex justify-center sm:justify-start">
+              <PreviewButton text="Previsualizar PDF" @click="handlePreview" />
+            </div>
+            <div class="flex gap-2 justify-center sm:justify-end">
+              <button
+                @click="$emit('close')"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
@@ -224,11 +222,15 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import type { CaseModel } from '@/modules/cases/types/case'
 import { useSidebar } from '@/shared/composables/SidebarControl'
+import { PreviewButton } from '@/shared/components/buttons'
 
-defineProps<{ caseItem: CaseModel | null }>()
+const props = defineProps<{ caseItem: CaseModel | null }>()
 defineEmits<{ (e: 'close'): void }>()
+
+const router = useRouter()
 
 function formatDate(dateString: string) {
   if (!dateString) return 'N/A'
@@ -242,4 +244,78 @@ const overlayLeftClass = computed(() => {
   const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
   return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
 })
+
+const handlePreview = () => {
+  // Cerrar el modal primero
+  const closeEvent = new CustomEvent('close')
+  window.dispatchEvent(closeEvent)
+  
+  // Preparar payload completo para la previsualización
+  if (props.caseItem?.caso_code) {
+    const payload = {
+      sampleId: props.caseItem.caso_code,
+      patient: props.caseItem.paciente ? {
+        id: props.caseItem.paciente.paciente_code,
+        fullName: props.caseItem.paciente.nombre,
+        document: props.caseItem.paciente.paciente_code,
+        age: props.caseItem.paciente.edad,
+        entity: props.caseItem.paciente.entidad_info?.nombre,
+        entityCode: props.caseItem.paciente.entidad_info?.codigo,
+        sexo: props.caseItem.paciente.sexo,
+        observaciones: props.caseItem.paciente.observaciones || ''
+      } : null,
+      caseDetails: {
+        _id: props.caseItem._id || '',
+        caso_code: props.caseItem.caso_code,
+        paciente: props.caseItem.paciente,
+        medico_solicitante: props.caseItem.medico_solicitante,
+        muestras: props.caseItem.muestras || [],
+        estado: props.caseItem.estado,
+        fecha_creacion: props.caseItem.fecha_creacion,
+        fecha_ingreso: props.caseItem.fecha_ingreso || props.caseItem.fecha_creacion,
+        fecha_firma: props.caseItem.fecha_firma,
+        fecha_actualizacion: props.caseItem.fecha_actualizacion,
+        observaciones_generales: props.caseItem.observaciones_generales,
+        is_active: props.caseItem.activo ?? true,
+        patologo_asignado: props.caseItem.patologo_asignado,
+        actualizado_por: props.caseItem.actualizado_por,
+        entidad_info: props.caseItem.entidad_info,
+        servicio: props.caseItem.servicio,
+        resultado: props.caseItem.resultado
+      },
+      sections: props.caseItem.resultado ? {
+        method: props.caseItem.resultado.metodo || [],
+        macro: props.caseItem.resultado.resultado_macro || '',
+        micro: props.caseItem.resultado.resultado_micro || '',
+        diagnosis: props.caseItem.resultado.diagnostico || ''
+      } : null,
+      diagnosis: {
+        cie10: props.caseItem.resultado?.diagnostico_cie10 ? {
+          codigo: props.caseItem.resultado.diagnostico_cie10.codigo,
+          nombre: props.caseItem.resultado.diagnostico_cie10.nombre
+        } : undefined,
+        cieo: props.caseItem.resultado?.diagnostico_cieo ? {
+          codigo: props.caseItem.resultado.diagnostico_cieo.codigo,
+          nombre: props.caseItem.resultado.diagnostico_cieo.nombre
+        } : undefined,
+        formatted: props.caseItem.resultado?.diagnostico_cie10 ? 
+          `${props.caseItem.resultado.diagnostico_cie10.codigo} - ${props.caseItem.resultado.diagnostico_cie10.nombre}` : 
+          (props.caseItem.resultado?.diagnostico_cieo ? 
+            `${props.caseItem.resultado.diagnostico_cieo.codigo} - ${props.caseItem.resultado.diagnostico_cieo.nombre}` : 
+            '')
+      },
+      generatedAt: new Date().toISOString()
+    }
+    
+    // Guardar payload en sessionStorage
+    try {
+      sessionStorage.setItem('results_preview_payload', JSON.stringify(payload))
+    } catch (error) {
+      console.warn('No se pudo guardar el payload en sessionStorage:', error)
+    }
+    
+    // Navegar a la previsualización
+    router.push({ name: 'results-preview' })
+  }
+}
 </script>

@@ -147,19 +147,23 @@ function previewCase(c: any) {
 
 async function navigateToPreview(c: any) {
   
-  // Obtener la firma del patólogo si existe el código
+  // Obtener la firma del patólogo - usar directamente la que viene del backend
   let patologoFirma = undefined
   const patologoCode = c.patologo_asignado?.codigo || c.pathologist?.codigo || c.patologo_asignado?.patologo_code
   
-  if (patologoCode) {
-    try {
-      patologoFirma = await signatureService.getSignature(patologoCode)
-      console.log('CurrentCasesListView - firma obtenida para código', patologoCode, ':', patologoFirma ? 'ENCONTRADA' : 'NO ENCONTRADA')
-    } catch (error) {
-      console.warn('CurrentCasesListView - error obteniendo firma del patólogo:', error)
-    }
+  // DEBUG: Log completo del caso para entender la estructura
+  console.log('CurrentCasesListView - DEBUG caso completo:', c)
+  console.log('CurrentCasesListView - DEBUG patologo_asignado:', c.patologo_asignado)
+  console.log('CurrentCasesListView - DEBUG patologoCode:', patologoCode)
+  console.log('CurrentCasesListView - DEBUG fecha_firma:', c.signedAt || (c as any).fecha_firma)
+  console.log('CurrentCasesListView - DEBUG estado:', c.status)
+  
+  // Usar la firma que viene directamente del backend
+  if (c.patologo_asignado?.firma) {
+    patologoFirma = c.patologo_asignado.firma
+    console.log('CurrentCasesListView - FIRMA ENCONTRADA EN EL CASO:', patologoFirma ? 'SÍ' : 'NO')
   } else {
-    console.log('CurrentCasesListView - no se encontró código de patólogo para obtener firma')
+    console.log('CurrentCasesListView - NO HAY FIRMA EN EL CASO')
   }
   
   const payload = {
@@ -242,8 +246,8 @@ async function navigateToPreview(c: any) {
       fecha_firma: payload.caseDetails.fecha_firma,
       patologo_asignado: payload.caseDetails.patologo_asignado ? {
         ...payload.caseDetails.patologo_asignado,
-        // Usar la firma obtenida del API, con fallbacks a los datos originales
-        firma: patologoFirma || (payload.caseDetails.patologo_asignado as any).firma || (payload.caseDetails.patologo_asignado as any).signature || (payload.caseDetails.patologo_asignado as any).image || undefined
+        // Usar la firma que viene del backend
+        firma: patologoFirma || undefined
       } : undefined,
       medico_solicitante: payload.caseDetails.medico_solicitante,
       entidad_info: payload.caseDetails.entidad_info,

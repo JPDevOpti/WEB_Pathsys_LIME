@@ -144,6 +144,7 @@
                       </svg>
                     </button>
                     <button
+                      v-if="!isPatologo && !isResidente"
                       class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                       @click.stop="handleEdit(caso)"
                       title="Editar caso"
@@ -258,6 +259,7 @@
                   <span class="xs:hidden">Ver</span>
                 </button>
                 <button
+                  v-if="!isPatologo && !isResidente"
                   class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
                   @click.stop="handleEdit(caso)"
                 >
@@ -361,6 +363,7 @@ import { useRouter } from 'vue-router'
 import { Card } from '@/shared/components/layout'
 import PathologistList from '@/shared/components/List/PathologistList.vue'
 import { useDashboard } from '../composables/useDashboard'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import type { CasoUrgente } from '../types/dashboard.types'
 import type { FormPathologistInfo } from '@/modules/cases/types'
 
@@ -380,6 +383,9 @@ const {
 } = useDashboard()
 
 const router = useRouter()
+
+// Permisos del usuario
+const { isPatologo, isResidente } = usePermissions()
 
 const errorCarga = error
 const patologoSeleccionado = ref('')

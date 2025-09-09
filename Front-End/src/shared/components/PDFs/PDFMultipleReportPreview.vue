@@ -278,8 +278,8 @@ function convertCaseToCaseItem(caseData: Case): CaseItem {
         nombre: caseData.requester
       },
       patologo_asignado: {
-  nombre: caseData.pathologist || 'No asignado',
-  firma: (caseData as any)?.patologo_asignado?.firma || (caseData as any)?.patologo_asignado?.signature || undefined
+        nombre: caseData.patologo_asignado?.nombre || caseData.pathologist || 'No asignado',
+        firma: caseData.patologo_asignado?.firma || undefined
       }
     },
     sections: {

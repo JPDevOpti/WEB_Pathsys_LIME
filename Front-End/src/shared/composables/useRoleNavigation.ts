@@ -18,7 +18,8 @@ export function useRoleNavigation() {
       { name: 'Casos', path: '/cases', icon: 'cases', alwaysVisible: true },
       { name: 'Listado de Casos', path: '/cases/current', icon: 'list', alwaysVisible: true },
       { name: 'Resultados', path: '/results', icon: 'results', alwaysVisible: true },
-      { name: 'Perfiles', path: '/profile', icon: 'profile', alwaysVisible: true }
+      { name: 'Perfiles', path: '/profile', icon: 'profile', alwaysVisible: true },
+      { name: 'Soporte', path: '/support', icon: 'support', alwaysVisible: true }
     ]
 
     const adminItems = [
@@ -39,7 +40,8 @@ export function useRoleNavigation() {
     const baseActions = {
       viewCases: true,
       viewResults: true,
-      editProfile: true
+      editProfile: true,
+      accessSupport: true
     }
 
     if (isAdmin.value) {
@@ -51,7 +53,8 @@ export function useRoleNavigation() {
         signResults: true,
         manageUsers: true,
         viewReports: true,
-        viewStatistics: true
+        viewStatistics: true,
+        manageSupportTickets: true
       }
     }
 

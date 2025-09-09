@@ -95,6 +95,7 @@ export interface CaseDetails {
   muestras: CaseMuestra[]
   estado: string
   fecha_creacion: string
+  fecha_ingreso: string
   fecha_firma: string | null
   fecha_actualizacion: string
   observaciones_generales?: string

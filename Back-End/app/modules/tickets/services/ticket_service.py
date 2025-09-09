@@ -76,10 +76,7 @@ class TicketService:
         sort_order: str = "desc"
     ) -> List[TicketListResponse]:
         """Listar todos los tickets con paginación."""
-        tickets = await self.repository.get_multi(
-            skip=skip, 
-            limit=limit
-        )
+        tickets = await self.repository.listar_todos_tickets(skip, limit, sort_by, sort_order)
         return [self._to_list_response(ticket) for ticket in tickets]
     
     async def buscar_tickets(

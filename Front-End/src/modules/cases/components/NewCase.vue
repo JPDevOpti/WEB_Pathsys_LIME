@@ -137,7 +137,7 @@
         </div>
 
         <!-- Campo de observaciones -->
-        <FormTextarea v-model="formData.observaciones" label="Observaciones del Caso" placeholder="Observaciones adicionales sobre el caso o procedimiento..." :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional relevante para el procesamiento del caso" />
+        <FormTextarea v-model="formData.observaciones" label="Observaciones del caso" placeholder="Observaciones adicionales sobre el caso o procedimiento..." :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional relevante para el procesamiento del caso" />
 
         <!-- Errores de validación de muestras -->
         <div v-if="errors.muestras.length > 0" class="bg-red-50 border border-red-200 rounded-lg p-4">

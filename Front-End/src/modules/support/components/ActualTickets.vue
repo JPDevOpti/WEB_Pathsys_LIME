@@ -77,7 +77,7 @@
               </div>
               
               <!-- Controles de administración (solo para administradores) -->
-              <div v-if="isAdmin" class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200" @click.stop>
+              <div v-if="canManageSupportTickets" class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200" @click.stop>
                 <span class="text-xs font-medium text-gray-700"></span>
                 <!-- Cambiar estado -->
                 <div class="w-40">
@@ -154,7 +154,7 @@ const emit = defineEmits<{
 }>()
 
 // Composables
-const { isAdmin } = usePermissions()
+const { canManageSupportTickets } = usePermissions()
 
 // Estado local
 const selectedTicket = ref<SupportTicket | null>(null)

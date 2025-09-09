@@ -144,7 +144,7 @@ export function usePerformResults(sampleId: string) {
               caso_code: c.caso_code,
               paciente: { nombre: c.paciente?.nombre || '', cedula: c.paciente?.paciente_code || '' },
               estado: c.estado as any,
-              fecha_ingreso: (c as any).fecha_creacion || c.fecha_ingreso,
+              fecha_ingreso: c.fecha_ingreso || (c as any).fecha_creacion,
               patologo_asignado: c.patologo_asignado ? { nombre: c.patologo_asignado.nombre } : undefined
             }))
         } catch (e) {

@@ -19,7 +19,7 @@ export class TicketsService {
 
   /**
    * Listar tickets con paginación y filtros
-   * Los usuarios ven solo sus tickets, los admins ven todos
+   * Todos los usuarios ven todos los tickets
    */
   async getTickets(
     skip: number = 0,

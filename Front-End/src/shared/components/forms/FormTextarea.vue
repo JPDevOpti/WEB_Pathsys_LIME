@@ -9,7 +9,7 @@
       v-bind="textareaAttrs"
       :value="modelValue"
       @input="handleInput"
-      :placeholder="placeholder"
+      :placeholder="computedPlaceholder"
       :rows="rows"
       :maxlength="maxLength"
       :disabled="disabled"
@@ -44,6 +44,7 @@ interface Props {
   modelValue: string
   label?: string
   placeholder?: string
+  previewText?: string
   required?: boolean
   disabled?: boolean
   rows?: number
@@ -85,6 +86,26 @@ const handleInput = (event: Event) => {
   const target = event.target as HTMLTextAreaElement
   emit('update:modelValue', target.value)
 }
+
+// Placeholder computado que muestra el texto de previsualización cuando está vacío
+const computedPlaceholder = computed(() => {
+  // Si hay contenido, no mostrar placeholder
+  if (props.modelValue && props.modelValue.trim() !== '') {
+    return ''
+  }
+  
+  // Si hay previewText, mostrarlo siempre cuando está vacío
+  if (props.previewText) {
+    return props.previewText
+  }
+  
+  // Si no hay previewText, mostrar placeholder normal
+  if (props.placeholder) {
+    return props.placeholder
+  }
+  
+  return ''
+})
 
 const textareaClasses = computed(() => {
   const baseClasses = "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors resize-none"

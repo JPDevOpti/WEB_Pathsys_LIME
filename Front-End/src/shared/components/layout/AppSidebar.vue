@@ -308,7 +308,7 @@ const canAccessRoute = (path: string): boolean => {
   // Administradores pueden acceder a todo
   if (isAdmin.value) return true;
   
-  // Patólogos: solo dashboard, listado de casos, resultados y mi perfil
+  // Patólogos: solo dashboard, listado de casos, resultados, mi perfil y soporte
   if (isPatologo.value) {
     // Bloquear submenús específicos
     if (path.includes('/users')) return false; // Gestión de usuarios
@@ -322,7 +322,8 @@ const canAccessRoute = (path: string): boolean => {
                    path.startsWith('/cases/current') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/sign') || 
-                   path === '/profile';
+                   path === '/profile' ||
+                   path.startsWith('/support');
     return result;
   }
   
@@ -332,7 +333,7 @@ const canAccessRoute = (path: string): boolean => {
     if (path.includes('/users')) return false; // Gestión de usuarios
     if (path.startsWith('/results/sign')) return false; // Firmar resultados
     
-    // Permitir todo lo demás
+    // Permitir todo lo demás (incluyendo soporte)
     return true;
   }
   
@@ -351,7 +352,8 @@ const canAccessRoute = (path: string): boolean => {
                    path.startsWith('/cases/current') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/perform') || 
-                   path === '/profile';
+                   path === '/profile' ||
+                   path.startsWith('/support');
     return result;
   }
   
@@ -407,7 +409,6 @@ const filteredMenuItems = computed(() => {
       subItems: [
         { name: "Nuevo caso", path: "/cases/new", pro: false, alwaysVisible: true },
         { name: "Editar caso", path: "/cases/edit", pro: false, alwaysVisible: true },
-        { name: "Técnicas complementarias", path: "/cases/technique-complementary", pro: false, alwaysVisible: false },
       ],
       alwaysVisible: true
     },

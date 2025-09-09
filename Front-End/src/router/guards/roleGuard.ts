@@ -35,7 +35,8 @@ export function roleGuard(
       '/dashboard',
       '/cases',
       '/results',
-      '/profile'
+      '/profile',
+      '/support'
     ],
     auxiliar: [
       '/dashboard',
@@ -43,14 +44,16 @@ export function roleGuard(
       '/results',
       '/profile',
       '/reports',
-      '/statistics'
+      '/statistics',
+      '/support'
     ],
     residente: [
       '/dashboard',
       '/cases',
       '/results',
       '/profile',
-      '/reports'
+      '/reports',
+      '/support'
     ],
     administrador: [
       '/dashboard',
@@ -58,7 +61,8 @@ export function roleGuard(
       '/results',
       '/profile',
       '/reports',
-      '/statistics'
+      '/statistics',
+      '/support'
     ]
   }
 

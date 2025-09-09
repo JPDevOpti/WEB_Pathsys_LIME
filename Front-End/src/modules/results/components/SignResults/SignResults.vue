@@ -106,6 +106,7 @@
             @needs-tests-change="handleNeedsTestsChange"
             @details-change="handleDetailsChange"
             @create-approval-request="handleCreateApprovalRequest"
+            @sign-with-changes="handleSignWithChanges"
           />
 
           <ValidationAlert :visible="!!validationMessage" class="mt-2"
@@ -168,7 +169,7 @@
           </div>
 
           <div class="mt-3 flex flex-wrap items-center gap-3 justify-end">
-            <ClearButton :disabled="loading" @click="handleClearResults" />
+            <ClearButton :disabled="loading" @click="limpiarBusqueda" />
             <PreviewButton :disabled="loading" @click="goToPreview" />
             <button
               :disabled="loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature"
@@ -484,21 +485,27 @@ const buscarCaso = async () => {
     isLoadingSearch.value = false
   }
 }
-// Hidratar firma del patólogo asignado desde backend si no está presente en el caso
+// Hidratar firma del patólogo asignado - usar la que ya viene del backend
 const hydrateAssignedSignature = async (caseData: any) => {
   try {
+    console.log('SignResults - DEBUG caso completo:', caseData)
+    console.log('SignResults - DEBUG patologo_asignado:', caseData?.patologo_asignado)
+    console.log('SignResults - DEBUG firma en caso:', caseData?.patologo_asignado?.firma ? 'SÍ' : 'NO')
+    
+    // La firma ya debería estar en el caso que viene del backend
     const assigned: any = caseData?.patologo_asignado as any
-    const currentAssigned: any = (caseDetails.value as any)?.patologo_asignado as any
-    const code = assigned?.codigo || currentAssigned?.codigo
-    const hasFirma = assigned?.firma || currentAssigned?.firma
-    if (!code || hasFirma) return
-    const pb = await profileApiService.getPathologistByCode(code)
-    const firmaUrl = (pb as any)?.firma || ''
-    if (firmaUrl) {
-      if (caseData?.patologo_asignado) (caseData.patologo_asignado as any).firma = firmaUrl
-      if (caseDetails.value?.patologo_asignado) (caseDetails.value.patologo_asignado as any).firma = firmaUrl
+    if (assigned?.firma) {
+      console.log('SignResults - FIRMA ENCONTRADA EN EL CASO')
+      // Asegurar que la firma se propague a caseDetails
+      if (caseDetails.value?.patologo_asignado) {
+        (caseDetails.value.patologo_asignado as any).firma = assigned.firma
+      }
+    } else {
+      console.log('SignResults - NO HAY FIRMA EN EL CASO')
     }
-  } catch {}
+  } catch (error) {
+    console.warn('SignResults - error en hydrateAssignedSignature:', error)
+  }
 }
 
 // Carga diagnósticos existentes del caso (CIE-10 y CIE-O) si ya están firmados
@@ -537,7 +544,6 @@ const resetEditorAndDiagnosis = () => {
   showCIEODiagnosis.value = false
 }
 
-function handleClearResults() { resetEditorAndDiagnosis() }
 
 function goToPreview() {
   const payload = {
@@ -697,6 +703,83 @@ const handleCreateApprovalRequest = async (payload: { caso_original: string; mot
     }
   } catch (error: any) {
     showError('Error al crear solicitud', error.message || 'No se pudo crear la solicitud de aprobación.', 0)
+  }
+}
+
+// Firmar caso con pruebas complementarias
+const handleSignWithChanges = async (data: { details: string; tests: PruebaComplementaria[] }) => {
+  try {
+    signing.value = true
+    
+    // Validar que se pueda firmar
+    if (!canUserSign.value) {
+      showError('No autorizado', 'Solo el patólogo asignado al caso o un administrador pueden firmar este resultado.', 0)
+      return
+    }
+    
+    if (!canSignByStatus.value && !hasBeenSigned.value) {
+      showError('Estado no válido', invalidStatusMessage.value, 0)
+      return
+    }
+    
+    // Obtener código del patólogo
+    let patologoCodigo = caseDetails?.value?.patologo_asignado?.codigo
+    if (!patologoCodigo && authStore.user?.rol === 'administrador') {
+      patologoCodigo = authStore.user.id || 'admin'
+    }
+    if (!patologoCodigo) {
+      showError('Error al firmar', 'No se pudo identificar el patólogo para firmar el caso.', 0)
+      return
+    }
+    
+    const casoCode = caseDetails?.value?.caso_code || props.sampleId
+    
+    // Preparar datos para firmar (sin diagnósticos CIE-10/CIEO ya que son pruebas complementarias)
+    const requestData = {
+      metodo: sections.value?.method || [],
+      resultado_macro: sections.value?.macro || '',
+      resultado_micro: sections.value?.micro || '',
+      diagnostico: sections.value?.diagnosis || '',
+      observaciones: data.details, // Usar el motivo de las pruebas complementarias
+      diagnostico_cie10: undefined, // No hay diagnóstico CIE-10 para pruebas complementarias
+      diagnostico_cieo: undefined   // No hay diagnóstico CIE-O para pruebas complementarias
+    }
+    
+    // Firmar el caso
+    const response = await resultsApiService.firmarResultado(casoCode, requestData, patologoCodigo)
+    console.log('Respuesta del backend al firmar con pruebas complementarias:', response)
+    
+    if (response) {
+      // Actualizar el estado del caso
+      if (caseDetails.value) {
+        if (response.estado) caseDetails.value.estado = response.estado
+        if (response.fecha_firma) caseDetails.value.fecha_firma = response.fecha_firma
+        console.log('CaseDetails actualizado con fecha de firma:', caseDetails.value)
+      }
+      
+      // Guardar contenido para notificación
+      setSavedFromSections()
+      savedCaseCode.value = casoCode
+      
+      // Guardar las pruebas complementarias solicitadas para la notificación
+      requestedComplementaryTests.value = data.tests
+      requestedComplementaryTestsReason.value = data.details
+      
+      showSuccess('¡Caso firmado con pruebas complementarias!', `El caso ${casoCode} ha sido firmado y se creó la solicitud de pruebas complementarias.`, 0)
+      validationMessage.value = ''
+      hasBeenSigned.value = true
+      
+      // Limpiar formulario después de firmar
+      clearFormAfterSign()
+      needsComplementaryTests.value = false
+      complementaryTestsDetails.value = ''
+    } else {
+      showError('Error al firmar', 'El servidor no devolvió una respuesta válida.', 0)
+    }
+  } catch (error: any) {
+    showError('Error al firmar con pruebas complementarias', error.response?.data?.message || error.message || 'No se pudo firmar el resultado.', 0)
+  } finally {
+    signing.value = false
   }
 }
 

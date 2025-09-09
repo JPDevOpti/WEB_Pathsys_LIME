@@ -41,7 +41,7 @@ export interface BackendCase {
     diagnostico_cieo?: { codigo?: string; nombre?: string } | null
     observaciones?: string
   }
-  patologo_asignado?: { codigo?: string; nombre?: string }
+  patologo_asignado?: { codigo?: string; nombre?: string; firma?: string }
 }
 
 export interface BackendTest {

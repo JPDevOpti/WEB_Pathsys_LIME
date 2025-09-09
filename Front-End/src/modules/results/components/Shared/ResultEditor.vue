@@ -34,6 +34,7 @@
         :class="getTextareaClasses()"
         :rows="8"
         :show-counter="false"
+        :preview-text="getPreviewText(activeSection)"
       />
     </div>
 
@@ -76,6 +77,20 @@ function getTabClasses(tabKey: EditorSectionKey): string {
 
 function getTextareaClasses(): string {
   return 'border-gray-300 focus:border-blue-400 focus:ring-blue-400'
+}
+
+// Función para obtener el texto de previsualización según la sección
+function getPreviewText(section: EditorSectionKey): string {
+  switch (section) {
+    case 'macro':
+      return 'Describa aquí los hallazgos macroscópicos observados en la muestra. Incluya características como tamaño, forma, color, consistencia, superficie, bordes, y cualquier otra característica relevante visible a simple vista...'
+    case 'micro':
+      return 'Describa aquí los hallazgos microscópicos observados en las preparaciones histológicas. Incluya características celulares, arquitectura tisular, patrones de crecimiento, presencia de inflamación, necrosis, y cualquier otro hallazgo relevante...'
+    case 'diagnosis':
+      return 'Escriba aquí el diagnóstico final basado en los hallazgos macroscópicos y microscópicos. Debe ser conciso, preciso y seguir la nomenclatura patológica estándar. Ejemplo: "Adenocarcinoma de colon moderadamente diferenciado"...'
+    default:
+      return ''
+  }
 }
 </script>
 

@@ -155,6 +155,11 @@ export function useCaseList() {
       signedAt,  // Nueva: fecha de firma específica
       tests: flatTests,
       pathologist: bk.patologo_asignado?.nombre || '',
+      patologo_asignado: bk.patologo_asignado ? {
+        codigo: bk.patologo_asignado.codigo || '',
+        nombre: bk.patologo_asignado.nombre || '',
+        firma: bk.patologo_asignado.firma
+      } : undefined,
       notes: bk.observaciones_generales || '',
       servicio: bk.servicio || '',
       // Incorporar prioridad (campo nuevo en backend). Mantenemos compatibilidad aunque el tipo Case aún no lo tenga.

@@ -177,7 +177,7 @@ const singleCaseObject = computed<PreviewCaseItem>(() => ({
     ...props.payload.caseDetails,
     patologo_asignado: props.payload.caseDetails.patologo_asignado ? {
       ...props.payload.caseDetails.patologo_asignado,
-      firma: (props.payload.caseDetails.patologo_asignado as any).firma || (props.payload.caseDetails.patologo_asignado as any).signature || (props.payload.caseDetails.patologo_asignado as any).image || undefined
+      firma: props.payload.caseDetails.patologo_asignado.firma || undefined
     } : undefined
   } : undefined,
   sections: props.payload?.sections || undefined,

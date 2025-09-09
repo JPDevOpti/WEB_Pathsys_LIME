@@ -42,6 +42,7 @@ export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
     })),
     estado: beCase.estado,
     fecha_creacion: (beCase as any).fecha_creacion || beCase.fecha_ingreso,
+    fecha_ingreso: beCase.fecha_ingreso || (beCase as any).fecha_creacion,
     fecha_firma: beCase.fecha_firma || null,
     fecha_actualizacion: beCase.fecha_actualizacion,
     observaciones_generales: beCase.observaciones_generales || '',
