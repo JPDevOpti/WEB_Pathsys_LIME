@@ -13,7 +13,7 @@
     <div class="p-6 space-y-4">
       <!-- Título -->
       <FormInputField
-        v-model="formData.title"
+        v-model="formData.titulo"
         label="Título del ticket"
         placeholder="Describe brevemente el problema..."
         :required="true"
@@ -23,7 +23,7 @@
 
       <!-- Categoría -->
       <FormSelect
-        v-model="formData.category"
+        v-model="formData.categoria"
         label="Categoría"
         placeholder="Selecciona una categoría"
         :required="true"
@@ -32,7 +32,7 @@
 
       <!-- Descripción -->
       <FormTextarea
-        v-model="formData.description"
+        v-model="formData.descripcion"
         label="Descripción"
         placeholder="Describe detalladamente el problema, pasos para reproducirlo, comportamiento esperado, etc..."
         :required="true"
@@ -41,10 +41,10 @@
         :showCounter="true"
       />
 
-      <!-- Archivos adjuntos -->
+      <!-- Imagen adjunta (simplificado) -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">
-          Archivos adjuntos
+          Imagen adjunta (opcional)
         </label>
         <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
           <div class="space-y-1 text-center">
@@ -54,48 +54,48 @@
               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
             >
               <PaperclipIcon class="w-4 h-4 mr-2" />
-              Seleccionar archivos
+              Seleccionar imagen
             </button>
             <input
               ref="fileInput"
               type="file"
-              multiple
-              accept="image/*,.pdf,.doc,.docx,.txt"
-              @change="handleFileUpload"
+              accept="image/*"
+              @change="handleImageUpload"
               class="hidden"
             />
             <p class="text-xs text-gray-500">
-              PNG, JPG, PDF, DOC hasta 10MB
+              PNG, JPG, GIF, WEBP hasta 5MB
             </p>
           </div>
         </div>
       </div>
 
-      <!-- Lista de archivos adjuntos -->
-      <div v-if="formData.attachments.length > 0" class="space-y-2">
-        <h4 class="text-sm font-medium text-gray-700">Archivos seleccionados:</h4>
-        <div class="space-y-1">
-          <div
-            v-for="attachment in formData.attachments"
-            :key="attachment.id"
-            class="flex items-center justify-between p-2 bg-gray-50 rounded border"
-          >
-            <div class="flex items-center">
-              <PaperclipIcon class="w-4 h-4 text-gray-400 mr-2" />
-              <span class="text-sm text-gray-700">{{ attachment.fileName }}</span>
-              <span class="text-xs text-gray-500 ml-2">
-                ({{ (attachment.fileSize / 1024).toFixed(1) }} KB)
+      <!-- Imagen seleccionada -->
+      <div v-if="formData.imagen || imagePreview" class="space-y-2">
+        <h4 class="text-sm font-medium text-gray-700">Imagen seleccionada:</h4>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded border">
+          <div class="flex items-center">
+            <img 
+              v-if="imagePreview" 
+              :src="imagePreview" 
+              alt="Preview" 
+              class="w-12 h-12 object-cover rounded mr-3"
+            />
+            <div>
+              <span class="text-sm text-gray-700">{{ formData.imagen?.name || 'Imagen' }}</span>
+              <span v-if="formData.imagen" class="text-xs text-gray-500 block">
+                ({{ (formData.imagen.size / 1024).toFixed(1) }} KB)
               </span>
             </div>
-            <button
-              @click="removeAttachment(attachment.id)"
-              class="text-red-600 hover:text-red-800"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
+          <button
+            @click="removeImage"
+            class="text-red-600 hover:text-red-800"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -113,6 +113,14 @@
           @click="submitTicket"
         />
       </div>
+      <!-- Notificación -->
+      <Notification 
+        :visible="notify.visible" 
+        :type="notify.type" 
+        :title="notify.title" 
+        :message="notify.message" 
+        @close="notify.visible = false" 
+      />
     </div>
   </div>
 </template>
@@ -122,7 +130,9 @@ import { ref, reactive, computed } from 'vue'
 import { PlusIcon, PaperclipIcon } from '@/assets/icons'
 import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
 import { ClearButton, SaveButton } from '@/shared/components/buttons'
-import type { NewTicketForm, TicketAttachment } from '../types/support.types'
+import { Notification } from '@/shared/components/feedback'
+import { ticketsService } from '@/shared/services/tickets.service'
+import type { NewTicketForm, TicketCategoryEnum } from '../types/support.types'
 
 // Emits
 const emit = defineEmits<{
@@ -131,19 +141,27 @@ const emit = defineEmits<{
 
 // Estado del formulario
 const formData = reactive<NewTicketForm>({
-  title: '',
-  category: '',
-  description: '',
-  attachments: []
+  titulo: '',
+  categoria: '' as TicketCategoryEnum,
+  descripcion: '',
+  imagen: undefined
 })
+
+// Estado adicional para preview de imagen
+const imagePreview = ref<string | null>(null)
+const isSubmitting = ref(false)
+
+// Notificaciones
+const notify = reactive({ visible: false, type: 'success' as 'success' | 'error', title: '', message: '' })
+const showSuccess = (message: string) => { Object.assign(notify, { visible: true, type: 'success', title: 'Éxito', message }) }
+const showError = (message: string) => { Object.assign(notify, { visible: true, type: 'error', title: 'Error', message }) }
 
 // Opciones de categoría para el FormSelect
 const categoryOptions = [
   { value: 'bug', label: 'Error / Bug' },
   { value: 'feature', label: 'Nueva característica' },
   { value: 'question', label: 'Pregunta' },
-  { value: 'technical', label: 'Problema técnico' },
-  { value: 'NN', label: 'Sin especificación' }
+  { value: 'technical', label: 'Problema técnico' }
 ]
 
 // Referencia para el input de archivos
@@ -151,89 +169,81 @@ const fileInput = ref<HTMLInputElement>()
 
 // Computed para validación del formulario
 const isFormValid = computed(() => {
-  return formData.title.trim() !== '' && 
-         formData.category !== '' && 
-         formData.description.trim() !== ''
+  return formData.titulo.trim() !== '' && 
+         formData.categoria !== '' && 
+         formData.descripcion.trim() !== '' &&
+         !isSubmitting.value
 })
 
-// Función para manejar la carga de archivos
-const handleFileUpload = (event: Event) => {
+// Función para manejar la carga de imagen
+const handleImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
-  const files = target.files
+  const file = target.files?.[0]
   
-  if (files) {
-    Array.from(files).forEach(file => {
-      // Validar tamaño (máximo 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert(`El archivo ${file.name} es demasiado grande. Máximo 10MB.`)
-        return
-      }
+  if (file) {
+    // Validar imagen usando el servicio
+    const validation = ticketsService.validateImage(file)
+    if (!validation.valid) {
+      showError(validation.error || 'Archivo inválido')
+      target.value = ''
+      return
+    }
 
-      const attachment: TicketAttachment = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size
-      }
-
-      // Si es una imagen, crear preview
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          attachment.previewUrl = e.target?.result as string
-        }
-        reader.readAsDataURL(file)
-      }
-
-      formData.attachments.push(attachment)
-    })
+    formData.imagen = file
+    
+    // Crear preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      imagePreview.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
     
     // Limpiar el input
     target.value = ''
   }
 }
 
-// Función para remover un archivo adjunto
-const removeAttachment = (attachmentId: string) => {
-  const index = formData.attachments.findIndex(att => att.id === attachmentId)
-  if (index > -1) {
-    formData.attachments.splice(index, 1)
-  }
+// Función para remover imagen
+const removeImage = () => {
+  formData.imagen = undefined
+  imagePreview.value = null
 }
 
 // Función para limpiar el formulario
 const clearForm = () => {
-  formData.title = ''
-  formData.category = ''
-  formData.description = ''
-  formData.attachments = []
+  formData.titulo = ''
+  formData.categoria = '' as TicketCategoryEnum
+  formData.descripcion = ''
+  formData.imagen = undefined
+  imagePreview.value = null
 }
 
 // Función para enviar el ticket
-const submitTicket = () => {
-  if (!isFormValid.value) {
+const submitTicket = async () => {
+  if (!isFormValid.value || isSubmitting.value) {
     return
   }
 
-  // Crear el ticket (simulado)
-  const newTicket = {
-    id: Date.now().toString(),
-    title: formData.title,
-    category: formData.category,
-    description: formData.description,
-    status: 'open' as const,
-    createdAt: new Date().toISOString(),
-    attachments: [...formData.attachments],
-    comments: []
+  isSubmitting.value = true
+
+  try {
+    // Crear ticket usando el servicio API
+    const newTicket = await ticketsService.createTicket(formData)
+
+    // Emitir evento con el ticket creado
+    emit('ticketCreated', newTicket)
+
+    // Limpiar formulario
+    clearForm()
+
+    showSuccess('¡Ticket creado exitosamente!')
+
+  } catch (error: any) {
+    console.error('Error creando ticket:', error)
+    const message = error?.response?.data?.detail || 'Error al crear el ticket'
+    showError(message)
+  } finally {
+    isSubmitting.value = false
   }
-
-  // Emitir evento
-  emit('ticketCreated', newTicket)
-
-  // Limpiar formulario
-  clearForm()
-
-  // Mostrar mensaje de éxito
-  alert('¡Ticket creado exitosamente!')
 }
 </script>

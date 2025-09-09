@@ -14,6 +14,7 @@
             :tickets="tickets" 
             @ticket-status-changed="onTicketStatusChanged"
             @ticket-deleted="onTicketDeleted"
+            @tickets-updated="loadTickets"
           />
         </div>
       </div>
@@ -22,63 +23,60 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { AdminLayout } from '@/shared'
 import { PageBreadcrumb } from '@/shared/components/navigation'
 import { NewTicket, ActualTickets } from '../components'
+import { ticketsService } from '@/shared/services/tickets.service'
 import type { SupportTicket } from '../types/support.types'
 
 const currentPageTitle = ref('Soporte')
 
-// Estado de tickets (datos dummy)
-const tickets = ref<SupportTicket[]>([
-  {
-    id: '1',
-    title: 'Error al cargar lista de casos',
-    category: 'bug',
-    description: 'Cuando intento acceder a la lista de casos, la página se queda cargando indefinidamente. Esto ha estado pasando desde ayer.',
-    status: 'open',
-    createdAt: '2024-01-15T10:30:00Z',
-    attachments: []
-  },
-  {
-    id: '2',
-    title: 'Solicitud: Exportar reportes a Excel',
-    category: 'feature',
-    description: 'Sería muy útil poder exportar los reportes de patólogos y entidades a formato Excel para análisis más detallados.',
-    status: 'in-progress',
-    createdAt: '2024-01-14T14:20:00Z',
-    attachments: []
-  },
-  {
-    id: '3',
-    title: 'No puedo cambiar mi contraseña',
-    category: 'technical',
-    description: 'Cuando intento cambiar mi contraseña en el perfil, me sale un error que dice "Token inválido".',
-    status: 'resolved',
-    createdAt: '2024-01-13T09:15:00Z',
-    attachments: []
-  }
-])
+// Estado de tickets (datos reales desde API)
+const tickets = ref<SupportTicket[]>([])
+const isLoading = ref(false)
+const error = ref<string | null>(null)
 
-// Función para manejar la creación de tickets
+// Función para cargar tickets desde la API
+const loadTickets = async () => {
+  try {
+    isLoading.value = true
+    error.value = null
+    tickets.value = await ticketsService.getTickets()
+  } catch (err: any) {
+    console.error('Error cargando tickets:', err)
+    error.value = err?.response?.data?.detail || 'Error al cargar los tickets'
+    // TODO: Reemplazar alert con notificación centrada
+    alert(`Error: ${error.value}`)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Función para manejar la creación de tickets (defensiva)
 const onTicketCreated = (newTicket: SupportTicket) => {
+  if (!Array.isArray(tickets.value)) tickets.value = []
   tickets.value.unshift(newTicket)
 }
 
 // Función para manejar el cambio de estado de tickets
-const onTicketStatusChanged = (ticketId: string, newStatus: string) => {
-  const ticket = tickets.value.find(t => t.id === ticketId)
+const onTicketStatusChanged = (ticketCode: string, newStatus: string) => {
+  const ticket = tickets.value.find(t => t.ticket_code === ticketCode)
   if (ticket) {
-    ticket.status = newStatus as any
+    ticket.estado = newStatus as any
   }
 }
 
 // Función para manejar la eliminación de tickets
-const onTicketDeleted = (ticketId: string) => {
-  const index = tickets.value.findIndex(t => t.id === ticketId)
+const onTicketDeleted = (ticketCode: string) => {
+  const index = tickets.value.findIndex(t => t.ticket_code === ticketCode)
   if (index > -1) {
     tickets.value.splice(index, 1)
   }
 }
+
+// Cargar tickets al montar el componente
+onMounted(() => {
+  loadTickets()
+})
 </script>

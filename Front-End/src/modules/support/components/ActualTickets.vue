@@ -9,9 +9,16 @@
         
         <!-- Filtros -->
         <div class="flex items-center space-x-3">
+          <div class="w-48">
+            <FormInputField
+              v-model="filters.search"
+              placeholder="Buscar tickets..."
+              :showIcon="true"
+            />
+          </div>
           <div class="w-40">
             <FormSelect
-              v-model="filters.status"
+              v-model="filters.estado"
               :options="statusOptions"
               placeholder="Estado"
             />
@@ -19,7 +26,7 @@
           
           <div class="w-44">
             <FormSelect
-              v-model="filters.category"
+              v-model="filters.categoria"
               :options="categoryOptions"
               placeholder="Categoría"
             />
@@ -45,27 +52,26 @@
       <div v-else class="space-y-4">
         <div
           v-for="ticket in filteredTickets"
-          :key="ticket.id"
+          :key="ticket.ticket_code"
           class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
           @click="selectTicket(ticket)"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
-                <h3 class="font-medium text-gray-900">{{ ticket.title }}</h3>
-                <span :class="getStatusBadgeClass(ticket.status)" class="text-xs font-medium px-2 py-1 rounded-full">
-                  {{ getStatusLabel(ticket.status) }}
+                <h3 class="font-medium text-gray-900">{{ ticket.titulo }}</h3>
+                <span :class="getStatusBadgeClass(ticket.estado)" class="text-xs font-medium px-2 py-1 rounded-full">
+                  {{ getStatusLabel(ticket.estado) }}
                 </span>
                 <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                  {{ getCategoryLabel(ticket.category) }}
+                  {{ getCategoryLabel(ticket.categoria) }}
                 </span>
               </div>
-              <p class="text-sm text-gray-600 mb-2">{{ ticket.description.substring(0, 100) }}...</p>
+              <p v-if="ticket.descripcion" class="text-sm text-gray-600 mb-2">{{ ticket.descripcion.substring(0, 100) }}...</p>
               <div class="flex items-center gap-4 text-xs text-gray-500">
-                <span>Ticket #{{ ticket.id }}</span>
-                <span>{{ formatDate(ticket.createdAt) }}</span>
-                <span v-if="ticket.attachments.length > 0">{{ ticket.attachments.length }} archivo{{ ticket.attachments.length !== 1 ? 's' : '' }}</span>
-
+                <span>Ticket {{ ticket.ticket_code }}</span>
+                <span>{{ ticket.fecha_ticket ? formatDate(ticket.fecha_ticket) : '' }}</span>
+                <span v-if="ticket.imagen">1 imagen adjunta</span>
               </div>
               
               <!-- Controles de administración (solo para administradores) -->
@@ -74,8 +80,8 @@
                 <!-- Cambiar estado -->
                 <div class="w-40">
                   <FormSelect
-                    :modelValue="ticket.status"
-                    @update:modelValue="changeTicketStatus(ticket.id, $event)"
+                    :modelValue="ticket.estado"
+                    @update:modelValue="changeTicketStatus(ticket.ticket_code, $event)"
                     :options="statusOptionsForAdmin"
                   />
                 </div>
@@ -85,7 +91,7 @@
                   size="xs"
                   variant="danger"
                   title="Eliminar ticket"
-                  @click="deleteTicket(ticket.id)"
+                  @click="deleteTicket(ticket.ticket_code)"
                 />
               </div>
             </div>
@@ -103,17 +109,40 @@
       @close="selectedTicket = null"
     />
 
+    <!-- Confirmación de eliminación -->
+    <ConfirmDialog
+      :model-value="showConfirm"
+      title="Eliminar ticket"
+      message="¿Estás seguro de eliminar este ticket? Esta acción no se puede deshacer."
+      confirm-text="Eliminar"
+      cancel-text="Cancelar"
+      @update:modelValue="v => showConfirm = v"
+      @confirm="confirmDelete"
+      @cancel="showConfirm = false"
+    />
+
+    <!-- Notificación -->
+    <Notification
+      :visible="notify.visible"
+      :type="notify.type"
+      :title="notify.title"
+      :message="notify.message"
+      @close="notify.visible = false"
+    />
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { TaskIcon } from '@/assets/icons'
-import { FormSelect } from '@/shared/components/forms'
+import { FormSelect, FormInputField } from '@/shared/components/forms'
 import { RemoveButton } from '@/shared/components/buttons'
+import { ConfirmDialog, Notification } from '@/shared/components/feedback'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { ticketsService } from '@/shared/services/tickets.service'
 import TicketDetailModal from './TicketDetailModal.vue'
-import type { SupportTicket, TicketFilters } from '../types/support.types'
+import type { SupportTicket, TicketFilters, TicketStatusEnum } from '../types/support.types'
 
 // Props
 const props = defineProps<{
@@ -122,8 +151,9 @@ const props = defineProps<{
 
 // Emits
 const emit = defineEmits<{
-  ticketStatusChanged: [ticketId: string, newStatus: string]
-  ticketDeleted: [ticketId: string]
+  ticketStatusChanged: [ticketCode: string, newStatus: string]
+  ticketDeleted: [ticketCode: string]
+  ticketsUpdated: []
 }>()
 
 // Composables
@@ -131,11 +161,17 @@ const { isAdmin } = usePermissions()
 
 // Estado local
 const selectedTicket = ref<SupportTicket | null>(null)
+const isLoading = ref(false)
+const showConfirm = ref(false)
+const pendingDeleteCode = ref<string | null>(null)
+const notify = reactive({ visible: false, type: 'success' as 'success' | 'error', title: '', message: '' })
+const showSuccess = (msg: string) => Object.assign(notify, { visible: true, type: 'success', title: 'Éxito', message: msg })
+const showError = (msg: string) => Object.assign(notify, { visible: true, type: 'error', title: 'Error', message: msg })
 
 // Filtros
 const filters = reactive<TicketFilters>({
-  status: 'all',
-  category: 'all',
+  estado: 'all',
+  categoria: 'all',
   search: ''
 })
 
@@ -166,16 +202,36 @@ const statusOptionsForAdmin = [
 
 // Computed para tickets filtrados
 const filteredTickets = computed(() => {
-  return props.tickets.filter(ticket => {
-    const matchesStatus = filters.status === 'all' || ticket.status === filters.status
-    const matchesCategory = filters.category === 'all' || ticket.category === filters.category
+  return props.tickets
+    .filter(ticket => !!ticket && typeof ticket === 'object')
+    .map(t => ({
+      ticket_code: (t as any).ticket_code ?? (t as any).id ?? '',
+      titulo: (t as any).titulo ?? (t as any).title ?? '',
+      categoria: (t as any).categoria ?? (t as any).category ?? '',
+      descripcion: (t as any).descripcion ?? (t as any).description ?? '',
+      imagen: (t as any).imagen ?? (Array.isArray((t as any).attachments) && (t as any).attachments.length ? (t as any).attachments[0]?.previewUrl : undefined),
+      fecha_ticket: (t as any).fecha_ticket ?? (t as any).createdAt ?? '',
+      estado: (t as any).estado ?? (t as any).status ?? 'open'
+    }))
+    .filter(ticket => {
+    const matchesStatus = filters.estado === 'all' || ticket.estado === filters.estado
+    const matchesCategory = filters.categoria === 'all' || ticket.categoria === filters.categoria
     const matchesSearch = filters.search === '' || 
-      ticket.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-      ticket.description.toLowerCase().includes(filters.search.toLowerCase())
+      ticket.titulo.toLowerCase().includes(filters.search.toLowerCase()) ||
+      ticket.descripcion.toLowerCase().includes(filters.search.toLowerCase())
     
     return matchesStatus && matchesCategory && matchesSearch
   })
 })
+
+// Watch para recargar tickets cuando cambian los filtros (con debounce)
+let searchTimeout: NodeJS.Timeout | null = null
+watch(filters, () => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    emit('ticketsUpdated')
+  }, 300)
+}, { deep: true })
 
 // Funciones utilitarias
 const formatDate = (dateString: string): string => {
@@ -221,18 +277,47 @@ const selectTicket = (ticket: SupportTicket) => {
   selectedTicket.value = ticket
 }
 
-
-
-const changeTicketStatus = (ticketId: string, newStatus: string) => {
-  emit('ticketStatusChanged', ticketId, newStatus)
+const changeTicketStatus = async (ticketCode: string, newStatus: string) => {
+  try {
+    isLoading.value = true
+    await ticketsService.changeStatus(ticketCode, newStatus as TicketStatusEnum)
+    emit('ticketStatusChanged', ticketCode, newStatus)
+    emit('ticketsUpdated')
+    showSuccess('Estado actualizado correctamente')
+  } catch (error: any) {
+    console.error('Error cambiando estado:', error)
+    const message = error?.response?.data?.detail || 'Error al cambiar el estado'
+    showError(message)
+  } finally {
+    isLoading.value = false
+  }
 }
 
-const deleteTicket = (ticketId: string) => {
-  if (confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
-    emit('ticketDeleted', ticketId)
-    if (selectedTicket.value?.id === ticketId) {
+const deleteTicket = (ticketCode: string) => {
+  pendingDeleteCode.value = ticketCode
+  showConfirm.value = true
+}
+
+const confirmDelete = async () => {
+  if (!pendingDeleteCode.value) return
+  try {
+    isLoading.value = true
+    await ticketsService.deleteTicket(pendingDeleteCode.value)
+    emit('ticketDeleted', pendingDeleteCode.value)
+    emit('ticketsUpdated')
+    showSuccess('Ticket eliminado correctamente')
+    
+    if (selectedTicket.value?.ticket_code === pendingDeleteCode.value) {
       selectedTicket.value = null
     }
+  } catch (error: any) {
+    console.error('Error eliminando ticket:', error)
+    const message = error?.response?.data?.detail || 'Error al eliminar el ticket'
+    showError(message)
+  } finally {
+    isLoading.value = false
+    showConfirm.value = false
+    pendingDeleteCode.value = null
   }
 }
 </script>

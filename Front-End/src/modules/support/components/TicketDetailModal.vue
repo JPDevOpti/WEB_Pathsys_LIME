@@ -19,7 +19,7 @@
       <div class="relative bg-white w-full max-w-4xl rounded-t-2xl sm:rounded-2xl shadow-2xl h-[85vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <!-- Header -->
         <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-900">{{ ticket.title }}</h3>
+          <h3 class="text-xl font-semibold text-gray-900">{{ ticket.titulo }}</h3>
           <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">✕</button>
         </div>
 
@@ -28,22 +28,22 @@
           <!-- Información del ticket -->
           <div class="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
-              <p class="text-sm text-gray-500">ID del Ticket</p>
-              <p class="text-base font-medium text-gray-900">#{{ ticket.id }}</p>
+              <p class="text-sm text-gray-500">Código del Ticket</p>
+              <p class="text-base font-medium text-gray-900">{{ ticket.ticket_code }}</p>
             </div>
             <div>
               <p class="text-sm text-gray-500">Estado</p>
-              <span :class="getStatusBadgeClass(ticket.status)" class="text-xs font-medium px-2 py-1 rounded-full">
-                {{ getStatusLabel(ticket.status) }}
+              <span :class="getStatusBadgeClass(ticket.estado)" class="text-xs font-medium px-2 py-1 rounded-full">
+                {{ getStatusLabel(ticket.estado) }}
               </span>
             </div>
             <div>
               <p class="text-sm text-gray-500">Categoría</p>
-              <p class="text-base font-medium text-gray-900">{{ getCategoryLabel(ticket.category) }}</p>
+              <p class="text-base font-medium text-gray-900">{{ getCategoryLabel(ticket.categoria) }}</p>
             </div>
             <div>
               <p class="text-sm text-gray-500">Fecha de Creación</p>
-              <p class="text-base font-medium text-gray-900">{{ formatDate(ticket.createdAt) }}</p>
+              <p class="text-base font-medium text-gray-900">{{ formatDate(ticket.fecha_ticket) }}</p>
             </div>
           </div>
 
@@ -51,29 +51,19 @@
           <div class="bg-gray-50 rounded-xl p-4">
             <h5 class="text-sm font-medium text-gray-700 mb-3">Descripción</h5>
             <div class="bg-white border border-gray-200 rounded-lg p-3">
-              <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ ticket.description }}</p>
+              <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ ticket.descripcion }}</p>
             </div>
           </div>
 
-          <!-- Archivos adjuntos -->
-          <div v-if="ticket.attachments && ticket.attachments.length > 0" class="bg-gray-50 rounded-xl p-4">
-            <h5 class="text-sm font-medium text-gray-700 mb-3">Archivos Adjuntos</h5>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <div
-                v-for="(attachment, index) in ticket.attachments"
-                :key="index"
-                class="relative group cursor-pointer"
-                @click="openImageModal(attachment.previewUrl)"
-              >
-                <img
-                  :src="attachment.previewUrl"
-                  :alt="attachment.fileName"
-                  class="w-full h-20 object-cover rounded-lg border border-gray-200 hover:border-blue-300 transition-colors"
-                />
-                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all flex items-center justify-center">
-                  <PaperclipIcon class="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
+          <!-- Imagen adjunta -->
+          <div v-if="ticket.imagen" class="bg-gray-50 rounded-xl p-4">
+            <h5 class="text-sm font-medium text-gray-700 mb-3">Imagen Adjunta</h5>
+            <div class="cursor-pointer" @click="openImageModal(ticket.imagen)">
+              <img
+                :src="ticket.imagen"
+                alt="Imagen del ticket"
+                class="max-w-xs h-40 object-cover rounded-lg border border-gray-200 hover:border-blue-300 transition-colors"
+              />
             </div>
           </div>
 
