@@ -8,7 +8,7 @@ class PatologoCreate(BaseModel):
     """Esquema para crear un nuevo patólogo"""
     patologo_name: str = Field(..., max_length=100, description="Nombre completo del patólogo")
     iniciales_patologo: str = Field(..., max_length=10, description="Iniciales del patólogo")
-    patologo_code: str = Field(..., max_length=10, description="Código único del patólogo")
+    patologo_code: str = Field(..., max_length=11, description="Código único del patólogo")
     patologo_email: EmailStr = Field(..., description="Email único del patólogo")
     registro_medico: str = Field(..., max_length=50, description="Número de registro médico único")
     password: str = Field(..., max_length=100, description="Contraseña para el usuario del patólogo")
@@ -23,7 +23,7 @@ class PatologoUpdate(BaseModel):
     """Esquema para actualizar un patólogo existente"""
     patologo_name: Optional[str] = Field(None, max_length=100, description="Nombre completo del patólogo")
     iniciales_patologo: Optional[str] = Field(None, max_length=10, description="Iniciales del patólogo")
-    patologo_code: Optional[str] = Field(None, max_length=10, description="Código único del patólogo")
+    patologo_code: Optional[str] = Field(None, max_length=11, description="Código único del patólogo")
     patologo_email: Optional[EmailStr] = Field(None, description="Email único del patólogo")
     registro_medico: Optional[str] = Field(None, max_length=50, description="Número de registro médico único")
     is_active: Optional[bool] = Field(None, description="Estado activo/inactivo del patólogo")
@@ -45,7 +45,7 @@ class PatologoResponse(BaseModel):
     id: str = Field(..., description="ID único del patólogo")
     patologo_name: str = Field(..., description="Nombre completo del patólogo")
     iniciales_patologo: Optional[str] = Field(None, description="Iniciales del patólogo")
-    patologo_code: str = Field(..., description="Código único de 6-10 caracteres")
+    patologo_code: str = Field(..., description="Código único de 6-11 caracteres")
     patologo_email: EmailStr = Field(..., description="Email único del patólogo")
     registro_medico: str = Field(..., description="Número de registro médico único")
     is_active: bool = Field(..., description="Estado activo/inactivo del patólogo")

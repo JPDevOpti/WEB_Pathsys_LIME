@@ -24,50 +24,59 @@
         </div>
 
         <!-- Content -->
-        <div class="p-6 space-y-6">
-          <!-- Información del ticket -->
-          <div class="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
-            <div>
-              <p class="text-sm text-gray-500">Código del Ticket</p>
-              <p class="text-base font-medium text-gray-900">{{ ticket.ticket_code }}</p>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Columna izquierda: información + descripción -->
+            <div class="md:col-span-2 space-y-6">
+              <!-- Información del ticket -->
+              <div class="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
+                <div>
+                  <p class="text-sm text-gray-500">Código del Ticket</p>
+                  <p class="text-base font-medium text-gray-900">{{ ticket.ticket_code }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Estado</p>
+                  <span :class="getStatusBadgeClass(ticket.estado)" class="text-xs font-medium px-2 py-1 rounded-full">
+                    {{ getStatusLabel(ticket.estado) }}
+                  </span>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Categoría</p>
+                  <p class="text-base font-medium text-gray-900">{{ getCategoryLabel(ticket.categoria) }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">Fecha de Creación</p>
+                  <p class="text-base font-medium text-gray-900">{{ formatDate(ticket.fecha_ticket) }}</p>
+                </div>
+              </div>
+
+              <!-- Descripción -->
+              <div class="bg-gray-50 rounded-xl p-4">
+                <h5 class="text-sm font-medium text-gray-700 mb-3">Descripción</h5>
+                <div class="bg-white border border-gray-200 rounded-lg p-3">
+                  <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ ticket.descripcion }}</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p class="text-sm text-gray-500">Estado</p>
-              <span :class="getStatusBadgeClass(ticket.estado)" class="text-xs font-medium px-2 py-1 rounded-full">
-                {{ getStatusLabel(ticket.estado) }}
-              </span>
-            </div>
-            <div>
-              <p class="text-sm text-gray-500">Categoría</p>
-              <p class="text-base font-medium text-gray-900">{{ getCategoryLabel(ticket.categoria) }}</p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-500">Fecha de Creación</p>
-              <p class="text-base font-medium text-gray-900">{{ formatDate(ticket.fecha_ticket) }}</p>
+
+            <!-- Columna derecha: imagen -->
+            <div class="space-y-4">
+              <div class="bg-gray-50 rounded-xl p-4 h-full">
+                <h5 class="text-sm font-medium text-gray-700 mb-3">Imagen</h5>
+                <div v-if="ticket.imagen" class="cursor-pointer group" @click="openImageModal(getImageSrc(ticket.imagen))">
+                  <img
+                    :src="getImageSrc(ticket.imagen)"
+                    alt="Imagen del ticket"
+                    class="w-full h-56 object-cover rounded-lg border border-gray-200 group-hover:border-blue-300 transition-colors"
+                  />
+                  <p class="mt-2 text-xs text-gray-500">Click para ver en grande</p>
+                </div>
+                <div v-else class="w-full h-56 rounded-lg border border-dashed border-gray-200 flex items-center justify-center text-xs text-gray-400">
+                  Sin imagen adjunta
+                </div>
+              </div>
             </div>
           </div>
-
-          <!-- Descripción -->
-          <div class="bg-gray-50 rounded-xl p-4">
-            <h5 class="text-sm font-medium text-gray-700 mb-3">Descripción</h5>
-            <div class="bg-white border border-gray-200 rounded-lg p-3">
-              <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ ticket.descripcion }}</p>
-            </div>
-          </div>
-
-          <!-- Imagen adjunta -->
-          <div v-if="ticket.imagen" class="bg-gray-50 rounded-xl p-4">
-            <h5 class="text-sm font-medium text-gray-700 mb-3">Imagen Adjunta</h5>
-            <div class="cursor-pointer" @click="openImageModal(ticket.imagen)">
-              <img
-                :src="ticket.imagen"
-                alt="Imagen del ticket"
-                class="max-w-xs h-40 object-cover rounded-lg border border-gray-200 hover:border-blue-300 transition-colors"
-              />
-            </div>
-          </div>
-
-
         </div>
 
         <!-- Footer -->
@@ -86,7 +95,7 @@
   </transition>
 
   <!-- Modal para ver imagen completa -->
-  <div v-if="selectedImage" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-[10000]" @click="selectedImage = null">
+  <div v-if="selectedImage" :class="['fixed right-0 bottom-0 z-[10000] flex items-center justify-center p-4 bg-black/75', 'top-0', overlayLeftClass]" @click="selectedImage = null">
     <div class="max-w-4xl max-h-full flex items-center justify-center">
       <img :src="selectedImage" alt="Imagen ampliada" class="max-w-full max-h-full object-contain" />
     </div>
@@ -167,6 +176,19 @@ const getCategoryLabel = (category: string) => {
 const openImageModal = (imageUrl?: string) => {
   if (imageUrl) {
     selectedImage.value = imageUrl
+  }
+}
+
+const getImageSrc = (src?: string) => {
+  if (!src) return ''
+  // Si es data URL o URL absoluta, retornar tal cual
+  if (src.startsWith('data:') || src.startsWith('http')) return src
+  // Para rutas relativas del backend, anteponer base si es necesario
+  try {
+    const base = import.meta.env?.VITE_API_BASE_URL || ''
+    return base ? `${base}${src}` : src
+  } catch {
+    return src
   }
 }
 

@@ -47,22 +47,17 @@ def compose_email(code: str, initials: str) -> str:
 
 # Embedded list of Residents provided (sheet: Residentes)
 RESIDENTS_LIST: List[Dict[str, str]] = [
-    {"raw_code": "1152202153", "raw_name": "María Carolina Aguilar Arango", "raw_siglas": "MCA"},
-    {"raw_code": "1128457685", "raw_name": "Oscar Mauricio Yepes Grajales", "raw_siglas": "OMY"},
-    {"raw_code": "1040747654", "raw_name": "Santiago Alzate Giraldo", "raw_siglas": "SAG"},
-    {"raw_code": "1052970426", "raw_name": "Juan Armando Guzmán Mendoza", "raw_siglas": "JAM"},
-    {"raw_code": "1037575729", "raw_name": "Juan Ricardo Cadavid Castrillón", "raw_siglas": "RCC"},
-    {"raw_code": "1037655805", "raw_name": "Juan Camilo López Bedoya", "raw_siglas": "CLB"},
-    {"raw_code": "1152200744", "raw_name": "José Fernando Rojas Agudelo", "raw_siglas": "FRA"},
-    {"raw_code": "8164627", "raw_name": "Juan David Cuartas Ramírez", "raw_siglas": "JDC"},
-    {"raw_code": "1152683958", "raw_name": "John Camilo Ochoa Hernández", "raw_siglas": "COH"},
-    {"raw_code": "98644128", "raw_name": "Juan Diego Baena Morales", "raw_siglas": "DBM"},
-    {"raw_code": "10782378", "raw_name": "Miguel Ángel Guevara Casadiego", "raw_siglas": "AGC"},
-    {"raw_code": "1144089415", "raw_name": "Laura Lucía Gallego Gallón", "raw_siglas": "LLG"},
-    {"raw_code": "1085325220", "raw_name": "Germán Dario Zamudio Burbano", "raw_siglas": "GDZ"},
-    {"raw_code": "1090441696", "raw_name": "Jesús David Díaz Mosquera", "raw_siglas": "JDM"},
-    {"raw_code": "1148205818", "raw_name": "Manuela Ocampo Medina", "raw_siglas": "MOM"},
-    {"raw_code": "71276707", "raw_name": "Carlos Hernán Posada Rendón", "raw_siglas": "CPR"},
+    {"raw_code": "1152202153", "raw_name": "María Carolina Aguilar Arango", "raw_siglas": "MCA", "registro_medico": "R-1152202153", "email": "mcarolina.aguilar@udea.edu.co"},
+    {"raw_code": "1128457685", "raw_name": "Oscar Mauricio Yepes Grajales", "raw_siglas": "OMY", "registro_medico": "R-1128457685", "email": "oscar.yepes@udea.edu.co"},
+    {"raw_code": "1040747654", "raw_name": "Santiago Alzate Giraldo", "raw_siglas": "SAG", "registro_medico": "R-1040747654", "email": "santiago.alzate11@udea.edu.co"},
+    {"raw_code": "1052970426", "raw_name": "Juan Armando Guzmán Mendoza", "raw_siglas": "JAM", "registro_medico": "R-1052970426", "email": "websjagm@gmail.com"},
+    {"raw_code": "1037575729", "raw_name": "Juan Ricardo Cadavid Castrillón", "raw_siglas": "RCC", "registro_medico": "R-1037575729", "email": "juanchorcc@gmail.com"},
+    {"raw_code": "1037655805", "raw_name": "Juan Camilo López Bedoya", "raw_siglas": "CLB", "registro_medico": "R-1037655805", "email": "jcamilolb@gmail.com"},
+    {"raw_code": "1152200744", "raw_name": "José Fernando Rojas Agudelo", "raw_siglas": "FRA", "registro_medico": "R-1152200744", "email": "josef.rojas@udea.edu.co"},
+    {"raw_code": "8164627", "raw_name": "Juan David Cuartas Ramírez", "raw_siglas": "JDC", "registro_medico": "R-8164627", "email": "juand.cuartas@udea.edu.co"},
+    {"raw_code": "1085325220", "raw_name": "Germán Dario Zamudio Burbano", "raw_siglas": "GDZ", "registro_medico": "R-1085325220", "email": "german.zamudio@udea.edu.co"},
+    {"raw_code": "1090441696", "raw_name": "Jesús David Díaz Mosquera", "raw_siglas": "JDM", "registro_medico": "R-1090441696", "email": "jesusd.diaz@udea.edu.co"},
+    {"raw_code": "1148205818", "raw_name": "Manuela Ocampo Medina", "raw_siglas": "MOM", "registro_medico": "R-1148205818", "email": "manuela.ocampom@udea.edu.co"},
 ]
 
 
@@ -110,8 +105,8 @@ async def import_residents(dry_run: bool) -> Tuple[int, int]:
                 continue
                 
             initials = derive_initials(raw_siglas, raw_name)
-            email = compose_email(raw_code, initials)
-            registro_medico = f"PEND-{raw_code}"
+            email = str(row.get("email") or "").strip() or compose_email(raw_code, initials)
+            registro_medico = str(row.get("registro_medico") or "").strip() or f"PEND-{raw_code}"
             
             # Validar longitud de iniciales (2-10 caracteres)
             if len(initials) < 2 or len(initials) > 10:
@@ -162,8 +157,8 @@ async def import_residents(dry_run: bool) -> Tuple[int, int]:
                     continue
 
                 initials = derive_initials(raw_siglas, raw_name)
-                email = compose_email(raw_code, initials)
-                registro_medico = f"PEND-{raw_code}"
+                email = str(row.get("email") or "").strip() or compose_email(raw_code, initials)
+                registro_medico = str(row.get("registro_medico") or "").strip() or f"PEND-{raw_code}"
 
                 # Validar longitud de iniciales (2-10 caracteres)
                 if len(initials) < 2 or len(initials) > 10:

@@ -48,19 +48,21 @@ def compose_email(code: str, initials: str) -> str:
 
 # Lista embebida de patólogos (Docentes) proporcionada
 PATHOLOGISTS_DOCENTES: List[Dict[str, str]] = [
-    {"raw_code": "32108690", "raw_name": "Leiby Alejandra Medina Zuluaica", "raw_siglas": "LAM"},
-    {"raw_code": "71589374", "raw_name": "Juan Carlos Arango Viana", "raw_siglas": "JCA"},
-    {"raw_code": "43617501", "raw_name": "Carolina López Urán", "raw_siglas": "CLU"},
-    {"raw_code": "1129564009", "raw_name": "Vanessa Santiago Pacheco", "raw_siglas": "VSP"},
-    {"raw_code": "32259741", "raw_name": "Alejandra Taborda Murillo", "raw_siglas": "ATM"},
-    {"raw_code": "72257523", "raw_name": "Ariel Antonio Arteta Cueto", "raw_siglas": "AAA"},
-    {"raw_code": "71666530", "raw_name": "Miguel Ignacio Roldán Pérez", "raw_siglas": "MRP"},
-    {"raw_code": "30582655", "raw_name": "Dilia Rosa Díaz Macea", "raw_siglas": "DRD"},
-    {"raw_code": "1144050050", "raw_name": "Luis Eduardo Muñoz Rayo", "raw_siglas": "LEM"},
-    {"raw_code": "1017233614", "raw_name": "Janine Orejuela Erazo", "raw_siglas": "JOE"},
-    {"raw_code": "10102849456", "raw_name": "Emil de Jesús Jiménez Berastegui", "raw_siglas": "EJB"},
-    {"raw_code": "1036636079", "raw_name": "Julieth Alexandra Franco Mira", "raw_siglas": "JFM"},
-    {"raw_code": "1130613519", "raw_name": "Andrés Lozano Camayo", "raw_siglas": "ALC"},
+    {"raw_code": "32108690", "raw_name": "Leiby Alejandra Medina Zuluaica", "raw_siglas": "LAM", "registro_medico": "R-05-0816", "email": "leiby.medina@udea.edu.co"},
+    {"raw_code": "71589374", "raw_name": "Juan Carlos Arango Viana", "raw_siglas": "JCA", "registro_medico": "R-9745-87", "email": "jcarlos.arango@udea.edu.co"},
+    {"raw_code": "43617501", "raw_name": "Carolina López Urán", "raw_siglas": "CLU", "registro_medico": "R-1543901", "email": "carolina.lopezu@udea.edu.co"},
+    {"raw_code": "1129564009", "raw_name": "Vanessa Santiago Pacheco", "raw_siglas": "VSP", "registro_medico": "R-5-6088-09", "email": "vanessa.santiago@udea.edu.co"},
+    {"raw_code": "32259741", "raw_name": "Alejandra Taborda Murillo", "raw_siglas": "ATM", "registro_medico": "R-5-0967-09", "email": "alejandra.tabordam@udea.edu.co"},
+    {"raw_code": "72257523", "raw_name": "Ariel Antonio Arteta Cueto", "raw_siglas": "AAA", "registro_medico": "R-13008141-5", "email": "ariel.arteta@udea.edu.co"},
+    {"raw_code": "71666530", "raw_name": "Miguel Ignacio Roldán Pérez", "raw_siglas": "MRP", "registro_medico": "R-36793", "email": "mirope65@yahoo.com"},
+    {"raw_code": "30582655", "raw_name": "Dilia Rosa Díaz Macea", "raw_siglas": "DRD", "registro_medico": "R-5-1161-10", "email": "diliadiazm@yahoo.com"},
+    {"raw_code": "1144050050", "raw_name": "Luis Eduardo Muñoz Rayo", "raw_siglas": "LEM", "registro_medico": "R-1144050050", "email": "luis.munoz2@udea.edu.co"},
+    {"raw_code": "1017233614", "raw_name": "Janine Orejuela Erazo", "raw_siglas": "JOE", "registro_medico": "R-1017233614", "email": "janine.orejuela@udea.edu.co"},
+    {"raw_code": "10102849456", "raw_name": "Emil de Jesús Jiménez Berastegui", "raw_siglas": "EJB", "registro_medico": "R-1102849456", "email": "emil.jimenezb@udea.edu.co"},
+    {"raw_code": "1036636079", "raw_name": "Julieth Alexandra Franco Mira", "raw_siglas": "JFM", "registro_medico": "R-1036636079", "email": "juliethfranco13@gmail.com"},
+    {"raw_code": "1130613519", "raw_name": "Andrés Lozano Camayo", "raw_siglas": "ALC", "registro_medico": "R-1130613519", "email": "feloza@gmail.com"},
+    {"raw_code": "70092000", "raw_name": "German de Jesus Osorio Sandoval", "raw_siglas": "GOS", "registro_medico": "R-2863", "email": "osoriosandoval2000@yahoo.es"},
+    {"raw_code": "71749611", "raw_name": "Andres Felipe Covo Sandoval", "raw_siglas": "ABC", "registro_medico": "R-76-4975", "email": "afelipe.bernal@udea.edu.co"},
 ]
 
 
@@ -95,8 +97,8 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                 skipped += 1
                 continue
                 
-            # Validar longitud del código según el esquema (6-10 caracteres)
-            if len(raw_code) < 6 or len(raw_code) > 10:
+            # Validar longitud del código según el esquema (6-11 caracteres)
+            if len(raw_code) < 6 or len(raw_code) > 11:
                 print(f"  [SKIP] Código debe tener entre 6 y 10 caracteres, actual: {len(raw_code)}")
                 skipped += 1
                 continue
@@ -108,8 +110,8 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                 continue
                 
             initials = derive_initials(raw_siglas, raw_name)
-            email = compose_email(raw_code, initials)
-            registro_medico = f"PEND-{raw_code}"
+            email = str(row.get("email") or "").strip() or compose_email(raw_code, initials)
+            registro_medico = str(row.get("registro_medico") or "").strip() or f"PEND-{raw_code}"
             
             # Validar longitud de iniciales (2-10 caracteres)
             if len(initials) < 2 or len(initials) > 10:
@@ -148,8 +150,8 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                     skipped += 1
                     continue
                     
-                # Validar longitud del código según el esquema (6-10 caracteres)
-                if len(raw_code) < 6 or len(raw_code) > 10:
+                # Validar longitud del código según el esquema (6-11 caracteres)
+                if len(raw_code) < 6 or len(raw_code) > 11:
                     print(f"  [SKIP] Código debe tener entre 6 y 10 caracteres, actual: {len(raw_code)}")
                     skipped += 1
                     continue
@@ -161,8 +163,8 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                     continue
 
                 initials = derive_initials(raw_siglas, raw_name)
-                email = compose_email(raw_code, initials)
-                registro_medico = f"PEND-{raw_code}"
+                email = str(row.get("email") or "").strip() or compose_email(raw_code, initials)
+                registro_medico = str(row.get("registro_medico") or "").strip() or f"PEND-{raw_code}"
 
                 # Validar longitud de iniciales (2-10 caracteres)
                 if len(initials) < 2 or len(initials) > 10:
@@ -177,7 +179,7 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                     patologo_code=raw_code,
                     patologo_email=email,
                     registro_medico=registro_medico,
-                    password=raw_code,  # Contraseña igual al número de documento
+                    password=raw_code,
                     is_active=True,
                     firma="",
                     observaciones=None,

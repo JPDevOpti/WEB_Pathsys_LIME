@@ -244,36 +244,20 @@ class TicketService:
                 raise BadRequestError("Formato de imagen no permitido. Use: JPG, PNG, GIF, WEBP")
     
     async def _guardar_imagen(self, file: UploadFile, ticket_code: str) -> str:
-        """Guardar imagen en el sistema de archivos."""
-        # Crear directorio si no existe
-        os.makedirs(self.upload_dir, exist_ok=True)
-        
-        # Generar nombre único para la imagen
-        file_ext = os.path.splitext(file.filename or "")[1] if file.filename else ".jpg"
-        timestamp = int(datetime.now().timestamp())
-        filename = f"{ticket_code}_{timestamp}_{uuid.uuid4().hex[:8]}{file_ext}"
-        file_path = os.path.join(self.upload_dir, filename)
-        
-        # Guardar archivo
+        """Genera un Data URL base64 para almacenar la imagen en la BD (similar a firmas)."""
         content = await file.read()
-        with open(file_path, "wb") as buffer:
-            buffer.write(content)
-        
-        # Retornar URL relativa
-        return f"/uploads/tickets/images/{filename}"
+        try:
+            import base64
+            mime = file.content_type or "image/png"
+            b64 = base64.b64encode(content).decode("utf-8")
+            return f"data:{mime};base64,{b64}"
+        except Exception:
+            # Fallback: no imagen válida
+            return ""
     
     async def _eliminar_imagen_archivo(self, image_url: str) -> None:
-        """Eliminar imagen del sistema de archivos."""
-        try:
-            # Extraer nombre del archivo de la URL
-            filename = os.path.basename(image_url)
-            file_path = os.path.join(self.upload_dir, filename)
-            
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        except Exception:
-            # No fallar si no se puede eliminar el archivo
-            pass
+        """No se requiere eliminación física: almacenamos como Data URL en BD."""
+        return None
     
     def _to_response(self, ticket: Ticket) -> TicketResponse:
         """Convertir modelo Ticket a TicketResponse."""

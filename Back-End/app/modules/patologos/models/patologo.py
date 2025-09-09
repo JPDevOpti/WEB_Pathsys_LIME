@@ -12,7 +12,7 @@ class Patologo(BaseDocument):
     """Modelo de Patólogo para MongoDB"""
     patologo_name: str = Field(..., max_length=100, description="Nombre completo del patólogo")
     iniciales_patologo: Optional[str] = Field(None, max_length=10, description="Iniciales del patólogo")
-    patologo_code: str = Field(..., max_length=10, description="Código único del patólogo (identificador principal)")
+    patologo_code: str = Field(..., max_length=11, description="Código único del patólogo (identificador principal)")
     patologo_email: str = Field(..., description="Email único del patólogo")
     registro_medico: str = Field(..., max_length=50, description="Número de registro médico único")
     is_active: bool = Field(default=True, description="Estado activo/inactivo del patólogo")
