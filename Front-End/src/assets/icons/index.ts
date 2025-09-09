@@ -45,6 +45,9 @@ import LayoutDashboardIcon from "./LayoutDashboardIcon.vue";
 import UserGroupIcon from "./UserGroupIcon.vue";
 import BellIcon from "./BellIcon.vue";
 import BarChartIcon from "./BarChartIcon.vue";
+import DoctorIcon from "./DoctorIcon.vue";
+import AuxiliarIcon from "./AuxiliarIcon.vue";
+import ResidenteIcon from "./ResidenteIcon.vue";
 
 export {
   BellIcon,
@@ -64,6 +67,9 @@ export {
   PaperclipIcon,
   BoxIcon,
   ChevronRightIcon,
+  DoctorIcon,
+  AuxiliarIcon,
+  ResidenteIcon,
   GridIcon,
   BoxCubeIcon,
   CalenderIcon,

@@ -4,13 +4,13 @@
       <!-- User Info Section -->
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <!-- Avatar -->
-        <div class="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto sm:mx-0">
+        <div class="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto sm:mx-0">
           <div
             class="w-full h-full rounded-full overflow-hidden border-2 border-blue-200 shadow-lg group"
             :class="{ 'hover:border-blue-300': isEditable }"
           >
             <div class="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-700">
-              <component :is="getRoleIcon(normalizedRole)" class="w-10 h-10 sm:w-12 sm:h-12" />
+              <component :is="getRoleIcon(normalizedRole)" class="w-[86%] h-[86%]" />
             </div>
           </div>
           
@@ -119,14 +119,14 @@ const formatLastLogin = (date: Date): string => {
   }).format(new Date(date))
 }
 
-import { SettingsIcon, DocsIcon, UserCircleIcon, MailBox } from '@/assets/icons'
+import { SettingsIcon, DoctorIcon, ResidenteIcon, AuxiliarIcon, MailBox } from '@/assets/icons'
 
 const getRoleIcon = (role: UserRole) => {
   const roleIconMap: Record<UserRole, any> = {
     admin: SettingsIcon,
-    patologo: DocsIcon,
-    residente: UserCircleIcon,
-    auxiliar: MailBox
+    patologo: DoctorIcon,
+    residente: ResidenteIcon,
+    auxiliar: AuxiliarIcon
   }
   return roleIconMap[role] || UserCircleIcon
 }

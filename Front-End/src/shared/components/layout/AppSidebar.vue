@@ -290,6 +290,7 @@ import {
   TableIcon,
   ListIcon,
   UserCircleIcon,
+  InfoCircleIcon,
 } from "@/shared/icons";
 import { useSidebar } from "@/shared/composables/SidebarControl";
 import logoExpanded from '@/assets/images/Logos/Logo-LIME-NoFondo.png'
@@ -447,6 +448,13 @@ const filteredMenuItems = computed(() => {
         { name: "Mi Perfil", path: "/profile", pro: false, alwaysVisible: true },
         { name: "Gestión de Usuarios", path: "/profile/users", pro: false, alwaysVisible: true }
       ],
+      alwaysVisible: true
+    },
+    {
+      name: "Soporte",
+      icon: InfoCircleIcon,
+      path: "/support",
+      pro: false,
       alwaysVisible: true
     }
   ];
