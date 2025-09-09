@@ -37,6 +37,7 @@ class CasoAprobacionResponse(BaseModel):
 class CasoAprobacionSearch(BaseModel):
     caso_original: Optional[str] = Field(None, description="Código del caso original")
     estado_aprobacion: Optional[EstadoAprobacionEnum] = None
+    solicitado_por: Optional[str] = Field(None, description="ID del patólogo que solicitó")
     fecha_solicitud_desde: Optional[datetime] = None
     fecha_solicitud_hasta: Optional[datetime] = None
     fecha_aprobacion_desde: Optional[datetime] = None

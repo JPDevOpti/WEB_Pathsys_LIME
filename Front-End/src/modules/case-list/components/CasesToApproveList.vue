@@ -8,24 +8,56 @@
 
     <div class="space-y-6">
       <!-- Filtros de búsqueda -->
-      <div class="max-w-md">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Solicitud</label>
-        <div class="flex gap-2">
-          <div class="flex-1">
-            <FormInputField 
-              v-model="searchTerm" 
-              :label="undefined" 
-              placeholder="Código del caso (Ejemplo: 2025-00001)" 
-              :max-length="100" 
-              @keyup.enter="handleSearch"
+      <div class="flex flex-col md:flex-row gap-3">
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Solicitud</label>
+          <div class="flex gap-2">
+            <div class="flex-1">
+              <FormInputField 
+                v-model="searchTerm" 
+                :label="undefined" 
+                placeholder="Código del caso (Ejemplo: 2025-00001)" 
+                :max-length="100" 
+                @keyup.enter="handleSearch"
+              />
+            </div>
+            <SearchButton 
+              text="Buscar" 
+              size="md" 
+              variant="primary" 
+              @click="handleSearch" 
             />
           </div>
-          <SearchButton 
-            text="Buscar" 
-            size="md" 
-            variant="primary" 
-            @click="handleSearch" 
-          />
+        </div>
+        <div class="flex gap-3 items-end">
+          <div class="w-64">
+            <PathologistList v-model="selectedPathologist" label="Patólogo" placeholder="Buscar y seleccionar patólogo..." />
+          </div>
+          <div class="w-48">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+            <select 
+              v-model="selectedStatus" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white"
+            >
+              <option value="">Todos los estados</option>
+              <option value="solicitud_hecha">Solicitud Hecha</option>
+              <option value="pendiente_aprobacion">Pendiente de Aprobación</option>
+              <option value="aprobado">Aprobado</option>
+              <option value="rechazado">Rechazado</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <BaseButton 
+              size="sm" 
+              variant="outline" 
+              text="Limpiar" 
+              @click="clearFilters"
+            >
+              <template #icon-left>
+                <TrashIcon class="w-4 h-4 mr-1" />
+              </template>
+            </BaseButton>
+          </div>
         </div>
       </div>
 
@@ -256,13 +288,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ComponentCard, FormInputField, BaseButton, SearchButton } from '@/shared/components'
+import { TrashIcon } from '@/assets/icons'
 import ConfirmDialog from '@/shared/components/feedback/ConfirmDialog.vue'
 import CaseApprovalDetailsModal from './CaseApprovalDetailsModal.vue'
 import CaseCreatedToast from './CaseCreatedToast.vue'
 import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
 import type { CasoAprobacionResponse, CasoAprobacionSearch } from '@/modules/results/services/casoAprobacion.service'
+import PathologistList from '@/shared/components/List/PathologistList.vue'
+
+// Sin fechas; se filtra por patólogo
 // Componente actualizado para trabajar con solicitudes de pruebas complementarias
 // basado en la estructura real de la base de datos MongoDB
 
@@ -298,6 +334,10 @@ const total = ref(0)
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 
+// Filtros
+const selectedPathologist = ref<string>('')
+const selectedStatus = ref<string>('')
+
 // const authStore = useAuthStore()
 
 const normalizeId = (raw: any): string => {
@@ -313,9 +353,11 @@ const mapBackendCase = (c: CasoAprobacionResponse): CaseToApprove => {
   // Obtener información del patólogo del caso original (ahora viene directamente en la respuesta)
   const patologoAsignado = (c.aprobacion_info as any)?.patologo_asignado
   let pathologistName = 'Pendiente'
+  let pathologistId = ''
   
   if (patologoAsignado && patologoAsignado.nombre) {
     pathologistName = patologoAsignado.nombre
+    pathologistId = patologoAsignado.codigo || ''
   }
   
   return {
@@ -323,7 +365,7 @@ const mapBackendCase = (c: CasoAprobacionResponse): CaseToApprove => {
     caseCode: c.caso_original,
     patientName: `Caso ${c.caso_original}`,
     pathologistName: pathologistName,
-    pathologistId: '',
+    pathologistId: pathologistId,
     description: c.aprobacion_info?.motivo || 'Sin motivo especificado',
     createdAt: c.fecha_creacion,
     updatedAt: c.fecha_creacion, // Usar fecha_creacion para ambos campos
@@ -342,8 +384,16 @@ const fetchCases = async () => {
     const term = (searchTerm.value || '').trim()
     const searchPayload: CasoAprobacionSearch = {
       caso_original: term || undefined,
-      estado_aprobacion: undefined // Obtener todos los estados
+      estado_aprobacion: selectedStatus.value || undefined,
+      solicitado_por: selectedPathologist.value || undefined
     }
+    
+    // Debug: mostrar el payload que se envía
+    console.log('🔍 Payload de búsqueda:', { 
+      solicitado_por: searchPayload.solicitado_por, 
+      estado_aprobacion: searchPayload.estado_aprobacion,
+      fullPayload: searchPayload 
+    })
     
     // Calcular skip basado en la página actual
     const calculatedSkip = (currentPage.value - 1) * itemsPerPage.value
@@ -352,7 +402,20 @@ const fetchCases = async () => {
     const dataList: CasoAprobacionResponse[] = respData?.data || []
     total.value = respData?.total || dataList.length
     cases.value = dataList.map(mapBackendCase)
+    
+    // Debug: mostrar resultados
+    console.log('📊 Resultados encontrados:', {
+      total: total.value,
+      casos: cases.value.length,
+      primerosCasos: cases.value.slice(0, 3).map(c => ({
+        id: c.id,
+        caseCode: c.caseCode,
+        createdAt: c.createdAt,
+        status: c.status
+      }))
+    })
   } catch (e: any) {
+    console.error('❌ Error en fetchCases:', e)
     errorMessage.value = e.message || 'Error cargando casos'
   } finally {
     loading.value = false
@@ -362,12 +425,48 @@ const fetchCases = async () => {
 fetchCases()
 
 // ============================================================================
+// WATCHERS
+// ============================================================================
+
+// Watcher para ejecutar búsqueda automáticamente cuando cambien los filtros
+watch([selectedPathologist, selectedStatus], () => {
+  currentPage.value = 1
+  fetchCases()
+})
+
+// Debounce para el término de búsqueda
+let searchTimeout: NodeJS.Timeout | null = null
+
+// Watcher para ejecutar búsqueda cuando cambie el término de búsqueda
+watch(searchTerm, () => {
+  currentPage.value = 1
+  
+  // Limpiar timeout anterior
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+  
+  // Debounce de 500ms
+  searchTimeout = setTimeout(() => {
+    fetchCases()
+  }, 500)
+})
+
+// ============================================================================
 // FUNCIONES DE FILTRADO
 // ============================================================================
 
 const handleSearch = async () => {
   currentPage.value = 1
   await fetchCases()
+}
+
+// Función para limpiar filtros
+const clearFilters = () => {
+  searchTerm.value = ''
+  selectedPathologist.value = ''
+  selectedStatus.value = ''
+  currentPage.value = 1
 }
 
 // ============================================================================

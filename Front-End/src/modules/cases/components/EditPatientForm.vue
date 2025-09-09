@@ -5,9 +5,9 @@
       <div v-if="!caseCodeProp" class="bg-gray-50 rounded-lg border border-gray-200 px-4 py-4">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
           <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
-          Buscar Paciente para Editar
+          Buscar paciente para editar
         </h3>
         <!-- Campo de búsqueda por cédula -->
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
@@ -63,7 +63,7 @@
           <FormInputField v-model="form.edad" type="number" label="Edad" placeholder="Ingrese la edad" required />
           <FormSelect v-model="form.sexo" :options="sexoOptions" label="Sexo" placeholder="Seleccione sexo" required />
           <FormSelect v-model="form.tipoAtencion" :options="tipoAtencionOptions" label="Tipo de atención" placeholder="Seleccione tipo de atención" required />
-          <EntityList v-model="form.entidadCodigo" label="Entidad" placeholder="Buscar entidad..." :required="true" :auto-load="true" :error="getEntidadError" @entity-selected="onEntitySelected" />
+          <EntityList v-model="form.entidadCodigo" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :error="getEntidadError" @entity-selected="onEntitySelected" />
         </div>
         <FormTextarea v-model="form.observaciones" label="Observaciones" placeholder="Observaciones del paciente" :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional sobre el paciente" />
         <!-- Botones de acción -->

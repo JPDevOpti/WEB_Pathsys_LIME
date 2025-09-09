@@ -94,7 +94,7 @@ const selectClasses = computed(() => {
   }
   
   if (props.error) {
-    return `${baseClasses} border-red-500 focus:ring-red-400 focus:border-red-400`
+    return `${baseClasses} border-red-500 focus:ring-red-200 focus:border-red-500`
   }
   
   if (props.modelValue && !props.error) {

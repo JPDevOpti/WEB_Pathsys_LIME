@@ -164,13 +164,10 @@
           </div>
         </div>
         <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl">
-          <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-            <div class="flex justify-center sm:justify-start">
+          <div class="flex justify-end">
+            <div class="flex gap-2">
               <PreviewButton text="Previsualizar Informe" @click="$emit('preview', caseItem)" />
-            </div>
-            <div class="flex gap-2 justify-center sm:justify-end">
-              <ActionButton variant="secondary" :text="'Cerrar'" @action="$emit('close')" />
-              <ActionButton :text="'Editar Caso'" @action="$emit('edit', caseItem)" />
+              <PreviewButton text="Editar Caso" :icon="SettingsIcon" @click="$emit('edit', caseItem)" />
             </div>
           </div>
         </div>
@@ -182,8 +179,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Case } from '../types/case.types'
-import { PreviewButton, ActionButton } from '@/shared/components/buttons'
+import { PreviewButton } from '@/shared/components/buttons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
+import { SettingsIcon } from '@/assets/icons'
 
 defineProps<{ caseItem: Case | null }>()
 defineEmits<{ (e: 'close'): void; (e: 'edit', c: Case): void; (e: 'preview', c: Case): void }>()

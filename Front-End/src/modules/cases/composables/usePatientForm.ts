@@ -53,7 +53,7 @@ export function usePatientForm() {
     errors.nombrePaciente = []
     
     if (!nombre) {
-      if (validationState.hasAttemptedSubmit) errors.nombrePaciente.push('El nombre del paciente es obligatorio')
+      errors.nombrePaciente.push('El nombre del paciente es obligatorio')
       return false
     }
     
@@ -82,7 +82,7 @@ export function usePatientForm() {
     warnings.edad = []
     
     if (!formData.edad || isNaN(edad)) {
-      if (validationState.hasAttemptedSubmit) errors.edad.push('La edad es obligatoria')
+      errors.edad.push('La edad es obligatoria')
       return false
     }
     

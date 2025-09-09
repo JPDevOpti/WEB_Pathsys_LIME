@@ -40,6 +40,8 @@ class CasoAprobacionRepository(BaseRepository[CasoAprobacion, CasoAprobacionCrea
             q["caso_original"] = {"$regex": search_params.caso_original, "$options": "i"}
         if search_params.estado_aprobacion:
             q["estado_aprobacion"] = search_params.estado_aprobacion.value
+        if search_params.solicitado_por:
+            q["aprobacion_info.patologo_asignado.codigo"] = search_params.solicitado_por
         if search_params.fecha_solicitud_desde or search_params.fecha_solicitud_hasta:
             f: Dict[str, Any] = {}
             if search_params.fecha_solicitud_desde: f["$gte"] = search_params.fecha_solicitud_desde

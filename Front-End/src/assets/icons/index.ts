@@ -48,6 +48,7 @@ import BarChartIcon from "./BarChartIcon.vue";
 import DoctorIcon from "./DoctorIcon.vue";
 import AuxiliarIcon from "./AuxiliarIcon.vue";
 import ResidenteIcon from "./ResidenteIcon.vue";
+import TestIcon from "./TestIcon.vue";
 
 export {
   BellIcon,
@@ -100,4 +101,5 @@ export {
   MailBox,
   SendIcon,
   DraftIcon,
+  TestIcon,
 };

@@ -131,7 +131,7 @@
                         >
                           <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
                             <span class="truncate test-code">{{ g.code }}</span>
-                            <sub v-if="g.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[10px] text-blue-600 font-bold">{{ g.count }}</sub>
+                            <sub v-if="g.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ g.count }}</sub>
                           </span>
                         </span>
                       </div>
@@ -145,7 +145,7 @@
                         >
                           <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
                             <span class="truncate test-code">{{ g.code }}</span>
-                            <sub v-if="g.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[10px] text-blue-600 font-bold">{{ g.count }}</sub>
+                            <sub v-if="g.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ g.count }}</sub>
                           </span>
                         </span>
                       </div>
@@ -157,7 +157,7 @@
                             :title="getTestTooltip(c.tests, getTestsLayout(c).organized.middle!.code, getTestsLayout(c).organized.middle!.count)">
                         <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
                           <span class="truncate test-code">{{ getTestsLayout(c).organized.middle!.code }}</span>
-                          <sub v-if="getTestsLayout(c).organized.middle!.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[10px] text-blue-600 font-bold">{{ getTestsLayout(c).organized.middle!.count }}</sub>
+                          <sub v-if="getTestsLayout(c).organized.middle!.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ getTestsLayout(c).organized.middle!.count }}</sub>
                         </span>
                       </span>
                     </div>
@@ -345,7 +345,7 @@
               >
                 <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
                   <span class="truncate test-code">{{ g.code }}</span>
-                  <sub v-if="g.count > 1" class="absolute right-0 bottom-0 translate-x-1/2 translate-y-1/2 text-[10px] text-blue-600 font-bold">{{ g.count }}</sub>
+                  <sub v-if="g.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ g.count }}</sub>
                 </span>
               </span>
               <span

@@ -1,5 +1,12 @@
 <template>
-  <form class="space-y-4" @submit.prevent="onAssign">
+  <div class="space-y-6">
+    <!-- Título con icono -->
+    <div class="flex items-center">
+      <DocsIcon class="w-5 h-5 mr-2 text-blue-600" />
+      <h2 class="text-lg font-semibold text-gray-800">Gestión de Patólogo</h2>
+    </div>
+
+    <form class="space-y-4" @submit.prevent="onAssign">
     <!-- Campos de búsqueda y selección de patólogo -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <FormInputField v-model="searchQuery" label="Buscar patólogo" placeholder="Nombre o documento" />
@@ -15,13 +22,15 @@
       <ActionButton color="danger" @click="onUnassign" type="button">Desasignar</ActionButton>
       <ClearButton label="Limpiar" type="button" @click="onClear" />
     </div>
-  </form>
+    </form>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton, ActionButton } from '@/shared/components/buttons'
+import { DocsIcon } from '@/assets/icons'
 
 // Estado del formulario
 const searchQuery = ref('')

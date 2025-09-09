@@ -11,7 +11,7 @@
         <div class="flex items-center justify-between mb-2">
           <div>
             <h2 class="text-lg font-semibold">
-              {{ casoEncontrado ? 'Firmar Resultados' : 'Buscar Caso para Firmar Resultados' }}
+              {{ casoEncontrado ? 'Firmar Resultados' : 'Buscar caso para firmar resultados' }}
             </h2>
             <p v-if="!casoEncontrado" class="text-sm text-gray-500 mt-1">
               Ingresa el código del caso para acceder a la firma de resultados
@@ -47,22 +47,22 @@
         </div>
 
         <div class="bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-200 mb-4">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">
-            Buscar Caso
+          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Buscar caso
           </h3>
 
-          <div class="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-end">
+          <div class="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center">
             <div class="flex-1">
               <FormInputField id="codigo-caso" :model-value="codigoCaso" @update:model-value="handleCodigoChange"
                 type="text" placeholder="Ejemplo: 2025-00001" maxlength="10" autocomplete="off" :disabled="isLoadingSearch"
-                @keydown.enter.prevent="buscarCaso" class="flex-1" />
+                @keydown.enter.prevent="buscarCaso" @keydown="keydownHandler" class="flex-1" />
 
-              <div v-if="codigoCaso && !isValidCodigoFormat(codigoCaso)" class="mt-1 text-xs text-red-600">
-                El código debe tener el formato YYYY-NNNNN (Ejemplo: 2025-00001)
-              </div>
             </div>
 
-            <div class="flex gap-2 md:gap-3">
+            <div class="flex gap-2 md:gap-3 md:mt-0 mt-2">
               <SearchButton v-if="!casoEncontrado" text="Buscar" loading-text="Buscando..." :loading="isLoadingSearch"
                 @click="buscarCaso" size="md" variant="primary" />
 
@@ -386,11 +386,6 @@ const casoEncontrado = ref(false)
 const searchError = ref('')
 const selectedPreviousCase = ref<any>(null)
 
-const isValidCodigoFormat = (codigo: string | undefined | null): boolean => {
-  if (!codigo || typeof codigo !== 'string' || codigo.trim() === '') return false
-  const regex = /^\d{4}-\d{5}$/
-  return regex.test(codigo.trim())
-}
 
 // Extrae el nombre completo del usuario desde diferentes formatos posibles
 const getCurrentUserName = (): string | null => {
@@ -444,13 +439,30 @@ const handleCodigoChange = (value: string) => {
   codigoCaso.value = value
 }
 
+/**
+ * Maneja la entrada de solo números en el campo de código de caso
+ */
+const keydownHandler = (event: KeyboardEvent) => {
+  // Permitir teclas de control (backspace, delete, tab, escape, enter, etc.)
+  if (event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab' || 
+      event.key === 'Escape' || event.key === 'Enter' || event.key === 'ArrowLeft' || 
+      event.key === 'ArrowRight' || event.key === 'Home' || event.key === 'End') {
+    return true
+  }
+  
+  // Permitir números y guión
+  if (/[0-9-]/.test(event.key)) {
+    return true
+  }
+  
+  // Bloquear todas las demás teclas
+  event.preventDefault()
+  return false
+}
+
 const buscarCaso = async () => {
   if (!codigoCaso.value.trim()) {
     searchError.value = 'Por favor, ingrese un código de caso';
-    return
-  }
-  if (!isValidCodigoFormat(codigoCaso.value)) {
-    searchError.value = 'El código debe tener el formato YYYY-NNNNN (Ejemplo: 2025-00001)';
     return
   }
 

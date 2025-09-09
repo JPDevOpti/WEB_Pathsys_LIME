@@ -4,9 +4,7 @@
     description="Busque un caso y asigne un patólogo responsable para el análisis."
   >
     <template #icon>
-      <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
+      <DoctorIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
 
     <div class="space-y-6">
@@ -31,6 +29,7 @@
               :disabled="isLoadingSearch"
               @update:model-value="handleCodigoChange"
               @keydown.enter.prevent="buscarCaso"
+              @input="handleNumericInput"
               class="flex-1"
             />
             
@@ -125,21 +124,14 @@
       <div v-if="casoEncontrado" class="space-y-6">
         <!-- Selección de Patólogo -->
         <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6">
-          <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Paso 2: Asignar Patólogo
-          </h3>
-
           <div class="max-w-md">
             <PathologistList
               v-model="formData.patologoId"
-              label="Patólogo Responsable"
+              label="Patólogo Asignado"
               placeholder="Buscar y seleccionar patólogo..."
               :required="true"
               :errors="validationErrors.patologoId"
-              help-text="Seleccione el patólogo responsable del análisis de este caso"
+              help-text="Seleccione el patólogo asignado a este caso"
             />
           </div>
         </div>
@@ -198,6 +190,7 @@ import { FormInputField } from '@/shared/components/forms'
 import { PathologistList } from '@/shared/components/List'
 import { SearchButton, SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
+import { DoctorIcon } from '@/assets/icons'
 
 // ============================================================================
 // ESTADO DEL COMPONENTE
@@ -334,6 +327,13 @@ const handleCodigoChange = (value: string) => {
   }
   
   codigoCaso.value = value
+}
+
+/**
+ * Maneja la entrada de solo números en el campo de código de caso
+ */
+const handleNumericInput = (value: string) => {
+  handleCodigoChange(value)
 }
 
 // ============================================================================

@@ -1,5 +1,7 @@
 <template>
-  <div class="space-y-4">
+  <div class="space-y-6">
+    <!-- Título con icono -->
+
     <form class="space-y-4" @submit.prevent="onSubmit">
       <div v-if="!caseCodeProp" class="bg-gray-50 rounded-lg border border-gray-200">
         <div class="px-4 pt-4 pb-4">
@@ -7,7 +9,7 @@
             <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
-            Buscar Caso para Editar
+            Buscar caso para editar
           </h3>
       
           <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
@@ -21,6 +23,7 @@
                 :disabled="isSearching"
                 @update:model-value="handleCaseCodeChange"
                 @keydown.enter.prevent="searchCase"
+                @input="handleNumericInput"
               />
               <div v-if="searchCaseCode && !isValidCaseCodeFormat(searchCaseCode)" class="mt-1 text-xs text-red-600">
                 El código debe tener el formato YYYY-NNNNN (Ejemplo: 2025-00001)
@@ -97,7 +100,7 @@
       <div v-if="caseFound" class="space-y-6">
         <!-- Campos de entidad y tipo de atención -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <EntityList :key="'entity-' + resetKey" v-model="form.entidadPaciente" label="Entidad del Paciente" placeholder="Buscar entidad..." :required="true" :auto-load="true" @entity-selected="onEntitySelected" />
+          <EntityList :key="'entity-' + resetKey" v-model="form.entidadPaciente" label="Entidad del Paciente" placeholder="Seleciona la entidad" :required="true" :auto-load="true" @entity-selected="onEntitySelected" />
           <FormSelect :key="'tipoAtencion-' + resetKey + '-' + form.tipoAtencionPaciente" v-model="form.tipoAtencionPaciente" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" />
         </div>
 
@@ -126,9 +129,7 @@
 
         <div v-if="form.muestras.length > 0" class="space-y-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-            </svg>
+            <TestIcon class="w-5 h-5 mr-2 text-blue-600" />
             Información de Submuestras
           </h3>
           
@@ -171,6 +172,22 @@
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
           <ClearButton @click="onReset" :disabled="isLoading" />
           <SaveButton text="Guardar Cambios" @click="onSubmit" :disabled="isLoading || !isFormValid" :loading="isLoading" />
+        </div>
+
+        <!-- Notificación de campos faltantes -->
+        <div v-if="caseFound && !isFormValid" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div>
+              <h4 class="text-sm font-semibold text-yellow-800 mb-2">Campos requeridos faltantes</h4>
+              <p class="text-sm text-yellow-700 mb-2">Para guardar los cambios, debe completar los siguientes campos:</p>
+              <ul class="list-disc list-inside space-y-1 text-sm text-yellow-700">
+                <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -244,6 +261,7 @@ import { useCaseForm } from '../composables/useCaseForm'
 import { casesApiService } from '../services/casesApi.service'
 import { patientsApiService } from '../services/patientsApi.service'
 import type { CaseFormData, CaseModel, CaseState, PatientData } from '../types'
+import { TestIcon } from '@/assets/icons'
 
 // ============================================================================
 // PROPS Y EMITS
@@ -350,6 +368,44 @@ const isFormValid = computed(() => {
     form.estado !== '' &&
     form.numeroMuestras !== ''
   )
+})
+
+// Validación de errores del formulario
+const validationErrors = computed(() => {
+  const validationErrorsList: string[] = []
+  
+  // Campos básicos del formulario
+  if (!form.fechaIngreso) validationErrorsList.push('Fecha de ingreso')
+  if (!form.medicoSolicitante) validationErrorsList.push('Médico solicitante')
+  if (!form.servicio) validationErrorsList.push('Servicio')
+  if (!form.prioridadCaso) validationErrorsList.push('Prioridad del caso')
+  if (!form.estado) validationErrorsList.push('Estado del caso')
+  if (!form.numeroMuestras) validationErrorsList.push('Número de muestras')
+  if (!form.entidadPaciente) validationErrorsList.push('Entidad del paciente')
+  if (!form.tipoAtencionPaciente) validationErrorsList.push('Tipo de atención')
+  
+  // Validación detallada de submuestras
+  if (form.muestras && form.muestras.length > 0) {
+    form.muestras.forEach((muestra, index) => {
+      if (!muestra.regionCuerpo) {
+        validationErrorsList.push(`Submuestra ${index + 1}: Región del cuerpo`)
+      }
+      if (!muestra.pruebas || muestra.pruebas.length === 0) {
+        validationErrorsList.push(`Submuestra ${index + 1}: Al menos una prueba`)
+      } else {
+        muestra.pruebas.forEach((prueba, pruebaIndex) => {
+          if (!prueba.code) {
+            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${pruebaIndex + 1}: Código de prueba`)
+          }
+          if (!prueba.cantidad || prueba.cantidad < 1) {
+            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${pruebaIndex + 1}: Cantidad`)
+          }
+        })
+      }
+    })
+  }
+  
+  return validationErrorsList
 })
 
 // Función para verificar cambios (disponible para uso futuro)
@@ -643,6 +699,21 @@ const handleCaseCodeChange = () => {
   searchError.value = ''
   caseFound.value = false
   foundCaseInfo.value = null
+}
+
+/**
+ * Maneja la entrada de solo números y guiones en el código de caso
+ */
+const handleNumericInput = (value: string) => {
+  // Permitir solo números y guiones, y mantener el formato YYYY-NNNNN
+  const numericValue = value.replace(/[^0-9-]/g, '')
+  
+  // Si el usuario está escribiendo y no hay guión, agregarlo automáticamente después de 4 dígitos
+  if (numericValue.length === 4 && !numericValue.includes('-')) {
+    searchCaseCode.value = numericValue + '-'
+  } else {
+    searchCaseCode.value = numericValue
+  }
 }
 
 /**

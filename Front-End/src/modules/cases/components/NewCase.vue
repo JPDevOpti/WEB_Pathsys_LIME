@@ -1,7 +1,7 @@
 <template>
   <ComponentCard title="Crear nuevo caso" description="Complete la información del caso para ingresarlo al sistema.">
     <template #icon>
-      <PlusIcon class="w-5 h-5 mr-2 text-blue-600" />
+      <DocsIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
 
     <div class="space-y-6">
@@ -9,7 +9,7 @@
       <div class="bg-gray-50 rounded-lg p-3 sm:p-4 lg:p-6 border border-gray-200">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
           <UserCircleIcon class="w-4 h-4 mr-2 text-blue-600" />
-        Buscar Paciente
+        Buscar paciente
         </h3>
         
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
@@ -72,7 +72,7 @@
       <div v-if="patientVerified" class="space-y-6">
         <!-- Campos de entidad y tipo de atención -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <EntityList v-model="formData.entidadPaciente" label="Entidad del Paciente" placeholder="Buscar entidad..." :required="true" :auto-load="true" :error="validationState.hasAttemptedSubmit && !formData.entidadPaciente ? 'La entidad es obligatoria' : ''" />
+          <EntityList v-model="formData.entidadPaciente" label="Entidad del Paciente" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :error="validationState.hasAttemptedSubmit && !formData.entidadPaciente ? 'La entidad es obligatoria' : ''" />
           <FormSelect v-model="formData.tipoAtencionPaciente" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="validationState.hasAttemptedSubmit && !formData.tipoAtencionPaciente ? 'Por favor seleccione el tipo de atención' : ''" />
         </div>
 
@@ -96,7 +96,7 @@
         <!-- Sección de información de submuestras -->
         <div class="space-y-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-            <TaskIcon class="w-5 h-5 mr-2 text-blue-600" />
+            <TestIcon class="w-5 h-5 mr-2 text-blue-600" />
             Información de Submuestras
           </h3>
           
@@ -151,6 +151,22 @@
         <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
           <ClearButton @click="clearForm" />
           <SaveButton text="Guardar Caso" @click="handleSaveClick" :disabled="!isFormValid" />
+        </div>
+
+        <!-- Notificación de campos faltantes -->
+        <div v-if="patientVerified && !isFormValid" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div>
+              <h4 class="text-sm font-semibold text-yellow-800 mb-2">Campos requeridos faltantes</h4>
+              <p class="text-sm text-yellow-700 mb-2">Para guardar el caso, debe completar los siguientes campos:</p>
+              <ul class="list-disc list-inside space-y-1 text-sm text-yellow-700">
+                <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         <!-- Alerta de validación -->
@@ -237,7 +253,7 @@ import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/fo
 import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList, TestList, BodyRegionList } from '@/shared/components/List'
-import { PlusIcon, UserCircleIcon, TaskIcon } from '@/assets/icons'
+import { DocsIcon, UserCircleIcon, TestIcon } from '@/assets/icons'
 
 
 
@@ -269,14 +285,48 @@ const prioridadOptions = [
 // Validación de errores del formulario
 const validationErrors = computed(() => {
   const validationErrorsList: string[] = []
-  if (!patientVerified.value) validationErrorsList.push('Debe verificar un paciente antes de crear el caso')
-  if (!formData.fechaIngreso || errors.fechaIngreso?.length > 0) validationErrorsList.push('Fecha de ingreso válida requerida')
-  if (errors.medicoSolicitante?.length > 0) validationErrorsList.push('Médico solicitante debe tener formato válido')
-  if (errors.prioridadCaso?.length > 0) validationErrorsList.push('Prioridad seleccionada no válida')
-  if (!formData.numeroMuestras || errors.numeroMuestras?.length > 0) validationErrorsList.push('Número de muestras válido requerido')
-  if (errors.muestras?.length > 0) validationErrorsList.push('Complete la información de todas las submuestras')
-  if (!formData.entidadPaciente) validationErrorsList.push('Entidad requerida')
-  if (!formData.tipoAtencionPaciente) validationErrorsList.push('Tipo de atención requerido')
+  
+  // Campos básicos del formulario
+  if (!formData.fechaIngreso) validationErrorsList.push('Fecha de ingreso')
+  if (!formData.medicoSolicitante) validationErrorsList.push('Médico solicitante')
+  if (!formData.servicio) validationErrorsList.push('Servicio')
+  if (!formData.prioridadCaso) validationErrorsList.push('Prioridad del caso')
+  if (!formData.numeroMuestras) validationErrorsList.push('Número de muestras')
+  if (!formData.entidadPaciente) validationErrorsList.push('Entidad del paciente')
+  if (!formData.tipoAtencionPaciente) validationErrorsList.push('Tipo de atención')
+  
+  // Validaciones específicas
+  if (errors.fechaIngreso?.length > 0) validationErrorsList.push('Fecha de ingreso (formato inválido)')
+  if (errors.medicoSolicitante?.length > 0) validationErrorsList.push('Médico solicitante (formato inválido)')
+  if (errors.prioridadCaso?.length > 0) validationErrorsList.push('Prioridad del caso (valor inválido)')
+  if (errors.numeroMuestras?.length > 0) validationErrorsList.push('Número de muestras (valor inválido)')
+  
+  // Validación detallada de submuestras
+  if (formData.muestras && formData.muestras.length > 0) {
+    formData.muestras.forEach((muestra, index) => {
+      if (!muestra.regionCuerpo) {
+        validationErrorsList.push(`Submuestra ${index + 1}: Región del cuerpo`)
+      }
+      if (!muestra.pruebas || muestra.pruebas.length === 0) {
+        validationErrorsList.push(`Submuestra ${index + 1}: Al menos una prueba`)
+      } else {
+        muestra.pruebas.forEach((prueba, pruebaIndex) => {
+          if (!prueba.code) {
+            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${pruebaIndex + 1}: Código de prueba`)
+          }
+          if (!prueba.cantidad || prueba.cantidad < 1) {
+            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${pruebaIndex + 1}: Cantidad`)
+          }
+        })
+      }
+    })
+  }
+  
+  // Errores generales de muestras del composable
+  if (errors.muestras?.length > 0) {
+    errors.muestras.forEach(error => validationErrorsList.push(`Submuestras: ${error}`))
+  }
+  
   return validationErrorsList
 })
 
