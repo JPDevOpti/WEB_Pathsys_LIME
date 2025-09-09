@@ -166,7 +166,7 @@ async def actualizar_ticket(
 @handle_exceptions
 async def eliminar_ticket(
     ticket_code: str,
-    current_user: AuthUser = Depends(require_roles(["admin"])),
+    current_user: AuthUser = Depends(require_roles(["admin", "administrador"])),
     ticket_service: TicketService = Depends(get_ticket_service)
 ):
     """Eliminar un ticket (solo administradores)."""
@@ -187,7 +187,7 @@ async def eliminar_ticket(
 async def cambiar_estado_ticket(
     ticket_code: str,
     estado_data: TicketStatusUpdate,
-    current_user: AuthUser = Depends(require_roles(["admin"])),
+    current_user: AuthUser = Depends(require_roles(["admin", "administrador"])),
     ticket_service: TicketService = Depends(get_ticket_service)
 ):
     """Cambiar el estado de un ticket (solo administradores)."""

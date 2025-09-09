@@ -3,7 +3,7 @@
     type="button"
     :disabled="disabled || loading"
     :class="buttonClasses"
-    @click="$emit('click')"
+    @click="$emit('click', $event)"
     :title="title"
   >
     <!-- Loading spinner -->
@@ -51,7 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 defineEmits<{
-  'click': []
+  'click': [e: MouseEvent]
 }>()
 
 const buttonClasses = computed(() => {

@@ -67,7 +67,9 @@
                   {{ getCategoryLabel(ticket.categoria) }}
                 </span>
               </div>
-              <p v-if="ticket.descripcion" class="text-sm text-gray-600 mb-2">{{ ticket.descripcion.substring(0, 100) }}...</p>
+              <div v-if="ticket.descripcion" class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2">
+                <p class="text-sm text-gray-700 whitespace-pre-line">{{ ticket.descripcion }}</p>
+              </div>
               <div class="flex items-center gap-4 text-xs text-gray-500">
                 <span>Ticket {{ ticket.ticket_code }}</span>
                 <span>{{ ticket.fecha_ticket ? formatDate(ticket.fecha_ticket) : '' }}</span>
@@ -91,7 +93,8 @@
                   size="xs"
                   variant="danger"
                   title="Eliminar ticket"
-                  @click="deleteTicket(ticket.ticket_code)"
+                  :loading="isLoading && pendingDeleteCode === ticket.ticket_code"
+                  @click="(e: MouseEvent) => { e?.stopPropagation(); deleteTicket(ticket.ticket_code) }"
                 />
               </div>
             </div>
