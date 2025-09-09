@@ -162,7 +162,8 @@ const isLoading = ref(false)
 const showConfirm = ref(false)
 const pendingDeleteCode = ref<string | null>(null)
 const { success, error } = useToasts()
-const showSuccess = (msg: string) => success('update', 'Ticket', msg, 3500)
+const showUpdate = (msg: string) => success('update', 'Ticket', msg, 3500)
+const showDelete = (msg: string) => success('delete', 'Ticket', msg, 3500)
 const showError = (msg: string) => error('generic', 'Error', msg, 5000)
 
 // Filtros
@@ -280,7 +281,7 @@ const changeTicketStatus = async (ticketCode: string, newStatus: string) => {
     await ticketsService.changeStatus(ticketCode, newStatus as TicketStatusEnum)
     emit('ticketStatusChanged', ticketCode, newStatus)
     emit('ticketsUpdated')
-    showSuccess('Estado actualizado correctamente')
+    showUpdate('Estado actualizado correctamente')
   } catch (error: any) {
     console.error('Error cambiando estado:', error)
     const message = error?.response?.data?.detail || 'Error al cambiar el estado'
@@ -302,7 +303,7 @@ const confirmDelete = async () => {
     await ticketsService.deleteTicket(pendingDeleteCode.value)
     emit('ticketDeleted', pendingDeleteCode.value)
     emit('ticketsUpdated')
-    showSuccess('Ticket eliminado correctamente')
+    showDelete('Ticket eliminado correctamente')
     
     if (selectedTicket.value?.ticket_code === pendingDeleteCode.value) {
       selectedTicket.value = null
