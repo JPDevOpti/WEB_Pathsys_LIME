@@ -113,14 +113,7 @@
           @click="submitTicket"
         />
       </div>
-      <!-- Notificación -->
-      <Notification 
-        :visible="notify.visible" 
-        :type="notify.type" 
-        :title="notify.title" 
-        :message="notify.message" 
-        @close="notify.visible = false" 
-      />
+      
     </div>
   </div>
 </template>
@@ -130,7 +123,7 @@ import { ref, reactive, computed } from 'vue'
 import { PlusIcon, PaperclipIcon } from '@/assets/icons'
 import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
 import { ClearButton, SaveButton } from '@/shared/components/buttons'
-import { Notification } from '@/shared/components/feedback'
+import { useToasts } from '@/shared/composables/useToasts'
 import { ticketsService } from '@/shared/services/tickets.service'
 import type { NewTicketForm, TicketCategoryEnum } from '../types/support.types'
 
@@ -151,10 +144,10 @@ const formData = reactive<NewTicketForm>({
 const imagePreview = ref<string | null>(null)
 const isSubmitting = ref(false)
 
-// Notificaciones
-const notify = reactive({ visible: false, type: 'success' as 'success' | 'error', title: '', message: '' })
-const showSuccess = (message: string) => { Object.assign(notify, { visible: true, type: 'success', title: 'Éxito', message }) }
-const showError = (message: string) => { Object.assign(notify, { visible: true, type: 'error', title: 'Error', message }) }
+// Toasts
+const { success, error } = useToasts()
+const showSuccess = (message: string) => { success('create', 'Ticket', message, 4000) }
+const showError = (message: string) => { error('generic', 'Error', message, 5000) }
 
 // Opciones de categoría para el FormSelect
 const categoryOptions = [

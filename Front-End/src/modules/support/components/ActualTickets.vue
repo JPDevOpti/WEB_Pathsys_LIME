@@ -119,19 +119,12 @@
       message="¿Estás seguro de eliminar este ticket? Esta acción no se puede deshacer."
       confirm-text="Eliminar"
       cancel-text="Cancelar"
-      @update:modelValue="v => showConfirm = v"
+      @update:modelValue="v => showConfirm = v as boolean"
       @confirm="confirmDelete"
       @cancel="showConfirm = false"
     />
 
-    <!-- Notificación -->
-    <Notification
-      :visible="notify.visible"
-      :type="notify.type"
-      :title="notify.title"
-      :message="notify.message"
-      @close="notify.visible = false"
-    />
+    
 
   </div>
 </template>
@@ -141,7 +134,8 @@ import { ref, reactive, computed, watch } from 'vue'
 import { TaskIcon } from '@/assets/icons'
 import { FormSelect, FormInputField } from '@/shared/components/forms'
 import { RemoveButton } from '@/shared/components/buttons'
-import { ConfirmDialog, Notification } from '@/shared/components/feedback'
+import { ConfirmDialog } from '@/shared/components/feedback'
+import { useToasts } from '@/shared/composables/useToasts'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { ticketsService } from '@/shared/services/tickets.service'
 import TicketDetailModal from './TicketDetailModal.vue'
@@ -167,9 +161,9 @@ const selectedTicket = ref<SupportTicket | null>(null)
 const isLoading = ref(false)
 const showConfirm = ref(false)
 const pendingDeleteCode = ref<string | null>(null)
-const notify = reactive({ visible: false, type: 'success' as 'success' | 'error', title: '', message: '' })
-const showSuccess = (msg: string) => Object.assign(notify, { visible: true, type: 'success', title: 'Éxito', message: msg })
-const showError = (msg: string) => Object.assign(notify, { visible: true, type: 'error', title: 'Error', message: msg })
+const { success, error } = useToasts()
+const showSuccess = (msg: string) => success('update', 'Ticket', msg, 3500)
+const showError = (msg: string) => error('generic', 'Error', msg, 5000)
 
 // Filtros
 const filters = reactive<TicketFilters>({

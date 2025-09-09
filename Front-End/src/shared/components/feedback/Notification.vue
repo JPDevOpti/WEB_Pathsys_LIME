@@ -12,7 +12,7 @@
       :class="[
         inline 
           ? 'w-full rounded-xl shadow-xl border-l-4 mt-4 relative' 
-          : 'fixed top-4 right-4 max-w-md w-full shadow-lg rounded-lg p-4 z-50 relative',
+          : containerPositionClasses,
         notificationClasses
       ]"
     >
@@ -32,25 +32,26 @@
         <!-- Ícono con fondo circular - más pequeño -->
         <div class="flex-shrink-0">
           <div :class="iconContainerClasses">
-            <!-- Ícono Success -->
-            <svg v-if="type === 'success'" :class="iconClasses" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            
-            <!-- Ícono Error -->
-            <svg v-else-if="type === 'error'" :class="iconClasses" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            
-            <!-- Ícono Warning -->
-            <svg v-else-if="type === 'warning'" :class="iconClasses" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            
-            <!-- Ícono Info -->
-            <svg v-else :class="iconClasses" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <!-- Ícono personalizado o por tipo -->
+            <component v-if="customIcon" :is="customIcon" :class="customIconClasses" />
+            <template v-else>
+              <!-- Success -->
+              <svg v-if="type === 'success'" :class="iconClasses" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <!-- Error -->
+              <svg v-else-if="type === 'error'" :class="iconClasses" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <!-- Warning -->
+              <svg v-else-if="type === 'warning'" :class="iconClasses" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <!-- Info -->
+              <svg v-else :class="iconClasses" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </template>
           </div>
         </div>
         
@@ -98,12 +99,18 @@ interface Props {
   autoClose?: boolean
   autoCloseDuration?: number
   inline?: boolean
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'center'
+  customIcon?: any
+  iconSize?: 'sm' | 'md' | 'lg'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   autoClose: true,
   autoCloseDuration: 5000,
-  inline: false
+  inline: false,
+  position: 'top-right',
+  customIcon: undefined,
+  iconSize: 'md'
 })
 
 const emit = defineEmits<{
@@ -155,8 +162,21 @@ const notificationClasses = computed(() => {
   return classes[props.type]
 })
 
+const containerPositionClasses = computed(() => {
+  const base = 'fixed max-w-md w-full shadow-lg rounded-lg p-4 z-50 relative'
+  const map: Record<string, string> = {
+    'top-right': 'top-4 right-4',
+    'top-left': 'top-4 left-4',
+    'bottom-right': 'bottom-4 right-4',
+    'bottom-left': 'bottom-4 left-4',
+    'center': 'inset-0 m-auto max-w-sm'
+  }
+  return `${base} ${map[props.position!]}`
+})
+
 const iconContainerClasses = computed(() => {
-  const base = 'flex items-center justify-center w-8 h-8 rounded-full'
+  const size = props.iconSize === 'lg' ? 'w-10 h-10' : props.iconSize === 'sm' ? 'w-7 h-7' : 'w-8 h-8'
+  const base = `flex items-center justify-center ${size} rounded-full`
   const classes = {
     success: 'bg-green-100',
     error: 'bg-red-100',
@@ -167,13 +187,18 @@ const iconContainerClasses = computed(() => {
 })
 
 const iconClasses = computed(() => {
+  const size = props.iconSize === 'lg' ? 'w-5 h-5' : props.iconSize === 'sm' ? 'w-4 h-4' : 'w-4 h-4'
   const classes = {
-    success: 'w-4 h-4 text-green-600',
-    error: 'w-4 h-4 text-red-600',
-    warning: 'w-4 h-4 text-amber-600',
-    info: 'w-4 h-4 text-blue-600'
+    success: `${size} text-green-600`,
+    error: `${size} text-red-600`,
+    warning: `${size} text-amber-600`,
+    info: `${size} text-blue-600`
   }
   return classes[props.type]
+})
+
+const customIconClasses = computed(() => {
+  return props.iconSize === 'lg' ? 'w-5 h-5 text-current' : props.iconSize === 'sm' ? 'w-4 h-4 text-current' : 'w-4 h-4 text-current'
 })
 
 const titleClasses = computed(() => {

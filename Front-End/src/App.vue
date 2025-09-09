@@ -10,11 +10,14 @@
     
     <!-- Contenido principal cuando está inicializado -->
     <router-view v-else />
+    <!-- Toasts globales -->
+    <ToastContainer />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useAuthPersistence } from './composables/useAuthPersistence'
+import ToastContainer from '@/shared/components/feedback/ToastContainer.vue'
 
 // Inicializar persistencia de autenticación
 const { isInitialized } = useAuthPersistence()

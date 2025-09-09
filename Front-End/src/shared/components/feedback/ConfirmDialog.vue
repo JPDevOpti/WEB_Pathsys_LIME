@@ -1,6 +1,10 @@
 <template>
   <transition name="fade-scale">
-    <div v-if="modelValue" class="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-4 bg-black/40" @click.self="onCancel">
+    <div 
+      v-if="modelValue" 
+      :class="['fixed right-0 bottom-0 z-[10000] flex items-center justify-center p-4 bg-black/40 top-16', overlayLeftClass, overlayClass]"
+      @click.self="onCancel"
+    >
       <div class="w-full max-w-sm bg-white rounded-xl shadow-xl overflow-hidden">
         <!-- Header -->
         <div class="px-4 py-3 border-b border-gray-100 flex items-start gap-3">
@@ -46,7 +50,8 @@
 </template>
 
 <script setup lang="ts">
-import { watch, onMounted } from 'vue'
+import { watch, onMounted, computed } from 'vue'
+import { useSidebar } from '@/shared/composables/SidebarControl'
 
 interface Props {
   modelValue: boolean
@@ -58,6 +63,7 @@ interface Props {
   loadingConfirm?: boolean
   icon?: any
   closeOnEsc?: boolean
+  overlayClass?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -67,7 +73,15 @@ const props = withDefaults(defineProps<Props>(), {
   confirmText: 'Confirmar',
   cancelText: 'Cancelar',
   loadingConfirm: false,
-  closeOnEsc: true
+  closeOnEsc: true,
+  overlayClass: ''
+})
+
+// Desplazamiento lateral dinámico como TicketDetailModal
+const { isExpanded, isMobileOpen, isHovered } = useSidebar()
+const overlayLeftClass = computed(() => {
+  const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
+  return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
 })
 
 const emit = defineEmits<{
