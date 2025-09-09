@@ -1,6 +1,23 @@
 <template>
-  <div class="overflow-x-auto -mx-4 sm:mx-0">
-    <table class="min-w-full divide-y divide-gray-200">
+  <div class="space-y-4">
+    <!-- Header con botón de exportar -->
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-gray-900">Pruebas</h3>
+      <BaseButton 
+        v-if="datos.length > 0"
+        size="sm" 
+        variant="outline" 
+        @click="exportToExcel"
+      >
+        <template #icon-left>
+          <DocsIcon class="w-4 h-4 mr-1" />
+        </template>
+        Exportar Excel
+      </BaseButton>
+    </div>
+    
+    <div class="overflow-x-auto -mx-4 sm:mx-0">
+      <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
         <tr>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -55,13 +72,17 @@
           <td class="px-6 py-4 text-center text-sm font-bold text-yellow-600">{{ tiempoPromedioTotal.toFixed(1) }} días</td>
         </tr>
       </tfoot>
-    </table>
+      </table>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { DocsIcon } from '@/assets/icons'
+import { BaseButton } from '@/shared/components'
 import type { TestStats } from '../../types/tests.types'
+import * as XLSX from 'xlsx'
 
 const props = defineProps<{
   datos: TestStats[]
@@ -84,4 +105,24 @@ const tiempoPromedioTotal = computed(() => {
   const total = props.datos.reduce((sum, test) => sum + test.tiempoPromedio, 0)
   return total / props.datos.length
 })
+
+// Función de exportación a Excel
+const exportToExcel = () => {
+  if (!props.datos.length) return
+  
+  const data = props.datos.map(test => ({
+    'Prueba': test.nombre,
+    'Código': test.codigo,
+    'Solicitadas': test.solicitadas,
+    'Completadas': test.completadas,
+    'Tiempo Promedio (días)': test.tiempoPromedio.toFixed(1)
+  }))
+  
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Pruebas')
+  
+  const fileName = `pruebas_${new Date().toISOString().split('T')[0]}.xlsx`
+  XLSX.writeFile(wb, fileName)
+}
 </script>

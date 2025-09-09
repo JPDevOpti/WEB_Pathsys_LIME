@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-sm">
+  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 cursor-pointer">
     <div class="p-4 border-b border-gray-200 flex justify-between items-center">
       <div>
         <h3 class="font-semibold text-gray-800">{{ prueba.name }}</h3>

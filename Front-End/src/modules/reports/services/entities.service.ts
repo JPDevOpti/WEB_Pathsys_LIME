@@ -75,25 +75,26 @@ export class EntitiesApiService {
       
       const detalles = response.detalles
       
-      // Transformar los datos al formato esperado
+      // El backend ya devuelve la estructura correcta, solo necesitamos mapear los campos
       const result: EntityDetails = {
         estadisticas_basicas: {
-          total_pacientes: detalles.total_casos || 0,
-          ambulatorios: detalles.ambulatorios || 0,
-          hospitalizados: detalles.hospitalizados || 0,
-          promedio_muestras_por_paciente: detalles.promedio_muestras_por_paciente || 0
+          total_pacientes: detalles.estadisticas_basicas?.total_pacientes || 0,
+          ambulatorios: detalles.estadisticas_basicas?.ambulatorios || 0,
+          hospitalizados: detalles.estadisticas_basicas?.hospitalizados || 0,
+          promedio_muestras_por_paciente: detalles.estadisticas_basicas?.promedio_muestras_por_paciente || 0
         },
         tiempos_procesamiento: {
-          promedio_dias: detalles.tiempo_promedio || 0,
-          minimo_dias: detalles.tiempo_minimo || 0,
-          maximo_dias: detalles.tiempo_maximo || 0,
-          muestras_completadas: detalles.casos_completados || 0
+          promedio_dias: detalles.tiempos_procesamiento?.promedio_dias || 0,
+          minimo_dias: detalles.tiempos_procesamiento?.minimo_dias || 0,
+          maximo_dias: detalles.tiempos_procesamiento?.maximo_dias || 0,
+          muestras_completadas: detalles.tiempos_procesamiento?.muestras_completadas || 0
         },
         pruebas_mas_solicitadas: detalles.pruebas_mas_solicitadas || []
       }
       
       return result
     } catch (error) {
+      console.error('Error al obtener detalles de la entidad:', error)
       throw new Error(`Error al obtener detalles de la entidad: ${error}`)
     }
   }
@@ -110,7 +111,7 @@ export class EntitiesApiService {
       const result: any[] = (response.patologos || []).map((pat: any) => ({
         codigo: pat.codigo || pat.patologo_code || '',
         nombre: pat.nombre || pat.patologo_name || 'Sin nombre',
-        totalCasos: pat.total_casos || 0,
+        totalCasos: pat.total_casos || pat.casesCount || 0,
         casosCompletados: pat.casos_completados || 0,
         tiempoPromedio: pat.tiempo_promedio || 0,
         casosPorMes: pat.casos_por_mes || []
@@ -118,6 +119,7 @@ export class EntitiesApiService {
       
       return result
     } catch (error) {
+      console.error('Error al obtener patólogos de la entidad:', error)
       throw new Error(`Error al obtener patólogos de la entidad: ${error}`)
     }
   }

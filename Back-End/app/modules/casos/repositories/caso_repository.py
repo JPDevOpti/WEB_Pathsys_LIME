@@ -1094,7 +1094,10 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         pipeline_pruebas = [
             {
                 "$match": {
-                    "paciente.entidad_info.codigo": entidad,
+                    "$or": [
+                        {"paciente.entidad_info.codigo": entidad},
+                        {"paciente.entidad_info.id": entidad}
+                    ],
                     "fecha_creacion": {"$gte": fecha_inicio, "$lte": fecha_fin}
                 }
             },
@@ -1165,7 +1168,10 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             # Filtrar por entidad
             {
                 "$match": {
-                    "paciente.entidad_info.codigo": entidad,
+                    "$or": [
+                        {"paciente.entidad_info.codigo": entidad},
+                        {"paciente.entidad_info.id": entidad}
+                    ],
                     "patologo_asignado": {"$exists": True, "$ne": None}
                 }
             }
@@ -1323,22 +1329,26 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             fin_mes = datetime(year, month + 1, 1) - timedelta(seconds=1)
         
         # Construir pipeline base
-        pipeline = [
-            # Filtrar por rango de fechas y prueba específica
-            {
-                "$match": {
-                    "fecha_creacion": {"$gte": inicio_mes, "$lte": fin_mes},
-                    "muestras.pruebas.id": codigo_prueba
-                }
-            }
-        ]
+        match_filter = {
+            "fecha_creacion": {"$gte": inicio_mes, "$lte": fin_mes},
+            "muestras.pruebas.id": codigo_prueba
+        }
         
         # Agregar filtro de entidad si se especifica
         if entity:
-            pipeline[0]["$match"]["$or"] = [
-                {"paciente.entidad_info.codigo": entity},
-                {"paciente.entidad_info.id": entity}
+            match_filter["$and"] = [
+                {"$or": [
+                    {"paciente.entidad_info.codigo": entity},
+                    {"paciente.entidad_info.id": entity}
+                ]}
             ]
+        
+        pipeline = [
+            # Filtrar por rango de fechas y prueba específica
+            {
+                "$match": match_filter
+            }
+        ]
         
         # Continuar con el pipeline
         pipeline.extend([
@@ -1371,9 +1381,28 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
                 "patologos": []
             }
         
+        # Filtrar casos válidos
+        casos_validos = [c for c in casos if c is not None]
+        
+        if not casos_validos:
+            return {
+                "estadisticas_principales": {
+                    "total_solicitadas": 0,
+                    "total_completadas": 0,
+                    "porcentaje_completado": 0
+                },
+                "tiempos_procesamiento": {
+                    "promedio_dias": 0,
+                    "dentro_oportunidad": 0,
+                    "fuera_oportunidad": 0,
+                    "total_casos": 0
+                },
+                "patologos": []
+            }
+        
         # Calcular estadísticas principales
-        total_solicitadas = len(casos)
-        casos_completados = [c for c in casos if c.get("estado") == EstadoCasoEnum.COMPLETADO.value]
+        total_solicitadas = len(casos_validos)
+        casos_completados = [c for c in casos_validos if c and c.get("estado") == EstadoCasoEnum.COMPLETADO.value]
         total_completadas = len(casos_completados)
         porcentaje_completado = (
             (total_completadas / total_solicitadas) * 100 
@@ -1381,10 +1410,10 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         )
         
         # Calcular tiempos de procesamiento
-        tiempos = await self._calcular_tiempos_prueba(casos)
+        tiempos = await self._calcular_tiempos_prueba(casos_validos)
         
         # Obtener patólogos
-        patologos = await self._obtener_patologos_por_prueba(casos)
+        patologos = await self._obtener_patologos_por_prueba(casos_validos)
         
         return {
             "estadisticas_principales": {
@@ -1407,14 +1436,25 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             fin_mes = datetime(year, month + 1, 1) - timedelta(seconds=1)
         
         # Construir pipeline
+        match_filter = {
+            "fecha_creacion": {"$gte": inicio_mes, "$lte": fin_mes},
+            "muestras.pruebas.id": codigo_prueba,
+            "patologo_asignado": {"$exists": True, "$ne": None}
+        }
+        
+        # Agregar filtro de entidad si se especifica
+        if entity:
+            match_filter["$and"] = [
+                {"$or": [
+                    {"paciente.entidad_info.codigo": entity},
+                    {"paciente.entidad_info.id": entity}
+                ]}
+            ]
+        
         pipeline = [
             # Filtrar por rango de fechas y prueba específica
             {
-                "$match": {
-                    "fecha_creacion": {"$gte": inicio_mes, "$lte": fin_mes},
-                    "muestras.pruebas.id": codigo_prueba,
-                    "patologo_asignado": {"$exists": True, "$ne": None}
-                }
+                "$match": match_filter
             },
             # Descomponer muestras
             {"$unwind": "$muestras"},
@@ -1444,10 +1484,6 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             # Ordenar por total de casos procesados descendente
             {"$sort": {"total_procesadas": -1}}
         ]
-        
-        # Agregar filtro de entidad si se especifica
-        if entity:
-            pipeline[0]["$match"]["paciente.entidad_info.codigo"] = entity
         
         # Ejecutar agregación
         result = await self.collection.aggregate(pipeline).to_list(length=None)
@@ -1551,8 +1587,11 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         fuera_oportunidad = 0
         
         for caso in casos_completados:
-            if caso.get("fecha_entrega") and caso.get("fecha_creacion"):
-                tiempo = (caso["fecha_entrega"] - caso["fecha_creacion"]).days
+            fecha_entrega = caso.get("fecha_entrega")
+            fecha_creacion = caso.get("fecha_creacion")
+            
+            if fecha_entrega and fecha_creacion and hasattr(fecha_entrega, 'days') and hasattr(fecha_creacion, 'days'):
+                tiempo = (fecha_entrega - fecha_creacion).days
                 tiempos_dias.append(tiempo)
                 
                 if tiempo <= 6:  # Dentro de oportunidad (≤6 días)
@@ -1574,28 +1613,39 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         patologos_map = {}
         
         for caso in casos:
-            if caso.get("patologo_asignado"):
+            if caso and caso.get("patologo_asignado"):
                 patologo = caso["patologo_asignado"]
-                codigo = patologo.get("codigo", "")
-                nombre = patologo.get("nombre", "")
-                
-                if codigo not in patologos_map:
-                    patologos_map[codigo] = {
-                        "codigo": codigo,
-                        "nombre": nombre,
-                        "total_procesadas": 0,
-                        "tiempo_promedio": 0.0
-                    }
-                
-                patologos_map[codigo]["total_procesadas"] += 1
+                if patologo:
+                    codigo = patologo.get("codigo", "")
+                    nombre = patologo.get("nombre", "")
+                    
+                    if codigo and codigo not in patologos_map:
+                        patologos_map[codigo] = {
+                            "codigo": codigo,
+                            "nombre": nombre,
+                            "total_procesadas": 0,
+                            "tiempo_promedio": 0.0
+                        }
+                    
+                    if codigo:
+                        patologos_map[codigo]["total_procesadas"] += 1
         
         # Calcular tiempo promedio para cada patólogo
         for codigo, patologo in patologos_map.items():
-            tiempo_promedio = await self._calcular_tiempo_promedio_patologo_prueba(
-                [c["_id"] for c in casos if c.get("patologo_asignado", {}).get("codigo") == codigo],
-                ""  # No necesitamos codigo_prueba aquí
-            )
-            patologo["tiempo_promedio"] = tiempo_promedio
+            try:
+                casos_patologo = [c for c in casos if c and c.get("patologo_asignado", {}).get("codigo") == codigo]
+                casos_ids = [c["_id"] for c in casos_patologo if c and c.get("_id")]
+                
+                if casos_ids:
+                    tiempo_promedio = await self._calcular_tiempo_promedio_patologo_prueba(
+                        casos_ids,
+                        ""  # No necesitamos codigo_prueba aquí
+                    )
+                    patologo["tiempo_promedio"] = tiempo_promedio
+                else:
+                    patologo["tiempo_promedio"] = 0.0
+            except Exception as e:
+                patologo["tiempo_promedio"] = 0.0
         
         # Convertir a lista y ordenar por total procesadas
         patologos_list = list(patologos_map.values())
@@ -1642,6 +1692,6 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         ])
         
         result = await self.collection.aggregate(pipeline).to_list(length=1)
-        if result and result[0]["tiempo_promedio"] is not None:
+        if result and len(result) > 0 and result[0] and result[0].get("tiempo_promedio") is not None:
             return round(result[0]["tiempo_promedio"], 1)
         return 0.0

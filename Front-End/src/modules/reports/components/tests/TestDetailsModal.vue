@@ -7,12 +7,18 @@
     leave-from-class="opacity-100 transform scale-100" 
     leave-to-class="opacity-0 transform scale-95"
   >
-    <div 
-      v-if="test" 
-      class="fixed inset-0 z-50 flex items-center justify-center p-4" 
+    <div
+      v-if="test"
+      :class="[
+        'fixed right-0 bottom-0 z-[9999] flex items-end sm:items-center justify-center p-2 sm:p-4 bg-black/40',
+        // Offset por header
+        'top-16', // ~64px
+        // Offset por sidebar en desktop
+        overlayLeftClass
+      ]"
       @click.self="$emit('close')"
     >
-      <div class="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden mt-4 sm:mt-10 md:mt-16 mx-4 sm:mx-0">
+      <div class="relative bg-white w-full max-w-4xl rounded-t-2xl sm:rounded-2xl shadow-2xl h-[85vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <!-- Header -->
         <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-t-2xl flex items-center justify-between">
           <div>
@@ -212,6 +218,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
+import { useSidebar } from '@/shared/composables/SidebarControl'
 import type { TestStats, TestDetails, PeriodSelection } from '../../types/tests.types'
 import { testsApiService } from '../../services/tests.service'
 
@@ -221,7 +228,7 @@ const props = defineProps<{
   entity?: string
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   close: []
 }>()
 
@@ -275,6 +282,18 @@ function formatPeriod() {
   ]
   return `${months[props.period.month - 1]} ${props.period.year}`
 }
+
+// Ajuste responsivo: respetar ancho del sidebar (colapsado/expandido) y su hover
+const { isExpanded, isMobileOpen, isHovered } = useSidebar()
+
+// En desktop (>= lg), cuando el sidebar está expandido u hovered, dejamos margen izquierdo ~18rem (w-72)
+// Cuando está colapsado, dejamos ~5rem (w-20)
+// En móvil, sidebar es overlay, así que sin margen (left: 0)
+const overlayLeftClass = computed(() => {
+  // Tailwind usa breakpoints; aquí usamos clases utilitarias fijas para left dinámico vía clases condicionales
+  const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
+  return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
+})
 </script>
 
 <style scoped>

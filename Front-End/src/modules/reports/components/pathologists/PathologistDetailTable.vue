@@ -1,6 +1,23 @@
 <template>
-  <div class="overflow-x-auto -mx-4 sm:mx-0">
-    <table class="min-w-full divide-y divide-gray-200">
+  <div class="space-y-4">
+    <!-- Header con botón de exportar -->
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-gray-900">Patólogos</h3>
+      <BaseButton 
+        v-if="datos.length > 0"
+        size="sm" 
+        variant="outline" 
+        @click="exportToExcel"
+      >
+        <template #icon-left>
+          <DocsIcon class="w-4 h-4 mr-1" />
+        </template>
+        Exportar Excel
+      </BaseButton>
+    </div>
+    
+    <div class="overflow-x-auto -mx-4 sm:mx-0">
+      <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
         <tr>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -57,13 +74,17 @@
           </td>
         </tr>
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { DocsIcon } from '@/assets/icons'
+import { BaseButton } from '@/shared/components'
 import type { PathologistMetrics } from '../../types/pathologists.types'
+import * as XLSX from 'xlsx'
 
 const props = defineProps<{ datos: PathologistMetrics[] }>()
 defineEmits<{ (e: 'pathologistClick', pathologist: PathologistMetrics): void }>()
@@ -86,4 +107,30 @@ const sortedPathologists = computed(() => {
     return bTotal - aTotal // Ordenar por total descendente
   })
 })
+
+// Función de exportación a Excel
+const exportToExcel = () => {
+  if (!props.datos.length) return
+  
+  const data = props.datos.map(pathologist => {
+    const total = pathologist.withinOpportunity + pathologist.outOfOpportunity
+    const compliance = total > 0 ? Math.round((pathologist.withinOpportunity / total) * 100) : 0
+    
+    return {
+      'Patólogo': pathologist.name,
+      'Total': total,
+      'Dentro de Oportunidad': pathologist.withinOpportunity,
+      'Fuera de Oportunidad': pathologist.outOfOpportunity,
+      '% Cumplimiento': `${compliance}%`,
+      'Tiempo Promedio (días)': pathologist.avgTime.toFixed(1)
+    }
+  })
+  
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Patólogos')
+  
+  const fileName = `patologos_${new Date().toISOString().split('T')[0]}.xlsx`
+  XLSX.writeFile(wb, fileName)
+}
 </script>
