@@ -194,7 +194,7 @@
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Información del Paciente</h4>
                     <div class="space-y-2 text-sm">
                       <div><span class="text-gray-500 font-medium">Nombre:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.nombre || verifiedPatient?.nombrePaciente }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Código:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.paciente?.paciente_code || createdCase.paciente?.cedula || verifiedPatient?.pacienteCode }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Documento de identidad:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.paciente?.paciente_code || createdCase.paciente?.cedula || verifiedPatient?.pacienteCode || 'NO DISPONIBLE' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Edad:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.edad || verifiedPatient?.edad }} años</p></div>
                       <div><span class="text-gray-500 font-medium">Sexo:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.sexo || verifiedPatient?.sexo }}</p></div>
                       <div><span class="text-gray-500 font-medium">Entidad:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.entidad || verifiedPatient?.entidad }}</p></div>

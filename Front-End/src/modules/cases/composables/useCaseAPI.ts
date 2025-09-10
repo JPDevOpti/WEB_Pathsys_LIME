@@ -48,7 +48,7 @@ export function useCaseAPI() {
     
     return {
       paciente: {
-        paciente_code: verifiedPatient.pacienteCode || verifiedPatient.codigo || `PAC_${verifiedPatient.numeroCedula}`,
+        paciente_code: verifiedPatient.pacienteCode || verifiedPatient.codigo || `PAC_${verifiedPatient.pacienteCode}`,
         nombre: verifiedPatient.nombrePaciente,
         edad: parseInt(verifiedPatient.edad),
         sexo: normalizeSexo(verifiedPatient.sexo),
@@ -82,8 +82,8 @@ export function useCaseAPI() {
       id: apiResponse._id || apiResponse.id || codigoCaso,
       codigo: codigoCaso,
       paciente: {
-        paciente_code: apiResponse.paciente?.paciente_code || verifiedPatient.numeroCedula,
-        cedula: apiResponse.paciente?.cedula || verifiedPatient.numeroCedula, // Mantener por compatibilidad
+        paciente_code: apiResponse.paciente?.paciente_code || verifiedPatient.pacienteCode,
+        cedula: apiResponse.paciente?.cedula || verifiedPatient.pacienteCode, // Mantener por compatibilidad
         nombre: apiResponse.paciente?.nombre || verifiedPatient.nombrePaciente,
         edad: apiResponse.paciente?.edad || parseInt(verifiedPatient.edad),
         sexo: apiResponse.paciente?.sexo || verifiedPatient.sexo,
@@ -118,7 +118,7 @@ export function useCaseAPI() {
         }
         
         const patientUpdateData = {
-          numeroCedula: verifiedPatient.numeroCedula,
+          numeroCedula: verifiedPatient.pacienteCode,
           nombrePaciente: verifiedPatient.nombrePaciente,
           sexo: verifiedPatient.sexo,
           edad: verifiedPatient.edad,
@@ -128,7 +128,7 @@ export function useCaseAPI() {
           observaciones: verifiedPatient.observaciones || ''
         }
         
-        await patientsApiService.updatePatient(verifiedPatient.numeroCedula, patientUpdateData)
+        await patientsApiService.updatePatient(verifiedPatient.pacienteCode, patientUpdateData)
       } catch {
         // No fallar la creación del caso por un error en la actualización del paciente
       }

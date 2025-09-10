@@ -39,7 +39,7 @@
                   <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdPatient.nombre }}</h3>
                   <p class="text-gray-600">
                     <span class="font-medium">Documento de identidad:</span> 
-                    <span class="font-mono font-bold text-gray-800 ml-1">{{ createdPatient.cedula }}</span>
+                    <span class="font-mono font-bold text-gray-800 ml-1">{{ createdPatient.cedula || createdPatient.paciente_code || 'NO DISPONIBLE' }}</span>
                   </p>
                 </div>
                 
