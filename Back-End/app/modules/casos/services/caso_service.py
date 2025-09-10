@@ -19,7 +19,8 @@ from app.modules.casos.schemas.caso import (
     CasoStats,
     MuestraStats,
     PatologoInfo,
-    ResultadoInfo
+    ResultadoInfo,
+    AgregarNotaAdicionalRequest
 )
 from app.core.exceptions import ConflictError, NotFoundError, BadRequestError
 from app.shared.schemas.common import EstadoCasoEnum
@@ -1000,3 +1001,42 @@ class CasoService:
         patologos = await self.repository.get_patologos_por_prueba(codigo_prueba, month, year, entity)
         
         return patologos
+    
+    async def agregar_nota_adicional(
+        self, 
+        caso_code: str, 
+        nota_data: Dict[str, Any], 
+        usuario_id: str
+    ) -> CasoResponse:
+        """Agregar una nota adicional a un caso completado."""
+        # Verificar que el caso existe
+        caso_existente = await self.repository.get_by_caso_code(caso_code)
+        if not caso_existente:
+            raise NotFoundError(f"Caso con código {caso_code} no encontrado")
+        
+        # Verificar que el caso esté completado
+        if caso_existente.estado != EstadoCasoEnum.COMPLETADO:
+            raise BadRequestError(f"Solo se pueden agregar notas adicionales a casos completados. Estado actual: {caso_existente.estado}")
+        
+        # Crear la nueva nota
+        nueva_nota = {
+            "fecha": datetime.utcnow(),
+            "nota": nota_data.get("nota", ""),
+            "agregado_por": nota_data.get("agregado_por", usuario_id)
+        }
+        
+        # Agregar la nota al array de notas_adicionales usando $push
+        update_data = {
+            "$push": {"notas_adicionales": nueva_nota},
+            "$set": {
+                "fecha_actualizacion": datetime.utcnow(),
+                "actualizado_por": usuario_id
+            }
+        }
+        
+        # Actualizar el caso
+        caso_actualizado = await self.repository.update_by_caso_code(caso_code, update_data)
+        if not caso_actualizado:
+            raise NotFoundError(f"Error al actualizar el caso {caso_code}")
+        
+        return self._to_response(caso_actualizado)

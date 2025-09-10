@@ -23,6 +23,12 @@ class DiagnosticoCIEO(BaseModel):
     codigo: str = Field(..., max_length=20, description="Código CIEO de la enfermedad")
     nombre: str = Field(..., max_length=500, description="Nombre de la enfermedad CIEO")
 
+class NotaAdicional(BaseModel):
+    """Información de una nota adicional agregada al caso."""
+    fecha: datetime = Field(default_factory=datetime.utcnow, description="Fecha y hora de la nota")
+    nota: str = Field(..., max_length=1000, description="Contenido de la nota adicional")
+    agregado_por: Optional[str] = Field(None, max_length=100, description="Usuario que agregó la nota")
+
 
 class EntidadInfo(BaseModel):
     """Información de la entidad asignada"""
@@ -113,6 +119,7 @@ class CasoBase(BaseModel):
     fecha_entrega: Optional[datetime] = Field(None, description="Fecha de entrega del caso")
     fecha_actualizacion: datetime = Field(default_factory=datetime.utcnow, description="Fecha de última actualización")
     observaciones_generales: Optional[str] = Field(None, max_length=1000, description="Observaciones generales del caso")
+    notas_adicionales: Optional[List[NotaAdicional]] = Field(default_factory=list, description="Notas adicionales agregadas al caso")
     
     @validator('caso_code')
     def validate_caso_code(cls, v):
@@ -354,6 +361,14 @@ class PatologoPorPrueba(BaseModel):
     codigo: str = Field(..., description="Código del patólogo")
     total_procesadas: int = Field(0, description="Total de casos procesados")
     tiempo_promedio: float = Field(0.0, description="Tiempo promedio en días")
+    
+    class Config:
+        from_attributes = True
+
+class AgregarNotaAdicionalRequest(BaseModel):
+    """Esquema para agregar una nota adicional a un caso completado"""
+    nota: str = Field(..., max_length=1000, description="Contenido de la nota adicional")
+    agregado_por: Optional[str] = Field(None, max_length=100, description="Usuario que agrega la nota")
     
     class Config:
         from_attributes = True

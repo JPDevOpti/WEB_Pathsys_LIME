@@ -18,7 +18,8 @@ from app.modules.casos.schemas.caso import (
     MuestraStats,
     CasoDeleteResponse,
     PatologoInfo,
-    ResultadoInfo
+    ResultadoInfo,
+    AgregarNotaAdicionalRequest
 )
 from app.config.database import get_database
 from app.shared.schemas.common import EstadoCasoEnum
@@ -587,3 +588,13 @@ async def obtener_patologos_por_prueba(
             status_code=500,
             detail=f"Error interno del servidor: {str(e)}"
         )
+
+@router.post("/caso-code/{caso_code}/notas-adicionales", response_model=CasoResponse)
+@handle_exceptions
+async def agregar_nota_adicional(
+    caso_code: str,
+    nota_data: AgregarNotaAdicionalRequest,
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Agregar una nota adicional a un caso completado."""
+    return await caso_service.agregar_nota_adicional(caso_code, nota_data.model_dump(), "sistema")

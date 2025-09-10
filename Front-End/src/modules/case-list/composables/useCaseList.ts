@@ -182,6 +182,7 @@ export function useCaseList() {
         observaciones: (bk.resultado as any)?.observaciones || '',
       },
       subsamples,
+      notas_adicionales: bk.notas_adicionales || [],
     }
   }
 

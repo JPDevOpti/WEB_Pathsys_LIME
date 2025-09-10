@@ -60,7 +60,7 @@
         <label for="complementary-tests-details" class="block text-sm font-medium text-gray-700 mb-2">
           Motivo de la solicitud <span class="text-red-500">*</span>
         </label>
-        <FormTextarea
+        <FormTextareaUnlimited
           id="complementary-tests-details"
           :model-value="complementaryTestsDetails"
           @update:model-value="handleDetailsChange"
@@ -89,7 +89,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { FormCheckbox, FormTextarea, FormInputField } from '@/shared/components/forms'
+import { FormCheckbox, FormTextareaUnlimited, FormInputField } from '@/shared/components/forms'
 import { SaveButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { TestList } from '@/shared/components/List'
 import type { PruebaComplementaria } from '@/modules/results/services/casoAprobacion.service'

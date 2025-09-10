@@ -29,6 +29,11 @@ export interface BackendCase {
   fecha_firma?: { $date?: string } | string | null
   fecha_actualizacion?: { $date?: string } | string
   observaciones_generales?: string
+  notas_adicionales?: Array<{
+    fecha: string
+    nota: string
+    agregado_por?: string
+  }>
   is_active?: boolean
   actualizado_por?: string
   resultado?: {

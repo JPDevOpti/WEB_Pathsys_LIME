@@ -26,14 +26,13 @@
       </div>
       
       <!-- Textarea para otras secciones -->
-      <FormTextarea 
+      <FormTextareaUnlimited 
         v-else
         :model-value="typeof modelValue === 'string' ? modelValue : ''" 
         @update:model-value="$emit('update:modelValue', $event)" 
         class="w-full h-full resize-none transition-colors"
         :class="getTextareaClasses()"
         :rows="8"
-        :show-counter="false"
         :preview-text="getPreviewText(activeSection)"
       />
     </div>
@@ -46,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { FormTextarea } from '@/shared/components/forms'
+import { FormTextareaUnlimited } from '@/shared/components/forms'
 import MethodSection from './MethodSection.vue'
 
 type EditorSectionKey = 'method' | 'macro' | 'micro' | 'diagnosis'

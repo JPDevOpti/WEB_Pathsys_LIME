@@ -92,6 +92,12 @@ class DiagnosticoCIEO(BaseModel):
     nombre: str = Field(..., max_length=500, description="Nombre de la enfermedad CIEO")
 
 
+class NotaAdicional(BaseModel):
+    """Información de una nota adicional agregada al caso."""
+    fecha: datetime = Field(default_factory=datetime.utcnow, description="Fecha y hora de la nota")
+    nota: str = Field(..., max_length=1000, description="Contenido de la nota adicional")
+    agregado_por: Optional[str] = Field(None, max_length=100, description="Usuario que agregó la nota")
+
 class ResultadoInfo(BaseModel):
     """Información de resultados del caso."""
     metodo: Optional[List[str]] = Field(default_factory=list, description="Lista de métodos utilizados")
@@ -123,6 +129,7 @@ class Caso(BaseModel):
     patologo_asignado: Optional[PatologoInfo] = None
     resultado: Optional[ResultadoInfo] = None
     observaciones_generales: Optional[str] = Field(None, max_length=1000)
+    notas_adicionales: Optional[List[NotaAdicional]] = Field(default_factory=list, description="Notas adicionales agregadas al caso")
     ingresado_por: Optional[str] = None
     actualizado_por: Optional[str] = None
 

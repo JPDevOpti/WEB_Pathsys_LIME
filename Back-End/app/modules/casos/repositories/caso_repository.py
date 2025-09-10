@@ -119,9 +119,16 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         """Actualizar un caso por su código de caso."""
         if not update_data:
             return await self.get_by_caso_code(caso_code)
-        # Asegurar fecha de actualización
-        update_data = {**update_data, "fecha_actualizacion": datetime.utcnow()}
-        await self.collection.update_one({"caso_code": caso_code}, {"$set": update_data})
+        
+        # Si update_data ya contiene operadores de MongoDB ($push, $set, etc.), usarlo directamente
+        # Si no, envolver en $set para compatibilidad con actualizaciones simples
+        if any(key.startswith('$') for key in update_data.keys()):
+            # Ya contiene operadores de MongoDB, usar directamente
+            await self.collection.update_one({"caso_code": caso_code}, update_data)
+        else:
+            # Actualización simple, envolver en $set
+            await self.collection.update_one({"caso_code": caso_code}, {"$set": update_data})
+        
         return await self.get_by_caso_code(caso_code)
 
     async def delete_by_caso_code(self, caso_code: str) -> bool:

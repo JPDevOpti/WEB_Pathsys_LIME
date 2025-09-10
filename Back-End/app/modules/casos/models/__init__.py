@@ -10,7 +10,8 @@ from .caso import (
     PatologoInfo,
     DiagnosticoCIE10,
     DiagnosticoCIEO,
-    ResultadoInfo
+    ResultadoInfo,
+    NotaAdicional
 )
 
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     "PatologoInfo",
     "DiagnosticoCIE10",
     "DiagnosticoCIEO", 
-    "ResultadoInfo"
+    "ResultadoInfo",
+    "NotaAdicional"
 ]

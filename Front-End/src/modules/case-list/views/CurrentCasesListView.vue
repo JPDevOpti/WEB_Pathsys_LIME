@@ -32,7 +32,7 @@
             @prev-page="() => currentPage--" @next-page="() => currentPage++" @refresh="reload" />
         </div>
 
-        <CaseDetailsModal :case-item="selectedCase" @close="closeDetails" @edit="editCase" @preview="previewCase" />
+        <CaseDetailsModal :case-item="selectedCase" @close="closeDetails" @edit="editCase" @preview="previewCase" @notes="handleNotesUpdate" />
       </template>
     </div>
   </AdminLayout>
@@ -143,6 +143,29 @@ function previewCase(c: any) {
   console.log('CurrentCasesListView - pathologist:', c.pathologist)
   
   navigateToPreview(c)
+}
+
+function handleNotesUpdate(updatedCase: any) {
+  // Buscar por caso_code si no hay caseCode
+  const caseCode = updatedCase.caseCode || updatedCase.caso_code
+  
+  // Actualizar solo las notas adicionales en la lista local
+  const caseIndex = cases.value.findIndex(c => (c.caseCode || c.caso_code) === caseCode)
+  if (caseIndex !== -1) {
+    // Solo actualizar las notas adicionales, mantener el resto del caso intacto
+    cases.value[caseIndex] = {
+      ...cases.value[caseIndex],
+      notas_adicionales: updatedCase.notas_adicionales
+    }
+  }
+  
+  // Si el caso actual es el mismo que se actualizó, actualizar solo las notas en selectedCase
+  if ((selectedCase.value?.caseCode || selectedCase.value?.caso_code) === caseCode) {
+    selectedCase.value = {
+      ...selectedCase.value,
+      notas_adicionales: updatedCase.notas_adicionales
+    }
+  }
 }
 
 async function navigateToPreview(c: any) {

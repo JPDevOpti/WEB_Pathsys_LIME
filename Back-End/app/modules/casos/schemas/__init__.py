@@ -21,7 +21,10 @@ from .caso import (
     PruebaStats,
     PruebaDetails,
     PruebasReportData,
-    PatologoPorPrueba
+    PatologoPorPrueba,
+    # Clases para notas adicionales
+    NotaAdicional,
+    AgregarNotaAdicionalRequest
 )
 
 __all__ = [
@@ -45,5 +48,8 @@ __all__ = [
     "PruebaStats",
     "PruebaDetails",
     "PruebasReportData",
-    "PatologoPorPrueba"
+    "PatologoPorPrueba",
+    # Clases para notas adicionales
+    "NotaAdicional",
+    "AgregarNotaAdicionalRequest"
 ]

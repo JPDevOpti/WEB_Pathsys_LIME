@@ -475,18 +475,30 @@ watch([casosUrgentes, itemsPerPage], () => {
   currentPage.value = 1
 })
 
-watch(patologoSeleccionado, () => {
-  cargarCasosUrgentesConFiltros()
+watch(patologoSeleccionado, (newValue) => {
+  // Solo cargar si el valor ha cambiado realmente
+  if (newValue !== undefined) {
+    cargarCasosUrgentesConFiltros()
+  }
 })
 
 async function cargarCasosUrgentesConFiltros() {
   const filtros = {
     patologo: patologoSeleccionado.value || undefined,
   }
+  
+  // Debug temporal
+  console.log('=== FILTRO PATOLOGO ===')
+  console.log('Patólogo seleccionado:', patologoSeleccionado.value)
+  console.log('Filtros enviados:', filtros)
+  console.log('=====================')
+  
   await cargarCasosUrgentes(filtros)
 }
 
 function onPathologistSelected(pathologist: FormPathologistInfo | null) {
+  // Actualizar el valor seleccionado con el documento del patólogo
+  patologoSeleccionado.value = pathologist?.documento || ''
   cargarCasosUrgentesConFiltros()
 }
 

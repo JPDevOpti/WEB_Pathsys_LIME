@@ -58,6 +58,11 @@ export interface Case {
     bodyRegion: string
     tests: Array<{ id: string; name: string; quantity: number }>
   }>
+  notas_adicionales?: Array<{
+    fecha: string
+    nota: string
+    agregado_por?: string
+  }>
 }
 
 export interface Filters {

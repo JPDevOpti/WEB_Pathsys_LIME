@@ -15,6 +15,7 @@
           :placeholder="placeholder"
           :disabled="disabled || isSearching"
           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white"
+          @input="handleSearchInput"
           @keydown.enter="handleSearch"
           autocomplete="off"
         />
@@ -29,6 +30,20 @@
           </svg>
           <span v-else>Buscar</span>
         </button>
+      </div>
+      <!-- Sugerencias de búsqueda -->
+      <div v-if="searchSuggestions.length > 0 && searchQuery.length >= 2" class="mt-2">
+        <p class="text-xs text-gray-500 mb-1">Sugerencias:</p>
+        <div class="flex flex-wrap gap-1">
+          <button
+            v-for="suggestion in searchSuggestions.slice(0, 5)"
+            :key="suggestion"
+            @click="selectSuggestion(suggestion)"
+            class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border transition-colors"
+          >
+            {{ suggestion }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -51,6 +66,7 @@
           placeholder="Buscar cáncer CIEO..."
           :disabled="disabled || isSearching"
           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white"
+          @input="handleSearchInputCIEO"
           @keydown.enter="handleSearchCIEO"
           autocomplete="off"
         />
@@ -65,6 +81,20 @@
           </svg>
           <span v-else>Buscar</span>
         </button>
+      </div>
+      <!-- Sugerencias de búsqueda CIEO -->
+      <div v-if="searchSuggestionsCIEO.length > 0 && searchQueryCIEO.length >= 2" class="mt-2">
+        <p class="text-xs text-gray-500 mb-1">Sugerencias:</p>
+        <div class="flex flex-wrap gap-1">
+          <button
+            v-for="suggestion in searchSuggestionsCIEO.slice(0, 5)"
+            :key="suggestion"
+            @click="selectSuggestionCIEO(suggestion)"
+            class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border transition-colors"
+          >
+            {{ suggestion }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -88,7 +118,7 @@
     </div>
 
     <!-- Results Table -->
-    <div v-if="searchResults.length > 0" class="border border-gray-300 rounded-lg overflow-hidden">
+    <div v-if="showResultsTable && searchResults.length > 0" class="border border-gray-300 rounded-lg overflow-hidden">
       <div class="max-h-60 overflow-y-auto">
         <table class="w-full">
           <thead class="bg-gray-50 sticky top-0">
@@ -137,7 +167,7 @@
     </div>
 
     <!-- No Results -->
-    <div v-else-if="hasSearched && !isSearching" class="text-center py-8 text-gray-500">
+    <div v-else-if="showResultsTable && hasSearched && !isSearching" class="text-center py-8 text-gray-500">
       <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
@@ -232,6 +262,15 @@ const hasSearched = ref(false)
 const loadError = ref('')
 const showCIEODiagnosis = ref(false)
 
+// Nuevas refs para búsqueda mejorada
+const searchSuggestions = ref<string[]>([])
+const searchSuggestionsCIEO = ref<string[]>([])
+const allDiseasesCache = ref<Disease[]>([])
+const allDiseasesCIEOCache = ref<Disease[]>([])
+const searchTimeout = ref<NodeJS.Timeout | null>(null)
+const searchTimeoutCIEO = ref<NodeJS.Timeout | null>(null)
+const showResultsTable = ref(false) // Controla si se muestra la tabla de resultados
+
 // Estado interno del componente seleccionado
 const selectedDisease = ref<Disease | null>(props.modelValue)
 const selectedDiseaseCIEO = ref<Disease | null>(null) // Nuevo estado para CIEO
@@ -251,15 +290,25 @@ const handleSearch = async () => {
   if (!searchQuery.value.trim() || props.disabled) return
   
   hasSearched.value = true
+  showResultsTable.value = true // Mostrar tabla solo cuando se hace clic en "Buscar"
   
   try {
-    const result = await searchDiseases(searchQuery.value, 'CIE10')
-    
-    if (result.success) {
-      searchResults.value = result.diseases || []
+    // Usar búsqueda flexible con filtrado local si tenemos cache
+    if (allDiseasesCache.value.length > 0) {
+      const filteredResults = filterDiseasesFlexibly(allDiseasesCache.value, searchQuery.value)
+      searchResults.value = filteredResults
     } else {
-      searchResults.value = []
-      loadError.value = result.error || 'Error al buscar enfermedades'
+      // Si no hay cache, hacer búsqueda en el servidor
+      const result = await searchDiseases(searchQuery.value, 'CIE10')
+      
+      if (result.success) {
+        searchResults.value = result.diseases || []
+        // Guardar en cache para futuras búsquedas
+        allDiseasesCache.value = result.diseases || []
+      } else {
+        searchResults.value = []
+        loadError.value = result.error || 'Error al buscar enfermedades'
+      }
     }
   } catch (error: any) {
     searchResults.value = []
@@ -267,24 +316,86 @@ const handleSearch = async () => {
   }
 }
 
+// Nueva función para manejar input en tiempo real
+const handleSearchInput = () => {
+  // Limpiar timeout anterior
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value)
+  }
+  
+  // Limpiar sugerencias y tabla si el campo está vacío
+  if (searchQuery.value.length < 2) {
+    searchSuggestions.value = []
+    showResultsTable.value = false
+    return
+  }
+  
+  // Generar sugerencias locales si tenemos cache
+  if (allDiseasesCache.value.length > 0) {
+    generateSuggestions(allDiseasesCache.value, searchQuery.value, searchSuggestions)
+  } else {
+    // Si no hay cache, cargar todas las enfermedades una vez
+    loadAllDiseasesForSuggestions('CIE10')
+  }
+  
+  // NO hacer búsqueda automática - solo sugerencias
+  // La tabla solo se muestra cuando se hace clic en "Buscar"
+}
+
 const handleSearchCIEO = async () => {
   if (!searchQueryCIEO.value.trim() || props.disabled) return
   
   hasSearched.value = true
+  showResultsTable.value = true // Mostrar tabla solo cuando se hace clic en "Buscar"
   
   try {
-    const result = await searchDiseases(searchQueryCIEO.value, 'CIEO')
-    
-    if (result.success) {
-      searchResults.value = result.diseases || []
+    // Usar búsqueda flexible con filtrado local si tenemos cache
+    if (allDiseasesCIEOCache.value.length > 0) {
+      const filteredResults = filterDiseasesFlexibly(allDiseasesCIEOCache.value, searchQueryCIEO.value)
+      searchResults.value = filteredResults
     } else {
-      searchResults.value = []
-      loadError.value = result.error || 'Error al buscar enfermedades'
+      // Si no hay cache, hacer búsqueda en el servidor
+      const result = await searchDiseases(searchQueryCIEO.value, 'CIEO')
+      
+      if (result.success) {
+        searchResults.value = result.diseases || []
+        // Guardar en cache para futuras búsquedas
+        allDiseasesCIEOCache.value = result.diseases || []
+      } else {
+        searchResults.value = []
+        loadError.value = result.error || 'Error al buscar enfermedades'
+      }
     }
   } catch (error: any) {
     searchResults.value = []
     loadError.value = 'Error al buscar enfermedades'
   }
+}
+
+// Nueva función para manejar input CIEO en tiempo real
+const handleSearchInputCIEO = () => {
+  // Limpiar timeout anterior
+  if (searchTimeoutCIEO.value) {
+    clearTimeout(searchTimeoutCIEO.value)
+  }
+  
+  // Limpiar sugerencias y tabla si el campo está vacío
+  if (searchQueryCIEO.value.length < 2) {
+    searchSuggestionsCIEO.value = []
+    showResultsTable.value = false
+    return
+  }
+  
+  // Generar sugerencias locales si tenemos cache
+  if (allDiseasesCIEOCache.value.length > 0) {
+    generateSuggestions(allDiseasesCIEOCache.value, searchQueryCIEO.value, searchSuggestionsCIEO)
+  } else {
+    // Si no hay cache, cargar todas las enfermedades una vez
+    loadAllDiseasesForSuggestions('CIEO')
+  }
+  
+  // NO hacer búsqueda automática - solo sugerencias
+  // La tabla solo se muestra cuando se hace clic en "Buscar"
 }
 
 const selectDisease = (disease: Disease) => {
@@ -304,22 +415,119 @@ const selectDisease = (disease: Disease) => {
   hasSearched.value = false
 }
 
-// Función para limpiar diagnóstico CIEO
+// Funciones para limpiar diagnósticos (exportadas para uso externo si es necesario)
 const clearCIEODiagnosis = () => {
   selectedDiseaseCIEO.value = null
 }
 
-// Función para limpiar diagnóstico CIE-10
 const clearCIE10Diagnosis = () => {
   selectedDisease.value = null
   emit('update:modelValue', null)
+}
+
+// Funciones auxiliares para búsqueda flexible
+const filterDiseasesFlexibly = (diseases: Disease[], query: string): Disease[] => {
+  const searchTerm = query.toLowerCase().trim()
+  
+  return diseases.filter(disease => {
+    const codigo = disease.codigo.toLowerCase()
+    const nombre = disease.nombre.toLowerCase()
+    
+    // Búsqueda exacta por código
+    if (codigo === searchTerm) return true
+    
+    // Búsqueda parcial por código
+    if (codigo.includes(searchTerm)) return true
+    
+    // Búsqueda por palabras clave en el nombre
+    const searchWords = searchTerm.split(/\s+/)
+    const nombreWords = nombre.split(/\s+/)
+    
+    // Verificar si todas las palabras de búsqueda están en el nombre
+    return searchWords.every(word => 
+      nombreWords.some(nombreWord => nombreWord.includes(word))
+    )
+  }).sort((a, b) => {
+    // Priorizar coincidencias exactas y por código
+    const aCode = a.codigo.toLowerCase()
+    const bCode = b.codigo.toLowerCase()
+    const searchTerm = query.toLowerCase()
+    
+    // Coincidencia exacta de código primero
+    if (aCode === searchTerm && bCode !== searchTerm) return -1
+    if (bCode === searchTerm && aCode !== searchTerm) return 1
+    
+    // Luego coincidencias que empiecen con el término
+    if (aCode.startsWith(searchTerm) && !bCode.startsWith(searchTerm)) return -1
+    if (bCode.startsWith(searchTerm) && !aCode.startsWith(searchTerm)) return 1
+    
+    // Finalmente ordenar alfabéticamente
+    return a.nombre.localeCompare(b.nombre)
+  })
+}
+
+const generateSuggestions = (diseases: Disease[], query: string, suggestionsRef: any) => {
+  const searchTerm = query.toLowerCase().trim()
+  const suggestions = new Set<string>()
+  
+  diseases.forEach(disease => {
+    const codigo = disease.codigo.toLowerCase()
+    
+    // Agregar código si coincide
+    if (codigo.includes(searchTerm)) {
+      suggestions.add(disease.codigo)
+    }
+    
+    // Agregar palabras del nombre que contengan el término
+    const nombreWords = disease.nombre.split(/\s+/)
+    nombreWords.forEach(word => {
+      if (word.toLowerCase().includes(searchTerm) && word.length > 2) {
+        suggestions.add(word)
+      }
+    })
+  })
+  
+  suggestionsRef.value = Array.from(suggestions).slice(0, 10)
+}
+
+const loadAllDiseasesForSuggestions = async (tabla: string) => {
+  try {
+    const result = await searchDiseases('', tabla, 10000) // Cargar muchas enfermedades
+    if (result.success && result.diseases) {
+      if (tabla === 'CIE10') {
+        allDiseasesCache.value = result.diseases
+        generateSuggestions(result.diseases, searchQuery.value, searchSuggestions)
+      } else if (tabla === 'CIEO') {
+        allDiseasesCIEOCache.value = result.diseases
+        generateSuggestions(result.diseases, searchQueryCIEO.value, searchSuggestionsCIEO)
+      }
+    }
+  } catch (error) {
+    console.warn('Error al cargar enfermedades para sugerencias:', error)
+  }
+}
+
+const selectSuggestion = (suggestion: string) => {
+  searchQuery.value = suggestion
+  searchSuggestions.value = []
+  showResultsTable.value = true // Mostrar tabla cuando se selecciona sugerencia
+  handleSearch()
+}
+
+const selectSuggestionCIEO = (suggestion: string) => {
+  searchQueryCIEO.value = suggestion
+  searchSuggestionsCIEO.value = []
+  showResultsTable.value = true // Mostrar tabla cuando se selecciona sugerencia
+  handleSearchCIEO()
 }
 
 // Función para recargar enfermedades (mantenida por compatibilidad)
 const reloadDiseases = async () => {
   try {
     loadError.value = ''
-    // En el nuevo diseño, no necesitamos cargar todas las enfermedades
+    // Limpiar cache y recargar
+    allDiseasesCache.value = []
+    allDiseasesCIEOCache.value = []
   } catch (error: any) {
     const errorMessage = 'Error al cargar la lista de enfermedades'
     loadError.value = errorMessage
@@ -344,6 +552,13 @@ watch(showCIEODiagnosis, (newValue) => {
     selectedDiseaseCIEO.value = null
     emit('cieo-disease-selected', null)
   }
+})
+
+// Exponer funciones para uso externo
+defineExpose({
+  clearCIEODiagnosis,
+  clearCIE10Diagnosis,
+  reloadDiseases
 })
 
 // Lifecycle

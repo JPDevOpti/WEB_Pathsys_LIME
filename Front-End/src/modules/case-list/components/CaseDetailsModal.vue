@@ -162,34 +162,151 @@
               <p class="text-sm text-gray-800">{{ caseItem.result.diagnostico_cieo.nombre }}</p>
             </div>
           </div>
+
+          <!-- Sección para notas adicionales -->
+          <div v-if="props.caseItem?.status === 'Completado'" class="bg-gray-50 rounded-xl p-4 space-y-3">
+            <div class="flex items-center gap-2 mb-3">
+              <DocsIcon class="w-4 h-4 text-gray-600" />
+              <h5 class="text-sm font-medium text-gray-700">Notas Adicionales</h5>
+              <span v-if="props.caseItem?.notas_adicionales && props.caseItem.notas_adicionales.length > 0" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {{ props.caseItem.notas_adicionales.length }} {{ props.caseItem.notas_adicionales.length === 1 ? 'nota' : 'notas' }}
+              </span>
+            </div>
+            
+            <!-- Mostrar notas existentes -->
+            <div v-if="props.caseItem?.notas_adicionales && props.caseItem.notas_adicionales.length > 0" class="space-y-3">
+              <div v-for="(nota, index) in props.caseItem.notas_adicionales" :key="index" class="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-600 font-medium">{{ formatDate(nota.fecha, true) }}</span>
+                    <span class="text-xs text-gray-400">•</span>
+                    <span v-if="nota.agregado_por" class="text-xs text-gray-500">{{ nota.agregado_por }}</span>
+                  </div>
+                  <span class="text-xs text-gray-400">#{{ index + 1 }}</span>
+                </div>
+                <p class="text-sm text-gray-800 break-words leading-relaxed">{{ nota.nota }}</p>
+              </div>
+            </div>
+            
+            <!-- Mensaje cuando no hay notas -->
+            <div v-else class="text-center py-4">
+              <DocsIcon class="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p class="text-sm text-gray-500">No hay notas adicionales para este caso</p>
+              <p class="text-xs text-gray-400 mt-1">Puedes agregar notas usando el botón "Notas adicionales"</p>
+            </div>
+          </div>
         </div>
         <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl">
           <div class="flex justify-end">
             <div class="flex gap-2">
-              <PreviewButton text="Previsualizar Informe" @click="$emit('preview', caseItem)" />
-              <PreviewButton text="Editar Caso" :icon="SettingsIcon" @click="$emit('edit', caseItem)" />
+              <PreviewButton 
+                v-if="props.caseItem?.status === 'Completado'" 
+                :text="props.caseItem?.notas_adicionales && props.caseItem.notas_adicionales.length > 0 ? `Notas adicionales (${props.caseItem.notas_adicionales.length})` : 'Notas adicionales'" 
+                :icon="DocsIcon"
+                @click="handleNotesClick" 
+              />
+              <PreviewButton text="Previsualizar Informe" @click="caseItem && $emit('preview', caseItem)" />
+              <PreviewButton text="Editar Caso" :icon="SettingsIcon" @click="caseItem && $emit('edit', caseItem)" />
             </div>
           </div>
         </div>
       </div>
     </div>
   </transition>
+  
+  <!-- Modal de notas adicionales -->
+  <NotesDialog
+    v-model="showNotesDialog"
+    title="Notas adicionales"
+    subtitle="Agregar información complementaria al caso"
+    textarea-label="Nueva nota"
+    textarea-placeholder="Escriba aquí la nueva nota adicional para este caso..."
+    help-text="Esta información será agregada al caso como nota adicional con fecha y hora actual"
+    confirm-text="Agregar nota"
+    cancel-text="Cancelar"
+    @confirm="handleNotesConfirm"
+    @cancel="handleNotesCancel"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Case } from '../types/case.types'
 import { PreviewButton } from '@/shared/components/buttons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
-import { SettingsIcon } from '@/assets/icons'
+import { SettingsIcon, DocsIcon } from '@/assets/icons'
+import { NotesDialog } from '@/shared/components/feedback'
+import { casesApiService } from '@/modules/cases/services/casesApi.service'
+import { useNotifications } from '@/modules/cases/composables/useNotifications'
 
-defineProps<{ caseItem: Case | null }>()
-defineEmits<{ (e: 'close'): void; (e: 'edit', c: Case): void; (e: 'preview', c: Case): void }>()
+const props = defineProps<{ caseItem: Case | null }>()
+const emit = defineEmits<{ (e: 'close'): void; (e: 'edit', c: Case): void; (e: 'preview', c: Case): void; (e: 'notes', c: Case): void }>()
 
-function formatDate(dateString: string) {
+const showNotesDialog = ref(false)
+const { showSuccess, showError } = useNotifications()
+
+function formatDate(dateString: string, includeTime: boolean = false) {
   if (!dateString) return 'N/A'
   const d = new Date(dateString)
+  
+  if (includeTime) {
+    return d.toLocaleString('es-ES', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+  
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function handleNotesClick() {
+  if (!props.caseItem) {
+    return
+  }
+  
+  showNotesDialog.value = true
+}
+
+async function handleNotesConfirm(notes: string) {
+  try {
+    const caseCode = props.caseItem?.caseCode || (props.caseItem as any)?.caso_code
+    if (!caseCode) {
+      showError('Error', 'No se pudo identificar el caso')
+      return
+    }
+
+    await casesApiService.addAdditionalNote(caseCode, notes, 'Usuario')
+    showSuccess('Nota agregada', 'La nota adicional se ha guardado exitosamente')
+    showNotesDialog.value = false
+    
+    // Crear la nueva nota localmente sin recargar todo el caso
+    const nuevaNota = {
+      fecha: new Date().toISOString(),
+      nota: notes,
+      agregado_por: 'Usuario'
+    }
+    
+    // Actualizar solo las notas adicionales localmente
+    const casoActualizado = {
+      ...props.caseItem,
+      notas_adicionales: [
+        ...(props.caseItem?.notas_adicionales || []),
+        nuevaNota
+      ]
+    }
+    
+    // Emitir evento con solo la información de las notas actualizadas
+    emit('notes', casoActualizado as any)
+  } catch (error: any) {
+    showError('Error', error.message || 'No se pudo guardar la nota adicional')
+  }
+}
+
+function handleNotesCancel() {
+  showNotesDialog.value = false
 }
 
 // Ajuste responsivo: respetar ancho del sidebar (colapsado/expandido) y su hover

@@ -158,6 +158,18 @@ export class CasesApiService {
     }
   }
 
+  async addAdditionalNote(caseCode: string, note: string, addedBy?: string): Promise<UpdateCaseResponse> {
+    try {
+      const response = await apiClient.post<UpdateCaseResponse>(`${this.endpoint}/caso-code/${caseCode}/notas-adicionales`, {
+        nota: note,
+        agregado_por: addedBy || 'Usuario'
+      })
+      return this.cleanDuplicateActiveFields(response)
+    } catch (error: any) {
+      throw new Error(error.message || `Error al agregar nota adicional al caso ${caseCode}`)
+    }
+  }
+
   /**
    * Marca múltiples casos como Completado aplicando cambios en sus muestras.
    * Genera múltiples peticiones secuenciales al endpoint updateCase existente.
