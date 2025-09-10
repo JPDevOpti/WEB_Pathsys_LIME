@@ -7,7 +7,6 @@ export { default as PreviousCaseDetailsModal } from './Shared/PreviousCaseDetail
 export { default as SampleInfoCard } from './Shared/SampleInfoCard.vue'
 export { default as AttachmentsPanel } from './Shared/AttachmentsPanel.vue'
 export { default as ActionsBar } from './Shared/ActionsBar.vue'
-export { default as PreviewModal } from './Shared/PreviewModal.vue'
 export { default as ComplementaryTestsSection } from './SignResults/ComplementaryTestsSection.vue'
 
 

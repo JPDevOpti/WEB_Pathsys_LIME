@@ -78,7 +78,7 @@
         </div>
         <div class="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row sm:justify-between gap-3">
           <div class="flex gap-2">
-            <PreviewButton text="Previsualizar Informe" @click="emit('preview', caseItem)" />
+            <!-- Botón de previsualización temporalmente deshabilitado -->
           </div>
           <div class="flex gap-2 justify-end">
             <ActionButton variant="secondary" :text="'Cerrar'" @action="emit('close')" />
@@ -93,7 +93,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import type { CasoUrgente } from '../types/dashboard.types'
-import { PreviewButton, ActionButton } from '@/shared/components/buttons'
+import { ActionButton } from '@/shared/components/buttons'
 
 const props = defineProps<{ caseItem: CasoUrgente | null }>()
 const emit = defineEmits<{ 

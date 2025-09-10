@@ -24,7 +24,7 @@ const router = createRouter({
     ...caseListRoutes,
     ...resultsRoutes,
     ...reportsRoutes,
-    ...supportRoutes
+    ...supportRoutes,
   ]
 })
 

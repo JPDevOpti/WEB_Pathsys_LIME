@@ -203,7 +203,7 @@
         <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl">
           <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
             <div class="flex justify-center sm:justify-start">
-              <PreviewButton text="Previsualizar PDF" @click="handlePreview" />
+              <!-- Botón de previsualización temporalmente deshabilitado -->
             </div>
             <div class="flex gap-2 justify-center sm:justify-end">
               <button
@@ -225,7 +225,6 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { CaseModel } from '@/modules/cases/types/case'
 import { useSidebar } from '@/shared/composables/SidebarControl'
-import { PreviewButton } from '@/shared/components/buttons'
 
 const props = defineProps<{ caseItem: CaseModel | null }>()
 defineEmits<{ (e: 'close'): void }>()
@@ -307,15 +306,8 @@ const handlePreview = () => {
       generatedAt: new Date().toISOString()
     }
     
-    // Guardar payload en sessionStorage
-    try {
-      sessionStorage.setItem('results_preview_payload', JSON.stringify(payload))
-    } catch (error) {
-      console.warn('No se pudo guardar el payload en sessionStorage:', error)
-    }
-    
-    // Navegar a la previsualización
-    router.push({ name: 'results-preview' })
+    // Función de previsualización temporalmente deshabilitada
+    console.log('Previsualización temporalmente deshabilitada')
   }
 }
 </script>

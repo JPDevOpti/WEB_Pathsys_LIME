@@ -307,10 +307,8 @@ async function navigateToPreview(c: any) {
   console.log('CurrentCasesListView - patologo_asignado en payload final:', completePayload.caseDetails.patologo_asignado)
   console.log('CurrentCasesListView - firma en payload final:', completePayload.caseDetails.patologo_asignado?.firma)
   
-  try {
-    sessionStorage.setItem('results_preview_payload', JSON.stringify(completePayload))
-  } catch { }
-  router.push({ name: 'results-preview' })
+  // Función de previsualización temporalmente deshabilitada
+  console.log('Previsualización temporalmente deshabilitada')
 }
 
 </script>

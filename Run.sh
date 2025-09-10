@@ -45,6 +45,7 @@ function setup() {
     exit 1
   fi
   
+  
   echo "✅ Configuración completada"
 }
 
@@ -228,6 +229,7 @@ EOF
     cd Back-End && pip3 install -r requirements.txt && cd ..
   fi
   
+  
   # Iniciar MongoDB local
   echo "🗄️  Iniciando MongoDB local..."
   if ! pgrep -f mongod > /dev/null; then
@@ -254,6 +256,7 @@ EOF
   python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
   BACKEND_PID=$!
   cd ..
+  
   
   # Verificar si el puerto 5174 ya está en uso
   if lsof -Pi :5174 -sTCP:LISTEN -t >/dev/null ; then
@@ -288,6 +291,7 @@ EOF
     echo "⚠️  Backend no responde en puerto 8000"
   fi
   
+  
   # Verificar configuración CORS
   echo "🔍 Verificando configuración CORS..."
   if curl -s -H "Origin: http://localhost:5174" http://localhost:8000/health >/dev/null 2>&1; then
@@ -299,10 +303,10 @@ EOF
   echo ""
   echo "✅ Sistema completo iniciado en LOCAL."
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "📊 MongoDB:   mongodb://localhost:27017"
-  echo "🔧 API:       http://localhost:8000"
-  echo "📖 Docs API:  http://localhost:8000/docs"
-  echo "🌐 Frontend:  http://localhost:5174"
+  echo "📊 MongoDB:     mongodb://localhost:27017"
+  echo "🔧 API:         http://localhost:8000"
+  echo "📖 Docs API:    http://localhost:8000/docs"
+  echo "🌐 Frontend:    http://localhost:5174"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "💡 Usa './Run.sh stop' para detener todos los servicios"
 }
@@ -344,6 +348,7 @@ function status() {
   else
     echo "❌ Frontend: Detenido"
   fi
+  
   
   # Verificar configuración de base de datos
   if [ -f "Back-End/.env" ]; then
@@ -406,6 +411,7 @@ function stop() {
   pkill -f "vite" || true
   lsof -ti:5174 | xargs kill -9 2>/dev/null || true
   
+  
   # Detener MongoDB local
   echo "  • Deteniendo MongoDB local..."
   brew services stop mongodb/brew/mongodb-community >/dev/null 2>&1 || true
@@ -421,20 +427,20 @@ function stop() {
 }
 
 function help() {
-  echo "🔧 WEB-LIS PathSys - Script de Control"
+  echo " WEB-LIS PathSys - Script de Control"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "📋 Comandos disponibles:"
+  echo " Comandos disponibles:"
   echo ""
-  echo "🔧 Configuración:"
+  echo " Configuración:"
   echo "  setup        - Instala dependencias del sistema"
   echo "  setup-atlas  - Configura MongoDB Atlas"
   echo ""
-  echo "🚀 Inicio:"
+  echo " Inicio:"
   echo "  local        - Inicia servicios en LOCAL (MongoDB local)"
   echo "  docker       - Inicia servicios Docker (MongoDB local)"
   echo "  docker-atlas - Inicia servicios Docker con MongoDB Atlas"
   echo ""
-  echo "🛠️  Utilidades:"
+  echo "  Utilidades:"
   echo "  status       - Muestra el estado del sistema"
   echo "  stop         - Detiene todos los procesos"
   echo "  clean        - Limpia archivos de configuración"
@@ -442,14 +448,14 @@ function help() {
   echo "  debug        - Muestra configuración de archivos .env"
   echo "  help         - Muestra esta ayuda"
   echo ""
-  echo "🌐 URLs del sistema:"
+  echo " URLs del sistema:"
   echo "  Frontend:     http://localhost:5174"
   echo "  API:          http://localhost:8000"
   echo "  API Docs:     http://localhost:8000/docs"
   echo "  MongoDB:      mongodb://localhost:27017 (local) / MongoDB Atlas (cloud)"
   echo "  Mongo Express: http://localhost:8081 (solo local)"
   echo ""
-  echo "💡 Ejemplos de uso:"
+  echo " Ejemplos de uso:"
   echo "  ./Run.sh setup        # Primera vez - instalar todo"
   echo "  ./Run.sh setup-atlas  # Configurar MongoDB Atlas"
   echo "  ./Run.sh local        # Iniciar todo en LOCAL"
@@ -461,7 +467,7 @@ function help() {
   echo "  ./Run.sh restart-fe   # Reiniciar solo frontend"
   echo "  ./Run.sh debug        # Debuggear configuración"
   echo ""
-  echo "🔍 Sistema de configuración:"
+  echo " Sistema de configuración:"
   echo "  • LOCAL: MongoDB local (puerto 27017) + Frontend Development"
   echo "  • DOCKER: MongoDB local en Docker + Frontend Development"
   echo "  • ATLAS: MongoDB Atlas en la nube + Frontend Production"

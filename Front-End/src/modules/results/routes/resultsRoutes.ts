@@ -17,14 +17,6 @@ export const resultsRoutes: RouteRecordRaw[] = [
       title: 'Firmar Resultados'
     }
   },
-  {
-    path: '/results/preview',
-    name: 'results-preview',
-    component: () => import('../views/PreviewReportView.vue'),
-    meta: {
-      title: 'Previsualización de Informe'
-    }
-  }
 ]
 
 

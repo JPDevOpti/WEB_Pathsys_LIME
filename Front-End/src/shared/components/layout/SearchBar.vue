@@ -124,11 +124,6 @@ const quickNavItems: QuickNavItem[] = [
     keywords: ['firmar', 'firmar resultados', 'sign results', 'firma', 'completar resultados']
   },
   {
-    title: 'Previsualización de Informe',
-    path: '/results/preview',
-    keywords: ['previsualizar', 'preview', 'informe', 'pdf', 'ver informe']
-  },
-  {
     title: 'Mi Perfil',
     path: '/profile/my-profile',
     keywords: ['perfil', 'mi perfil', 'usuario', 'datos usuario']

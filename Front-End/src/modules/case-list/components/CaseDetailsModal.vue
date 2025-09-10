@@ -199,14 +199,6 @@
         <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl">
           <div class="flex justify-end">
             <div class="flex gap-2">
-              <PreviewButton 
-                v-if="props.caseItem?.status === 'Completado'" 
-                :text="props.caseItem?.notas_adicionales && props.caseItem.notas_adicionales.length > 0 ? `Notas adicionales (${props.caseItem.notas_adicionales.length})` : 'Notas adicionales'" 
-                :icon="DocsIcon"
-                @click="handleNotesClick" 
-              />
-              <PreviewButton text="Previsualizar Informe" @click="caseItem && $emit('preview', caseItem)" />
-              <PreviewButton text="Editar Caso" :icon="SettingsIcon" @click="caseItem && $emit('edit', caseItem)" />
             </div>
           </div>
         </div>
@@ -232,7 +224,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { Case } from '../types/case.types'
-import { PreviewButton } from '@/shared/components/buttons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import { SettingsIcon, DocsIcon } from '@/assets/icons'
 import { NotesDialog } from '@/shared/components/feedback'

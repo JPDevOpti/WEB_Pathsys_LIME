@@ -190,7 +190,7 @@
               <BaseButton
                 variant="outline"
                 size="sm"
-                text="Previsualizar PDF"
+                text="Previsualizar"
                 custom-class="bg-white border-blue-600 text-blue-600 hover:bg-blue-50"
                 @click="$emit('preview', caseItem)"
               />

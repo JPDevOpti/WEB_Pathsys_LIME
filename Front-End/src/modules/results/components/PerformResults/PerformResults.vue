@@ -102,7 +102,6 @@
             <template #footer>
               <div class="flex flex-wrap items-center gap-3 justify-end">
                 <ClearButton :disabled="loading" @click="handleClearResults" />
-                <PreviewButton :disabled="loading" @click="goToPreview" />
                 <SaveButton 
                   :disabled="saving || loading || !canSaveProgress" 
                   :loading="saving" 
@@ -155,11 +154,7 @@
 
     
 
-    <PreviewModal
-      v-if="isPreviewOpen && previewData"
-      :html="previewData.html"
-      @close="closePreview"
-    />
+    <!-- Modal de previsualización temporalmente deshabilitado -->
 
     <PreviousCaseDetailsModal
       v-if="selectedPreviousCase"
@@ -175,7 +170,7 @@ import { useRouter } from 'vue-router'
 import { ComponentCard } from '@/shared/components'
 import { ErrorMessage, ValidationAlert } from '@/shared/components/feedback'
 import { FormInputField } from '@/shared/components/forms'
-import { SearchButton, ClearButton, SaveButton, PreviewButton } from '@/shared/components/buttons'
+import { SearchButton, ClearButton, SaveButton } from '@/shared/components/buttons'
 import ResultEditor from '../Shared/ResultEditor.vue'
 import PatientInfoCard from '../Shared/PatientInfoCard.vue'
 import CaseDetailsCard from '../Shared/CaseDetailsCard.vue'
@@ -183,7 +178,6 @@ import PreviousCaseDetailsModal from '../Shared/PreviousCaseDetailsModal.vue'
 // import AttachmentsPanel from './AttachmentsPanel.vue'
 import Notification from '@/shared/components/feedback/Notification.vue'
 import ResultsActionNotification from '../Shared/ResultsActionNotification.vue'
-import PreviewModal from '../Shared/PreviewModal.vue'
 import { usePerformResults } from '../../composables/usePerformResults'
 import { useNotifications } from '@/modules/cases/composables/useNotifications'
 import casesApiService from '@/modules/cases/services/casesApi.service'
@@ -439,8 +433,8 @@ const { notification, showSuccess, showError, closeNotification } = useNotificat
       },
       generatedAt: new Date().toISOString()
     }
-    try { sessionStorage.setItem('results_preview_payload', JSON.stringify(payload)) } catch {}
-    router.push({ name: 'results-preview' })
+    // Función de previsualización temporalmente deshabilitada
+    console.log('Previsualización temporalmente deshabilitada')
   }
 
 async function handleSaveAction() {

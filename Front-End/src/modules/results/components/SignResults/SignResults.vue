@@ -170,7 +170,7 @@
 
           <div class="mt-3 flex flex-wrap items-center gap-3 justify-end">
             <ClearButton :disabled="loading" @click="limpiarBusqueda" />
-            <PreviewButton :disabled="loading" @click="goToPreview" />
+            <!-- Botón de previsualización temporalmente deshabilitado -->
             <button
               :disabled="loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature"
               :class="['px-4 py-2 text-sm font-medium rounded-md', (loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700']"
@@ -232,7 +232,7 @@ import { useRouter } from 'vue-router'
 import { ComponentCard } from '@/shared/components'
 import { ErrorMessage, ValidationAlert } from '@/shared/components/feedback'
 import { FormInputField } from '@/shared/components/forms'
-import { SearchButton, ClearButton, PreviewButton } from '@/shared/components/buttons'
+import { SearchButton, ClearButton } from '@/shared/components/buttons'
 import { DiseaseList } from '@/shared/components/List'
 import DocsIcon from '@/assets/icons/DocsIcon.vue'
 import WarningIcon from '@/assets/icons/WarningIcon.vue'
@@ -570,8 +570,8 @@ function goToPreview() {
     },
     generatedAt: new Date().toISOString()
   }
-  try { sessionStorage.setItem('results_preview_payload', JSON.stringify(payload)) } catch { }
-  router.push({ name: 'results-preview' })
+  // Función de previsualización temporalmente deshabilitada
+  console.log('Previsualización temporalmente deshabilitada')
 }
 
 async function handleSign() {
