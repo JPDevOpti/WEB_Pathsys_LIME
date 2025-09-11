@@ -291,10 +291,10 @@ import {
   ListIcon,
   UserCircleIcon,
   InfoCircleIcon,
-} from "@/shared/icons";
+} from "@/assets/icons";
 import { useSidebar } from "@/shared/composables/SidebarControl";
-import logoExpanded from '@/assets/images/Logos/Logo-LIME-NoFondo.png'
-import logoCollapsed from '@/assets/images/Logos/LOGO-LIME-Inicial.png'
+import logoExpanded from '@/assets/images/Logo-LIME-NoFondo.png'
+import logoCollapsed from '@/assets/images/LOGO-LIME-Inicial.png'
 
 const route = useRoute();
 const { isAdmin, isPatologo, isAuxiliar, isResidente } = usePermissions();

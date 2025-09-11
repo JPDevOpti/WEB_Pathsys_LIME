@@ -65,7 +65,7 @@ import { useRouter } from 'vue-router'
 import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import Card from '@/shared/components/layout/Card.vue'
 import { BaseButton } from '@/shared/components'
-import { RefreshIcon } from '@/shared/icons'
+import { RefreshIcon } from '@/assets/icons'
 import LoadingSpinner from '@/shared/components/feedback/LoadingSpinner.vue'
 
 import FiltersBar from '../components/FiltersBar.vue'

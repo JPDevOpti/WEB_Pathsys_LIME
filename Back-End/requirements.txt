@@ -1,34 +1,17 @@
-# FastAPI y dependencias principales
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
-
-# Base de datos MongoDB
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.10.0
+pydantic-settings==2.7.0
 motor==3.3.2
 pymongo==4.6.0
-
-# Autenticación y seguridad
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
-
-# CORS y middleware
-starlette==0.27.0
-
-# Validación de email
-email-validator==2.1.0
-
-# Utilidades
+starlette==0.38.0
+email-validator==2.2.0
 python-dotenv==1.0.0
-typing-extensions==4.8.0
-
-# Logging y monitoreo
+typing-extensions>=4.12.2
 loguru==0.7.2
 python-json-logger==2.0.7
-
-# Cliente HTTP para testing
 httpx==0.25.2
- 
-# Lectura de Excel para scripts de importación
 openpyxl==3.1.5

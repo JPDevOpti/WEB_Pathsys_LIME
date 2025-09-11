@@ -107,7 +107,7 @@ import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { usePathologistEdition } from '../../composables/usePathologistEdition'
 import type { PathologistEditFormModel } from '../../types/pathologist.types'
-import { RefreshIcon } from '@/shared/icons'
+import { RefreshIcon } from '@/assets/icons'
 
 const props = defineProps<{ usuario: any }>()
 

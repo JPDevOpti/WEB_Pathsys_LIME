@@ -1,16 +1,10 @@
 <template>
-  <transition enter-active-class="transition ease-out duration-300" enter-from-class="opacity-0 transform scale-95" enter-to-class="opacity-100 transform scale-100" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100 transform scale-100" leave-to-class="opacity-0 transform scale-95">
-    <div v-if="caseItem" class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20" @click.self="emit('close')">
-      <!-- Debug info -->
-      <div class="absolute top-0 left-0 bg-red-500 text-white p-2 text-xs z-50">
-        Modal visible - caseItem: {{ caseItem?.codigo }}
-      </div>
-      <div ref="modalContent" class="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden">
-        <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-900">Detalles del Caso</h3>
-          <button @click="emit('close')" class="text-gray-400 hover:text-gray-600">✕</button>
-        </div>
-        <div class="p-6 space-y-6">
+  <Modal
+    v-model="isOpen"
+    title="Detalles del Caso"
+    size="lg"
+    @close="emit('close')"
+  >
           <div class="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
               <p class="text-sm text-gray-500">Código del Caso</p>
@@ -75,25 +69,25 @@
               </div>
             </div>
           </div>
-        </div>
-        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row sm:justify-between gap-3">
-          <div class="flex gap-2">
-            <!-- Botón de previsualización temporalmente deshabilitado -->
-          </div>
-          <div class="flex gap-2 justify-end">
-            <ActionButton variant="secondary" :text="'Cerrar'" @action="emit('close')" />
-            <ActionButton :text="'Editar Caso'" @action="emit('edit', caseItem)" />
-          </div>
-        </div>
+    
+    <template #footer>
+      <div class="flex justify-end">
+        <CloseButton
+          @click="emit('close')"
+          variant="danger-outline"
+          size="md"
+          text="Cerrar"
+        />
       </div>
-    </div>
-  </transition>
+    </template>
+  </Modal>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import type { CasoUrgente } from '../types/dashboard.types'
-import { ActionButton } from '@/shared/components/buttons'
+import { CloseButton } from '@/shared/components/buttons'
+import { Modal } from '@/shared/components/layout'
 
 const props = defineProps<{ caseItem: CasoUrgente | null }>()
 const emit = defineEmits<{ 
@@ -101,6 +95,9 @@ const emit = defineEmits<{
   (e: 'edit', caso: CasoUrgente): void; 
   (e: 'preview', caso: CasoUrgente): void; 
 }>()
+
+// Estado del modal principal
+const isOpen = computed(() => !!props.caseItem)
 
 // Watcher para centrar el scroll cuando se abre el modal
 watch(() => props.caseItem, (newValue) => {

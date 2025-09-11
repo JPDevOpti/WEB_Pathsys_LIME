@@ -37,11 +37,20 @@ function setup() {
     exit 1
   fi
   
-  echo "🐍 Instalando dependencias Back-End..."
-  if cd Back-End && pip3 install -r requirements.txt && cd ..; then
-    echo "✅ Dependencias Back-End instaladas"
+  echo "🐍 Configurando entorno virtual para Back-End..."
+  if cd Back-End; then
+    if [ ! -d "venv" ]; then
+      echo "  • Creando entorno virtual..."
+      python3 -m venv venv
+    fi
+    echo "  • Activando entorno virtual..."
+    source venv/bin/activate
+    echo "  • Instalando dependencias..."
+    pip install -r requirements.txt
+    cd ..
+    echo "✅ Dependencias Back-End instaladas en entorno virtual"
   else
-    echo "❌ Error instalando dependencias Back-End"
+    echo "❌ Error accediendo al directorio Back-End"
     exit 1
   fi
   
@@ -224,9 +233,13 @@ EOF
   fi
   
   # Verificar dependencias del backend
-  if [ ! -d "Back-End/__pycache__" ]; then
-    echo "🐍 Instalando dependencias del Backend..."
-    cd Back-End && pip3 install -r requirements.txt && cd ..
+  if [ ! -d "Back-End/venv" ]; then
+    echo "🐍 Configurando entorno virtual para Backend..."
+    cd Back-End
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    cd ..
   fi
   
   
@@ -253,7 +266,8 @@ EOF
   # Iniciar backend local
   echo "🔧 Iniciando Backend local..."
   cd Back-End
-  python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
+  source venv/bin/activate
+  python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
   BACKEND_PID=$!
   cd ..
   

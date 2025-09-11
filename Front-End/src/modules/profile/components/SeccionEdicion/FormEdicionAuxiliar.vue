@@ -96,7 +96,7 @@ import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useAuxiliaryEdition } from '../../composables/useAuxiliaryEdition'
 import type { AuxiliaryEditFormModel } from '../../types/auxiliary.types'
-import { RefreshIcon } from '@/shared/icons'
+import { RefreshIcon } from '@/assets/icons'
 
 // Ampliamos el tipo para contemplar posibles renombres del backend
 type UsuarioAux = {

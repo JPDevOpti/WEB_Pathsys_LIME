@@ -5,4 +5,4 @@ export * from './composables/SidebarControl'
 export * from './components/layout'
 
 // Icons
-export * from './icons'
+export * from '../assets/icons'

@@ -1,39 +1,13 @@
 <template>
-  <transition 
-    enter-active-class="transition ease-out duration-300" 
-    enter-from-class="opacity-0 transform scale-95" 
-    enter-to-class="opacity-100 transform scale-100" 
-    leave-active-class="transition ease-in duration-200" 
-    leave-from-class="opacity-100 transform scale-100" 
-    leave-to-class="opacity-0 transform scale-95"
+  <Modal
+    v-model="isOpen"
+    title="Detalles del Patólogo"
+    size="lg"
+    @close="$emit('close')"
   >
-    <div
-      v-if="pathologist"
-      :class="[
-        'fixed right-0 bottom-0 z-[9999] flex items-end sm:items-center justify-center p-2 sm:p-4 bg-black/40',
-        // Offset por header
-        'top-16', // ~64px
-        // Offset por sidebar en desktop
-        overlayLeftClass
-      ]"
-      @click.self="$emit('close')"
-    >
-      <div class="relative bg-white w-full max-w-4xl rounded-t-2xl sm:rounded-2xl shadow-2xl h-[85vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto overflow-x-hidden">
-        <!-- Header -->
-        <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-t-2xl flex items-center justify-between">
-          <div>
-            <h3 class="text-xl font-semibold text-gray-900">Detalles del Patólogo</h3>
-            <p class="text-sm text-gray-500 mt-1">Período: {{ formatPeriod() }}</p>
-          </div>
-          <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Content -->
-        <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <div class="mb-4">
+      <p class="text-sm text-gray-500">Período: {{ formatPeriod() }}</p>
+    </div>
           <!-- Información General -->
           <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
             <div class="flex items-center space-x-4">
@@ -180,24 +154,24 @@
 
 
         </div>
-
-        <!-- Footer -->
-        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl flex justify-end">
-          <button 
-            @click="$emit('close')"
-            class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Cerrar
-          </button>
-        </div>
+    
+    <template #footer>
+      <div class="flex justify-end">
+        <CloseButton
+          @click="$emit('close')"
+          variant="danger-outline"
+          size="md"
+          text="Cerrar"
+        />
       </div>
-    </div>
-  </transition>
+    </template>
+  </Modal>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useSidebar } from '@/shared/composables/SidebarControl'
+import { CloseButton } from '@/shared/components/buttons'
+import { Modal } from '@/shared/components/layout'
 import type { PathologistMetrics, PeriodSelection } from '../../types/pathologists.types'
 import { pathologistsApiService } from '../../services/pathologists.service'
 
@@ -222,6 +196,9 @@ interface Props {
 
 const props = defineProps<Props>()
 defineEmits<{ (e: 'close'): void }>()
+
+// Estado del modal principal
+const isOpen = computed(() => !!props.pathologist)
 
 // Estado para entidades
 const entitiesData = ref<EntityData[]>([])
@@ -308,15 +285,4 @@ watch(() => props.pathologist, (newPathologist) => {
   }
 }, { immediate: true })
 
-// Ajuste responsivo: respetar ancho del sidebar (colapsado/expandido) y su hover
-const { isExpanded, isMobileOpen, isHovered } = useSidebar()
-
-// En desktop (>= lg), cuando el sidebar está expandido u hovered, dejamos margen izquierdo ~18rem (w-72)
-// Cuando está colapsado, dejamos ~5rem (w-20)
-// En móvil, sidebar es overlay, así que sin margen (left: 0)
-const overlayLeftClass = computed(() => {
-  // Tailwind usa breakpoints; aquí usamos clases utilitarias fijas para left dinámico vía clases condicionales
-  const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
-  return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
-})
 </script>

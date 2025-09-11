@@ -12,5 +12,5 @@
 
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import logo from '@/assets/images/Logos/Logo-LIME-NoFondo.png'
+import logo from '@/assets/images/Logo-LIME-NoFondo.png'
 </script>

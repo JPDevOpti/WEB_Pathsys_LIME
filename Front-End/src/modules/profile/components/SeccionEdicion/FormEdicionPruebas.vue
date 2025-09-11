@@ -177,7 +177,7 @@ import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useTestEdition } from '../../composables/useTestEdition'
 import type { TestEditFormModel, TestUpdateResponse } from '../../types/test.types'
-import { RefreshIcon } from '@/shared/icons'
+import { RefreshIcon } from '@/assets/icons'
 
 // Props y emits
 const props = defineProps<{ 

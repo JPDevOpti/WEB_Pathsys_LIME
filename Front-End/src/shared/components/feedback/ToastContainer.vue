@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { useToasts } from '@/shared/composables/useToasts'
-import { SuccessIcon, ErrorIcon, WarningIcon, InfoIcon, TrashIconLg, RefreshIcon, CheckIcon } from '@/assets/icons'
+import { SuccessIcon, ErrorIcon, WarningIcon, InfoIcon, RefreshIcon, CheckIcon } from '@/assets/icons'
 
 const { toasts, remove } = useToasts()
 

@@ -1,22 +1,10 @@
 <template>
-  <transition enter-active-class="transition ease-out duration-300" enter-from-class="opacity-0 transform scale-95" enter-to-class="opacity-100 transform scale-100" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100 transform scale-100" leave-to-class="opacity-0 transform scale-95">
-    <div
-      v-if="caseItem"
-      :class="[
-        'fixed right-0 bottom-0 z-[9999] flex items-end sm:items-center justify-center p-2 sm:p-4 bg-black/40',
-        // Offset por header
-        'top-16', // ~64px
-        // Offset por sidebar en desktop
-        overlayLeftClass
-      ]"
-      @click.self="$emit('close')"
-    >
-      <div class="relative bg-white w-full max-w-4xl rounded-t-2xl sm:rounded-2xl shadow-2xl h-[85vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto overflow-x-hidden">
-        <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-900">Detalles del Caso</h3>
-          <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">✕</button>
-        </div>
-        <div class="p-6 space-y-6">
+  <Modal
+    v-model="isOpen"
+    title="Detalles del Caso"
+    size="lg"
+    @close="$emit('close')"
+  >
           <div class="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
               <p class="text-sm text-gray-500">Código del Caso</p>
@@ -195,16 +183,18 @@
               <p class="text-xs text-gray-400 mt-1">Puedes agregar notas usando el botón "Notas adicionales"</p>
             </div>
           </div>
-        </div>
-        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl">
-          <div class="flex justify-end">
-            <div class="flex gap-2">
-            </div>
-          </div>
-        </div>
+    
+    <template #footer>
+      <div class="flex justify-end">
+        <CloseButton
+          @click="$emit('close')"
+          variant="danger-outline"
+          size="md"
+          text="Cerrar"
+        />
       </div>
-    </div>
-  </transition>
+    </template>
+  </Modal>
   
   <!-- Modal de notas adicionales -->
   <NotesDialog
@@ -224,9 +214,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { Case } from '../types/case.types'
-import { useSidebar } from '@/shared/composables/SidebarControl'
-import { SettingsIcon, DocsIcon } from '@/assets/icons'
+import { DocsIcon } from '@/assets/icons'
 import { NotesDialog } from '@/shared/components/feedback'
+import { CloseButton } from '@/shared/components/buttons'
+import { Modal } from '@/shared/components/layout'
 import { casesApiService } from '@/modules/cases/services/casesApi.service'
 import { useNotifications } from '@/modules/cases/composables/useNotifications'
 
@@ -234,6 +225,9 @@ const props = defineProps<{ caseItem: Case | null }>()
 const emit = defineEmits<{ (e: 'close'): void; (e: 'edit', c: Case): void; (e: 'preview', c: Case): void; (e: 'notes', c: Case): void }>()
 
 const showNotesDialog = ref(false)
+
+// Estado del modal principal
+const isOpen = computed(() => !!props.caseItem)
 const { showSuccess, showError } = useNotifications()
 
 function formatDate(dateString: string, includeTime: boolean = false) {
@@ -253,13 +247,6 @@ function formatDate(dateString: string, includeTime: boolean = false) {
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-function handleNotesClick() {
-  if (!props.caseItem) {
-    return
-  }
-  
-  showNotesDialog.value = true
-}
 
 async function handleNotesConfirm(notes: string) {
   try {
@@ -300,17 +287,6 @@ function handleNotesCancel() {
   showNotesDialog.value = false
 }
 
-// Ajuste responsivo: respetar ancho del sidebar (colapsado/expandido) y su hover
-const { isExpanded, isMobileOpen, isHovered } = useSidebar()
-
-// En desktop (>= lg), cuando el sidebar está expandido u hovered, dejamos margen izquierdo ~18rem (w-72)
-// Cuando está colapsado, dejamos ~5rem (w-20)
-// En móvil, sidebar es overlay, así que sin margen (left: 0)
-const overlayLeftClass = computed(() => {
-  // Tailwind usa breakpoints; aquí usamos clases utilitarias fijas para left dinámico vía clases condicionales
-  const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
-  return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
-})
 </script>
 
 

@@ -22,13 +22,13 @@
         <!-- Contenedor de logos con animación al hover -->
         <div class="flex justify-center items-center gap-8 mb-8">
           <router-link to="/" class="inline-block transition-transform duration-300 hover:scale-105">
-            <img src="/images/logo/banner_huam.png" alt="Logo HUAM" class="w-56 h-auto mx-auto" />
+            <img src="@/assets/images/Baner_HAMA.png" alt="Logo HAMA" class="w-56 h-auto mx-auto" />
           </router-link>
           <router-link to="/" class="inline-block transition-transform duration-300 hover:scale-105">
-            <img src="/images/logo/Logo-LIME-NoFondo.png" alt="Logo LIME" class="w-44 h-auto mx-auto rounded-md" />
+            <img src="@/assets/images/Logo-LIME-NoFondo.png" alt="Logo LIME" class="w-44 h-auto mx-auto rounded-md" />
           </router-link>
           <router-link to="/" class="inline-block transition-transform duration-300 hover:scale-105">
-            <img src="/images/logo/Baner-udea.png" alt="Logo UDEA" class="w-44 h-auto mx-auto rounded-md" />
+            <img src="@/assets/images/Banner_UDEA.png" alt="Logo UDEA" class="w-44 h-auto mx-auto rounded-md" />
           </router-link>
         </div>
       </div>

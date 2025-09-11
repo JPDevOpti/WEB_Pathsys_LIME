@@ -88,7 +88,7 @@ import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useEntityEdition } from '../../composables/useEntityEdition'
 import type { EntityEditFormModel, EntityUpdateResponse } from '../../types/entity.types'
-import { RefreshIcon } from '@/shared/icons'
+import { RefreshIcon } from '@/assets/icons'
 
 const props = defineProps<{ usuario: any; usuarioActualizado: boolean; mensajeExito: string }>()
 const emit = defineEmits<{ (e: 'usuario-actualizado', payload: any): void; (e: 'cancelar'): void }>()

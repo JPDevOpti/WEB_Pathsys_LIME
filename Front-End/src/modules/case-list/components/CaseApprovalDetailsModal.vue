@@ -1,40 +1,10 @@
 <template>
-  <transition 
-    enter-active-class="transition ease-out duration-300" 
-    enter-from-class="opacity-0 transform scale-95" 
-    enter-to-class="opacity-100 transform scale-100" 
-    leave-active-class="transition ease-in duration-200" 
-    leave-from-class="opacity-100 transform scale-100" 
-    leave-to-class="opacity-0 transform scale-95"
+  <Modal
+    v-model="isOpen"
+    title="Detalles de Solicitud de Pruebas Complementarias"
+    size="lg"
+    @close="$emit('close')"
   >
-    <div
-      v-if="approvalCase"
-      :class="[
-        'fixed right-0 bottom-0 z-[9999] flex items-end sm:items-center justify-center p-2 sm:p-4 bg-black/40',
-        // Offset por header
-        'top-16', // ~64px
-        // Offset por sidebar en desktop
-        overlayLeftClass
-      ]"
-      @click.self="$emit('close')"
-    >
-      <div class="relative bg-white w-full max-w-4xl rounded-t-2xl sm:rounded-2xl shadow-2xl h-[85vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto overflow-x-hidden">
-        <!-- Header -->
-        <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            Detalles de Solicitud de Pruebas Complementarias
-          </h3>
-          <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 p-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="p-6 space-y-6">
           <!-- Estado de la solicitud -->
           <div class="bg-gray-50 rounded-xl p-4">
             <div class="flex items-center justify-between">
@@ -335,28 +305,27 @@
                 {{ approvalCase.pruebas_complementarias.reduce((sum, test) => sum + test.cantidad, 0) }}
               </div>
             </div>
-            <div class="flex gap-2 justify-center sm:justify-end">
-            <BaseButton
-              variant="outline"
-              size="md"
-              text="Cerrar"
-              @click="$emit('close')"
-            />
-            </div>
-          </div>
-        </div>
+    
+    <template #footer>
+      <div class="flex justify-end">
+        <CloseButton
+          @click="$emit('close')"
+          variant="danger-outline"
+          size="md"
+          text="Cerrar"
+        />
       </div>
-    </div>
-  </transition>
+    </template>
+  </Modal>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { BaseButton } from '@/shared/components'
+import { CloseButton } from '@/shared/components/buttons'
+import { Modal } from '@/shared/components/layout'
 import casesApiService from '@/modules/cases/services/casesApi.service'
 import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
 import type { CasoAprobacionResponse } from '@/modules/results/services/casoAprobacion.service'
-import { useSidebar } from '@/shared/composables/SidebarControl'
 
 // Props
 interface Props {
@@ -370,6 +339,9 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'tests-updated', tests: Array<{ codigo: string; nombre: string; cantidad: number }>): void
 }>()
+
+// Estado del modal principal
+const isOpen = computed(() => !!props.approvalCase)
 
 // Estado del componente
 const originalCase = ref<any>(null)
@@ -524,15 +496,4 @@ const cancelTestEditing = () => {
 }
 
 
-// Ajuste responsivo: respetar ancho del sidebar (colapsado/expandido) y su hover
-const { isExpanded, isMobileOpen, isHovered } = useSidebar()
-
-// En desktop (>= lg), cuando el sidebar está expandido u hovered, dejamos margen izquierdo ~18rem (w-72)
-// Cuando está colapsado, dejamos ~5rem (w-20)
-// En móvil, sidebar es overlay, así que sin margen (left: 0)
-const overlayLeftClass = computed(() => {
-  // Tailwind usa breakpoints; aquí usamos clases utilitarias fijas para left dinámico vía clases condicionales
-  const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
-  return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
-})
 </script>

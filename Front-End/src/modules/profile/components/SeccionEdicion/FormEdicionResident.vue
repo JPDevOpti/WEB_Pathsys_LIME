@@ -173,7 +173,7 @@ import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useResidentEdition } from '../../composables/useResidentEdition'
 import type { ResidentEditFormModel, ResidentUpdateResponse } from '../../types/resident.types'
-import { RefreshIcon } from '@/shared/icons'
+import { RefreshIcon } from '@/assets/icons'
 
 type Usuario = {
   id: string;
