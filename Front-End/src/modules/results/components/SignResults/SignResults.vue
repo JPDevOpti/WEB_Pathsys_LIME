@@ -95,9 +95,15 @@
             </h3>
 
             <div class="mb-4">
-              <DiseaseList :model-value="primaryDisease" @update:model-value="handlePrimaryDiseaseChange"
-                @cieo-disease-selected="handlePrimaryDiseaseCIEOChange" label="Diagnóstico CIE-10"
-                placeholder="Buscar enfermedad CIE-10..." :required="true" />
+              <DiseaseList 
+                :model-value="primaryDisease" 
+                :cieo-value="primaryDiseaseCIEO"
+                @update:model-value="handlePrimaryDiseaseChange"
+                @cieo-disease-selected="handlePrimaryDiseaseCIEOChange" 
+                label="Diagnóstico CIE-10"
+                placeholder="Buscar enfermedad CIE-10..." 
+                :required="true" 
+              />
             </div>
           </div>
 
@@ -582,10 +588,12 @@ const hydrateAssignedSignature = async (caseData: any) => {
 const loadExistingDiagnosis = async (caseData: any) => {
   if (caseData.resultado) {
     const resultado = caseData.resultado as any
+    
     if (resultado.diagnostico_cie10) {
       const diseaseData = { codigo: resultado.diagnostico_cie10.codigo, nombre: resultado.diagnostico_cie10.nombre, tabla: 'CIE-10', isActive: true }
       setPrimaryDisease(diseaseData)
     }
+    
     if (resultado.diagnostico_cieo) {
       const diseaseDataCIEO = { codigo: resultado.diagnostico_cieo.codigo, nombre: resultado.diagnostico_cieo.nombre, tabla: 'CIE-O', isActive: true }
       setPrimaryDiseaseCIEO(diseaseDataCIEO)
@@ -791,6 +799,13 @@ const handleSignWithChanges = async (data: { details: string; tests: PruebaCompl
   try {
     signing.value = true
     
+    // Validar diagnósticos (igual que en handleSign normal)
+    const validation = validateDiagnosis()
+    if (!validation.isValid) {
+      validationMessage.value = validation.errors.join(', ')
+      return
+    }
+    
     // Validar que se pueda firmar
     if (!canUserSign.value) {
       showError('No autorizado', 'Solo el patólogo asignado al caso o un administrador pueden firmar este resultado.', 0)
@@ -814,15 +829,25 @@ const handleSignWithChanges = async (data: { details: string; tests: PruebaCompl
     
     const casoCode = caseDetails?.value?.caso_code || props.sampleId
     
-    // Preparar datos para firmar (sin diagnósticos CIE-10/CIEO ya que son pruebas complementarias)
+    // Preparar diagnósticos CIE-10 y CIE-O (igual que en handleSign normal)
+    const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
+      codigo: primaryDisease.value.codigo,
+      nombre: primaryDisease.value.nombre
+    } : undefined
+    const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
+      codigo: primaryDiseaseCIEO.value.codigo,
+      nombre: primaryDiseaseCIEO.value.nombre
+    } : undefined
+    
+    // Preparar datos para firmar (incluyendo diagnósticos CIE-10/CIEO)
     const requestData = {
       metodo: sections.value?.method || [],
       resultado_macro: sections.value?.macro || '',
       resultado_micro: sections.value?.micro || '',
       diagnostico: sections.value?.diagnosis || '',
       observaciones: data.details, // Usar el motivo de las pruebas complementarias
-      diagnostico_cie10: undefined, // No hay diagnóstico CIE-10 para pruebas complementarias
-      diagnostico_cieo: undefined   // No hay diagnóstico CIE-O para pruebas complementarias
+      diagnostico_cie10: diagnosticoCie10,
+      diagnostico_cieo: diagnosticoCIEO
     }
     
     // Firmar el caso

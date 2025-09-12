@@ -194,6 +194,7 @@ interface Disease {
 // Props
 interface Props {
   modelValue?: Disease | null
+  cieoValue?: Disease | null
   label?: string
   placeholder?: string
   required?: boolean
@@ -205,6 +206,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: null,
+  cieoValue: null,
   label: '',
   placeholder: 'Buscar enfermedad CIE-10...',
   required: false,
@@ -451,6 +453,13 @@ const reloadDiseases = async () => {
 // Watchers
 watch(() => props.modelValue, (newValue) => {
   selectedDisease.value = newValue || null
+}, { immediate: true })
+
+watch(() => props.cieoValue, (newValue) => {
+  selectedDiseaseCIEO.value = newValue || null
+  if (newValue) {
+    showCIEODiagnosis.value = true
+  }
 }, { immediate: true })
 
 watch(selectedDisease, (newValue) => {

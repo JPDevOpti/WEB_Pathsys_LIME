@@ -30,6 +30,28 @@ class CasePdfService:
             ) from e
 
         case = await self.caso_service.obtener_caso_por_caso_code(caso_code)
+        
+        # Obtener pruebas complementarias pendientes de aprobación
+        pruebas_complementarias = None
+        try:
+            from app.modules.aprobacion.repositories.caso_aprobacion_repository import CasoAprobacionRepository
+            from app.modules.aprobacion.models.caso_aprobacion import EstadoAprobacionEnum
+            
+            aprobacion_repo = CasoAprobacionRepository(self.database)
+            caso_aprobacion = await aprobacion_repo.find_by_caso_original(caso_code)
+            
+            # Solo mostrar si el caso tiene pruebas pendientes de aprobación
+            if (caso_aprobacion and 
+                caso_aprobacion.estado_aprobacion in [EstadoAprobacionEnum.SOLICITUD_HECHA, EstadoAprobacionEnum.PENDIENTE_APROBACION]):
+                pruebas_complementarias = {
+                    'pruebas': caso_aprobacion.pruebas_complementarias,
+                    'motivo': caso_aprobacion.aprobacion_info.motivo if caso_aprobacion.aprobacion_info else '',
+                    'fecha_solicitud': caso_aprobacion.fecha_creacion,
+                    'estado': caso_aprobacion.estado_aprobacion.value
+                }
+        except Exception as e:
+            print(f"Error obteniendo pruebas complementarias: {e}")
+            pruebas_complementarias = None
 
         # Obtener firma del patólogo desde la colección de patólogos
         pathologist_signature = None
@@ -79,7 +101,11 @@ class CasePdfService:
             pathologist_signature = None
 
         template = self.jinja_env.get_template("case_report.html")
-        html: str = await template.render_async(case=case, pathologist_signature=pathologist_signature)
+        html: str = await template.render_async(
+            case=case, 
+            pathologist_signature=pathologist_signature,
+            pruebas_complementarias=pruebas_complementarias
+        )
 
         async with async_playwright() as p:
             browser = await p.chromium.launch()

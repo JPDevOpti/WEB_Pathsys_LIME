@@ -443,6 +443,25 @@
   <div class="content-section"><div class="section-title">CIE-O:</div><div class="content-box">{{ case.resultado.diagnostico_cieo.codigo }} - {{ case.resultado.diagnostico_cieo.nombre }}</div></div>
     {% endif %}
 
+    <!-- Pruebas Complementarias Pendientes -->
+    {% if pruebas_complementarias and pruebas_complementarias.pruebas %}
+  <div class="content-section"><div class="section-title">PRUEBAS COMPLEMENTARIAS SOLICITADAS:</div>
+    <div class="content-box">
+      <div style="margin-bottom: 8px;">
+        <strong>Estado:</strong> {{ pruebas_complementarias.estado.replace('_', ' ').title() }}<br/>
+        <strong>Fecha de solicitud:</strong> {{ pruebas_complementarias.fecha_solicitud.strftime('%d/%m/%Y %H:%M') if pruebas_complementarias.fecha_solicitud.strftime else pruebas_complementarias.fecha_solicitud[:10] }}<br/>
+        {% if pruebas_complementarias.motivo %}<strong>Motivo:</strong> {{ pruebas_complementarias.motivo }}<br/>{% endif %}
+      </div>
+      <div style="margin-top: 8px;">
+        <strong>Pruebas solicitadas:</strong><br/>
+        {% for prueba in pruebas_complementarias.pruebas %}
+        • {{ prueba.codigo }} - {{ prueba.nombre }}{% if prueba.cantidad > 1 %} (Cantidad: {{ prueba.cantidad }}){% endif %}{% if not loop.last %}<br/>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+    {% endif %}
+
     <!-- Additional Notes -->
     {% if case.notas_adicionales and case.notas_adicionales|length > 0 %}
   <div class="content-section"><div class="section-title">NOTAS ADICIONALES:</div><div class="content-box">{% for nota in case.notas_adicionales %}{% if nota.fecha %}{% set fecha = nota.fecha %}{% if fecha.strftime %}<strong>{{ fecha.strftime('%d/%m/%Y') }}</strong>{% else %}<strong>{{ fecha[:10] }}</strong>{% endif %}{% endif %}: {{ nota.nota }}{% if not loop.last %}<br/>{% endif %}{% endfor %}</div></div>
