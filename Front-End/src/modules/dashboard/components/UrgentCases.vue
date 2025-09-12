@@ -144,7 +144,7 @@
                       </svg>
                     </button>
                     <button
-                      v-if="!isPatologo && !isResidente"
+                      v-if="!isPatologo && !isResidente && !isFacturacion"
                       class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                       @click.stop="handleEdit(caso)"
                       title="Editar caso"
@@ -155,7 +155,7 @@
                       </svg>
                     </button>
                     <button
-                      v-if="caso.estado === 'En proceso'"
+                      v-if="caso.estado === 'En proceso' && !isFacturacion"
                       class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                       @click.stop="handlePerform(caso)"
                       title="Realizar resultados"
@@ -165,7 +165,7 @@
                       </svg>
                     </button>
                     <button
-                      v-if="['Por firmar','Por entregar'].includes(caso.estado)"
+                      v-if="['Por firmar','Por entregar'].includes(caso.estado) && !isFacturacion"
                       class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                       @click.stop="handleValidate(caso)"
                       :title="caso.estado === 'Por firmar' ? 'Realizar validación del informe' : 'Validar'"
@@ -259,7 +259,7 @@
                   <span class="xs:hidden">Ver</span>
                 </button>
                 <button
-                  v-if="!isPatologo && !isResidente"
+                  v-if="!isPatologo && !isResidente && !isFacturacion"
                   class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
                   @click.stop="handleEdit(caso)"
                 >
@@ -270,7 +270,7 @@
                   Editar
                 </button>
                 <button
-                  v-if="caso.estado === 'En proceso'"
+                  v-if="caso.estado === 'En proceso' && !isFacturacion"
                   class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
                   @click.stop="handlePerform(caso)"
                 >
@@ -280,7 +280,7 @@
                   Realizar
                 </button>
                 <button
-                  v-if="['Por firmar','Por entregar'].includes(caso.estado)"
+                  v-if="['Por firmar','Por entregar'].includes(caso.estado) && !isFacturacion"
                   class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
                   @click.stop="handleValidate(caso)"
                 >
@@ -385,7 +385,7 @@ const {
 const router = useRouter()
 
 // Permisos del usuario
-const { isPatologo, isResidente } = usePermissions()
+const { isPatologo, isResidente, isFacturacion } = usePermissions()
 
 const errorCarga = error
 const patologoSeleccionado = ref('')

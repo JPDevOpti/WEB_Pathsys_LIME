@@ -122,7 +122,7 @@ const formatLastLogin = (date: Date): string => {
   }).format(new Date(date))
 }
 
-import { SettingsIcon, DoctorIcon, ResidenteIcon, AuxiliarIcon } from '@/assets/icons'
+import { SettingsIcon, DoctorIcon, ResidenteIcon, AuxiliarIcon, DolarIcon, UserCircleIcon } from '@/assets/icons'
 
 const getRoleIcon = (role: UserRole) => {
   const roleIconMap: Record<UserRole, any> = {
@@ -130,7 +130,7 @@ const getRoleIcon = (role: UserRole) => {
     patologo: DoctorIcon,
     residente: ResidenteIcon,
     auxiliar: AuxiliarIcon,
-    facturacion: SettingsIcon // Usar SettingsIcon para facturación
+    facturacion: DolarIcon
   }
   return roleIconMap[role] || UserCircleIcon
 }

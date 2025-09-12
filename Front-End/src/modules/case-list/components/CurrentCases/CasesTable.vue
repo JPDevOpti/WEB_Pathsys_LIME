@@ -34,7 +34,7 @@
           
           <button
             @click="handleBatchMarkDelivered"
-            :disabled="isPatologo"
+            :disabled="isPatologo || isFacturacion"
             class="inline-flex items-center gap-2 px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,7 +203,7 @@
                   <InfoCircleIcon class="w-4 h-4" />
                 </button>
                 <button
-                  v-if="!isPatologo && !isResidente && c.status !== 'Completado'"
+                  v-if="!isPatologo && !isResidente && !isFacturacion && c.status !== 'Completado'"
                   class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                   @click.stop="handleEdit(c)"
                   title="Editar caso"
@@ -211,7 +211,7 @@
                   <SettingsIcon class="w-4 h-4" />
                 </button>
                 <button
-                  v-if="c.status === 'En proceso'"
+                  v-if="c.status === 'En proceso' && !isFacturacion"
                   class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                   @click.stop="handlePerform(c)"
                   title="Realizar resultados"
@@ -221,7 +221,7 @@
                   </svg>
                 </button>
                 <button
-                  v-if="['Por firmar','Por entregar'].includes(c.status)"
+                  v-if="['Por firmar','Por entregar'].includes(c.status) && !isFacturacion"
                   class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                   @click.stop="handleValidate(c)"
                   :title="c.status === 'Por firmar' ? 'Realizar validación del informe' : 'Validar'"
@@ -359,7 +359,7 @@
               Ver detalles
             </button>
             <button
-              v-if="!isPatologo && !isResidente && c.status !== 'Completado'"
+              v-if="!isPatologo && !isResidente && !isFacturacion && c.status !== 'Completado'"
               class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
               @click.stop="handleEdit(c)"
             >
@@ -367,7 +367,7 @@
               Editar
             </button>
             <button
-              v-if="c.status === 'En proceso'"
+              v-if="c.status === 'En proceso' && !isFacturacion"
               class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
               @click.stop="handlePerform(c)"
             >
@@ -377,7 +377,7 @@
               Realizar
             </button>
             <button
-              v-if="['Por firmar','Por entregar'].includes(c.status)"
+              v-if="['Por firmar','Por entregar'].includes(c.status) && !isFacturacion"
               class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
               @click.stop="handleValidate(c)"
             >
@@ -497,7 +497,7 @@ const emit = defineEmits<{
 const router = useRouter()
 
 // Permisos del usuario
-const { isPatologo, isResidente } = usePermissions()
+const { isPatologo, isResidente, isFacturacion } = usePermissions()
 
 // Funciones para selección - delegar al componente padre (igual que el frontend viejo)
 function toggleSelectAll() {
@@ -561,7 +561,7 @@ async function handleBatchDownloadExcel() {
 }
 
 function handleBatchMarkDelivered() {
-  if (isPatologo?.value) return
+  if (isPatologo?.value || isFacturacion?.value) return
   showMarkDeliveredDrawer.value = true
 }
 

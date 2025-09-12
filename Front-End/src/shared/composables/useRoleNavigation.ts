@@ -4,12 +4,10 @@
  */
 
 import { computed } from 'vue'
-import { useAuthStore } from '@/stores/auth.store'
 import { usePermissions } from './usePermissions'
 
 export function useRoleNavigation() {
-  const authStore = useAuthStore()
-  const { isAdmin, isPatologo, isAuxiliar, isResidente } = usePermissions()
+  const { isAdmin, isPatologo, isAuxiliar, isResidente, isFacturacion } = usePermissions()
 
   // Menú principal disponible para cada rol
   const availableMenuItems = computed(() => {
@@ -28,8 +26,19 @@ export function useRoleNavigation() {
       { name: 'Gestión de Usuarios', path: '/users', icon: 'users', alwaysVisible: false }
     ]
 
+    const facturacionItems = [
+      { name: 'Listado de Casos', path: '/case-list', icon: 'list', alwaysVisible: true },
+      { name: 'Estadísticas', path: '/statistics', icon: 'statistics', alwaysVisible: true },
+      { name: 'Mi Perfil', path: '/profile', icon: 'profile', alwaysVisible: true },
+      { name: 'Soporte', path: '/support', icon: 'support', alwaysVisible: true }
+    ]
+
     if (isAdmin.value) {
       return [...baseItems, ...adminItems]
+    }
+
+    if (isFacturacion.value) {
+      return facturacionItems
     }
 
     return baseItems
@@ -78,6 +87,16 @@ export function useRoleNavigation() {
       return {
         ...baseActions,
         editCases: true
+      }
+    }
+
+    if (isFacturacion.value) {
+      return {
+        viewCases: true,
+        viewResults: false,
+        editProfile: true,
+        accessSupport: true,
+        viewStatistics: true
       }
     }
 

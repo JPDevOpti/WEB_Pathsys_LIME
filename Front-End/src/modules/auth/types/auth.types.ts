@@ -50,4 +50,4 @@ export interface AuthError {
   code?: string
 }
 
-export type RolEnum = 'admin' | 'patologo' | 'residente' | 'recepcionista' | 'auxiliar'
+export type RolEnum = 'admin' | 'patologo' | 'residente' | 'recepcionista' | 'auxiliar' | 'facturacion'

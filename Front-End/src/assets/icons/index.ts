@@ -1,6 +1,7 @@
 export { default as AuxiliarIcon } from './AuxiliarIcon.vue'
 export { default as CheckIcon } from './CheckIcon.vue'
 export { default as ChevronDownIcon } from './ChevronDownIcon.vue'
+export { default as DolarIcon } from './DolarIcon.vue'
 export { default as DocsIcon } from './DocsIcon.vue'
 export { default as DoctorIcon } from './DoctorIcon.vue'
 export { default as ErrorIcon } from './ErrorIcon.vue'

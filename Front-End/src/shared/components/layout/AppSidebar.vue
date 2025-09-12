@@ -297,7 +297,7 @@ import logoExpanded from '@/assets/images/Logo-LIME-NoFondo.png'
 import logoCollapsed from '@/assets/images/LOGO-LIME-Inicial.png'
 
 const route = useRoute();
-const { isAdmin, isPatologo, isAuxiliar, isResidente } = usePermissions();
+const { isAdmin, isPatologo, isAuxiliar, isResidente, isFacturacion } = usePermissions();
 
 const { isExpanded, isMobileOpen, isHovered, openSubmenu, setIsHovered, toggleSubmenu } = useSidebar();
 
@@ -307,6 +307,17 @@ const { isExpanded, isMobileOpen, isHovered, openSubmenu, setIsHovered, toggleSu
 const canAccessRoute = (path: string): boolean => {
   // Administradores pueden acceder a todo
   if (isAdmin.value) return true;
+  
+  // Usuario de facturación: solo dashboard, listado de casos, estadísticas, mi perfil y soporte
+  if (isFacturacion.value) {
+    // Permitir solo las rutas específicas para facturación
+    const result = path.startsWith('/dashboard') || 
+                   path.startsWith('/cases/current') || 
+                   path.startsWith('/statistics') || 
+                   path === '/profile' ||
+                   path.startsWith('/support');
+    return result;
+  }
   
   // Patólogos: solo dashboard, listado de casos, resultados, mi perfil y soporte
   if (isPatologo.value) {
@@ -366,6 +377,11 @@ const canAccessAnySubItem = (subItems: SubMenuItem[]): boolean => {
   // Para patólogos, auxiliares y residentes, siempre permitir que los menús principales sean clickeables
   // Los submenús individuales se controlan con canAccessRoute
   if (isPatologo.value || isAuxiliar.value || isResidente.value) return true;
+  
+  // Para facturación, verificar si pueden acceder a al menos un subitem
+  if (isFacturacion.value) {
+    return subItems.some(subItem => canAccessRoute(subItem.path));
+  }
   
   // Para otros roles, verificar si pueden acceder a al menos un subitem
   return subItems.some(subItem => canAccessRoute(subItem.path));

@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { UserCircleIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, MailBox, DoctorIcon, AuxiliarIcon, ResidenteIcon } from '@/assets/icons'
+import { UserCircleIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, DoctorIcon, AuxiliarIcon, ResidenteIcon, DolarIcon } from '@/assets/icons'
 import { RouterLink, useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
@@ -104,6 +104,7 @@ const userRole = computed(() => {
     patologo: 'Patólogo',
     auxiliar: 'Auxiliar',
     residente: 'Residente',
+    facturacion: 'Usuario de Facturación',
     paciente: 'Paciente'
   }
   if (!r) return 'Sin rol'
@@ -111,7 +112,6 @@ const userRole = computed(() => {
 })
 
 // Icono por rol para coherencia con el perfil
-import { DoctorIcon } from '@/assets/icons'
 
 const getRoleIcon = () => {
   const raw = (authStore.user?.rol || '').toString().trim().toLowerCase()
@@ -119,6 +119,7 @@ const getRoleIcon = () => {
   if (raw.includes('patolog')) return DoctorIcon
   if (raw.includes('resident')) return ResidenteIcon
   if (raw.includes('auxiliar')) return AuxiliarIcon
+  if (raw.includes('facturacion') || raw.includes('user')) return DolarIcon
   return UserCircleIcon
 }
 

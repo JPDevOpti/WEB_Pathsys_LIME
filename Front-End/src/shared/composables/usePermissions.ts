@@ -15,6 +15,7 @@ export function usePermissions() {
   const isPatologo = computed(() => authStore.isPatologo)
   const isResidente = computed(() => authStore.isResidente)
   const isRecepcionista = computed(() => authStore.userRole === 'recepcionista')
+  const isFacturacion = computed(() => authStore.isFacturacion)
 
   // Permisos específicos por funcionalidad
   const canCreateCases = computed(() => isAdmin.value || isRecepcionista.value)
@@ -28,11 +29,11 @@ export function usePermissions() {
   // Permisos específicos por módulo
   const canAccessDashboard = computed(() => true) // Todos pueden acceder al dashboard
   const canAccessCases = computed(() => isAdmin.value || isPatologo.value || isAuxiliar.value || isResidente.value) // Patólogos, auxiliares y residentes pueden acceder a casos
-  const canAccessCaseList = computed(() => isAdmin.value || isPatologo.value || isAuxiliar.value || isResidente.value) // Patólogos, auxiliares y residentes pueden ver listado de casos
+  const canAccessCaseList = computed(() => isAdmin.value || isPatologo.value || isAuxiliar.value || isResidente.value || isFacturacion.value) // Patólogos, auxiliares, residentes y facturación pueden ver listado de casos
   const canAccessResults = computed(() => isAdmin.value || isPatologo.value || isAuxiliar.value || isResidente.value) // Patólogos, auxiliares y residentes pueden acceder a resultados
   const canAccessProfile = computed(() => true) // Todos pueden acceder a perfil
   const canAccessReports = computed(() => isAdmin.value) // Solo admin puede acceder a reportes
-  const canAccessStatistics = computed(() => isAdmin.value) // Solo admin puede acceder a estadísticas
+  const canAccessStatistics = computed(() => isAdmin.value || isFacturacion.value) // Admin y facturación pueden acceder a estadísticas
 
   // Función para verificar si un usuario tiene un rol específico
   const hasRole = (role: RolEnum): boolean => {
@@ -56,6 +57,7 @@ export function usePermissions() {
     isPatologo,
     isResidente,
     isRecepcionista,
+    isFacturacion,
     
     // Permisos específicos
     canCreateCases,

@@ -27,6 +27,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isPatologo = computed(() => userRole.value === 'patologo')
   const isResidente = computed(() => userRole.value === 'residente')
   const isPaciente = computed(() => userRole.value === 'paciente')
+  const isFacturacion = computed(() => userRole.value === 'facturacion' || userRole.value === 'user')
 
   // Acciones
   const login = async (credentials: LoginRequest): Promise<boolean> => {
@@ -193,6 +194,7 @@ export const useAuthStore = defineStore('auth', () => {
     isPatologo,
     isResidente,
     isPaciente,
+    isFacturacion,
     
     // Acciones
     login,

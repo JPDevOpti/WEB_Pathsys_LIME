@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
+import { roleGuard } from './guards/roleGuard'
 import { dashboardRoutes } from '@/modules/dashboard/routes/dashboardRoutes'
 import { authRoutes } from '@/modules/auth/routes/authRoutes'
 import { casesRoutes } from '@/modules/cases/routes/casesRoutes'
@@ -56,6 +57,12 @@ router.beforeEach(async (to, _from, next) => {
   // Si la ruta requiere autenticación y el usuario no está autenticado
   if (!isPublicRoute && !authStore.isAuthenticated) {
     next('/login')
+    return
+  }
+  
+  // Aplicar restricciones de rol si está autenticado
+  if (authStore.isAuthenticated) {
+    roleGuard(to, _from, next)
     return
   }
   

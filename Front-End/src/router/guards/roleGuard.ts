@@ -14,6 +14,7 @@ export function roleGuard(
   
   // Si no está autenticado, continuar (el guard principal ya maneja esto)
   if (!authStore.isAuthenticated) {
+    next()
     return
   }
 
@@ -21,11 +22,13 @@ export function roleGuard(
   
   // SIEMPRE permitir acceso al dashboard para evitar bucles infinitos
   if (to.path === '/dashboard') {
+    next()
     return
   }
   
   // Si no hay rol definido, permitir acceso (fallback)
   if (!userRole) {
+    next()
     return
   }
   
@@ -55,6 +58,20 @@ export function roleGuard(
       '/reports',
       '/support'
     ],
+    facturacion: [
+      '/dashboard',
+      '/cases/current',
+      '/statistics',
+      '/profile',
+      '/support'
+    ],
+    user: [
+      '/dashboard',
+      '/cases/current',
+      '/statistics',
+      '/profile',
+      '/support'
+    ],
     administrador: [
       '/dashboard',
       '/cases',
@@ -79,4 +96,7 @@ export function roleGuard(
     next({ path: '/dashboard' })
     return
   }
+  
+  // Si la ruta está permitida, continuar
+  next()
 }
