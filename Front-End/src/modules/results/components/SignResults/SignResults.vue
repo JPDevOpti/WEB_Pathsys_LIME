@@ -711,9 +711,19 @@ function clearFormAfterSign() {
 
 const handleCaseClick = async (caseItem: any) => {
   try {
-    const fullCase = await casesApiService.getCaseByCode(caseItem.caso_code)
+    // Obtener el código del caso correctamente
+    const caseCode = caseItem.caso_code || caseItem.CasoCode || caseItem.id
+    if (!caseCode) {
+      console.error('No se encontró código de caso en:', caseItem)
+      return
+    }
+    
+    // Cargar el caso completo desde la base de datos
+    const fullCase = await casesApiService.getCaseByCode(caseCode)
     selectedPreviousCase.value = fullCase
   } catch (error) {
+    console.error('Error al cargar caso completo:', error)
+    // Si falla, usar el caso básico
     selectedPreviousCase.value = caseItem
   }
 }

@@ -598,10 +598,18 @@ const updateSectionContent = (value: string | string[]) => {
 // Función para manejar el clic en casos anteriores
 const handleCaseClick = async (caseItem: any) => {
   try {
+    // Obtener el código del caso correctamente
+    const caseCode = caseItem.caso_code || caseItem.CasoCode || caseItem.id
+    if (!caseCode) {
+      console.error('No se encontró código de caso en:', caseItem)
+      return
+    }
+    
     // Cargar el caso completo desde la base de datos
-    const fullCase = await casesApiService.getCaseByCode(caseItem.CasoCode)
+    const fullCase = await casesApiService.getCaseByCode(caseCode)
     selectedPreviousCase.value = fullCase
   } catch (error) {
+    console.error('Error al cargar caso completo:', error)
     // Si falla, usar el caso básico
     selectedPreviousCase.value = caseItem
   }
