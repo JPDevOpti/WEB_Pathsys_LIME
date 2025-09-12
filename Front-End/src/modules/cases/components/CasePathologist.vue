@@ -118,10 +118,26 @@
             </div>
           </div>
         </div>
+
+        <!-- Advertencia para casos completados -->
+        <div v-if="casoEncontrado && casoInfo && isCaseCompleted" class="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div>
+              <h4 class="text-sm font-semibold text-red-800">Caso Completado</h4>
+              <p class="text-sm text-red-700 mt-1">
+                Este caso ya ha sido completado y no se puede reasignar patólogo. 
+                Los casos completados mantienen su asignación final para preservar la integridad de los datos.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Sección 2: Formulario de Asignación -->
-      <div v-if="casoEncontrado" class="space-y-6">
+      <div v-if="casoEncontrado && !isCaseCompleted" class="space-y-6">
         <!-- Selección de Patólogo -->
         <div class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6">
           <div class="max-w-md">
@@ -235,7 +251,16 @@ const { notification, showNotification, closeNotification } = useNotifications()
  * Verifica si el formulario es válido para proceder con la asignación
  */
 const isFormValid = computed(() => {
-  return casoEncontrado.value && formData.patologoId.trim() !== ''
+  return casoEncontrado.value && formData.patologoId.trim() !== '' && !isCaseCompleted.value
+})
+
+/**
+ * Verifica si el caso está en estado completado
+ */
+const isCaseCompleted = computed(() => {
+  if (!casoInfo.value?.estado) return false
+  const estado = casoInfo.value.estado
+  return estado.toLowerCase() === 'completado'
 })
 
 /**
@@ -262,6 +287,9 @@ const validationErrorsList = computed(() => {
   if (!casoEncontrado.value) {
     errors.push('Debe buscar y encontrar un caso primero')
   }
+  if (isCaseCompleted.value) {
+    errors.push('No se puede asignar patólogo a un caso completado')
+  }
   if (!formData.patologoId) {
     errors.push('Debe seleccionar un patólogo')
   }
@@ -273,6 +301,9 @@ const validationErrorsList = computed(() => {
  * Texto del botón de asignación según el estado del caso
  */
 const getButtonText = computed(() => {
+  if (isCaseCompleted.value) {
+    return 'No se puede asignar'
+  }
   return casoInfo.value?.patologo_asignado ? 'Reasignar Patólogo' : 'Asignar Patólogo'
 })
 
@@ -410,6 +441,17 @@ const getErrorMessage = (error: any): string => {
  */
 const asignarPatologo = async () => {
   if (!isFormValid.value || !casoInfo.value) return
+
+  // Validar que el caso no esté completado
+  if (isCaseCompleted.value) {
+    showNotification(
+      'error',
+      'Caso completado',
+      'No se puede asignar patólogo a un caso que ya ha sido completado.',
+      0
+    )
+    return
+  }
 
   isLoadingAssignment.value = true
 

@@ -44,7 +44,50 @@
             </div>
           </div>
 
-          <div v-if="caseFound && foundCaseInfo" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <!-- Advertencia para casos completados -->
+          <div v-if="caseFound && foundCaseInfo && isCaseCompleted" class="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <div class="flex items-center mb-4">
+              <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <h4 class="text-sm sm:text-base font-semibold text-red-800">Caso Completado - No Editable</h4>
+            </div>
+            <div class="bg-white border border-red-200 rounded-lg shadow-sm p-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Nombre</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.paciente?.nombre || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Código</p>
+                  <p class="text-gray-900 font-mono font-semibold">{{ foundCaseInfo.paciente?.paciente_code || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Edad</p>
+                  <p class="text-gray-900 font-semibold">{{ (foundCaseInfo.paciente?.edad ?? 'N/A') + (foundCaseInfo.paciente?.edad ? ' años' : '') }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Sexo</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ foundCaseInfo.paciente?.sexo || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Tipo de Atención</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ foundCaseInfo.paciente?.tipo_atencion || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Entidad</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.paciente?.entidad_info?.nombre || foundCaseInfo.entidad_info?.nombre || 'N/A' }}</p>
+                </div>
+                <div class="space-y-1 sm:col-span-2">
+                  <p class="text-gray-600 font-medium">Estado del Caso</p>
+                  <p class="text-red-600 font-semibold">{{ foundCaseInfo.estado || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información normal para casos editables -->
+          <div v-if="caseFound && foundCaseInfo && !isCaseCompleted" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div class="flex items-center mb-4">
               <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -97,7 +140,7 @@
         </div>
       </div>
 
-      <div v-if="caseFound" class="space-y-6">
+      <div v-if="caseFound && !isCaseCompleted" class="space-y-6">
         <!-- Campos de entidad y tipo de atención -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <EntityList :key="'entity-' + resetKey" v-model="form.entidadPaciente" label="Entidad del Paciente" placeholder="Seleciona la entidad" :required="true" :auto-load="true" @entity-selected="onEntitySelected" />
@@ -171,7 +214,12 @@
 
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
           <ClearButton @click="onReset" :disabled="isLoading" />
-          <SaveButton text="Guardar Cambios" @click="onSubmit" :disabled="isLoading || !isFormValid" :loading="isLoading" />
+          <SaveButton 
+            text="Guardar Cambios" 
+            @click="onSubmit" 
+            :disabled="isLoading || !isFormValid || isCaseCompleted" 
+            :loading="isLoading" 
+          />
         </div>
 
         <!-- Notificación de campos faltantes -->
@@ -369,6 +417,13 @@ const isFormValid = computed(() => {
   )
 })
 
+// Computed para verificar si el caso está completado
+const isCaseCompleted = computed(() => {
+  if (!foundCaseInfo.value?.estado) return false
+  const estado = foundCaseInfo.value.estado
+  return estado.toLowerCase() === 'completado'
+})
+
 // Validación de errores del formulario
 const validationErrors = computed(() => {
   const validationErrorsList: string[] = []
@@ -470,6 +525,13 @@ const loadCaseData = async () => {
 const onSubmit = async () => {
   // Validar que hay datos para actualizar (ya sea desde props o búsqueda)
   const caseCode = props.caseCodeProp || foundCaseInfo.value?.caso_code
+  
+  // Validar que el caso no esté completado
+  if (isCaseCompleted.value) {
+    showError('Caso completado', 'No se puede editar un caso que ya ha sido completado. Los casos completados no pueden ser modificados.')
+    return
+  }
+  
   if (!isFormValid.value) {
     if (suppressValidation.value) {
       // Consumir la supresión y no mostrar error

@@ -87,7 +87,6 @@
             </div>
           </div>
 
-          <!-- Se elimina el bloque de notificación de caso encontrado -->
         </div>
 
         <!-- Editor de resultados - Solo visible cuando se encuentra un caso -->
@@ -104,15 +103,34 @@
               <div class="flex flex-wrap items-center gap-3 justify-end">
                 <ClearButton :disabled="loading" @click="handleClearResults" />
                 <SaveButton 
-                  :disabled="saving || loading || !canSaveProgress" 
+                  :disabled="saving || loading || !canSaveProgress || !canTranscribeByStatus" 
                   :loading="saving" 
-                  :text="canComplete ? 'Completar para Firma' : 'Guardar Progreso'" 
+                  :text="!canTranscribeByStatus ? 'No se puede guardar' : (canComplete ? 'Completar para Firma' : 'Guardar Progreso')" 
                   :loading-text="canComplete ? 'Completando...' : 'Guardando...'" 
                   @click="handleSaveAction"
                 />
               </div>
             </template>
           </ResultEditor>
+
+          <!-- Advertencia para casos completados -->
+          <div v-if="casoInfo?.caso_code && !canTranscribeByStatus"
+            class="mt-3 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <div>
+                <p class="text-sm font-bold text-red-800">Caso ya completado</p>
+                <p class="text-sm text-red-700 mt-1">
+                  Este caso ya ha sido completado y no se puede transcribir resultados.
+                </p>
+                <p class="text-xs text-red-600 mt-2">
+                  Estado actual: <span class="font-semibold">{{ casoInfo?.estado }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
 
           <ValidationAlert
             :visible="!!validationMessage"
@@ -166,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, nextTick } from 'vue'
+import { onMounted, onUnmounted, ref, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ComponentCard } from '@/shared/components'
 import { ErrorMessage, ValidationAlert } from '@/shared/components/feedback'
@@ -255,6 +273,30 @@ const casoInfo = ref<any>(null)
 
 // Estado para el modal de casos anteriores
 const selectedPreviousCase = ref<any>(null)
+
+// Normaliza estados a formato de BD (mayúsculas y guiones bajos)
+const normalizeStatus = (status: string): string => {
+  if (!status) return status
+  return status.toUpperCase().replace(/\s+/g, '_')
+}
+
+// Solo se puede transcribir si el caso NO está en estado COMPLETADO
+const canTranscribeByStatus = computed(() => {
+  if (!casoInfo.value?.estado) return false
+  const normalizedStatus = normalizeStatus(casoInfo.value.estado)
+  return normalizedStatus !== 'COMPLETADO'
+})
+
+const invalidStatusMessage = computed(() => {
+  if (!casoInfo.value?.estado) return ''
+  const estado = casoInfo.value.estado
+  const normalizedStatus = normalizeStatus(estado)
+  if (normalizedStatus === 'COMPLETADO') {
+    return 'Este caso ya ha sido completado y no se puede transcribir resultados.'
+  }
+  return `El estado "${estado}" no permite la transcripción del caso.`
+})
+
 
 // Estado para almacenar el contenido guardado para mostrar en la notificación
 const savedContent = ref({
@@ -485,6 +527,12 @@ const { notification, showSuccess, showError, closeNotification } = useNotificat
 async function handleSaveAction() {
   // Evitar múltiples ejecuciones
   if (saving.value) return
+  
+  // Validar que el caso no esté completado
+  if (!canTranscribeByStatus.value) {
+    showError('Estado no válido', invalidStatusMessage.value, 0)
+    return
+  }
   
   // Capturar todo el estado INMEDIATAMENTE para evitar cambios durante la ejecución
   const currentState = {

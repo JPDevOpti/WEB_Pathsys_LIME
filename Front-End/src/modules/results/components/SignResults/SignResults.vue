@@ -70,6 +70,7 @@
             </div>
           </div>
 
+          <!-- Mensaje de error de búsqueda -->
           <div v-if="searchError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
             <div class="flex items-center">
               <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,6 +80,7 @@
               <p class="text-sm text-red-600">{{ searchError }}</p>
             </div>
           </div>
+
         </div>
 
         <div v-if="casoEncontrado" class="flex-1 flex flex-col min-h-0 mt-0">
@@ -157,13 +159,21 @@
             </div>
           </div>
 
+          <!-- Advertencia para casos completados -->
           <div v-if="caseDetails?.caso_code && !canSignByStatus && !hasBeenSigned"
-            class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            class="mt-3 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
             <div class="flex items-center">
-              <WarningIcon class="w-5 h-5 text-yellow-500 mr-2 flex-shrink-0" />
+              <svg class="w-5 h-5 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
               <div>
-                <p class="text-sm font-medium text-yellow-800">Estado no válido para firmar</p>
-                <p class="text-sm text-yellow-700">{{ invalidStatusMessage }}</p>
+                <p class="text-sm font-bold text-red-800">Caso ya completado</p>
+                <p class="text-sm text-red-700 mt-1">
+                  Este caso ya ha sido completado y firmado. No se puede firmar nuevamente.
+                </p>
+                <p class="text-xs text-red-600 mt-2">
+                  Estado actual: <span class="font-semibold">{{ caseDetails?.estado }}</span>
+                </p>
               </div>
             </div>
           </div>
@@ -173,9 +183,10 @@
             <!-- Botón de previsualización temporalmente deshabilitado -->
             <button
               :disabled="loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature"
-              :class="['px-4 py-2 text-sm font-medium rounded-md', (loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700']"
+              :class="['px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2', (loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700']"
               @click="handleSign"
             >
+              <SignIcon :size="16" />
               {{ signing ? 'Firmando...' : 'Firmar' }}
             </button>
           </div>
@@ -237,6 +248,7 @@ import { DiseaseList } from '@/shared/components/List'
 import DocsIcon from '@/assets/icons/DocsIcon.vue'
 import WarningIcon from '@/assets/icons/WarningIcon.vue'
 import ErrorIcon from '@/assets/icons/ErrorIcon.vue'
+import SignIcon from '@/assets/icons/SignIcon.vue'
 import ResultEditor from '../Shared/ResultEditor.vue'
 import PatientInfoCard from '../Shared/PatientInfoCard.vue'
 import CaseDetailsCard from '../Shared/CaseDetailsCard.vue'
@@ -376,8 +388,10 @@ const invalidStatusMessage = computed(() => {
   if (!caseDetails.value?.estado) return ''
   const estado = caseDetails.value.estado
   const normalizedStatus = normalizeStatus(estado)
-  if (normalizedStatus === 'COMPLETADO') return 'Este caso ya ha sido completado y firmado.'
-  return ''
+  if (normalizedStatus === 'COMPLETADO') {
+    return 'Este caso ya ha sido completado y firmado. No se puede firmar nuevamente.'
+  }
+  return `El estado "${estado}" no permite la firma del caso.`
 })
 
 const codigoCaso = ref('')

@@ -203,7 +203,7 @@
                   <InfoCircleIcon class="w-4 h-4" />
                 </button>
                 <button
-                  v-if="!isPatologo && !isResidente"
+                  v-if="!isPatologo && !isResidente && c.status !== 'Completado'"
                   class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                   @click.stop="handleEdit(c)"
                   title="Editar caso"
@@ -359,7 +359,7 @@
               Ver detalles
             </button>
             <button
-              v-if="!isPatologo && !isResidente"
+              v-if="!isPatologo && !isResidente && c.status !== 'Completado'"
               class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
               @click.stop="handleEdit(c)"
             >
