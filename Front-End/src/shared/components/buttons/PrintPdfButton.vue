@@ -19,6 +19,8 @@ import { computed } from 'vue'
 import { DocsIcon } from '@/assets/icons'
 import { useRouter } from 'vue-router'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
 interface Props {
   text?: string
   loadingText?: string
@@ -47,10 +49,9 @@ const buttonClasses = computed(() => {
 
 const router = useRouter()
 function goToPreview() {
-  if (props.caseCode) {
-    router.push({ name: 'pdfs-preview', params: { caseCode: props.caseCode } })
-  } else {
-    router.push({ name: 'pdfs-preview' })
-  }
+  if (!props.caseCode) return
+  const url = `${API_BASE_URL}/api/v1/casos/caso-code/${encodeURIComponent(props.caseCode)}/pdf`
+  const features = 'noopener,noreferrer,width=1000,height=800'
+  window.open(url, '_blank', features)
 }
 </script>
