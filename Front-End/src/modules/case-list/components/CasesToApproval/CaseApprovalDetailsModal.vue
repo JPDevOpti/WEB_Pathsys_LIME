@@ -298,7 +298,8 @@
         </div>
 
     <template #footer>
-      <div class="flex justify-end">
+      <div class="flex justify-end gap-3">
+        <PrintPdfButton text="Imprimir PDF" :caseCode="approvalCase?.caso_original" />
         <CloseButton
           @click="$emit('close')"
           variant="danger-outline"
@@ -312,7 +313,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { CloseButton } from '@/shared/components/buttons'
+import { CloseButton, PrintPdfButton } from '@/shared/components/buttons'
 import { Modal } from '@/shared/components/layout'
 import casesApiService from '@/modules/cases/services/casesApi.service'
 import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
@@ -485,6 +486,5 @@ const cancelTestEditing = () => {
   editedTests.value = [...originalTests.value]
   isEditingTests.value = false
 }
-
 
 </script>
