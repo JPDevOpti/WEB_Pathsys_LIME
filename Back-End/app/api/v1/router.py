@@ -9,6 +9,7 @@ from app.modules.entidades.routes.entidad_routes import router as entidades_rout
 from app.modules.patologos.routes.patologo_routes import router as patologos_router
 from app.modules.residentes.routes.residente_routes import router as residentes_router
 from app.modules.auxiliares.routes import auxiliares_router
+from app.modules.facturacion.routes import facturacion_router
 from app.modules.enfermedades.routes import router as enfermedad_router
 from app.modules.aprobacion.routes.caso_aprobacion_routes import router as aprobacion_router
 from app.modules.tickets.routes.ticket_routes import router as tickets_router
@@ -24,6 +25,7 @@ api_router.include_router(entidades_router, prefix="/entidades", tags=["entidade
 api_router.include_router(patologos_router, prefix="/patologos", tags=["patologos"])
 api_router.include_router(residentes_router, prefix="/residentes", tags=["residentes"])
 api_router.include_router(auxiliares_router, prefix="/auxiliares", tags=["auxiliares"])
+api_router.include_router(facturacion_router, prefix="/facturacion", tags=["facturacion"])
 api_router.include_router(enfermedad_router, prefix="/enfermedades", tags=["enfermedades"])
 api_router.include_router(aprobacion_router, prefix="/aprobacion", tags=["aprobacion"])
 api_router.include_router(tickets_router, prefix="/tickets", tags=["tickets"])
@@ -53,6 +55,7 @@ async def api_info():
             "patologos",
             "residentes",
             "auxiliares",
+            "facturacion",
             "enfermedades",
             "aprobación",
             "tickets"

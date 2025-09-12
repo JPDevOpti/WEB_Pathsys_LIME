@@ -108,7 +108,7 @@ import SignatureUploader from '../components/MyProfile/SignatureUploader.vue'
 import type { UserProfile, ValidationError, ProfileEditPayload, UserRole } from '../types/userProfile.types'
 import { profileApiService } from '../services/profileApiService'
 import { useAuthStore } from '@/stores/auth.store'
-import type { BackendPatologo, BackendResidente, BackendAuxiliar } from '../services/profileApiService'
+import type { BackendPatologo, BackendResidente, BackendAuxiliar, BackendFacturacion } from '../services/profileApiService'
 
 const currentPageTitle = ref('Mi Perfil')
 
@@ -141,6 +141,7 @@ const loadUserProfile = async () => {
       if (r.includes('admin') || r === 'administrador') return 'admin'
       if (r.includes('patolog')) return 'patologo'
       if (r.includes('resident')) return 'residente'
+      if (r.includes('facturacion') || r.includes('facturación') || r.includes('billing')) return 'facturacion'
       if (r.includes('auxiliar')) return 'auxiliar'
       return 'admin'
     }
@@ -166,25 +167,46 @@ const loadUserProfile = async () => {
     }
 
     // Intentar detectar el rol efectivo priorizando colecciones con búsqueda fiable por email
-    const [residenteData, auxiliarData] = await Promise.all([
+    const [residenteData, auxiliarData, facturacionData] = await Promise.all([
       profileApiService.getByRoleAndEmail('residente', email).catch(() => undefined),
-      profileApiService.getByRoleAndEmail('auxiliar', email).catch(() => undefined)
+      profileApiService.getByRoleAndEmail('auxiliar', email).catch(() => undefined),
+      profileApiService.getByRoleAndEmail('facturacion', email).catch(() => undefined)
     ])
     let patologoData = undefined
-    if (!residenteData && !auxiliarData) {
+    if (!residenteData && !auxiliarData && !facturacionData) {
       patologoData = await profileApiService.getByRoleAndEmail('patologo', email).catch(() => undefined)
     }
 
     const hasResidente = !!(residenteData && (residenteData as any).residenteCode)
     const hasAuxiliar = !!(auxiliarData && (auxiliarData as any).auxiliarCode)
     const hasPatologo = !!(patologoData && (patologoData as any).patologoCode)
+    const hasFacturacion = !!(facturacionData && (facturacionData as any).facturacionCode)
 
-    // Determinar rol efectivo: respetar coincidencias únicas; si múltiples, priorizar patólogo sólo si fue explícito en token
+    console.log('🔍 Detección de roles:', {
+      email,
+      roleFromToken: role,
+      hasResidente,
+      hasAuxiliar,
+      hasPatologo,
+      hasFacturacion,
+      facturacionData
+    })
+
+    // Determinar rol efectivo: priorizar detección en colecciones sobre rol del token
     let effectiveRole: UserRole
     if (hasResidente) effectiveRole = 'residente'
+    else if (hasFacturacion) effectiveRole = 'facturacion'
     else if (hasAuxiliar) effectiveRole = 'auxiliar'
     else if (hasPatologo) effectiveRole = 'patologo'
     else effectiveRole = role
+
+    // Forzar rol de facturación si se detectó en la colección, independientemente del token
+    if (hasFacturacion) {
+      effectiveRole = 'facturacion'
+      console.log('🔧 Forzando rol a facturacion porque se detectó en la colección')
+    }
+
+    console.log('✅ Rol efectivo detectado:', effectiveRole)
 
     if (effectiveRole === 'patologo') {
       const pb = patologoData as BackendPatologo | undefined
@@ -231,6 +253,21 @@ const loadUserProfile = async () => {
         role: 'auxiliar',
         roleSpecificData: {
           observaciones: ab?.observaciones || ''
+        }
+      } as any
+      return
+    }
+
+    if (effectiveRole === 'facturacion') {
+      const fb = facturacionData as any
+      userProfile.value = {
+        ...base,
+        document: '',
+        documentType: 'CC',
+        phone: '',
+        role: 'facturacion',
+        roleSpecificData: {
+          observaciones: fb?.observaciones || ''
         }
       } as any
       return
@@ -317,6 +354,19 @@ const handleProfileUpdate = async (formData: ProfileEditPayload) => {
           observaciones: formData.observaciones
         })
         userProfile.value.email = formData.AuxiliarEmail
+        userProfile.value.roleSpecificData = {
+          ...userProfile.value.roleSpecificData,
+          observaciones: formData.observaciones || ''
+        }
+      } else if (formData.role === 'facturacion') {
+        const f = await profileApiService.getByRoleAndEmail('facturacion', userProfile.value.email) as BackendFacturacion | undefined
+        const code = f?.facturacionCode || ''
+        await profileApiService.updateByRole('facturacion', code, {
+          facturacionName: formData.facturacionName,
+          FacturacionEmail: formData.FacturacionEmail,
+          observaciones: formData.observaciones
+        })
+        userProfile.value.email = formData.FacturacionEmail
         userProfile.value.roleSpecificData = {
           ...userProfile.value.roleSpecificData,
           observaciones: formData.observaciones || ''

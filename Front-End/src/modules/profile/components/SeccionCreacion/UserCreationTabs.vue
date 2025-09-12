@@ -29,6 +29,11 @@
       v-model="formAuxiliar"
       @usuario-creado="forwardCreated('auxiliar', $event)"
     />
+    <FormFacturacion
+      v-else-if="selectedType === 'facturacion'"
+      v-model="formFacturacion"
+      @usuario-creado="forwardCreated('facturacion', $event)"
+    />
     <FormPatologo
       v-else-if="selectedType === 'patologo'"
       v-model="formPatologo"
@@ -56,12 +61,13 @@
 import { ref } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
 import FormAuxiliar from './FormAuxiliar.vue'
+import FormFacturacion from './FormFacturacion.vue'
 import FormPatologo from './FormPatologo.vue'
 import FormResident from './FormResident.vue'
 import FormEntidad from './FormEntidad.vue'
 import FormPruebas from './FormPruebas.vue'
 
-type UserType = 'auxiliar' | 'patologo' | 'residente' | 'entidad' | 'pruebas'
+type UserType = 'auxiliar' | 'facturacion' | 'patologo' | 'residente' | 'entidad' | 'pruebas'
 
 const emit = defineEmits<{
   (e: 'usuario-creado', payload: { tipo: UserType; data: any }): void
@@ -70,6 +76,7 @@ const emit = defineEmits<{
 
 const tabs = [
   { value: 'auxiliar', label: 'Auxiliar administrativo' },
+  { value: 'facturacion', label: 'Facturación' },
   { value: 'patologo', label: 'Patólogo' },
   { value: 'residente', label: 'Residente' },
   { value: 'entidad', label: 'Entidad' },
@@ -80,6 +87,7 @@ const selectedType = ref<UserType>('auxiliar')
 
 // Formularios locales - iniciados vacíos
 const formAuxiliar = ref({ auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', password: '', observaciones: '', isActive: true })
+const formFacturacion = ref({ facturacionName: '', facturacionCode: '', FacturacionEmail: '', password: '', observaciones: '', isActive: true })
 const formPatologo = ref({ patologoName: '', InicialesPatologo: '', patologoCode: '', PatologoEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true, firma: '' })
 const formResident = ref({ residenteName: '', InicialesResidente: '', residenteCode: '', ResidenteEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true })
 const formEntidad = ref({ EntidadName: '', EntidadCode: '', observaciones: '', isActive: true })
@@ -97,6 +105,7 @@ const forwardCreated = (tipo: UserType, data: any) => {
   emit('usuario-creado', { tipo, data })
   // limpiar formulario del tipo actual
   if (tipo === 'auxiliar') formAuxiliar.value = { auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', password: '', observaciones: '', isActive: true }
+  if (tipo === 'facturacion') formFacturacion.value = { facturacionName: '', facturacionCode: '', FacturacionEmail: '', password: '', observaciones: '', isActive: true }
   if (tipo === 'patologo') formPatologo.value = { patologoName: '', InicialesPatologo: '', patologoCode: '', PatologoEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true, firma: '' }
   if (tipo === 'residente') formResident.value = { residenteName: '', InicialesResidente: '', residenteCode: '', ResidenteEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true }
   if (tipo === 'entidad') formEntidad.value = { EntidadName: '', EntidadCode: '', observaciones: '', isActive: true }

@@ -98,6 +98,30 @@ class UserManagementService:
         """
         return await self._create_user_with_role(name, email, password, "administrador", is_active)
     
+    async def create_user_for_facturacion(
+        self,
+        name: str,
+        email: str,
+        password: str,
+        is_active: bool = True
+    ) -> Optional[dict]:
+        """
+        Crear un usuario en la colección usuarios para facturación
+        
+        Args:
+            name: Nombre completo del usuario de facturación
+            email: Email del usuario de facturación
+            password: Contraseña en texto plano
+            is_active: Estado activo del usuario
+            
+        Returns:
+            dict: Documento del usuario creado o None si falla
+        """
+        print(f"🔧 Creando usuario de facturación: {name} ({email}) con rol 'facturacion'")
+        result = await self._create_user_with_role(name, email, password, "facturacion", is_active)
+        print(f"✅ Usuario de facturación creado: {result}")
+        return result
+    
     async def _create_user_with_role(
         self,
         name: str,
@@ -138,6 +162,8 @@ class UserManagementService:
                 "fecha_creacion": datetime.now(timezone.utc),
                 "fecha_actualizacion": datetime.now(timezone.utc)
             }
+            
+            print(f"🔧 Documento de usuario a crear: {user_document}")
             
             # Insertar en la base de datos
             result = await self.usuarios_collection.insert_one(user_document)
@@ -291,4 +317,53 @@ class UserManagementService:
             return result.modified_count > 0 or result.matched_count > 0
         except Exception as e:
             print(f"Error updating user for auxiliary: {e}")
+            raise e
+
+    async def update_user_for_facturacion(
+        self,
+        old_email: str,
+        *,
+        name: Optional[str] = None,
+        new_email: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        new_password: Optional[str] = None
+    ) -> bool:
+        """
+        Actualiza el documento del usuario asociado a facturación en la colección usuarios.
+
+        Lógica paralela a auxiliares: busca por old_email (o new_email si cambió),
+        valida colisiones de email, actualiza nombre, email, is_active y password_hash.
+        """
+        try:
+            user = await self.usuarios_collection.find_one({"email": old_email})
+            if not user and new_email:
+                user = await self.usuarios_collection.find_one({"email": new_email})
+            if not user:
+                user = await self.usuarios_collection.find_one({
+                    "email": {"$regex": f"^{(new_email or old_email)}$", "$options": "i"}
+                })
+            if not user:
+                return False
+
+            update_doc = {"$set": {"fecha_actualizacion": datetime.utcnow()}}
+
+            if name is not None:
+                update_doc["$set"]["nombre"] = name
+
+            if is_active is not None:
+                update_doc["$set"]["is_active"] = is_active
+
+            if new_email is not None and new_email != old_email:
+                exists = await self.usuarios_collection.find_one({"email": new_email})
+                if exists and str(exists.get("_id")) != str(user.get("_id")):
+                    raise ValueError("El nuevo email ya está registrado en usuarios")
+                update_doc["$set"]["email"] = new_email
+
+            if new_password:
+                update_doc["$set"]["password_hash"] = get_password_hash(new_password)
+
+            result = await self.usuarios_collection.update_one({"_id": user["_id"]}, update_doc)
+            return result.modified_count > 0 or result.matched_count > 0
+        except Exception as e:
+            print(f"Error updating user for facturacion: {e}")
             raise e

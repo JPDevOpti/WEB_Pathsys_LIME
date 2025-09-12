@@ -43,6 +43,9 @@
           <FormEdicionAuxiliar v-if="selectedUser.tipo === 'auxiliar'" :usuario="selectedUser"
             :usuario-actualizado="userUpdated" :mensaje-exito="updateSuccessMessage" @usuario-actualizado="onUpdateUser" />
 
+          <FormEdicionFacturacion v-else-if="selectedUser.tipo === 'facturacion'" v-model="selectedUser"
+            @usuario-actualizado="onUpdateUser" />
+
           <FormEdicionPatologo v-else-if="selectedUser.tipo === 'patologo'" :usuario="selectedUser"
             :usuario-actualizado="userUpdated" :mensaje-exito="updateSuccessMessage" @usuario-actualizado="onUpdateUser" />
 
@@ -73,6 +76,7 @@ import { ComponentCard } from '@/shared/components/common'
 import BuscadorUsuarios from './BuscadorUsuarios.vue'
 import ResultadosBusqueda from './ResultadosBusqueda.vue'
 import FormEdicionAuxiliar from './FormEdicionAuxiliar.vue'
+import FormEdicionFacturacion from './FormEdicionFacturacion.vue'
 import FormEdicionPatologo from './FormEdicionPatologo.vue'
 import FormEdicionResident from './FormEdicionResident.vue'
 import FormEdicionEntidad from './FormEdicionEntidad.vue'
@@ -80,10 +84,11 @@ import FormEdicionPruebas from './FormEdicionPruebas.vue'
 import { testSearchService } from '../../services/testSearchService'
 import { entitySearchService } from '../../services/entitySearchService'
 
-type UserType = 'auxiliar' | 'patologo' | 'residente' | 'entidad' | 'pruebas'
+type UserType = 'auxiliar' | 'facturacion' | 'patologo' | 'residente' | 'entidad' | 'pruebas'
 
 const tabs = [
   { value: 'auxiliar', label: 'Auxiliar administrativo' },
+  { value: 'facturacion', label: 'Facturación' },
   { value: 'patologo', label: 'Patólogo' },
   { value: 'residente', label: 'Residente' },
   { value: 'entidad', label: 'Entidad' },
@@ -132,6 +137,8 @@ const onSearch = async (params: { query: string; tipo: string; includeInactive: 
       searchResults = await entitySearchService.searchPathologists(params.query, params.includeInactive)
     } else if (params.tipo === 'auxiliar') {
       searchResults = await entitySearchService.searchAuxiliaries(params.query, params.includeInactive)
+    } else if (params.tipo === 'facturacion') {
+      searchResults = await entitySearchService.searchFacturacion(params.query, params.includeInactive)
     } else {
       searchResults = []
     }
@@ -142,6 +149,7 @@ const onSearch = async (params: { query: string; tipo: string; includeInactive: 
     if (searchResults.length === 0) {
       const typeLabels = {
         auxiliar: 'auxiliares',
+        facturacion: 'usuarios de facturación',
         patologo: 'patólogos', 
         residente: 'residentes',
         entidad: 'entidades',
@@ -261,6 +269,23 @@ const onSelectUserToEdit = (item: any) => {
       fecha_creacion: item.fecha_creacion,
       fecha_actualizacion: item.fecha_actualizacion
     }
+  } else if (item.tipo === 'facturacion') {
+    // Mapeo específico para usuarios de facturación con estructura del formulario de edición
+    selectedUser.value = {
+      id: item.id,
+      nombre: item.nombre,
+      tipo: item.tipo,
+      codigo: item.codigo,
+      activo: item.activo,
+      email: item.email,
+      facturacionName: item.facturacionName || item.nombre,
+      facturacionCode: item.facturacionCode || item.codigo,
+      FacturacionEmail: item.FacturacionEmail || item.email,
+      observaciones: item.observaciones || '',
+      isActive: item.isActive !== undefined ? item.isActive : item.activo,
+      fecha_creacion: item.fecha_creacion,
+      fecha_actualizacion: item.fecha_actualizacion
+    }
   } else {
     // Mapeo genérico para otros tipos (mantener estructura existente)
     selectedUser.value = {
@@ -299,7 +324,7 @@ const onSelectUserToEdit = (item: any) => {
 const onUpdateUser = (_data: any) => {
   const tipo = selectedUser.value?.tipo
   // Para formularios con notificación detallada interna, no duplicar notificaciones ni cerrar el formulario
-  if (tipo === 'pruebas' || tipo === 'entidad' || tipo === 'residente' || tipo === 'auxiliar') {
+  if (tipo === 'pruebas' || tipo === 'entidad' || tipo === 'residente' || tipo === 'auxiliar' || tipo === 'facturacion') {
     // Mantener el formulario visible y no mostrar banner externo
     return
   }

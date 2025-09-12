@@ -17,6 +17,7 @@ defineProps<{ tipoSeleccionado: string }>()
 
 const options = [
   { value: 'auxiliar', label: 'Auxiliar administrativo' },
+  { value: 'facturacion', label: 'Facturación' },
   { value: 'patologo', label: 'Patólogo' },
   { value: 'entidad', label: 'Entidad' },
   { value: 'pruebas', label: 'Pruebas' }

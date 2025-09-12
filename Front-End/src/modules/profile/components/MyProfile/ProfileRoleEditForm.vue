@@ -85,6 +85,29 @@
       </div>
     </div>
 
+    <div v-else-if="user.role === 'facturacion'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <h4 class="text-lg font-medium text-gray-900 mb-1">Editar Usuario de Facturación</h4>
+        <p class="text-sm text-gray-500">Modifica los datos del usuario de facturación</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
+        <input v-model="facturacionForm.facturacionName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+        <input v-model="facturacionForm.FacturacionEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+        <textarea v-model="facturacionForm.observaciones" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña (opcional)</label>
+        <input v-model="facturacionForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+    </div>
+
     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="md:col-span-2">
         <h4 class="text-lg font-medium text-gray-900 mb-1">Editar Perfil</h4>
@@ -158,9 +181,16 @@ const auxiliarForm = reactive({
   observaciones: props.user.roleSpecificData?.observaciones || ''
 })
 
-const originalState = JSON.stringify({ adminForm, patologoForm, residenteForm, auxiliarForm })
+const facturacionForm = reactive({
+  facturacionName: `${props.user.firstName} ${props.user.lastName}`.trim(),
+  FacturacionEmail: props.user.email,
+  password: '',
+  observaciones: props.user.roleSpecificData?.observaciones || ''
+})
 
-const hasChanges = computed(() => JSON.stringify({ adminForm, patologoForm, residenteForm, auxiliarForm }) !== originalState)
+const originalState = JSON.stringify({ adminForm, patologoForm, residenteForm, auxiliarForm, facturacionForm })
+
+const hasChanges = computed(() => JSON.stringify({ adminForm, patologoForm, residenteForm, auxiliarForm, facturacionForm }) !== originalState)
 
 const isLoading = computed(() => props.isLoading)
 
@@ -172,6 +202,8 @@ const onSubmit = () => {
     payload = { role: 'residente', ...residenteForm }
   } else if (props.user.role === 'auxiliar') {
     payload = { role: 'auxiliar', ...auxiliarForm, auxiliarCode: '' }
+  } else if (props.user.role === 'facturacion') {
+    payload = { role: 'facturacion', ...facturacionForm, facturacionCode: '' }
   } else {
     payload = { role: 'admin', ...adminForm }
   }

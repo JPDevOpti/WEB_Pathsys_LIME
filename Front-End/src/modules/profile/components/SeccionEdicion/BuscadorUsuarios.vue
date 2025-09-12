@@ -31,7 +31,7 @@ import { FormInput } from '@/shared/components/forms'
 import { SearchButton, ClearButton } from '@/shared/components/buttons'
 
 // Tipos estrictos para evitar valores arbitrarios y errores de conexión con el backend
-type TipoBusqueda = 'auxiliar' | 'patologo' | 'residente' | 'entidad' | 'pruebas'
+type TipoBusqueda = 'auxiliar' | 'facturacion' | 'patologo' | 'residente' | 'entidad' | 'pruebas'
 
 interface BuscarEventPayload {
   query: string

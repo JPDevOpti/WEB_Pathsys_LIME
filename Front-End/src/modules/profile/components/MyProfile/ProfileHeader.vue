@@ -84,6 +84,7 @@ const normalizeRole = (role: string): UserRole => {
   if ([ 'patologo', 'pathologist', 'patólogo' ].includes(r)) return 'patologo'
   if ([ 'residente', 'resident' ].includes(r)) return 'residente'
   if ([ 'auxiliar', 'assistant', 'auxiliary' ].includes(r)) return 'auxiliar'
+  if ([ 'facturacion', 'facturación', 'billing' ].includes(r)) return 'facturacion'
   return 'auxiliar'
 }
 import { computed } from 'vue'
@@ -94,7 +95,8 @@ const getRoleLabel = (role: UserRole): string => {
     admin: 'Administrador',
     patologo: 'Patólogo',
     residente: 'Residente',
-    auxiliar: 'Auxiliar'
+    auxiliar: 'Auxiliar',
+    facturacion: 'Usuario de Facturación'
   }
   return roleLabels[role]
 }
@@ -104,7 +106,8 @@ const getRoleStyles = (role: UserRole): string => {
     admin: 'bg-purple-100 text-purple-800',
     patologo: 'bg-blue-100 text-blue-800',
     residente: 'bg-green-100 text-green-800',
-    auxiliar: 'bg-gray-100 text-gray-800'
+    auxiliar: 'bg-gray-100 text-gray-800',
+    facturacion: 'bg-orange-100 text-orange-800'
   }
   return roleStyles[role]
 }
@@ -119,14 +122,15 @@ const formatLastLogin = (date: Date): string => {
   }).format(new Date(date))
 }
 
-import { SettingsIcon, DoctorIcon, ResidenteIcon, AuxiliarIcon, MailBox } from '@/assets/icons'
+import { SettingsIcon, DoctorIcon, ResidenteIcon, AuxiliarIcon } from '@/assets/icons'
 
 const getRoleIcon = (role: UserRole) => {
   const roleIconMap: Record<UserRole, any> = {
     admin: SettingsIcon,
     patologo: DoctorIcon,
     residente: ResidenteIcon,
-    auxiliar: AuxiliarIcon
+    auxiliar: AuxiliarIcon,
+    facturacion: SettingsIcon // Usar SettingsIcon para facturación
   }
   return roleIconMap[role] || UserCircleIcon
 }

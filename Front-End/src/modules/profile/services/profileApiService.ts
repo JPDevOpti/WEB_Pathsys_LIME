@@ -37,10 +37,20 @@ export interface BackendAuxiliar {
   fecha_actualizacion?: string
 }
 
+export interface BackendFacturacion {
+  facturacionName: string
+  facturacionCode: string
+  FacturacionEmail: string
+  observaciones?: string
+  isActive: boolean
+  fecha_creacion?: string
+  fecha_actualizacion?: string
+}
+
 const pickFirstFromUnknown = (resp: any) => {
   if (Array.isArray(resp)) return resp[0]
   if (!resp || typeof resp !== 'object') return undefined
-  const candidates = ['patologos', 'residentes', 'auxiliares', 'results', 'items', 'data', 'resultados']
+  const candidates = ['patologos', 'residentes', 'auxiliares', 'facturacion', 'results', 'items', 'data', 'resultados']
   for (const key of candidates) {
     if (Array.isArray(resp[key]) && resp[key].length > 0) return resp[key][0]
   }
@@ -115,6 +125,24 @@ export const profileApiService = {
         } as BackendAuxiliar
         return mapped
       }
+      case 'facturacion': {
+        // Backend espera facturacion_email (snake_case)
+        const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.FACTURACION}/search`, {
+          params: { facturacion_email: email, limit: 5 }
+        })
+        const raw = pickFirstFromUnknown(data)
+        if (!raw) return undefined
+        const mapped = {
+          facturacionName: raw.facturacion_name || raw.facturacionName,
+          facturacionCode: raw.facturacion_code || raw.facturacionCode,
+          FacturacionEmail: raw.facturacion_email || raw.FacturacionEmail,
+          observaciones: raw.observaciones,
+          isActive: typeof raw.is_active === 'boolean' ? raw.is_active : raw.isActive,
+          fecha_creacion: raw.fecha_creacion,
+          fecha_actualizacion: raw.fecha_actualizacion
+        } as BackendFacturacion
+        return mapped
+      }
       case 'admin':
       default:
         return undefined
@@ -164,6 +192,16 @@ export const profileApiService = {
           observaciones: payload.observaciones
         }
         return apiClient.put(`${API_CONFIG.ENDPOINTS.AUXILIARIES}/${code}`, auxPayload)
+      case 'facturacion':
+        const factPayload = {
+          facturacion_name: payload.facturacionName || payload.facturacion_name,
+          facturacion_email: payload.FacturacionEmail || payload.facturacion_email,
+          observaciones: payload.observaciones,
+          ...(payload.is_active !== undefined ? { is_active: payload.is_active } : {}),
+          ...(payload.isActive !== undefined ? { is_active: payload.isActive } : {}),
+          ...(payload.password ? { password: payload.password } : {})
+        }
+        return apiClient.put(`${API_CONFIG.ENDPOINTS.FACTURACION}/${code}`, factPayload)
       default:
         return null
     }

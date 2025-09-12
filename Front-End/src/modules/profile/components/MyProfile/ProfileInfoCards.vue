@@ -92,6 +92,16 @@
             :value="user.roleSpecificData.observaciones!"
           />
         </template>
+
+        <!-- Facturación -->
+        <template v-if="user.role === 'facturacion'">
+          <InfoCard
+            v-if="user.roleSpecificData && user.roleSpecificData.observaciones"
+            icon="document"
+            label="Observaciones"
+            :value="user.roleSpecificData.observaciones!"
+          />
+        </template>
       </div>
     </div>
   </ComponentCard>
@@ -114,7 +124,8 @@ const getRoleLabel = (role: UserRole): string => {
     admin: 'Administrador',
     patologo: 'Patólogo',
     residente: 'Residente',
-    auxiliar: 'Auxiliar'
+    auxiliar: 'Auxiliar',
+    facturacion: 'Usuario de Facturación'
   }
   return roleLabels[role]
 }

@@ -23,7 +23,8 @@ export const API_CONFIG = {
     PATHOLOGISTS: '/patologos',
     PATIENTS: '/pacientes',
     RESIDENTS: '/residentes',  
-    AUXILIARIES: '/auxiliares', 
+    AUXILIARIES: '/auxiliares',
+    FACTURACION: '/facturacion', 
     AUTH: {
       LOGIN: '/auth/login',
       LOGOUT: '/auth/logout',

@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'patologo' | 'residente' | 'auxiliar'
+export type UserRole = 'admin' | 'patologo' | 'residente' | 'auxiliar' | 'facturacion'
 
 export type DocumentType = 'CC' | 'CE' | 'PP'
 
@@ -82,6 +82,14 @@ export type ProfileEditPayload =
       auxiliarName: string
       auxiliarCode: string
       AuxiliarEmail: string
+      password?: string
+      observaciones?: string
+    }
+  | {
+      role: 'facturacion'
+      facturacionName: string
+      facturacionCode: string
+      FacturacionEmail: string
       password?: string
       observaciones?: string
     }

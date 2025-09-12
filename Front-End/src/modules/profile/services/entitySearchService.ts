@@ -200,6 +200,54 @@ class EntitySearchService {
     return []
   }
 
+  async searchFacturacion(query: string, includeInactive: boolean = false): Promise<any[]> {
+    if (!query?.trim()) return []
+    
+    let endpoint: string
+    
+    if (includeInactive) {
+      endpoint = '/facturacion/all-including-inactive'
+    } else {
+      endpoint = '/facturacion/active'
+    }
+    
+    // Construir parámetros de búsqueda
+    const params: any = { 
+      query: query.trim(),
+      limit: 50 
+    }
+
+    console.log('🔍 Parámetros de búsqueda facturación:', params, 'Endpoint:', endpoint)
+
+    const response = await apiClient.get(endpoint, { params })
+    if (response && response.data?.facturacion && Array.isArray(response.data.facturacion)) {
+      return response.data.facturacion.map((fact: any) => {
+        // Mapeo correcto según documentación del backend
+        const facturacionName = fact.facturacion_name || fact.facturacionName || fact.name || fact.nombre || ''
+        const facturacionCode = fact.facturacion_code || fact.facturacionCode || fact.code || fact.codigo || ''
+        const email = fact.facturacion_email || fact.FacturacionEmail || fact.email || ''
+        const activo = fact.is_active !== undefined ? fact.is_active : (fact.isActive !== undefined ? fact.isActive : fact.activo)
+        return {
+          id: fact.id || fact._id || facturacionCode,
+          nombre: facturacionName,
+          codigo: facturacionCode,
+          tipo: 'facturacion',
+          activo,
+          email,
+          fecha_creacion: fact.fecha_creacion,
+          fecha_actualizacion: fact.fecha_actualizacion,
+          // Campos específicos manteniendo nombres esperados por formularios
+          facturacionName,
+          facturacionCode,
+          FacturacionEmail: email,
+          observaciones: fact.observaciones || fact.observations || '',
+          isActive: activo
+        }
+      })
+    }
+    return []
+  }
+
   async searchTests(query: string, includeInactive: boolean = false): Promise<any[]> {
     if (!query?.trim()) return []
     
