@@ -48,9 +48,9 @@ import Card from '@/shared/components/layout/Card.vue'
 import { BaseButton } from '@/shared/components'
 import LoadingSpinner from '@/shared/components/feedback/LoadingSpinner.vue'
 
-import FiltersBar from '../components/FiltersBar.vue'
-import CasesTable from '../components/CasesTable.vue'
-import CaseDetailsModal from '../components/CaseDetailsModal.vue'
+import FiltersBar from '../components/CurrentCases/FiltersBar.vue'
+import CasesTable from '../components/CurrentCases/CasesTable.vue'
+import CaseDetailsModal from '../components/CurrentCases/CaseDetailsModal.vue'
 
 import { useCaseList } from '../composables/useCaseList'
 import { useExcelExport } from '../composables/useExcelExport'

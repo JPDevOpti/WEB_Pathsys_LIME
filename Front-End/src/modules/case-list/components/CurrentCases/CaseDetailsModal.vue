@@ -185,7 +185,8 @@
           </div>
     
     <template #footer>
-      <div class="flex justify-end">
+      <div class="flex justify-end gap-2">
+        <PrintPdfButton text="Imprimir PDF" />
         <CloseButton
           @click="$emit('close')"
           variant="danger-outline"
@@ -216,7 +217,7 @@ import { computed, ref } from 'vue'
 import type { Case } from '../types/case.types'
 import { DocsIcon } from '@/assets/icons'
 import { NotesDialog } from '@/shared/components/feedback'
-import { CloseButton } from '@/shared/components/buttons'
+import { CloseButton, PrintPdfButton } from '@/shared/components/buttons'
 import { Modal } from '@/shared/components/layout'
 import { casesApiService } from '@/modules/cases/services/casesApi.service'
 import { useNotifications } from '@/modules/cases/composables/useNotifications'

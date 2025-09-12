@@ -8,6 +8,7 @@ import { caseListRoutes } from '@/modules/case-list/routes/caseListRoutes'
 import { resultsRoutes } from '@/modules/results/routes/resultsRoutes'
 import { reportsRoutes } from '@/modules/reports/routes/reportsRoutes'
 import { supportRoutes } from '@/modules/support/routes/supportRoutes'
+import { pdfsRoutes } from '@/modules/pdfs/routes/pdfsRoutes'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -25,6 +26,7 @@ const router = createRouter({
     ...resultsRoutes,
     ...reportsRoutes,
     ...supportRoutes,
+    ...pdfsRoutes,
   ]
 })
 

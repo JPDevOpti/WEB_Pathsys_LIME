@@ -293,7 +293,7 @@ import { ComponentCard, FormInputField, BaseButton, SearchButton } from '@/share
 import { TrashIcon } from '@/assets/icons'
 import ConfirmDialog from '@/shared/components/feedback/ConfirmDialog.vue'
 import CaseApprovalDetailsModal from './CaseApprovalDetailsModal.vue'
-import CaseCreatedToast from './CaseCreatedToast.vue'
+import CaseCreatedToast from '../CurrentCases/CaseCreatedToast.vue'
 import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
 import type { CasoAprobacionResponse, CasoAprobacionSearch } from '@/modules/results/services/casoAprobacion.service'
 import PathologistList from '@/shared/components/List/PathologistList.vue'

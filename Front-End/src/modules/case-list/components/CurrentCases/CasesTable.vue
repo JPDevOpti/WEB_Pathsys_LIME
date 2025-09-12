@@ -34,6 +34,7 @@
           
           <button
             @click="handleBatchMarkDelivered"
+            :disabled="isPatologo"
             class="inline-flex items-center gap-2 px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -449,7 +450,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Case } from '../types/case.types'
+import type { Case } from '../../types/case.types'
 import { InfoCircleIcon, SettingsIcon, DocsIcon } from '@/assets/icons'
 import { useRouter } from 'vue-router'
 import { ref } from 'vue'
@@ -514,7 +515,6 @@ function clearSelection() {
 // Computed para verificar si un caso está seleccionado
 const isCaseSelected = (caseId: string) => {
   if (!caseId || caseId.trim() === '') {
-    console.error('ERROR: Checking selection for empty case ID!')
     return false
   }
   const isSelected = props.selectedIds.includes(caseId)
@@ -522,12 +522,7 @@ const isCaseSelected = (caseId: string) => {
 }
 
 // Funciones de descarga (temporalmente deshabilitadas)
-const exportCasesToExcel = async (cases: Case[], type: string) => {
-  console.log('Función de exportación temporalmente deshabilitada')
-}
-const previewMultipleCases = (cases: Case[]) => {
-  console.log('Función de previsualización temporalmente deshabilitada')
-}
+const exportCasesToExcel = async (_cases: Case[], _type: string) => {}
 
 // Ref para controlar el estado de carga de Excel
 const isDownloadingExcel = ref(false)
@@ -566,6 +561,7 @@ async function handleBatchDownloadExcel() {
 }
 
 function handleBatchMarkDelivered() {
+  if (isPatologo?.value) return
   showMarkDeliveredDrawer.value = true
 }
 

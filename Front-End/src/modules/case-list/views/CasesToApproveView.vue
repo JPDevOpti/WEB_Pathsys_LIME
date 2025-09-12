@@ -14,7 +14,7 @@
 import { ref } from 'vue'
 import { AdminLayout } from '@/shared'
 import { PageBreadcrumb } from '@/shared/components/navigation'
-import CasesToApproveList from '../components/CasesToApproveList.vue'
+import CasesToApproveList from '../components/CasesToApproval/CasesToApproveList.vue'
 
 // ============================================================================
 // ESTADO DEL COMPONENTE
