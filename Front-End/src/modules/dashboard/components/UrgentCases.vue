@@ -556,9 +556,6 @@ function getTestTooltip(tests: string[], code: string, count: number): string {
 }
 
 function statusLabel(caso: CasoUrgente): string {
-  const days = caso.dias_en_sistema
-  if (caso.estado === 'Por entregar') return 'Por entregar'
-  if (days > 6 && caso.estado !== 'Completado') return 'URGENTE'
   return caso.estado
 }
 
@@ -567,8 +564,6 @@ function statusClass(caso: CasoUrgente): string {
   if (caso.estado === 'Por entregar') return 'bg-red-50 text-red-700 font-semibold'
   if (days > 6 && caso.estado !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
   if (caso.estado === 'Por firmar') return 'bg-yellow-50 text-yellow-700'
-  // 'Por entregar' deprecado -> tratar como 'Requiere cambios'
-  if (caso.estado === 'Por entregar') return 'bg-red-50 text-red-700'
   if (caso.estado === 'En proceso') return 'bg-blue-50 text-blue-700'
   if (caso.estado === 'Completado') return 'bg-green-50 text-green-700'
   return ''

@@ -353,8 +353,8 @@ const buscarPatologoUsuario = () => {
 
       if (patologoEncontrado) {
         // Establecer automáticamente el patólogo encontrado
-        selectedPathologist.value = patologoEncontrado.id
-        emit('update:modelValue', patologoEncontrado.id)
+        selectedPathologist.value = patologoEncontrado.patologo_code
+        emit('update:modelValue', patologoEncontrado.patologo_code)
         emit('pathologist-selected', patologoEncontrado)
       }
     }

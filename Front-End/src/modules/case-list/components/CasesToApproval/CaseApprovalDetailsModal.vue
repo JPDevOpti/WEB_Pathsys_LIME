@@ -5,26 +5,27 @@
     size="lg"
     @close="$emit('close')"
   >
-          <!-- Estado de la solicitud -->
+    <div class="space-y-6">
+      <!-- Estado de la solicitud -->
           <div class="bg-gray-50 rounded-xl p-4">
             <div class="flex items-center justify-between">
               <h4 class="text-lg font-medium text-gray-900">Estado de la Solicitud</h4>
               <span 
                 :class="[
                   'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
-                  approvalCase.estado_aprobacion === 'solicitud_hecha' ? 'bg-blue-100 text-blue-800' :
-                  approvalCase.estado_aprobacion === 'pendiente_aprobacion' ? 'bg-yellow-100 text-yellow-800' :
-                  approvalCase.estado_aprobacion === 'aprobado' ? 'bg-green-100 text-green-800' :
+                  approvalCase?.estado_aprobacion === 'solicitud_hecha' ? 'bg-blue-100 text-blue-800' :
+                  approvalCase?.estado_aprobacion === 'pendiente_aprobacion' ? 'bg-yellow-100 text-yellow-800' :
+                  approvalCase?.estado_aprobacion === 'aprobado' ? 'bg-green-100 text-green-800' :
                   'bg-red-100 text-red-800'
                 ]"
               >
-                {{ getStatusLabel(approvalCase.estado_aprobacion) }}
+                {{ getStatusLabel(approvalCase?.estado_aprobacion || '') }}
               </span>
             </div>
             <div class="mt-3">
               <div>
                 <p class="text-sm text-gray-500">Fecha de solicitud</p>
-                <p class="font-medium text-gray-900">{{ formatDate(approvalCase.fecha_creacion) }}</p>
+                <p class="font-medium text-gray-900">{{ formatDate(approvalCase?.fecha_creacion) }}</p>
               </div>
             </div>
           </div>
@@ -281,13 +282,13 @@
             <div>
               <h5 class="text-sm font-medium text-gray-700 mb-2">Motivo de la Solicitud</h5>
               <div class="bg-white border border-orange-200 rounded-lg p-3">
-                <p class="text-gray-900">{{ approvalCase.aprobacion_info?.motivo || 'Sin motivo especificado' }}</p>
+                <p class="text-gray-900">{{ approvalCase?.aprobacion_info?.motivo || 'Sin motivo especificado' }}</p>
               </div>
             </div>
           </div>
 
           <!-- Información de aprobación (si existe) -->
-          <div v-if="approvalCase.aprobacion_info && approvalCase.aprobacion_info.fecha_aprobacion" class="bg-gray-50 rounded-xl p-4">
+          <div v-if="approvalCase?.aprobacion_info?.fecha_aprobacion" class="bg-gray-50 rounded-xl p-4">
             <h4 class="text-lg font-medium text-gray-900 mb-3">Información de Aprobación</h4>
             <div>
               <p class="text-sm text-gray-500">Fecha de aprobación</p>
@@ -296,16 +297,6 @@
           </div>
         </div>
 
-        <!-- Footer con botones -->
-        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl">
-          <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-            <div class="flex justify-center sm:justify-start">
-              <div class="text-sm text-gray-500">
-                <span class="font-medium">Total de pruebas:</span>
-                {{ approvalCase.pruebas_complementarias.reduce((sum, test) => sum + test.cantidad, 0) }}
-              </div>
-            </div>
-    
     <template #footer>
       <div class="flex justify-end">
         <CloseButton

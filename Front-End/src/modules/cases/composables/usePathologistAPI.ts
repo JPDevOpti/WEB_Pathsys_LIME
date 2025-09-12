@@ -103,11 +103,11 @@ export function usePathologistAPI() {
   }
 
   const findSelectedPathologist = (patologoId: string): FormPathologistInfo | undefined => {
-    return pathologists.value.find(p => p.id === patologoId)
+    return pathologists.value.find(p => p.patologo_code === patologoId)
   }
 
   const buildPathologistApiData = (pathologist: FormPathologistInfo) => ({
-    codigo: pathologist.patologo_code || pathologist.codigo || pathologist.id, 
+    codigo: pathologist.patologo_code || pathologist.id, 
     nombre: pathologist.patologo_name || pathologist.nombre
   })
 
