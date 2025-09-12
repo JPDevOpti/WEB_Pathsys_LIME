@@ -212,6 +212,24 @@ const onSelectUserToEdit = (item: any) => {
       fecha_creacion: item.fecha_creacion,
       fecha_actualizacion: item.fecha_actualizacion
     }
+  } else if (item.tipo === 'facturacion') {
+    // Mapeo específico para facturación con estructura del formulario de edición
+    selectedUser.value = {
+      id: item.id,
+      nombre: item.nombre,
+      tipo: item.tipo,
+      codigo: item.codigo,
+      activo: item.activo,
+      email: item.email,
+      // Campos específicos para facturación (estructura del FormEdicionFacturacion)
+      facturacionName: item.facturacionName || item.nombre,
+      facturacionCode: item.facturacionCode || item.codigo,
+      FacturacionEmail: item.FacturacionEmail || item.email,
+      observaciones: item.observaciones || '',
+      isActive: item.isActive !== undefined ? item.isActive : item.activo,
+      fecha_creacion: item.fecha_creacion,
+      fecha_actualizacion: item.fecha_actualizacion
+    }
   } else if (item.tipo === 'residente') {
     // Mapeo específico para residentes con estructura del formulario de edición
     selectedUser.value = {

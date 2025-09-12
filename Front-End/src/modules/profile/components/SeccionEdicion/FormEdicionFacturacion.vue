@@ -39,7 +39,7 @@
       label="Nueva contraseña (opcional)" 
       type="password" 
       placeholder="••••••••" 
-      v-model="localModel.password"
+      v-model="passwordValue"
       :error="formErrors.password"
       autocomplete="new-password" 
     />
@@ -129,8 +129,7 @@ const {
   validateForm,
   update,
   setInitialData,
-  clearMessages,
-  createHasChanges
+  clearMessages
 } = useFacturacionEdition()
 
 // Estado de loading local
@@ -168,9 +167,16 @@ const validationErrors = computed(() => {
 
 // Computed para verificar si se puede enviar
 const canSubmit = computed(() => {
-  // Verificar si hay cambios
-  const hasChanges = createHasChanges(localModel)
-  return hasChanges && !isLoading.value
+  // Siempre habilitado (sin restricción de cambios)
+  return !isLoading.value
+})
+
+// Computed para manejar el campo de contraseña
+const passwordValue = computed({
+  get: () => localModel.password || '',
+  set: (value: string) => {
+    localModel.password = value
+  }
 })
 
 // Watchers

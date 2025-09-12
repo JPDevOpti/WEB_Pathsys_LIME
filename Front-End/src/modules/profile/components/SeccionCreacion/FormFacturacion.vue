@@ -355,24 +355,13 @@ const submit = async () => {
     // Enviar al backend
     const result = await createFacturacion(localModel)
     
-    console.log('🔍 RESULTADO COMPLETO:', result)
-    console.log('🔍 result.success:', result.success)
-    console.log('🔍 result.data:', result.data)
-    console.log('🔍 typeof result.data:', typeof result.data)
-    console.log('🔍 result.data es null?', result.data === null)
-    console.log('🔍 result.data es undefined?', result.data === undefined)
-    
     if (result.success && result.data) {
-      console.log('✅ Entrando a handleFacturacionCreated')
       await handleFacturacionCreated(result.data)
     } else {
-      console.log('❌ NO CUMPLE CONDICIONES - result.success:', result.success, 'result.data:', result.data)
       const errorMessage = state.error || 'Error desconocido al crear el usuario de facturación'
-      console.log('❌ Error message:', errorMessage)
       throw new Error(errorMessage)
     }
   } catch (error: any) {
-    console.log('❌ ERROR CAPTURADO:', error)
     await handleFacturacionCreationError(error)
   } finally {
     isLoading.value = false

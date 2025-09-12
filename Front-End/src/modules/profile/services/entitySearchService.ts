@@ -206,9 +206,9 @@ class EntitySearchService {
     let endpoint: string
     
     if (includeInactive) {
-      endpoint = '/facturacion/all-including-inactive'
+      endpoint = '/facturacion/search/all-including-inactive'
     } else {
-      endpoint = '/facturacion/active'
+      endpoint = '/facturacion/search/active'
     }
     
     // Construir parámetros de búsqueda
@@ -220,8 +220,11 @@ class EntitySearchService {
     console.log('🔍 Parámetros de búsqueda facturación:', params, 'Endpoint:', endpoint)
 
     const response = await apiClient.get(endpoint, { params })
-    if (response && response.data?.facturacion && Array.isArray(response.data.facturacion)) {
-      return response.data.facturacion.map((fact: any) => {
+    console.log('🔍 Respuesta búsqueda facturación:', response)
+    
+    // El backend devuelve la respuesta directamente, no en response.data
+    if (response && response.facturacion && Array.isArray(response.facturacion)) {
+      return response.facturacion.map((fact: any) => {
         // Mapeo correcto según documentación del backend
         const facturacionName = fact.facturacion_name || fact.facturacionName || fact.name || fact.nombre || ''
         const facturacionCode = fact.facturacion_code || fact.facturacionCode || fact.code || fact.codigo || ''

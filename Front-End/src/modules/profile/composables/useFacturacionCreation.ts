@@ -174,18 +174,11 @@ export function useFacturacionCreation() {
 
       // Crear usuario de facturación
       const result = await facturacionCreateService.createFacturacion(facturacionData)
-      
-      console.log('🔍 RESULTADO DEL SERVICIO:', result)
-      console.log('🔍 Tipo del resultado:', typeof result)
-      console.log('🔍 Es null?', result === null)
-      console.log('🔍 Es undefined?', result === undefined)
 
       state.isSuccess = true
       state.successMessage = 'Usuario de facturación creado exitosamente'
 
-      const finalResult = { success: true, data: result }
-      console.log('🔍 RESULTADO FINAL DEL COMPOSABLE:', finalResult)
-      return finalResult
+      return { success: true, data: result }
     } catch (error: any) {
       console.error('Error creating facturacion:', error)
       // No establecer state.error aquí, dejar que el error se propague

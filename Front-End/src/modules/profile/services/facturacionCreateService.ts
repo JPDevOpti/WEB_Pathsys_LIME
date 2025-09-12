@@ -19,14 +19,8 @@ class FacturacionCreateService {
         facturacionData
       )
       
-      console.log('🔍 RESPUESTA COMPLETA DEL BACKEND:', response)
-      console.log('🔍 response.data:', response.data)
-      console.log('🔍 response.status:', response.status)
-      console.log('🔍 Tipo de response.data:', typeof response.data)
-      
       // Si response.data es undefined, el backend está devolviendo el objeto directamente
       if (response.data === undefined) {
-        console.log('🔍 Usando response directamente')
         return response as any
       }
       
