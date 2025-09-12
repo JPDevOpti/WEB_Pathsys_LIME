@@ -94,7 +94,7 @@ import { FormInputField, FormSelect, DateInputField } from '@/shared/components/
 import { SearchButton } from '@/shared/components/buttons'
 import { EntityList, PathologistList, TestList } from '@/shared/components/List'
 import type { Filters } from '../types/case.types'
-import { getDefaultDateRange } from '../utils/dateUtils'
+import { getDefaultDateRange } from '../../utils/dateUtils'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useAuthStore } from '@/stores/auth.store'
 

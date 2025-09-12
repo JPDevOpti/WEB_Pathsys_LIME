@@ -24,6 +24,7 @@ from app.modules.casos.schemas.caso import (
 from app.config.database import get_database
 from app.shared.schemas.common import EstadoCasoEnum
 from app.core.exceptions import ConflictError, NotFoundError, BadRequestError
+from fastapi.responses import StreamingResponse
 
 # Configurar logger
 logger = logging.getLogger(__name__)
@@ -408,6 +409,21 @@ async def upsert_resultado(
 ):
     """Crear o actualizar resultado del caso por código de caso."""
     return await caso_service.agregar_o_actualizar_resultado_por_caso_code(caso_code, resultado, "sistema")
+
+
+@router.get("/caso-code/{caso_code}/pdf")
+@handle_exceptions
+async def generar_pdf_caso(
+    caso_code: str,
+    database: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Generar PDF del caso usando Playwright y plantilla HTML."""
+    from app.modules.casos.services.pdf_service import CasePdfService
+    service = CasePdfService(database)
+    pdf_bytes = await service.generate_case_pdf(caso_code)
+    return StreamingResponse(iter([pdf_bytes]), media_type="application/pdf", headers={
+        "Content-Disposition": f"inline; filename=caso-{caso_code}.pdf"
+    })
 
 
 @router.post("/caso-code/{caso_code}/resultado/firmar", response_model=CasoResponse)

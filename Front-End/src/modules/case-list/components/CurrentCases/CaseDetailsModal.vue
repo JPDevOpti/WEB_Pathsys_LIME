@@ -186,7 +186,7 @@
     
     <template #footer>
       <div class="flex justify-end gap-2">
-        <PrintPdfButton text="Imprimir PDF" />
+                <PrintPdfButton text="Imprimir PDF" :caseCode="props.caseItem?.caseCode || props.caseItem?.id" />
         <CloseButton
           @click="$emit('close')"
           variant="danger-outline"

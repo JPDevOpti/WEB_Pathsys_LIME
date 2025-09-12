@@ -26,6 +26,7 @@ interface Props {
   disabled?: boolean
   loading?: boolean
   variant?: 'primary' | 'secondary' | 'ghost'
+  caseCode?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -45,5 +46,11 @@ const buttonClasses = computed(() => {
 })
 
 const router = useRouter()
-function goToPreview() { router.push({ name: 'pdfs-preview' }) }
+function goToPreview() {
+  if (props.caseCode) {
+    router.push({ name: 'pdfs-preview', params: { caseCode: props.caseCode } })
+  } else {
+    router.push({ name: 'pdfs-preview' })
+  }
+}
 </script>

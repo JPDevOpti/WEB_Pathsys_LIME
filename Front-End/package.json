@@ -10,9 +10,10 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "apexcharts": "^3.44.0",
     "@heroicons/vue": "^2.2.0",
+    "apexcharts": "^3.44.0",
     "axios": "^1.7.9",
+    "pdfjs-dist": "^5.4.149",
     "pinia": "^2.1.0",
     "vue": "^3.4.0",
     "vue-router": "^4.2.0",

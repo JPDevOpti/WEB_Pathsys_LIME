@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Informe de Caso {{ case.caso_code or case.id }}</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; color: #111827; }
+    .header { display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px; }
+    .title { font-size: 18px; font-weight: 700; }
+    .meta { font-size: 12px; color: #374151; }
+    .section { margin: 14px 0; }
+    .section h3 { font-size: 14px; margin: 0 0 6px; color: #1f2937; }
+    .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .small { font-size: 12px; }
+  </style>
+  </head>
+<body>
+  <div class="header">
+    <div class="title">Informe de Caso</div>
+    <div class="meta">Código: {{ case.caso_code or case.id }}</div>
+  </div>
+
+  <div class="section card">
+    <h3>Paciente</h3>
+    <div class="grid-2 small">
+      <div><strong>Nombre:</strong> {{ case.paciente.nombre if case.paciente else '' }}</div>
+      <div><strong>Documento:</strong> {{ case.paciente.paciente_code if case.paciente else '' }}</div>
+      <div><strong>Edad:</strong> {{ case.paciente.edad if case.paciente else '' }}</div>
+      <div><strong>Sexo:</strong> {{ case.paciente.sexo if case.paciente else '' }}</div>
+      <div><strong>Entidad:</strong> {{ case.paciente.entidad_info.nombre if case.paciente and case.paciente.entidad_info else '' }}</div>
+      <div><strong>Tipo atención:</strong> {{ case.paciente.tipo_atencion if case.paciente else '' }}</div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <h3>Datos del Caso</h3>
+    <div class="grid-2 small">
+      <div><strong>Estado:</strong> {{ case.estado }}</div>
+      <div><strong>Servicio:</strong> {{ case.servicio or '' }}</div>
+      <div><strong>Fecha creación:</strong> {{ case.fecha_creacion or '' }}</div>
+      <div><strong>Fecha firma:</strong> {{ case.fecha_firma or '' }}</div>
+    </div>
+  </div>
+
+  {% if case.resultado %}
+  <div class="section card">
+    <h3>Resultado</h3>
+    <div class="small"><strong>Método:</strong> {{ case.resultado.metodo or '' }}</div>
+    <div class="small"><strong>Diagnóstico:</strong> {{ case.resultado.diagnostico or '' }}</div>
+    <div class="small"><strong>Observaciones:</strong> {{ case.resultado.observaciones or '' }}</div>
+  </div>
+  {% endif %}
+
+  {% if case.muestras %}
+  <div class="section card">
+    <h3>Muestras</h3>
+    <div class="small">
+      {% for m in case.muestras %}
+        <div style="margin-bottom:6px;">
+          <div><strong>Región:</strong> {{ m.region_cuerpo or '' }}</div>
+          {% if m.pruebas %}
+            <div><strong>Pruebas:</strong>
+              {% for p in m.pruebas %}
+                {{ p.id }} - {{ p.nombre or p.id }}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if case.patologo_asignado %}
+  <div class="section card">
+    <h3>Patólogo Asignado</h3>
+    <div class="small">
+      <div><strong>Nombre:</strong> {{ case.patologo_asignado.nombre }}</div>
+      <div><strong>Código:</strong> {{ case.patologo_asignado.codigo }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+</body>
+</html>
+
+
