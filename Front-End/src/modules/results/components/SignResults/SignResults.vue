@@ -58,7 +58,7 @@
             <div class="flex-1">
               <FormInputField id="codigo-caso" :model-value="codigoCaso" @update:model-value="handleCodigoChange"
                 type="text" placeholder="Ejemplo: 2025-00001" maxlength="10" autocomplete="off" :disabled="isLoadingSearch"
-                @keydown.enter.prevent="buscarCaso" @keydown="keydownHandler" class="flex-1" />
+                @keydown.enter.prevent="buscarCaso" @keydown="keydownHandler" @paste="handlePaste" class="flex-1" />
 
             </div>
 
@@ -450,6 +450,11 @@ const keydownHandler = (event: KeyboardEvent) => {
     return true
   }
   
+  // Permitir combinaciones de teclas para copiar y pegar
+  if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v' || event.key === 'a')) {
+    return true
+  }
+  
   // Permitir números y guión
   if (/[0-9-]/.test(event.key)) {
     return true
@@ -458,6 +463,45 @@ const keydownHandler = (event: KeyboardEvent) => {
   // Bloquear todas las demás teclas
   event.preventDefault()
   return false
+}
+
+/**
+ * Maneja el evento de pegar desde el portapapeles
+ */
+const handlePaste = (event: ClipboardEvent) => {
+  event.preventDefault()
+  const pastedText = event.clipboardData?.getData('text') || ''
+  
+  // Filtrar solo números y guiones del texto pegado
+  const filteredText = pastedText.replace(/[^\d-]/g, '')
+  
+  if (filteredText) {
+    // Aplicar el mismo formato que handleCodigoChange
+    let formattedText = filteredText.slice(0, 10)
+    
+    // Insertar guión después de 4 dígitos si no existe
+    if (formattedText.length >= 4 && !formattedText.includes('-')) {
+      formattedText = formattedText.slice(0, 4) + '-' + formattedText.slice(4)
+    }
+    
+    // Evitar múltiples guiones
+    const parts = formattedText.split('-')
+    if (parts.length > 2) {
+      formattedText = parts[0] + '-' + parts.slice(1).join('')
+    }
+    
+    // Asegurar guión en posición 4
+    if (formattedText.includes('-') && formattedText.indexOf('-') !== 4) {
+      const digits = formattedText.replace(/-/g, '')
+      if (digits.length >= 4) {
+        formattedText = digits.slice(0, 4) + '-' + digits.slice(4, 9)
+      } else {
+        formattedText = digits
+      }
+    }
+    
+    codigoCaso.value = formattedText
+  }
 }
 
 const buscarCaso = async () => {

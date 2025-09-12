@@ -348,10 +348,8 @@ const prioridadOptions = [
 const estadoOptions = [
   { value: 'En proceso', label: 'En proceso' },
   { value: 'Por firmar', label: 'Por firmar' },
-  // 'Por entregar' deprecado -> usar 'Requiere cambios'
-  { value: 'Requiere cambios', label: 'Requiere cambios' },
-  { value: 'Completado', label: 'Completado' },
-  { value: 'cancelado', label: 'Cancelado' }
+  { value: 'Por entregar', label: 'Por entregar' },
+  { value: 'Completado', label: 'Completado' }
 ]
 
 // ============================================================================
@@ -929,6 +927,7 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
     
     // Guardar patólogo seleccionado (si viene en el caso) - mapeo consistente
     const patologoAsignado = (caseData as any).patologo_asignado
+    
     if (patologoAsignado?.codigo) {
       // Si el codigo parece ser un ObjectId (24 hex), necesitamos buscar el patologo_code real
       const codigo = patologoAsignado.codigo
@@ -937,33 +936,73 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
         try {
           const pathologist = await pathologistApi.getPathologist(codigo)
           if (pathologist) {
-            selectedPathologist.value = {
-              codigo: pathologist.patologo_code || pathologist.id || codigo,
+            const patologoCode = pathologist.patologo_code || codigo
+            const patologoData = {
+              codigo: patologoCode,
               nombre: pathologist.patologo_name || pathologist.nombre || patologoAsignado.nombre || ''
             }
+            selectedPathologist.value = patologoData
+            form.patologoAsignado = patologoCode // Usar patologo_code para el v-model
+            // Disparar el evento para que el componente se actualice
+            onPathologistSelected(patologoData)
           } else {
             // Fallback al codigo original si no se encuentra
-            selectedPathologist.value = {
+            const patologoData = {
               codigo: codigo,
               nombre: patologoAsignado.nombre || ''
             }
+            selectedPathologist.value = patologoData
+            form.patologoAsignado = codigo
+            onPathologistSelected(patologoData)
           }
         } catch (error) {
           // Fallback al codigo original si hay error
-          selectedPathologist.value = {
+          const patologoData = {
             codigo: codigo,
             nombre: patologoAsignado.nombre || ''
           }
+          selectedPathologist.value = patologoData
+          form.patologoAsignado = codigo
+          onPathologistSelected(patologoData)
         }
       } else {
-        // No es un ObjectId, usar directamente
-        selectedPathologist.value = {
-          codigo: codigo,
-          nombre: patologoAsignado.nombre || ''
+        // No es un ObjectId, usar directamente el patologo_code
+        try {
+          const pathologist = await pathologistApi.getPathologist(codigo)
+          if (pathologist) {
+            const patologoCode = pathologist.patologo_code || codigo
+            const patologoData = {
+              codigo: patologoCode,
+              nombre: pathologist.patologo_name || pathologist.nombre || patologoAsignado.nombre || ''
+            }
+            selectedPathologist.value = patologoData
+            form.patologoAsignado = patologoCode // Usar patologo_code para el v-model
+            onPathologistSelected(patologoData)
+          } else {
+            // Fallback si no se encuentra
+            const patologoData = {
+              codigo: codigo,
+              nombre: patologoAsignado.nombre || ''
+            }
+            selectedPathologist.value = patologoData
+            form.patologoAsignado = codigo
+            console.log('⚠️ DEBUG - Patólogo no encontrado, usando código como fallback:', patologoData)
+            onPathologistSelected(patologoData)
+          }
+        } catch (error) {
+          // Fallback si hay error
+          const patologoData = {
+            codigo: codigo,
+            nombre: patologoAsignado.nombre || ''
+          }
+          selectedPathologist.value = patologoData
+          form.patologoAsignado = codigo
+          onPathologistSelected(patologoData)
         }
       }
     } else {
       selectedPathologist.value = null
+      form.patologoAsignado = ''
     }
     
     // Guardar entidad seleccionada (si viene en el caso)

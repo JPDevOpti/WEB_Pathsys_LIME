@@ -169,7 +169,7 @@ const errorString = computed(() => {
 // Convertir patólogos a opciones del select
 const pathologistOptions = computed((): (SelectOption & { pathologist: FormPathologistInfo })[] => {
   return pathologists.value.map(pathologist => ({
-    value: pathologist.id, // Usar id como valor (no documento)
+    value: pathologist.patologo_code, // Usar patologo_code como valor
     label: pathologist.iniciales
       ? `${pathologist.iniciales} - ${pathologist.nombre}`
       : pathologist.nombre,

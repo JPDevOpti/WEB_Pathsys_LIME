@@ -9,14 +9,14 @@
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
     </svg>
-    <DocsIcon v-else class="w-4 h-4 mr-2 text-blue-600" />
+    <PrintIcon v-else class="w-4 h-4 mr-2 text-gray-600" />
     {{ loading ? loadingText : text }}
   </button>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { DocsIcon } from '@/assets/icons'
+import { PrintIcon } from '@/assets/icons'
 import { useRouter } from 'vue-router'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -41,8 +41,8 @@ const buttonClasses = computed(() => {
   const size = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2 text-sm', lg: 'px-6 py-3 text-base' }[props.size || 'md']
   const variant = {
     primary: 'border-transparent text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-blue-500',
-    ghost: 'border-transparent text-blue-600 bg-transparent hover:bg-blue-50 focus:ring-blue-500'
+    secondary: 'border-gray-300 text-gray-600 bg-white hover:bg-gray-50 focus:ring-gray-500',
+    ghost: 'border-transparent text-gray-600 bg-transparent hover:bg-gray-50 focus:ring-gray-500'
   }[props.variant || 'secondary']
   return `${base} ${size} ${variant}`
 })

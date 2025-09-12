@@ -463,7 +463,7 @@ const handleAsignacionExitosa = async (result: any) => {
   // Actualizar información del caso con el patólogo asignado (preferir código del patólogo)
   if (result.assignment?.pathologist && casoInfo.value) {
     const p = result.assignment.pathologist
-    const codigo = p.patologo_code || p.codigo || p.code || p.documento || p.id || formData.patologoId
+    const codigo = p.patologo_code || p.codigo || p.code || p.documento || formData.patologoId
     const nombre = p.patologo_name || p.nombre || p.name || (selectedPathologist.value as any)?.nombre || ''
     ;(casoInfo.value as any).patologo_asignado = { codigo, nombre }
   }

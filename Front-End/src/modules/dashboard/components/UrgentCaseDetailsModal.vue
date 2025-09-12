@@ -71,7 +71,8 @@
           </div>
     
     <template #footer>
-      <div class="flex justify-end">
+      <div class="flex justify-end gap-2">
+        <PrintPdfButton text="Imprimir PDF" :caseCode="caseItem?.codigo" />
         <CloseButton
           @click="emit('close')"
           variant="danger-outline"
@@ -86,7 +87,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue'
 import type { CasoUrgente } from '../types/dashboard.types'
-import { CloseButton } from '@/shared/components/buttons'
+import { CloseButton, PrintPdfButton } from '@/shared/components/buttons'
 import { Modal } from '@/shared/components/layout'
 
 const props = defineProps<{ caseItem: CasoUrgente | null }>()
@@ -96,17 +97,10 @@ const emit = defineEmits<{
   (e: 'preview', caso: CasoUrgente): void; 
 }>()
 
+const modalContent = ref<HTMLElement>()
+
 // Estado del modal principal
 const isOpen = computed(() => !!props.caseItem)
-
-// Watcher para centrar el scroll cuando se abre el modal
-watch(() => props.caseItem, (newValue) => {
-  if (newValue) {
-    centerScrollInModal()
-  }
-}, { immediate: true })
-
-const modalContent = ref<HTMLElement>()
 
 // Función para centrar el scroll en la ventana modal
 function centerScrollInModal() {
@@ -121,9 +115,9 @@ function centerScrollInModal() {
   }
 }
 
-// Watch para centrar el scroll cuando se abre el modal
-watch(() => props.caseItem, (newCase) => {
-  if (newCase) {
+// Watcher para centrar el scroll cuando se abre el modal
+watch(() => props.caseItem, (newValue) => {
+  if (newValue) {
     centerScrollInModal()
   }
 }, { immediate: true })
