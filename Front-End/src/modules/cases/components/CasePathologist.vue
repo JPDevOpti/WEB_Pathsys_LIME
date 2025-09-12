@@ -218,12 +218,13 @@ const isLoadingAssignment = ref(false)
 
 // Referencias
 const notificationContainer = ref<HTMLElement | null>(null)
+const selectedPathologist = ref<{ codigo: string; nombre: string } | null>(null)
 
 // ============================================================================
 // COMPOSABLES
 // ============================================================================
 
-const { assignPathologist } = usePathologistAPI()
+const { assignPathologist, unassignPathologist } = usePathologistAPI()
 const { notification, showNotification, closeNotification } = useNotifications()
 
 // ============================================================================
@@ -405,7 +406,7 @@ const getErrorMessage = (error: any): string => {
 // ============================================================================
 
 /**
- * Asigna un patólogo al caso encontrado
+ * Asigna o reasigna un patólogo al caso encontrado
  */
 const asignarPatologo = async () => {
   if (!isFormValid.value || !casoInfo.value) return
@@ -420,8 +421,23 @@ const asignarPatologo = async () => {
       throw new Error(`Código del caso no disponible. Estructura: ${JSON.stringify(casoInfo.value)}`)
     }
     
-    // Realizar asignación usando el composable
-    const result = await assignPathologist(codigoCaso, {
+    // Verificar si ya hay un patólogo asignado
+    const tienePatologo = casoInfo.value?.patologo_asignado?.codigo
+    
+    let result: any
+    
+    if (tienePatologo) {
+      // Si ya tiene patólogo, primero desasignar y luego asignar el nuevo
+      try {
+        await unassignPathologist(codigoCaso)
+      } catch (unassignError: any) {
+        // Si falla la desasignación pero no es crítico, continuar
+        console.warn('Error al desasignar patólogo anterior:', unassignError.message)
+      }
+    }
+    
+    // Realizar asignación del nuevo patólogo
+    result = await assignPathologist(codigoCaso, {
       patologoId: formData.patologoId,
       fechaAsignacion: new Date().toISOString().split('T')[0]
     })
@@ -444,21 +460,23 @@ const asignarPatologo = async () => {
  * @param result - Resultado de la asignación
  */
 const handleAsignacionExitosa = async (result: any) => {
-  
-  
-  // Actualizar información del caso con el patólogo asignado
+  // Actualizar información del caso con el patólogo asignado (preferir código del patólogo)
   if (result.assignment?.pathologist && casoInfo.value) {
-    casoInfo.value.patologo_asignado = {
-      codigo: result.assignment.pathologist.id,
-      nombre: result.assignment.pathologist.nombre
-    }
+    const p = result.assignment.pathologist
+    const codigo = p.patologo_code || p.codigo || p.code || p.documento || p.id || formData.patologoId
+    const nombre = p.patologo_name || p.nombre || p.name || (selectedPathologist.value as any)?.nombre || ''
+    ;(casoInfo.value as any).patologo_asignado = { codigo, nombre }
   }
   
   // Obtener el código correcto del caso (backend devuelve caso_code)
   const codigoCaso = (casoInfo.value as any).caso_code
   
+  // Determinar si es asignación o reasignación basándose en si ya había un patólogo
+  const teniaPatologoAnterior = casoInfo.value?.patologo_asignado && 
+    casoInfo.value.patologo_asignado.codigo !== formData.patologoId
+  const accion = teniaPatologoAnterior ? 'reasignado' : 'asignado'
+  
   // Mostrar notificación de éxito
-  const accion = casoInfo.value?.patologo_asignado ? 'reasignado' : 'asignado'
   showNotification(
     'success',
     `¡Patólogo ${accion} exitosamente!`,
@@ -481,47 +499,15 @@ const handleAsignacionExitosa = async (result: any) => {
  * @param error - Error capturado
  */
 const handleErrorAsignacion = async (error: any) => {
-  
-  // Si el error indica que ya tiene patólogo asignado, tratarlo como reasignación exitosa
-  if (isReasignacionError(error.message)) {
-    
-    
-    // Obtener el código correcto del caso (backend devuelve caso_code)
-    const codigoCaso = (casoInfo.value as any).caso_code
-    
-    showNotification(
-      'success',
-      '¡Patólogo asignado exitosamente!',
-      `El patólogo ha sido reasignado al caso ${codigoCaso} correctamente.`,
-      0
-    )
-
-    emit('patologo-asignado', {
-      codigoCaso: codigoCaso,
-      patologo: formData.patologoId
-    })
-
-    limpiarFormulario()
-  } else {
-    // Error real
-    showNotification(
-      'error',
-      'Error al Asignar Patólogo',
-      error.message || 'No se pudo asignar el patólogo. Por favor, inténtelo nuevamente.',
-      0
-    )
-  }
+  // Error real - mostrar notificación de error
+  showNotification(
+    'error',
+    'Error al Asignar Patólogo',
+    error.message || 'No se pudo asignar el patólogo. Por favor, inténtelo nuevamente.',
+    0
+  )
 }
 
-/**
- * Verifica si el error corresponde a una reasignación
- * @param message - Mensaje de error
- * @returns true si es un error de reasignación
- */
-const isReasignacionError = (message: string): boolean => {
-  const reasignacionKeywords = ['ya tiene', 'already', 'asignado', 'assigned']
-  return reasignacionKeywords.some(keyword => message.includes(keyword))
-}
 
 // ============================================================================
 // FUNCIONES DE UTILIDAD

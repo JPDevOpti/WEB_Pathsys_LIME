@@ -260,6 +260,7 @@ import Notification from '@/shared/components/feedback/Notification.vue'
 import { useCaseForm } from '../composables/useCaseForm'
 import { casesApiService } from '../services/casesApi.service'
 import { patientsApiService } from '../services/patientsApi.service'
+import pathologistApi from '../services/pathologistApi.service'
 import type { CaseFormData, CaseModel, CaseState, PatientData } from '../types'
 import { TestIcon } from '@/assets/icons'
 
@@ -570,7 +571,10 @@ const onSubmit = async () => {
       prioridad: prioridadToSend,
       observaciones_generales: form.observaciones || undefined,
       muestras: allEmptyRegions && existingMuestras.length ? undefined : muestrasClean,
-      patologo_asignado: form.patologoAsignado ? { codigo: form.patologoAsignado, nombre: selectedPathologist.value?.nombre || '' } : undefined,
+      patologo_asignado: form.patologoAsignado ? { 
+        codigo: selectedPathologist.value?.codigo || form.patologoAsignado, 
+        nombre: selectedPathologist.value?.nombre || '' 
+      } : undefined,
       entidad_info: pacienteEntidad,
       paciente: {
         paciente_code: patientInfo.value?.codigo || cedulaToUse,
@@ -923,11 +927,40 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
         ''
     }
     
-    // Guardar patólogo seleccionado (si viene en el caso)
-    if ((caseData as any).patologo_asignado?.codigo) {
-      selectedPathologist.value = {
-        codigo: (caseData as any).patologo_asignado.codigo,
-        nombre: (caseData as any).patologo_asignado.nombre || ''
+    // Guardar patólogo seleccionado (si viene en el caso) - mapeo consistente
+    const patologoAsignado = (caseData as any).patologo_asignado
+    if (patologoAsignado?.codigo) {
+      // Si el codigo parece ser un ObjectId (24 hex), necesitamos buscar el patologo_code real
+      const codigo = patologoAsignado.codigo
+      if (codigo && codigo.length === 24 && /^[0-9a-fA-F]{24}$/.test(codigo)) {
+        // Es un ObjectId, necesitamos buscar el patólogo para obtener el patologo_code
+        try {
+          const pathologist = await pathologistApi.getPathologist(codigo)
+          if (pathologist) {
+            selectedPathologist.value = {
+              codigo: pathologist.patologo_code || pathologist.id || codigo,
+              nombre: pathologist.patologo_name || pathologist.nombre || patologoAsignado.nombre || ''
+            }
+          } else {
+            // Fallback al codigo original si no se encuentra
+            selectedPathologist.value = {
+              codigo: codigo,
+              nombre: patologoAsignado.nombre || ''
+            }
+          }
+        } catch (error) {
+          // Fallback al codigo original si hay error
+          selectedPathologist.value = {
+            codigo: codigo,
+            nombre: patologoAsignado.nombre || ''
+          }
+        }
+      } else {
+        // No es un ObjectId, usar directamente
+        selectedPathologist.value = {
+          codigo: codigo,
+          nombre: patologoAsignado.nombre || ''
+        }
       }
     } else {
       selectedPathologist.value = null
@@ -1039,12 +1072,14 @@ const onEntitySelected = (entity: any | null) => {
 const selectedPathologist = ref<{ codigo: string; nombre: string } | null>(null)
 const onPathologistSelected = (pathologist: any | null) => {
   if (pathologist) {
-    selectedPathologist.value = {
-      codigo: pathologist.documento,
-      nombre: pathologist.nombre
-    }
+    // Mapear campos del patólogo de forma consistente con CasePathologist.vue
+    const codigo = pathologist.patologo_code || pathologist.codigo || pathologist.code || pathologist.documento || pathologist.id || ''
+    const nombre = pathologist.patologo_name || pathologist.nombre || pathologist.name || ''
+    selectedPathologist.value = { codigo, nombre }
+    form.patologoAsignado = codigo
   } else {
     selectedPathologist.value = null
+    form.patologoAsignado = ''
   }
 }
 

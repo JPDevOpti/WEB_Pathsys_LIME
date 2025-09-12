@@ -107,7 +107,8 @@ export function usePathologistAPI() {
   }
 
   const buildPathologistApiData = (pathologist: FormPathologistInfo) => ({
-    codigo: pathologist.id, nombre: pathologist.nombre
+    codigo: pathologist.patologo_code || pathologist.codigo || pathologist.id, 
+    nombre: pathologist.patologo_name || pathologist.nombre
   })
 
   const clearState = () => {

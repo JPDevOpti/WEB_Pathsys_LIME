@@ -1,5 +1,7 @@
 export interface FormPathologistInfo {
   id: string
+  patologo_code?: string
+  patologo_name?: string
   nombre: string
   iniciales?: string
   documento: string

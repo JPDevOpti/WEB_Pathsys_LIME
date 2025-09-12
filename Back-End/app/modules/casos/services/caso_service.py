@@ -140,6 +140,35 @@ class CasoService:
             raise NotFoundError(f"Caso con código {CasoCode} no encontrado")
         
         update_data = caso_update.model_dump(exclude_unset=True)
+        
+        # Procesar patologo_asignado si está presente
+        if "patologo_asignado" in update_data and update_data["patologo_asignado"]:
+            patologo_dict = update_data["patologo_asignado"]
+            # El caso ya no almacena 'firma' en patologo_asignado
+            patologo_dict.pop("firma", None)
+            try:
+                from bson import ObjectId
+                if patologo_dict.get("codigo") and len(patologo_dict["codigo"]) == 24 and all(c in '0123456789abcdef' for c in patologo_dict["codigo"].lower()):
+                    # Intentar buscar patólogo por _id
+                    from app.modules.patologos.repositories.patologo_repository import PatologoRepository
+                    from app.modules.patologos.services.patologo_service import PatologoService
+                    from app.shared.services.user_management import UserManagementService
+                    pat_repo = PatologoRepository(self.repository.database if hasattr(self.repository, 'database') else self.repository.db)
+                    user_mgmt = UserManagementService(self.repository.database if hasattr(self.repository, 'database') else self.repository.db)
+                    pat_service = PatologoService(pat_repo, user_mgmt)
+                    # Buscar manualmente en la colección por _id
+                    raw = await pat_repo.collection.find_one({"_id": ObjectId(patologo_dict["codigo"])})
+                    if raw:
+                        # Reemplazar campos correctos
+                        patologo_dict["codigo"] = raw.get("patologo_code", patologo_dict["codigo"])
+                        patologo_dict["nombre"] = raw.get("patologo_name", patologo_dict.get("nombre"))
+                        # No guardar firma en el caso
+                        patologo_dict.pop("firma", None)
+            except Exception:
+                pass
+            # Asegurar que no persista 'firma' bajo ninguna circunstancia
+            patologo_dict.pop("firma", None)
+        
         # Asegurar que el paciente tenga fecha_actualizacion
         if "paciente" in update_data and "fecha_actualizacion" not in update_data["paciente"]:
             update_data["paciente"]["fecha_actualizacion"] = datetime.utcnow()
@@ -191,6 +220,8 @@ class CasoService:
         
         # Normalizar datos del patólogo: si el campo codigo parece ser un ObjectId (24 hex) buscar patólogo real
         patologo_dict = patologo_info.model_dump()
+        # El caso ya no almacena 'firma' en patologo_asignado
+        patologo_dict.pop("firma", None)
         try:
             from bson import ObjectId
             if patologo_dict.get("codigo") and len(patologo_dict["codigo"]) == 24 and all(c in '0123456789abcdef' for c in patologo_dict["codigo"].lower()):
@@ -207,23 +238,12 @@ class CasoService:
                     # Reemplazar campos correctos
                     patologo_dict["codigo"] = raw.get("patologo_code", patologo_dict["codigo"])
                     patologo_dict["nombre"] = raw.get("patologo_name", patologo_dict.get("nombre"))
-                    patologo_dict["firma"] = raw.get("firma") or patologo_dict.get("firma")
+                    # No guardar firma en el caso
+                    patologo_dict.pop("firma", None)
         except Exception:
             pass
-        # Si falta firma pero tenemos codigo normalizado, intentar completarla
-        if patologo_dict.get("codigo") and not patologo_dict.get("firma"):
-            try:
-                from app.modules.patologos.repositories.patologo_repository import PatologoRepository
-                from app.modules.patologos.services.patologo_service import PatologoService
-                from app.shared.services.user_management import UserManagementService
-                pat_repo = PatologoRepository(self.repository.database if hasattr(self.repository, 'database') else self.repository.db)
-                user_mgmt = UserManagementService(self.repository.database if hasattr(self.repository, 'database') else self.repository.db)
-                pat_service = PatologoService(pat_repo, user_mgmt)
-                pat = await pat_service.get_by_code(patologo_dict["codigo"]) if hasattr(pat_service, 'get_by_code') else None
-                if pat and getattr(pat, 'firma', None):
-                    patologo_dict['firma'] = pat.firma
-            except Exception:
-                pass
+        # Asegurar que no persista 'firma' bajo ninguna circunstancia
+        patologo_dict.pop("firma", None)
         caso_actualizado = await self.repository.asignar_patologo_por_caso_code(CasoCode, patologo_dict)
         
         if not caso_actualizado:
@@ -255,7 +275,7 @@ class CasoService:
             raise NotFoundError(f"Patólogo con código {patologo_codigo} no encontrado")
     
     async def sincronizar_firma_patologo(self, CasoCode: str) -> CasoResponse:
-        """Sincronizar la firma del patólogo asignado a un caso."""
+        """Sincronizar la información del patólogo asignado (sin firma)."""
         caso = await self.repository.get_by_caso_code(CasoCode)
         if not caso:
             raise NotFoundError(f"Caso con código {CasoCode} no encontrado")
@@ -274,8 +294,9 @@ class CasoService:
         
         try:
             patologo_info_dict = await patologo_service.get_patologo_info_for_assignment(caso.patologo_asignado.codigo)
-            
-            # Actualizar la información del patólogo en el caso
+            # No persistir firma en el caso
+            patologo_info_dict.pop("firma", None)
+            # Actualizar la información del patólogo en el caso (solo codigo y nombre)
             caso_actualizado = await self.repository.asignar_patologo_por_caso_code(CasoCode, patologo_info_dict)
             
             if not caso_actualizado:
@@ -287,7 +308,7 @@ class CasoService:
             raise NotFoundError(f"Patólogo con código {caso.patologo_asignado.codigo} no encontrado")
     
     async def sincronizar_firmas_patologos_masivo(self) -> Dict[str, Any]:
-        """Sincronizar las firmas de todos los patólogos asignados en todos los casos."""
+        """Sincronizar la información de patólogos asignados en todos los casos (sin firma)."""
         from app.modules.patologos.services.patologo_service import PatologoService
         from app.modules.patologos.repositories.patologo_repository import PatologoRepository
         from app.shared.services.user_management import UserManagementService
@@ -310,15 +331,11 @@ class CasoService:
                 if caso_doc.get("patologo_asignado") and caso_doc["patologo_asignado"].get("codigo"):
                     patologo_codigo = caso_doc["patologo_asignado"]["codigo"]
                     
-                    # Verificar si ya tiene firma
-                    current_firma = caso_doc["patologo_asignado"].get("firma")
-                    if current_firma:
-                        continue  # Ya tiene firma, saltar
-                    
                     # Obtener información actualizada del patólogo
                     patologo_info_dict = await patologo_service.get_patologo_info_for_assignment(patologo_codigo)
-                    
-                    # Actualizar en la base de datos
+                    # No persistir firma en el caso
+                    patologo_info_dict.pop("firma", None)
+                    # Actualizar en la base de datos solo con codigo y nombre
                     await self.repository.collection.update_one(
                         {"_id": caso_doc["_id"]},
                         {"$set": {

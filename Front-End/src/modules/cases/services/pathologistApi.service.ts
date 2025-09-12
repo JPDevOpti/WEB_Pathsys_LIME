@@ -53,6 +53,16 @@ export class PathologistApiService {
     }
   }
 
+  async getPathologistById(id: string): Promise<FormPathologistInfo | null> {
+    try {
+      const response = await apiClient.get<PathologistBackendResponse>(`${this.endpoint}/${id}`)
+      return this.transformPathologistResponse(response)
+    } catch (error: any) {
+      console.warn(`Patólogo con ID ${id} no encontrado:`, error.message)
+      return null
+    }
+  }
+
   async searchPathologists(query: string, includeInactive: boolean = false): Promise<FormPathologistInfo[]> {
     try {
       let endpoint: string
@@ -93,6 +103,8 @@ export class PathologistApiService {
   private transformPathologistResponse(pathologist: PathologistBackendResponse): FormPathologistInfo {
     return {
       id: pathologist.id || pathologist._id || pathologist.patologo_code || 'N/A',
+      patologo_code: pathologist.patologo_code,
+      patologo_name: pathologist.patologo_name,
       nombre: pathologist.patologo_name || 'Sin nombre',
       iniciales: pathologist.iniciales_patologo || this.generateInitials(pathologist.patologo_name),
       documento: pathologist.patologo_code || 'N/A',
