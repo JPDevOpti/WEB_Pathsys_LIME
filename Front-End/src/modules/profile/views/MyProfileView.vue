@@ -210,8 +210,13 @@ const loadUserProfile = async () => {
 
     if (effectiveRole === 'patologo') {
       const pb = patologoData as BackendPatologo | undefined
+      // Separar el nombre completo del patólogo
+      const fullName = pb?.patologoName || base.firstName + ' ' + base.lastName
+      const [firstName, ...rest] = fullName.split(' ').filter(Boolean)
       userProfile.value = {
         ...base,
+        firstName: firstName || base.firstName,
+        lastName: rest.join(' ') || base.lastName,
         document: '',
         documentType: 'CC',
         phone: '',
@@ -228,8 +233,13 @@ const loadUserProfile = async () => {
 
     if (effectiveRole === 'residente') {
       const rb = residenteData as BackendResidente | undefined
+      // Separar el nombre completo del residente
+      const fullName = rb?.residenteName || base.firstName + ' ' + base.lastName
+      const [firstName, ...rest] = fullName.split(' ').filter(Boolean)
       userProfile.value = {
         ...base,
+        firstName: firstName || base.firstName,
+        lastName: rest.join(' ') || base.lastName,
         document: '',
         documentType: 'CC',
         phone: '',
@@ -245,8 +255,13 @@ const loadUserProfile = async () => {
 
     if (effectiveRole === 'auxiliar') {
       const ab = auxiliarData as BackendAuxiliar | undefined
+      // Separar el nombre completo del auxiliar
+      const fullName = ab?.auxiliarName || base.firstName + ' ' + base.lastName
+      const [firstName, ...rest] = fullName.split(' ').filter(Boolean)
       userProfile.value = {
         ...base,
+        firstName: firstName || base.firstName,
+        lastName: rest.join(' ') || base.lastName,
         document: '',
         documentType: 'CC',
         phone: '',
@@ -260,8 +275,13 @@ const loadUserProfile = async () => {
 
     if (effectiveRole === 'facturacion') {
       const fb = facturacionData as any
+      // Separar el nombre completo del usuario de facturación
+      const fullName = fb?.facturacionName || base.firstName + ' ' + base.lastName
+      const [firstName, ...rest] = fullName.split(' ').filter(Boolean)
       userProfile.value = {
         ...base,
+        firstName: firstName || base.firstName,
+        lastName: rest.join(' ') || base.lastName,
         document: '',
         documentType: 'CC',
         phone: '',
@@ -318,9 +338,13 @@ const handleProfileUpdate = async (formData: ProfileEditPayload) => {
           InicialesPatologo: formData.InicialesPatologo,
           PatologoEmail: formData.PatologoEmail,
           registro_medico: formData.registro_medico,
-          observaciones: formData.observaciones
+          observaciones: formData.observaciones,
+          password: formData.password
         })
         // Actualización local
+        const [firstName, ...rest] = formData.patologoName.split(' ').filter(Boolean)
+        userProfile.value.firstName = firstName || userProfile.value.firstName
+        userProfile.value.lastName = rest.join(' ') || userProfile.value.lastName
         userProfile.value.email = formData.PatologoEmail
         userProfile.value.roleSpecificData = {
           ...userProfile.value.roleSpecificData,
@@ -336,8 +360,13 @@ const handleProfileUpdate = async (formData: ProfileEditPayload) => {
           InicialesResidente: formData.InicialesResidente,
           ResidenteEmail: formData.ResidenteEmail,
           registro_medico: formData.registro_medico,
-          observaciones: formData.observaciones
+          observaciones: formData.observaciones,
+          password: formData.password
         })
+        // Actualización local
+        const [firstName, ...rest] = formData.residenteName.split(' ').filter(Boolean)
+        userProfile.value.firstName = firstName || userProfile.value.firstName
+        userProfile.value.lastName = rest.join(' ') || userProfile.value.lastName
         userProfile.value.email = formData.ResidenteEmail
         userProfile.value.roleSpecificData = {
           ...userProfile.value.roleSpecificData,
@@ -351,8 +380,13 @@ const handleProfileUpdate = async (formData: ProfileEditPayload) => {
         await profileApiService.updateByRole('auxiliar', code, {
           auxiliarName: formData.auxiliarName,
           AuxiliarEmail: formData.AuxiliarEmail,
-          observaciones: formData.observaciones
+          observaciones: formData.observaciones,
+          password: formData.password
         })
+        // Actualizar datos locales
+        const [firstName, ...rest] = formData.auxiliarName.split(' ').filter(Boolean)
+        userProfile.value.firstName = firstName || userProfile.value.firstName
+        userProfile.value.lastName = rest.join(' ') || userProfile.value.lastName
         userProfile.value.email = formData.AuxiliarEmail
         userProfile.value.roleSpecificData = {
           ...userProfile.value.roleSpecificData,
@@ -364,8 +398,13 @@ const handleProfileUpdate = async (formData: ProfileEditPayload) => {
         await profileApiService.updateByRole('facturacion', code, {
           facturacionName: formData.facturacionName,
           FacturacionEmail: formData.FacturacionEmail,
-          observaciones: formData.observaciones
+          observaciones: formData.observaciones,
+          password: formData.password
         })
+        // Actualización local
+        const [firstName, ...rest] = formData.facturacionName.split(' ').filter(Boolean)
+        userProfile.value.firstName = firstName || userProfile.value.firstName
+        userProfile.value.lastName = rest.join(' ') || userProfile.value.lastName
         userProfile.value.email = formData.FacturacionEmail
         userProfile.value.roleSpecificData = {
           ...userProfile.value.roleSpecificData,

@@ -23,7 +23,7 @@
       autocomplete="off"
     />
 
-    <!-- Email y Contraseña -->
+    <!-- Email -->
     <FormInputField 
       class="col-span-full md:col-span-6" 
       label="Email" 
@@ -34,6 +34,8 @@
       @blur="validateEmail"
       autocomplete="email" 
     />
+
+    <!-- Contraseña y Confirmación -->
     <FormInputField 
       class="col-span-full md:col-span-6" 
       label="Nueva contraseña (opcional)" 
@@ -41,6 +43,16 @@
       placeholder="••••••••" 
       v-model="passwordValue"
       :error="formErrors.password"
+      autocomplete="new-password" 
+    />
+    <FormInputField 
+      class="col-span-full md:col-span-6" 
+      label="Confirmar contraseña" 
+      type="password" 
+      placeholder="••••••••" 
+      :model-value="localModel.passwordConfirm || ''"
+      @update:model-value="val => (localModel.passwordConfirm = val)"
+      :error="formErrors.passwordConfirm"
       autocomplete="new-password" 
     />
 
@@ -137,7 +149,9 @@ const isLoading = ref(false)
 
 // Modelo local del formulario
 const localModel = reactive<FacturacionEditFormModel>({ 
-  ...modelValue.value
+  ...modelValue.value,
+  password: '',
+  passwordConfirm: ''
 })
 
 // Errores del formulario
@@ -146,6 +160,7 @@ const formErrors = reactive({
   facturacionCode: '',
   FacturacionEmail: '',
   password: '',
+  passwordConfirm: '',
   observaciones: ''
 })
 
@@ -258,6 +273,20 @@ const submit = async () => {
   clearFormErrors()
   clearNotification()
   
+  // Validar contraseñas
+  if (localModel.password && localModel.password.trim().length > 0) {
+    if (localModel.password.trim().length < 6) {
+      formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+      validationState.showValidationError = true
+      return
+    }
+    if (localModel.password !== localModel.passwordConfirm) {
+      formErrors.passwordConfirm = 'Las contraseñas no coinciden'
+      validationState.showValidationError = true
+      return
+    }
+  }
+  
   // Validación local primero
   const validation = validateForm(localModel)
   if (!validation.isValid) {
@@ -368,6 +397,8 @@ const clearForm = () => {
   // Resetear a los datos originales
   const originalData = modelValue.value
   Object.assign(localModel, originalData)
+  localModel.password = ''
+  localModel.passwordConfirm = ''
 }
 
 // Limpiar formulario (función pública para el botón Limpiar)

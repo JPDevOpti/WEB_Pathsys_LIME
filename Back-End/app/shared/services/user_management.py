@@ -367,3 +367,54 @@ class UserManagementService:
         except Exception as e:
             print(f"Error updating user for facturacion: {e}")
             raise e
+
+    async def update_user(
+        self,
+        old_email: str,
+        *,
+        name: Optional[str] = None,
+        new_email: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        new_password: Optional[str] = None
+    ) -> bool:
+        """
+        Actualizar un usuario genérico en la colección usuarios
+        
+        Args:
+            old_email: Email actual del usuario
+            name: Nuevo nombre (opcional)
+            new_email: Nuevo email (opcional)
+            is_active: Nuevo estado activo (opcional)
+            new_password: Nueva contraseña (opcional)
+            
+        Returns:
+            bool: True si la actualización fue exitosa
+        """
+        try:
+            user = await self.usuarios_collection.find_one({"email": old_email})
+            if not user:
+                raise ValueError("Usuario no encontrado")
+
+            update_doc = {"$set": {}}
+
+            if name is not None:
+                update_doc["$set"]["nombre"] = name
+
+            if is_active is not None:
+                update_doc["$set"]["is_active"] = is_active
+
+            if new_email is not None and new_email != old_email:
+                # Validar que el nuevo email no esté ya en uso por otro usuario
+                exists = await self.usuarios_collection.find_one({"email": new_email})
+                if exists and str(exists.get("_id")) != str(user.get("_id")):
+                    raise ValueError("El nuevo email ya está registrado en usuarios")
+                update_doc["$set"]["email"] = new_email
+
+            if new_password:
+                update_doc["$set"]["password_hash"] = get_password_hash(new_password)
+
+            result = await self.usuarios_collection.update_one({"_id": user["_id"]}, update_doc)
+            return result.modified_count > 0 or result.matched_count > 0
+        except Exception as e:
+            print(f"Error updating user: {e}")
+            raise e

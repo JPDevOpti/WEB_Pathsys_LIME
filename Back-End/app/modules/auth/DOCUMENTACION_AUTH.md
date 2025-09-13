@@ -4,7 +4,6 @@
 **Este módulo maneja la autenticación y autorización del sistema.** Todos los endpoints relacionados con login, tokens y gestión de usuarios están centralizados aquí. Es fundamental para la seguridad del sistema.
 
 ### Características de Seguridad
-- **Rate Limiting**: Protección contra ataques de fuerza bruta (5 intentos por 5 minutos)
 - **Validación de Roles**: Verificación automática contra RolEnum
 - **Contraseñas Hasheadas**: Solo se permiten contraseñas con hash bcrypt
 - **Logging Estructurado**: Auditoría completa de intentos de acceso
@@ -62,7 +61,6 @@
 **Iniciar sesión en el sistema**
 
 **Protección de Seguridad:**
-- Rate limiting: 5 intentos por 5 minutos por email
 - Validación de contraseñas hasheadas
 - Verificación de usuario activo
 - Validación de roles contra RolEnum
@@ -92,12 +90,6 @@ Response 200:
 }
 ```
 
-Response 429 (Rate Limit):
-```json
-{
-    "detail": "Demasiados intentos de login. Intente nuevamente en 5 minutos."
-}
-```
 
 ### 2. POST http://localhost:8000/api/v1/auth/refresh
 **Renovar token de acceso**
@@ -242,5 +234,4 @@ Response 200:
 }
 ```
 
-### 429 Too Many Requests
 ```

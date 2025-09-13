@@ -11,23 +11,27 @@
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Iniciales</label>
-        <input v-model="patologoForm.InicialesPatologo" type="text" maxlength="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="patologoForm.InicialesPatologo" type="text" maxlength="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" />
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-        <input v-model="patologoForm.PatologoEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="patologoForm.PatologoEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Registro médico *</label>
-        <input v-model="patologoForm.registro_medico" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="patologoForm.registro_medico" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" />
       </div>
       <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
         <textarea v-model="patologoForm.observaciones" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
       </div>
-      <div class="md:col-span-2">
+      <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña (opcional)</label>
-        <input v-model="patologoForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="patologoForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="new-password" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+        <input v-model="patologoForm.passwordConfirm" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="confirm-password" />
       </div>
     </div>
 
@@ -42,23 +46,27 @@
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Iniciales</label>
-        <input v-model="residenteForm.InicialesResidente" type="text" maxlength="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="residenteForm.InicialesResidente" type="text" maxlength="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" />
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-        <input v-model="residenteForm.ResidenteEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="residenteForm.ResidenteEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Registro médico *</label>
-        <input v-model="residenteForm.registro_medico" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="residenteForm.registro_medico" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" />
       </div>
       <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
         <textarea v-model="residenteForm.observaciones" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
       </div>
-      <div class="md:col-span-2">
+      <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña (opcional)</label>
-        <input v-model="residenteForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="residenteForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="new-password" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+        <input v-model="residenteForm.passwordConfirm" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="confirm-password" />
       </div>
     </div>
 
@@ -73,15 +81,19 @@
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-        <input v-model="auxiliarForm.AuxiliarEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="auxiliarForm.AuxiliarEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
       </div>
       <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
         <textarea v-model="auxiliarForm.observaciones" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
       </div>
-      <div class="md:col-span-2">
+      <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña (opcional)</label>
-        <input v-model="auxiliarForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="auxiliarForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="new-password" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+        <input v-model="auxiliarForm.passwordConfirm" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="confirm-password" />
       </div>
     </div>
 
@@ -96,15 +108,19 @@
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-        <input v-model="facturacionForm.FacturacionEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="facturacionForm.FacturacionEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
       </div>
       <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
         <textarea v-model="facturacionForm.observaciones" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
       </div>
-      <div class="md:col-span-2">
+      <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña (opcional)</label>
-        <input v-model="facturacionForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="facturacionForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="new-password" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+        <input v-model="facturacionForm.passwordConfirm" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="confirm-password" />
       </div>
     </div>
 
@@ -123,7 +139,7 @@
       </div>
       <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-        <input v-model="adminForm.email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input v-model="adminForm.email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
       </div>
     </div>
 
@@ -162,6 +178,7 @@ const patologoForm = reactive({
   PatologoEmail: props.user.email,
   registro_medico: props.user.roleSpecificData?.registroMedico || '',
   password: '',
+  passwordConfirm: '',
   observaciones: props.user.roleSpecificData?.observaciones || ''
 })
 
@@ -171,6 +188,7 @@ const residenteForm = reactive({
   ResidenteEmail: props.user.email,
   registro_medico: props.user.roleSpecificData?.registroMedico || '',
   password: '',
+  passwordConfirm: '',
   observaciones: props.user.roleSpecificData?.observaciones || ''
 })
 
@@ -178,6 +196,7 @@ const auxiliarForm = reactive({
   auxiliarName: `${props.user.firstName} ${props.user.lastName}`.trim(),
   AuxiliarEmail: props.user.email,
   password: '',
+  passwordConfirm: '',
   observaciones: props.user.roleSpecificData?.observaciones || ''
 })
 
@@ -185,6 +204,7 @@ const facturacionForm = reactive({
   facturacionName: `${props.user.firstName} ${props.user.lastName}`.trim(),
   FacturacionEmail: props.user.email,
   password: '',
+  passwordConfirm: '',
   observaciones: props.user.roleSpecificData?.observaciones || ''
 })
 
@@ -194,15 +214,32 @@ const hasChanges = computed(() => JSON.stringify({ adminForm, patologoForm, resi
 
 const isLoading = computed(() => props.isLoading)
 
+const validatePasswords = (password: string, passwordConfirm: string): boolean => {
+  if (password && password.length < 6) {
+    alert('La contraseña debe tener al menos 6 caracteres')
+    return false
+  }
+  if (password && password !== passwordConfirm) {
+    alert('Las contraseñas no coinciden')
+    return false
+  }
+  return true
+}
+
 const onSubmit = () => {
   let payload: ProfileEditPayload
+  
   if (props.user.role === 'patologo') {
+    if (!validatePasswords(patologoForm.password, patologoForm.passwordConfirm)) return
     payload = { role: 'patologo', ...patologoForm }
   } else if (props.user.role === 'residente') {
+    if (!validatePasswords(residenteForm.password, residenteForm.passwordConfirm)) return
     payload = { role: 'residente', ...residenteForm }
   } else if (props.user.role === 'auxiliar') {
+    if (!validatePasswords(auxiliarForm.password, auxiliarForm.passwordConfirm)) return
     payload = { role: 'auxiliar', ...auxiliarForm, auxiliarCode: '' }
   } else if (props.user.role === 'facturacion') {
+    if (!validatePasswords(facturacionForm.password, facturacionForm.passwordConfirm)) return
     payload = { role: 'facturacion', ...facturacionForm, facturacionCode: '' }
   } else {
     payload = { role: 'admin', ...adminForm }

@@ -167,7 +167,9 @@ export const profileApiService = {
           iniciales_patologo: payload.InicialesPatologo || payload.iniciales_patologo || payload.iniciales,
           patologo_email: payload.PatologoEmail || payload.patologo_email,
           registro_medico: payload.registro_medico,
-          observaciones: payload.observaciones
+          observaciones: payload.observaciones,
+          // Incluir password solo si se proporciona y tiene al menos 6 caracteres
+          ...(payload.password && payload.password.trim().length >= 6 ? { password: payload.password } : {})
         }
         return apiClient.put(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`, patoPayload)
       case 'residente':
@@ -189,7 +191,9 @@ export const profileApiService = {
         const auxPayload = {
           auxiliar_name: payload.auxiliarName || payload.auxiliar_name,
           auxiliar_email: payload.AuxiliarEmail || payload.auxiliar_email,
-          observaciones: payload.observaciones
+          observaciones: payload.observaciones,
+          // Incluir password solo si se proporciona y tiene al menos 6 caracteres
+          ...(payload.password && payload.password.trim().length >= 6 ? { password: payload.password } : {})
         }
         return apiClient.put(`${API_CONFIG.ENDPOINTS.AUXILIARIES}/${code}`, auxPayload)
       case 'facturacion':

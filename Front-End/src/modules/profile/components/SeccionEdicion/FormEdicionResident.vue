@@ -56,14 +56,25 @@
         @blur="validateMedicalLicense"
       />
 
-      <!-- Contraseña (opcional) -->
+      <!-- Contraseña y Confirmación -->
       <FormInputField 
         class="col-span-full md:col-span-6" 
         label="Nueva contraseña (opcional)" 
         type="password" 
         placeholder="••••••••" 
-  :model-value="localModel.password || ''"
-  @update:model-value="val => (localModel.password = val)"
+        :model-value="localModel.password || ''"
+        @update:model-value="val => (localModel.password = val)"
+        :error="formErrors.password"
+        autocomplete="new-password"
+      />
+      <FormInputField 
+        class="col-span-full md:col-span-6" 
+        label="Confirmar contraseña" 
+        type="password" 
+        placeholder="••••••••" 
+        :model-value="localModel.passwordConfirm || ''"
+        @update:model-value="val => (localModel.passwordConfirm = val)"
+        :error="formErrors.passwordConfirm"
         autocomplete="new-password"
       />
 
@@ -247,7 +258,9 @@ const localModel = reactive<ResidentEditFormModel>({
   ResidenteEmail: '',
   registro_medico: '',
   observaciones: '',
-  isActive: true
+  isActive: true,
+  password: '',
+  passwordConfirm: ''
 })
 
 // Errores del formulario
@@ -257,7 +270,9 @@ const formErrors = reactive({
   residenteCode: '',
   ResidenteEmail: '',
   registro_medico: '',
-  observaciones: ''
+  observaciones: '',
+  password: '',
+  passwordConfirm: ''
 })
 
 // Computed para detectar cambios
@@ -437,6 +452,20 @@ const submit = async () => {
   validationState.hasAttemptedSubmit = true
   clearFormErrors()
   
+  // Validar contraseñas
+  if (localModel.password && localModel.password.trim().length > 0) {
+    if (localModel.password.trim().length < 6) {
+      formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+      validationState.showValidationError = true
+      return
+    }
+    if (localModel.password !== localModel.passwordConfirm) {
+      formErrors.passwordConfirm = 'Las contraseñas no coinciden'
+      validationState.showValidationError = true
+      return
+    }
+  }
+  
   const validation = validateForm(localModel)
   if (!validation.isValid) {
     Object.assign(formErrors, validation.errors)
@@ -466,6 +495,8 @@ const onReset = () => {
   const original = resetToOriginal()
   if (original) {
     Object.assign(localModel, original)
+    localModel.password = ''
+    localModel.passwordConfirm = ''
     clearFormErrors()
     validationState.hasAttemptedSubmit = false
     validationState.showValidationError = false

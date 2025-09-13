@@ -10,9 +10,12 @@
       <FormInputField class="md:col-span-6" label="Código del auxiliar" :disabled="true" v-model="localModel.auxiliarCode" />
       <FormInputField class="md:col-span-6" label="Nombre completo" v-model="localModel.auxiliarName" :error="formErrors.auxiliarName" />
 
-      <!-- Email y Contraseña -->
+      <!-- Email -->
       <FormInputField class="md:col-span-6" label="Email" type="email" v-model="localModel.AuxiliarEmail" :error="formErrors.AuxiliarEmail" autocomplete="email" />
-      <FormInputField class="md:col-span-6" label="Nueva contraseña (opcional)" type="password" placeholder="••••••••" :model-value="localModel.password || ''" @update:model-value="val => (localModel.password = val)" autocomplete="new-password" />
+
+      <!-- Contraseña y Confirmación -->
+      <FormInputField class="md:col-span-6" label="Nueva contraseña (opcional)" type="password" placeholder="••••••••" :model-value="localModel.password || ''" @update:model-value="val => (localModel.password = val)" :error="formErrors.password" autocomplete="new-password" />
+      <FormInputField class="md:col-span-6" label="Confirmar contraseña" type="password" placeholder="••••••••" :model-value="localModel.passwordConfirm || ''" @update:model-value="val => (localModel.passwordConfirm = val)" :error="formErrors.passwordConfirm" autocomplete="new-password" />
 
       <!-- Observaciones -->
       <FormTextarea class="col-span-full" label="Observaciones" v-model="localModel.observaciones" :rows="3" :error="formErrors.observaciones" />
@@ -152,10 +155,10 @@ const scrollToNotification = async () => {
 const { isLoading, canSubmit, validateForm, update, setInitialData, resetToOriginal, clearMessages, createHasChanges } = useAuxiliaryEdition()
 
 const localModel = reactive<AuxiliaryEditFormModel>({
-  id: '', auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '', isActive: true
+  id: '', auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '', isActive: true, password: '', passwordConfirm: ''
 })
 
-const formErrors = reactive({ auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '' })
+const formErrors = reactive({ auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '', password: '', passwordConfirm: '' })
 
 const hasChanges = computed(() => createHasChanges(localModel))
 
@@ -238,15 +241,31 @@ const onReset = () => {
   const original = resetToOriginal()
   if (original) {
     Object.assign(localModel, original)
+    localModel.password = ''
+    localModel.passwordConfirm = ''
     validationState.hasAttemptedSubmit = false
     validationState.showValidationError = false
-    Object.assign(formErrors, { auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '' })
+    Object.assign(formErrors, { auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '', password: '', passwordConfirm: '' })
   }
 }
 
 const submit = async () => {
   validationState.hasAttemptedSubmit = true
-  Object.assign(formErrors, { auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '' })
+  Object.assign(formErrors, { auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '', password: '', passwordConfirm: '' })
+
+  // Validar contraseñas
+  if (localModel.password && localModel.password.trim().length > 0) {
+    if (localModel.password.trim().length < 6) {
+      formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+      validationState.showValidationError = true
+      return
+    }
+    if (localModel.password !== localModel.passwordConfirm) {
+      formErrors.passwordConfirm = 'Las contraseñas no coinciden'
+      validationState.showValidationError = true
+      return
+    }
+  }
 
   const validation = validateForm(localModel)
   if (!validation.isValid) {

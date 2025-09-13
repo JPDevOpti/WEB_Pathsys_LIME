@@ -66,6 +66,7 @@ export type ProfileEditPayload =
       PatologoEmail: string
       registro_medico: string
       password?: string
+      passwordConfirm?: string
       observaciones?: string
     }
   | {
@@ -75,6 +76,7 @@ export type ProfileEditPayload =
       ResidenteEmail: string
       registro_medico: string
       password?: string
+      passwordConfirm?: string
       observaciones?: string
     }
   | {
@@ -83,6 +85,7 @@ export type ProfileEditPayload =
       auxiliarCode: string
       AuxiliarEmail: string
       password?: string
+      passwordConfirm?: string
       observaciones?: string
     }
   | {
@@ -91,6 +94,7 @@ export type ProfileEditPayload =
       facturacionCode: string
       FacturacionEmail: string
       password?: string
+      passwordConfirm?: string
       observaciones?: string
     }
   | {

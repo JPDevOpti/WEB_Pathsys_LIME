@@ -61,6 +61,7 @@ export interface FacturacionEditFormModel {
   observaciones: string
   isActive: boolean
   password?: string
+  passwordConfirm?: string
 }
 
 export interface FacturacionUpdateRequest {

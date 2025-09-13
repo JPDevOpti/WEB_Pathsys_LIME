@@ -85,6 +85,7 @@ export interface ResidentEditFormModel {
   observaciones: string
   isActive: boolean
   password?: string
+  passwordConfirm?: string
 }
 
 /**

@@ -10,13 +10,16 @@
       <FormInputField class="md:col-span-6" label="Código del patólogo" :disabled="true" v-model="localModel.patologoCode" />
       <FormInputField class="md:col-span-6" label="Nombre completo" v-model="localModel.patologoName" />
 
-      <!-- Iniciales y Email -->
-      <FormInputField class="md:col-span-6" label="Iniciales" v-model="localModel.InicialesPatologo" maxlength="10" />
-      <FormInputField class="md:col-span-6" label="Email" type="email" v-model="localModel.PatologoEmail" />
+      <!-- Email e Iniciales -->
+      <FormInputField class="md:col-span-6" label="Email" type="email" v-model="localModel.PatologoEmail" autocomplete="email" name="email" />
+      <FormInputField class="md:col-span-6" label="Iniciales" v-model="localModel.InicialesPatologo" maxlength="10" autocomplete="off" />
 
-      <!-- Registro médico y Contraseña (lado a lado) -->
-      <FormInputField class="md:col-span-6" label="Registro médico" v-model="localModel.registro_medico" />
-      <FormInputField class="md:col-span-6" label="Nueva contraseña (opcional)"  placeholder="••••••••" type="password" :model-value="localModel.password || ''" @update:model-value="val => (localModel.password = val)" />
+      <!-- Nueva contraseña y Registro médico -->
+      <FormInputField class="md:col-span-6" label="Nueva contraseña (opcional)" placeholder="••••••••" type="password" :model-value="localModel.password || ''" @update:model-value="val => (localModel.password = val)" :error="formErrors.password" autocomplete="new-password" name="new-password" />
+      <FormInputField class="md:col-span-6" label="Registro médico" v-model="localModel.registro_medico" autocomplete="off" />
+
+      <!-- Confirmar contraseña -->
+      <FormInputField class="md:col-span-6" label="Confirmar contraseña" placeholder="••••••••" type="password" :model-value="localModel.passwordConfirm || ''" @update:model-value="val => (localModel.passwordConfirm = val)" :error="formErrors.passwordConfirm" autocomplete="new-password" name="confirm-password" />
 
       <!-- Observaciones -->
       <FormTextarea class="col-span-full" label="Observaciones" v-model="localModel.observaciones" :rows="3" />
@@ -173,7 +176,12 @@ const canSubmitButton = computed(() => {
 
 const localModel = reactive<PathologistEditFormModel>({
   id: '', patologoName: '', InicialesPatologo: '', patologoCode: '', PatologoEmail: '',
-  registro_medico: '', observaciones: '', isActive: true
+  registro_medico: '', observaciones: '', isActive: true, password: '', passwordConfirm: ''
+})
+
+const formErrors = reactive({
+  password: '',
+  passwordConfirm: ''
 })
 
 const hasChanges = computed(() => createHasChanges(localModel))
@@ -185,6 +193,8 @@ const validationErrors = computed(() => {
   if (!localModel.InicialesPatologo?.trim() || localModel.InicialesPatologo.trim().length < 2) errs.push('Iniciales válidas requeridas')
   if (!localModel.PatologoEmail?.trim()) errs.push('Email válido requerido')
   if (!localModel.registro_medico?.trim()) errs.push('Registro médico válido requerido')
+  if (formErrors.password) errs.push(formErrors.password)
+  if (formErrors.passwordConfirm) errs.push(formErrors.passwordConfirm)
   return errs
 })
 
@@ -217,13 +227,39 @@ watch(() => props.usuario, (u) => {
   setInitialData(mapped)
 }, { immediate: true, deep: true })
 
+const clearFormErrors = () => {
+  formErrors.password = ''
+  formErrors.passwordConfirm = ''
+}
+
 const onReset = () => {
   const original = resetToOriginal()
-  if (original) Object.assign(localModel, original)
+  if (original) {
+    Object.assign(localModel, original)
+    localModel.password = ''
+    localModel.passwordConfirm = ''
+  }
+  clearFormErrors()
 }
 
 const submit = async () => {
   validationState.hasAttemptedSubmit = true
+  clearFormErrors()
+  
+  // Validar contraseñas
+  if (localModel.password && localModel.password.trim().length > 0) {
+    if (localModel.password.trim().length < 6) {
+      formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+      validationState.showValidationError = true
+      return
+    }
+    if (localModel.password !== localModel.passwordConfirm) {
+      formErrors.passwordConfirm = 'Las contraseñas no coinciden'
+      validationState.showValidationError = true
+      return
+    }
+  }
+  
   const validation = validateForm(localModel)
   if (!validation.isValid) { validationState.showValidationError = true; return }
   validationState.showValidationError = false

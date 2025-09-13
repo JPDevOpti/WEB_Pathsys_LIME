@@ -11,39 +11,12 @@ from app.core.exceptions import UnauthorizedError, NotFoundError, BadRequestErro
 from app.config.database import get_database
 from typing import Dict, Any
 import logging
-import time
-from collections import defaultdict
 
 # Configurar logger
 logger = logging.getLogger(__name__)
 
-# Rate limiting básico para login
-LOGIN_ATTEMPTS = defaultdict(list)
-MAX_LOGIN_ATTEMPTS = 5  # Máximo 5 intentos
-LOGIN_WINDOW = 300  # Ventana de 5 minutos (300 segundos)
-
 auth_router = APIRouter()
 security = HTTPBearer()
-
-def check_rate_limit(email: str) -> bool:
-    """Verificar rate limiting para login"""
-    now = time.time()
-    attempts = LOGIN_ATTEMPTS[email]
-    
-    # Limpiar intentos antiguos
-    attempts = [attempt for attempt in attempts if now - attempt < LOGIN_WINDOW]
-    LOGIN_ATTEMPTS[email] = attempts
-    
-    # Verificar si excede el límite
-    if len(attempts) >= MAX_LOGIN_ATTEMPTS:
-        logger.warning(f"Rate limit excedido para {email}: {len(attempts)} intentos en {LOGIN_WINDOW}s")
-        return False
-    
-    return True
-
-def record_login_attempt(email: str):
-    """Registrar intento de login"""
-    LOGIN_ATTEMPTS[email].append(time.time())
 
 # Dependencias
 async def get_auth_repository() -> AuthRepository:
@@ -69,23 +42,8 @@ async def login(
     auth_service: AuthService = Depends(get_auth_service)
 ) -> LoginResponse:
     """Iniciar sesión"""
-    # Verificar rate limiting
-    if not check_rate_limit(login_data.email):
-        logger.warning(f"Rate limit excedido para IP {request.client.host}, email {login_data.email}")
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Demasiados intentos de login. Intente nuevamente en 5 minutos."
-        )
-    
     try:
-        # Registrar intento de login
-        record_login_attempt(login_data.email)
-        
         result = await auth_service.authenticate_user(login_data)
-        
-        # Si el login es exitoso, limpiar intentos fallidos
-        LOGIN_ATTEMPTS[login_data.email].clear()
-        
         return result
         
     except (UnauthorizedError, NotFoundError) as e:
