@@ -105,7 +105,7 @@ class DashboardApiService {
   async getMetricasPatologo(): Promise<DashboardMetrics> {
     try {
       const response = await apiClient.get('/dashboard/metricas/patologo')
-      return response
+      return response.data || response
     } catch (error: any) {
       return await this._getMetricasPatologoFallback()
     }

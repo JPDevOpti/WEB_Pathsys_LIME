@@ -22,7 +22,7 @@
         
         <div>
           <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
-            {{ esPatologo ? 'Pacientes con casos asignados mes actual' : 'Pacientes ingresados mes actual' }}
+            {{ esPatologo ? 'Pacientes tratados este mes' : 'Pacientes ingresados mes actual' }}
           </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
             {{ isLoading ? '...' : formatNumber(pacientesMesActual) }}
@@ -84,7 +84,7 @@
         
         <div>
           <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
-            {{ esPatologo ? 'Casos asignados mes actual' : 'Casos ingresados mes actual' }}
+            {{ esPatologo ? 'Casos asignados este mes' : 'Casos ingresados mes actual' }}
           </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
             {{ isLoading ? '...' : formatNumber(casosMesActual) }}
@@ -182,33 +182,45 @@ const pacientesCambio = computed(() => {
   return Number(metricas.value?.pacientes?.cambio_porcentual ?? 0)
 })
 
-// Casos del mes actual - obtenemos desde la serie de 12 meses
+// Casos del mes actual - usar datos específicos del patólogo o generales según el rol
 const casosMesActual = computed(() => {
-  const serie = casosPorMes.value?.datos
-  if (Array.isArray(serie) && serie.length === 12) {
-    const now = new Date()
-    const m = now.getMonth() // 0-11 (mes actual)
-    return serie[m] || 0
+  if (esPatologo.value) {
+    // Para patólogos: usar datos específicos del patólogo
+    return Number(metricas.value?.casos?.mes_actual ?? 0)
+  } else {
+    // Para otros roles: usar datos de la serie de 12 meses (generales del laboratorio)
+    const serie = casosPorMes.value?.datos
+    if (Array.isArray(serie) && serie.length === 12) {
+      const now = new Date()
+      const m = now.getMonth() // 0-11 (mes actual)
+      return serie[m] || 0
+    }
+    // Fallback al valor del backend si no hay serie
+    return Number(metricas.value?.casos?.mes_actual ?? 0)
   }
-  // Fallback al valor del backend si no hay serie
-  return Number(metricas.value?.casos?.mes_actual ?? 0)
 })
 
 // Porcentaje de cambio comparando los 2 meses anteriores
 const casosCambio = computed(() => {
-  const serie = casosPorMes.value?.datos
-  if (Array.isArray(serie) && serie.length === 12) {
-    const now = new Date()
-    const m = now.getMonth() // 0-11
-    if (m >= 2) {
-      const mesAnterior = serie[m - 1] || 0      // Mes anterior
-      const mesAnteriorAnterior = serie[m - 2] || 0  // Mes anterior al anterior
-      const denom = mesAnteriorAnterior === 0 ? 1 : mesAnteriorAnterior
-      return Math.round(((mesAnterior - mesAnteriorAnterior) / denom) * 100)
+  if (esPatologo.value) {
+    // Para patólogos: usar datos específicos del patólogo
+    return Number(metricas.value?.casos?.cambio_porcentual ?? 0)
+  } else {
+    // Para otros roles: usar datos de la serie de 12 meses (generales del laboratorio)
+    const serie = casosPorMes.value?.datos
+    if (Array.isArray(serie) && serie.length === 12) {
+      const now = new Date()
+      const m = now.getMonth() // 0-11
+      if (m >= 2) {
+        const mesAnterior = serie[m - 1] || 0      // Mes anterior
+        const mesAnteriorAnterior = serie[m - 2] || 0  // Mes anterior al anterior
+        const denom = mesAnteriorAnterior === 0 ? 1 : mesAnteriorAnterior
+        return Math.round(((mesAnterior - mesAnteriorAnterior) / denom) * 100)
+      }
     }
+    // Fallback a cambio_porcentual del backend
+    return Number(metricas.value?.casos?.cambio_porcentual ?? 0)
   }
-  // Fallback a cambio_porcentual del backend
-  return Number(metricas.value?.casos?.cambio_porcentual ?? 0)
 })
 
 const cargarEstadisticas = async () => {

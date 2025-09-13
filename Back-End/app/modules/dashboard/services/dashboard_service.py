@@ -124,6 +124,14 @@ class DashboardService:
         
         fin_mes_anterior = inicio_mes_actual - timedelta(seconds=1)
         
+        # Mes anterior al anterior
+        if inicio_mes_anterior.month == 1:
+            inicio_mes_anterior_anterior = inicio_mes_anterior.replace(year=inicio_mes_anterior.year - 1, month=12)
+        else:
+            inicio_mes_anterior_anterior = inicio_mes_anterior.replace(month=inicio_mes_anterior.month - 1)
+        
+        fin_mes_anterior_anterior = inicio_mes_anterior - timedelta(seconds=1)
+        
         # Obtener pacientes únicos del mes actual que tienen casos asignados al patólogo
         pipeline_pacientes_actual = [
             {
@@ -132,7 +140,7 @@ class DashboardService:
                     "fecha_creacion": {"$gte": inicio_mes_actual}
                 }
             },
-            {"$group": {"_id": "$paciente.id"}},
+            {"$group": {"_id": "$paciente.paciente_code"}},
             {"$count": "total"}
         ]
         
@@ -144,22 +152,36 @@ class DashboardService:
                     "fecha_creacion": {"$gte": inicio_mes_anterior, "$lte": fin_mes_anterior}
                 }
             },
-            {"$group": {"_id": "$paciente.id"}},
+            {"$group": {"_id": "$paciente.paciente_code"}},
+            {"$count": "total"}
+        ]
+        
+        # Obtener pacientes únicos del mes anterior al anterior que tienen casos asignados al patólogo
+        pipeline_pacientes_anterior_anterior = [
+            {
+                "$match": {
+                    "patologo_asignado.codigo": patologo_code,
+                    "fecha_creacion": {"$gte": inicio_mes_anterior_anterior, "$lte": fin_mes_anterior_anterior}
+                }
+            },
+            {"$group": {"_id": "$paciente.paciente_code"}},
             {"$count": "total"}
         ]
         
         # Ejecutar consultas
         resultado_actual = await self.caso_repository.collection.aggregate(pipeline_pacientes_actual).to_list(length=None)
         resultado_anterior = await self.caso_repository.collection.aggregate(pipeline_pacientes_anterior).to_list(length=None)
+        resultado_anterior_anterior = await self.caso_repository.collection.aggregate(pipeline_pacientes_anterior_anterior).to_list(length=None)
         
         pacientes_mes_actual = resultado_actual[0]["total"] if resultado_actual else 0
         pacientes_mes_anterior = resultado_anterior[0]["total"] if resultado_anterior else 0
+        pacientes_mes_anterior_anterior = resultado_anterior_anterior[0]["total"] if resultado_anterior_anterior else 0
         
-        # Calcular cambio porcentual
+        # Calcular cambio porcentual (mes anterior vs mes anterior al anterior)
         cambio_porcentual = 0.0
-        if pacientes_mes_anterior > 0:
-            cambio_porcentual = round(((pacientes_mes_actual - pacientes_mes_anterior) / pacientes_mes_anterior) * 100, 2)
-        elif pacientes_mes_actual > 0:
+        if pacientes_mes_anterior_anterior > 0:
+            cambio_porcentual = round(((pacientes_mes_anterior - pacientes_mes_anterior_anterior) / pacientes_mes_anterior_anterior) * 100, 2)
+        elif pacientes_mes_anterior > 0:
             cambio_porcentual = 100.0
         
         return {
