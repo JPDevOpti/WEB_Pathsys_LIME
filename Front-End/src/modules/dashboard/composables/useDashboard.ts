@@ -27,11 +27,16 @@ export function useDashboard() {
   const totalCasosAño = computed(() => casosPorMes.value?.total || 0)
   const añoActual = computed(() => new Date().getFullYear())
 
-  const cargarMetricas = async () => {
+  const cargarMetricas = async (esPatologo: boolean = false) => {
     try {
       loadingMetricas.value = true
       error.value = null
-      metricas.value = await dashboardApiService.getMetricasDashboard()
+      
+      if (esPatologo) {
+        metricas.value = await dashboardApiService.getMetricasPatologo()
+      } else {
+        metricas.value = await dashboardApiService.getMetricasDashboard()
+      }
     } catch (err: any) {
       error.value = err.message || 'Error al cargar las métricas del dashboard'
       throw err

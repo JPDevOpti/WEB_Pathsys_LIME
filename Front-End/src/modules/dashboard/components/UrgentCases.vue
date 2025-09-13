@@ -487,12 +487,6 @@ async function cargarCasosUrgentesConFiltros() {
     patologo: patologoSeleccionado.value || undefined,
   }
   
-  // Debug temporal
-  console.log('=== FILTRO PATOLOGO ===')
-  console.log('Patólogo seleccionado:', patologoSeleccionado.value)
-  console.log('Filtros enviados:', filtros)
-  console.log('=====================')
-  
   await cargarCasosUrgentes(filtros)
 }
 
@@ -502,7 +496,7 @@ function onPathologistSelected(pathologist: FormPathologistInfo | null) {
   cargarCasosUrgentesConFiltros()
 }
 
-function onPathologistLoadError(error: string) {
+function onPathologistLoadError() {
 }
 
 const columnasDesktop = [

@@ -13,6 +13,7 @@ from app.modules.facturacion.routes import facturacion_router
 from app.modules.enfermedades.routes import router as enfermedad_router
 from app.modules.aprobacion.routes.caso_aprobacion_routes import router as aprobacion_router
 from app.modules.tickets.routes.ticket_routes import router as tickets_router
+from app.modules.dashboard.routes.dashboard_routes import router as dashboard_router
 
 api_router = APIRouter()
 
@@ -29,6 +30,7 @@ api_router.include_router(facturacion_router, prefix="/facturacion", tags=["fact
 api_router.include_router(enfermedad_router, prefix="/enfermedades", tags=["enfermedades"])
 api_router.include_router(aprobacion_router, prefix="/aprobacion", tags=["aprobacion"])
 api_router.include_router(tickets_router, prefix="/tickets", tags=["tickets"])
+api_router.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 
 @api_router.get("/health")
 async def health_check():
@@ -58,10 +60,10 @@ async def api_info():
             "facturacion",
             "enfermedades",
             "aprobación",
-            "tickets"
+            "tickets",
+            "dashboard"
         ],
         "modules_pendientes": [
-            "estadisticas",
             "resultados",
             "notificaciones"
         ]

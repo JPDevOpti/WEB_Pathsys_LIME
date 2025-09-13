@@ -49,7 +49,6 @@ class DashboardApiService {
         casos_por_tipo_prueba: data.casos_por_tipo_prueba || {}
       }
     } catch (error) {
-      console.error('Error obteniendo estadísticas de casos:', error)
       throw error
     }
   }
@@ -71,12 +70,12 @@ class DashboardApiService {
         tiempo_promedio_procesamiento: data.tiempo_promedio_procesamiento || 0
       }
     } catch (error) {
-      console.error('Error obteniendo estadísticas de muestras:', error)
       throw error
     }
   }
 
   async getMetricasDashboard(): Promise<DashboardMetrics> {
+    // Usar el método de fallback por ahora hasta que el endpoint esté disponible
     try {
       const [casosStats, pacientesStats] = await Promise.all([
         this.getEstadisticasCasos(),
@@ -96,11 +95,143 @@ class DashboardApiService {
         }
       }
     } catch (error) {
-      console.error('Error obteniendo métricas del dashboard:', error)
       return {
         pacientes: { mes_actual: 0, mes_anterior: 0, cambio_porcentual: 0 },
         casos: { mes_actual: 0, mes_anterior: 0, cambio_porcentual: 0 }
       }
+    }
+  }
+
+  async getMetricasPatologo(): Promise<DashboardMetrics> {
+    try {
+      const response = await apiClient.get('/dashboard/metricas/patologo')
+      return response
+    } catch (error: any) {
+      return await this._getMetricasPatologoFallback()
+    }
+  }
+
+  private async _getMetricasPatologoFallback(): Promise<DashboardMetrics> {
+    try {
+      const { useAuthStore } = await import('@/stores/auth.store')
+      const authStore = useAuthStore()
+      const user = authStore.user
+      
+      if (!user || user.rol !== 'patologo') {
+        return await this.getMetricasDashboard()
+      }
+
+      const patologosResponse = await apiClient.get(`${this.baseUrl.PATHOLOGISTS}/search?q=${user.nombre}`)
+      const patologos = patologosResponse.data || []
+      
+      if (patologos.length === 0) {
+        const patologosEmailResponse = await apiClient.get(`${this.baseUrl.PATHOLOGISTS}/search?q=${user.email}`)
+        const patologosEmail = patologosEmailResponse.data || []
+        
+        if (patologosEmail.length === 0) {
+          return await this.getMetricasDashboard()
+        }
+        
+        patologos.push(...patologosEmail)
+      }
+
+      const nombreUsuario = user.nombre || ''
+      const nombreUsuarioLower = nombreUsuario.toLowerCase()
+      
+      const patologoEncontrado = patologos.find((p: any) => {
+        if (!p.patologo_name) return false
+        
+        const nombrePatologo = p.patologo_name.toLowerCase()
+        
+        return nombrePatologo.includes(nombreUsuarioLower) || 
+               nombreUsuarioLower.includes(nombrePatologo) ||
+               (p.iniciales_patologo && p.iniciales_patologo.toLowerCase().includes(nombreUsuarioLower))
+      })
+
+      if (!patologoEncontrado) {
+        return await this.getMetricasDashboard()
+      }
+
+      const patologoCode = patologoEncontrado.patologo_code
+      const casosResponse = await apiClient.get(`${this.baseUrl.CASES}/patologo/${patologoCode}`)
+      const casos = casosResponse.data || []
+
+      const casosStats = this._calcularMetricasCasos(casos)
+      const pacientesStats = this._calcularMetricasPacientes(casos)
+
+      return {
+        pacientes: pacientesStats,
+        casos: casosStats
+      }
+    } catch (error) {
+      return await this.getMetricasDashboard()
+    }
+  }
+
+  private _calcularMetricasCasos(casos: any[]): any {
+    const ahora = new Date()
+    const inicioMesActual = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
+    const inicioMesAnterior = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)
+    const inicioMesAnteriorAnterior = new Date(ahora.getFullYear(), ahora.getMonth() - 2, 1)
+
+    const casosMesActual = casos.filter(caso => 
+      new Date(caso.fecha_creacion) >= inicioMesActual
+    ).length
+
+    const casosMesAnterior = casos.filter(caso => {
+      const fecha = new Date(caso.fecha_creacion)
+      return fecha >= inicioMesAnterior && fecha < inicioMesActual
+    }).length
+
+    const casosMesAnteriorAnterior = casos.filter(caso => {
+      const fecha = new Date(caso.fecha_creacion)
+      return fecha >= inicioMesAnteriorAnterior && fecha < inicioMesAnterior
+    }).length
+
+    let cambioPorcentual = 0
+    if (casosMesAnteriorAnterior > 0) {
+      cambioPorcentual = Math.round(((casosMesAnterior - casosMesAnteriorAnterior) / casosMesAnteriorAnterior) * 100)
+    } else if (casosMesAnterior > 0) {
+      cambioPorcentual = 100
+    }
+
+    return {
+      mes_actual: casosMesActual,
+      mes_anterior: casosMesAnterior,
+      cambio_porcentual: cambioPorcentual
+    }
+  }
+
+  private _calcularMetricasPacientes(casos: any[]): any {
+    const ahora = new Date()
+    const inicioMesActual = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
+    const inicioMesAnterior = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)
+
+    // Filtrar casos por mes y obtener pacientes únicos
+    const casosMesActual = casos.filter(caso => 
+      new Date(caso.fecha_creacion) >= inicioMesActual
+    )
+    
+    const casosMesAnterior = casos.filter(caso => {
+      const fecha = new Date(caso.fecha_creacion)
+      return fecha >= inicioMesAnterior && fecha < inicioMesActual
+    })
+
+    // Obtener pacientes únicos por mes
+    const pacientesMesActual = [...new Set(casosMesActual.map(caso => caso.paciente?.id).filter(Boolean))].length
+    const pacientesMesAnterior = [...new Set(casosMesAnterior.map(caso => caso.paciente?.id).filter(Boolean))].length
+
+    let cambioPorcentual = 0
+    if (pacientesMesAnterior > 0) {
+      cambioPorcentual = Math.round(((pacientesMesActual - pacientesMesAnterior) / pacientesMesAnterior) * 100)
+    } else if (pacientesMesActual > 0) {
+      cambioPorcentual = 100
+    }
+
+    return {
+      mes_actual: pacientesMesActual,
+      mes_anterior: pacientesMesAnterior,
+      cambio_porcentual: cambioPorcentual
     }
   }
 
@@ -116,7 +247,6 @@ class DashboardApiService {
       // Endpoint según documentación: GET /api/v1/casos/casos-por-mes/{year}
       // Rango permitido: 2020-2030
       if (añoActual < 2020 || añoActual > 2030) {
-        console.warn(`Año ${añoActual} fuera del rango permitido (2020-2030)`)
         return defaultResponse
       }
 
@@ -124,7 +254,6 @@ class DashboardApiService {
       const data = response?.data ?? response
       
       if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) {
-        console.warn('Estructura de datos inválida para casos por mes')
         return defaultResponse
       }
       
@@ -134,7 +263,6 @@ class DashboardApiService {
         año: data.año || añoActual
       }
     } catch (error) {
-      console.error(`Error obteniendo casos por mes para ${añoActual}:`, error)
       return defaultResponse
     }
   }
