@@ -189,3 +189,52 @@ class DashboardService:
             "mes_anterior": pacientes_mes_anterior,
             "cambio_porcentual": cambio_porcentual
         }
+    
+    async def get_casos_por_mes_patologo(self, patologo_email: str, año: int) -> Dict[str, Any]:
+        """Obtener casos por mes específicos del patólogo"""
+        # Buscar patólogo por email
+        patologo = await self.patologo_repository.get_by_email(patologo_email)
+        if not patologo:
+            raise NotFoundError("Patólogo no encontrado")
+        
+        # Crear pipeline de agregación para casos por mes del patólogo
+        pipeline = [
+            {
+                "$match": {
+                    "patologo_asignado.codigo": patologo.patologo_code,
+                    "fecha_creacion": {
+                        "$gte": datetime(año, 1, 1),
+                        "$lt": datetime(año + 1, 1, 1)
+                    }
+                }
+            },
+            {
+                "$group": {
+                    "_id": {"$month": "$fecha_creacion"},
+                    "count": {"$sum": 1}
+                }
+            },
+            {
+                "$sort": {"_id": 1}
+            }
+        ]
+        
+        # Ejecutar agregación
+        resultados = await self.caso_repository.collection.aggregate(pipeline).to_list(length=None)
+        
+        # Crear array de 12 meses inicializado en 0
+        casos_por_mes = [0] * 12
+        
+        # Llenar con los datos obtenidos
+        for resultado in resultados:
+            mes = resultado["_id"] - 1  # MongoDB devuelve 1-12, necesitamos 0-11
+            casos_por_mes[mes] = resultado["count"]
+        
+        # Calcular total
+        total_casos = sum(casos_por_mes)
+        
+        return {
+            "datos": casos_por_mes,
+            "total": total_casos,
+            "año": año
+        }

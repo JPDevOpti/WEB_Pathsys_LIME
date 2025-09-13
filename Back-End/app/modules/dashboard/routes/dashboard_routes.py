@@ -47,3 +47,29 @@ async def get_metricas_patologo(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error obteniendo métricas del patólogo: {str(e)}"
         )
+
+@router.get("/casos-por-mes/patologo/{year}")
+async def get_casos_por_mes_patologo(
+    year: int,
+    current_user: AuthUser = Depends(require_patologo),
+    dashboard_service: DashboardService = Depends(get_dashboard_service)
+):
+    """Obtener casos por mes específicos del patólogo autenticado"""
+    try:
+        if year < 2020 or year > 2030:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El año debe estar entre 2020 y 2030"
+            )
+        
+        return await dashboard_service.get_casos_por_mes_patologo(current_user.email, year)
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error obteniendo casos por mes del patólogo: {str(e)}"
+        )

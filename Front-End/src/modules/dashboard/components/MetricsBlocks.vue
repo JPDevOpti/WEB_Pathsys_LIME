@@ -230,7 +230,7 @@ const cargarEstadisticas = async () => {
   
   await Promise.all([
     cargarMetricas(esPatologo.value),
-    cargarCasosPorMes()
+    cargarCasosPorMes(undefined, esPatologo.value)
   ])
 }
 

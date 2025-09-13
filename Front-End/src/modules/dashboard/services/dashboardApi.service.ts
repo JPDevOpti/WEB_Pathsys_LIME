@@ -267,6 +267,39 @@ class DashboardApiService {
     }
   }
 
+  async getCasosPorMesPatologo(año?: number): Promise<CasosPorMesResponse> {
+    const añoActual = año || new Date().getFullYear()
+    const defaultResponse = {
+      datos: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      total: 0,
+      año: añoActual
+    }
+
+    try {
+      // Endpoint específico para patólogos: GET /api/v1/dashboard/casos-por-mes/patologo/{year}
+      if (añoActual < 2020 || añoActual > 2030) {
+        return defaultResponse
+      }
+
+      const response = await apiClient.get<any>(`/dashboard/casos-por-mes/patologo/${añoActual}`)
+      const data = response?.data ?? response
+      
+      if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) {
+        return defaultResponse
+      }
+      
+      return {
+        datos: data.datos,
+        total: data.total || 0,
+        año: data.año || añoActual
+      }
+    } catch (error) {
+      // Fallback temporal: usar el endpoint general hasta que se reinicie el servidor
+      console.warn('Endpoint de patólogo no disponible, usando fallback temporal')
+      return await this.getCasosPorMes(año)
+    }
+  }
+
   async getCasosUrgentes(filtros: FiltrosCasosUrgentes = {}): Promise<CasoUrgente[]> {
     try {
       const searchParams: any = {}

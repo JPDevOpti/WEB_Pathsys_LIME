@@ -1,7 +1,7 @@
 <template>
   <Card class="overflow-hidden px-5 pt-5 sm:px-6 sm:pt-6">
     <h3 class="text-lg font-semibold text-gray-800">
-      Casos ingresados por mes ({{ anioActual }})
+      {{ esPatologo ? 'Casos asignados por mes' : 'Casos ingresados por mes' }} ({{ anioActual }})
     </h3>
 
     <div v-if="isLoading" class="flex items-center justify-center py-8">
@@ -51,14 +51,21 @@ import { ref, onMounted, computed } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
 import { Card } from '@/shared/components/layout'
 import { useDashboard } from '../composables/useDashboard'
+import { useAuthStore } from '@/stores/auth.store'
 
+const authStore = useAuthStore()
 const { casosPorMes, loadingCasosPorMes: isLoading, error, cargarCasosPorMes, totalCasosAño, añoActual: anioActual } = useDashboard()
+
+// Detectar si el usuario es patólogo
+const esPatologo = computed(() => {
+  return authStore.user?.rol === 'patologo' && authStore.userRole !== 'administrador'
+})
 
 const estadisticas = casosPorMes
 const totalCasos = totalCasosAño
 
 const series = computed(() => [{
-  name: 'Casos',
+  name: esPatologo.value ? 'Casos asignados' : 'Casos',
   data: Array.isArray(estadisticas.value?.datos) ? estadisticas.value.datos : Array(12).fill(0)
 }])
 
@@ -81,7 +88,9 @@ const chartOptions = ref({
 })
 
 const cargarEstadisticas = async () => {
-  try { await cargarCasosPorMes() } catch (error) {}
+  try { 
+    await cargarCasosPorMes(undefined, esPatologo.value) 
+  } catch (error) {}
 }
 
 onMounted(cargarEstadisticas)

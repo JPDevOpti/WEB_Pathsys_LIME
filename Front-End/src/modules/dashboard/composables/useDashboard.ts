@@ -45,11 +45,16 @@ export function useDashboard() {
     }
   }
 
-  const cargarCasosPorMes = async (año?: number) => {
+  const cargarCasosPorMes = async (año?: number, esPatologo: boolean = false) => {
     try {
       loadingCasosPorMes.value = true
       error.value = null
-      casosPorMes.value = await dashboardApiService.getCasosPorMes(año)
+      
+      if (esPatologo) {
+        casosPorMes.value = await dashboardApiService.getCasosPorMesPatologo(año)
+      } else {
+        casosPorMes.value = await dashboardApiService.getCasosPorMes(año)
+      }
     } catch (err: any) {
       error.value = err.message || 'Error al cargar estadísticas de casos por mes'
       throw err
