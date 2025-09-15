@@ -3,6 +3,7 @@ from app.config.settings import settings
 from app.modules.auth.routes.auth_routes import auth_router
 from app.modules.pacientes.routes.paciente_routes import router as pacientes_router
 from app.modules.casos.routes.caso_routes import router as casos_router
+from app.modules.casos.routes.stats_routes import router as casos_stats_router
 from app.modules.casos.routes.consecutivo_routes import router as consecutivos_router
 from app.modules.pruebas.routes.prueba_routes import router as pruebas_router
 from app.modules.entidades.routes.entidad_routes import router as entidades_router
@@ -20,6 +21,7 @@ api_router = APIRouter()
 api_router.include_router(auth_router, prefix="/auth", tags=["autenticación"])
 api_router.include_router(pacientes_router, prefix="/pacientes", tags=["pacientes"])
 api_router.include_router(casos_router, prefix="/casos", tags=["casos"])
+api_router.include_router(casos_stats_router, prefix="/casos", tags=["casos"])  # estadísticas de casos
 api_router.include_router(consecutivos_router, prefix="/consecutivos", tags=["consecutivos"])
 api_router.include_router(pruebas_router, prefix="/pruebas", tags=["pruebas"])
 api_router.include_router(entidades_router, prefix="/entidades", tags=["entidades"])

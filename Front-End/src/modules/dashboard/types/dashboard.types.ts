@@ -76,11 +76,13 @@ export interface DashboardMetrics {
   pacientes: {
     mes_actual: number
     mes_anterior: number
+    mes_anterior_anterior?: number
     cambio_porcentual: number
   }
   casos: {
     mes_actual: number
     mes_anterior: number
+    mes_anterior_anterior?: number
     cambio_porcentual: number
   }
 }

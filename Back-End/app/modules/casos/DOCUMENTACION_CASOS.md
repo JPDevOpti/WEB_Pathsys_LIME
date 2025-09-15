@@ -5,17 +5,39 @@
 ```text
 app/modules/casos/
 ├── models/
-│   └── caso.py                 # Modelos MongoDB (Caso, ResultadoInfo, DiagnosticoCIE10/CIEO)
+│   └── caso.py                         # Modelos MongoDB (Caso, ResultadoInfo, DiagnosticoCIE10/CIEO)
 ├── schemas/
-│   └── caso.py                 # Esquemas Pydantic para API (Request/Response)
+│   ├── caso.py                         # Esquemas Pydantic para CRUD de casos
+│   └── stats.py                        # Esquemas Pydantic para estadísticas (placeholder)
 ├── repositories/
-│   ├── caso_repository.py      # Operaciones CRUD y consultas avanzadas
-│   └── consecutivo_repository.py  # Gestión códigos consecutivos
+│   ├── caso_repository.py              # Operaciones CRUD y búsquedas de casos
+│   ├── consecutivo_repository.py       # Gestión códigos consecutivos
+│   └── stats/                          # NUEVO: repositorios de estadísticas
+│       ├── cases_stats_repository.py       # Estadísticas generales de casos
+│       ├── samples_stats_repository.py     # Estadísticas de muestras
+│       ├── monthly_stats_repository.py     # Casos por mes
+│       ├── opportunity_stats_repository.py # Oportunidad mensual/detalle
+│       ├── entities_stats_repository.py    # Entidades mensual/detalle
+│       └── tests_stats_repository.py       # Pruebas mensual/detalle
 ├── services/
-│   └── caso_service.py         # Lógica de negocio y transformaciones
+│   ├── caso_service.py                 # Lógica de negocio para CRUD de casos
+│   ├── cache_service.py                # Servicio de caché (compartido)
+│   ├── pagination_service.py           # Servicio de paginación cursor-based
+│   ├── index_optimizer.py              # Optimización de índices MongoDB
+│   └── stats/                          # NUEVO: servicios de estadísticas
+│       ├── cases_stats_service.py          # Orquestación de estadísticas generales
+│       ├── samples_stats_service.py        # Orquestación de estadísticas de muestras
+│       ├── monthly_stats_service.py        # Orquestación de casos por mes
+│       ├── opportunity_stats_service.py    # Orquestación de oportunidad
+│       ├── entities_stats_service.py       # Orquestación de entidades
+│       └── tests_stats_service.py          # Orquestación de pruebas
 ├── routes/
-│   └── caso_routes.py          # Endpoints FastAPI
-└── DOCUMENTACION_CASOS.md      # Este archivo
+│   ├── caso_routes.py                  # Endpoints CRUD de casos
+│   └── stats_routes.py                 # NUEVO: endpoints de estadísticas (mismos paths actuales)
+├── templates/
+│   └── case_report.html                # Plantilla PDF
+├── DOCUMENTACION_CASOS.md              # Este archivo (CRUD + guía general)
+└── DOCUMENTACION_CASOS_STATS.md        # NUEVO: documentación de estadísticas
 ```
 
 ### Capas y Responsabilidades
@@ -25,6 +47,7 @@ app/modules/casos/
 - **Repositories**: Acceso a datos y consultas complejas
 - **Services**: Lógica de negocio, validaciones, transformaciones
 - **Routes**: Definición de endpoints HTTP
+- Nota: las estadísticas fueron desacopladas en submódulos `repositories/stats`, `services/stats` y `routes/stats_routes.py` sin cambiar los endpoints públicos.
 
 ---
 
@@ -440,6 +463,8 @@ Nota: desde la última actualización del módulo, el campo "metodo" se maneja c
 **Respuesta**: `Array<CasoResponse>`
 
 ### 3.5. Estadísticas y Reportes
+
+Los endpoints de estadísticas mantienen los mismos paths públicos, pero su implementación está separada en archivos dedicados para favorecer mantenibilidad y rendimiento. La documentación detallada de cada estadística (origen de datos, agregaciones, caché, TTL, validaciones) se encuentra en `DOCUMENTACION_CASOS_STATS.md`.
 
 #### GET `/api/v1/casos/estadisticas`
 

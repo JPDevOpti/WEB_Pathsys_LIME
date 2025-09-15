@@ -22,7 +22,7 @@
         
         <div>
           <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
-            {{ esPatologo ? 'Pacientes tratados este mes' : 'Pacientes ingresados mes actual' }}
+            {{ esPatologo ? 'Pacientes tratados este mes' : 'Pacientes ingresados el mes actual' }}
           </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
             {{ isLoading ? '...' : formatNumber(pacientesMesActual) }}
@@ -65,26 +65,12 @@
     <Card class="group p-4 md:p-4 relative">
       <div class="flex items-center gap-4">
         <div class="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg transition-colors duration-300 group-hover:bg-blue-50">
-          <svg
-            class="fill-gray-800 transition-colors duration-300 group-hover:fill-blue-600"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-              d="M11.665 3.75621C11.8762 3.65064 12.1247 3.65064 12.3358 3.75621L18.7807 6.97856L12.3358 10.2009C12.1247 10.3065 11.8762 10.3065 11.665 10.2009L5.22014 6.97856L11.665 3.75621ZM4.29297 8.19203V16.0946C4.29297 16.3787 4.45347 16.6384 4.70757 16.7654L11.25 20.0366V11.6513C11.1631 11.6205 11.0777 11.5843 10.9942 11.5426L4.29297 8.19203ZM12.75 20.037L19.2933 16.7654C19.5474 16.6384 19.7079 16.3787 19.7079 16.0946V8.19202L13.0066 11.5426C12.9229 11.5844 12.8372 11.6208 12.75 11.6516V20.037ZM13.0066 2.41456C12.3732 2.09786 11.6277 2.09786 10.9942 2.41456L4.03676 5.89319C3.27449 6.27432 2.79297 7.05342 2.79297 7.90566V16.0946C2.79297 16.9469 3.27448 17.726 4.03676 18.1071L10.9942 21.5857L11.3296 20.9149L10.9942 21.5857C11.6277 21.9024 12.3732 21.9024 13.0066 21.5857L19.9641 18.1071C20.7264 17.726 21.2079 16.9469 21.2079 16.0946V7.90566C21.2079 7.05342 20.7264 6.27432 19.9641 5.89319L13.0066 2.41456Z"
-              fill=""
-            />
-          </svg>
+          <MuestraIcon class="w-5 h-5 text-gray-800 transition-colors duration-300 group-hover:text-blue-600" />
         </div>
         
         <div>
           <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
-            {{ esPatologo ? 'Casos asignados este mes' : 'Casos ingresados mes actual' }}
+            {{ esPatologo ? 'Casos asignados este mes' : 'Casos ingresados mes el actual' }}
           </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
             {{ isLoading ? '...' : formatNumber(casosMesActual) }}
@@ -139,6 +125,7 @@
 </template>
 
 <script setup lang="ts">
+import { MuestraIcon } from '@/assets/icons'
 import { onMounted, computed, watch } from 'vue'
 import { Card } from '@/shared/components/layout'
 import { useDashboard } from '../composables/useDashboard'
@@ -202,25 +189,22 @@ const casosMesActual = computed(() => {
 
 // Porcentaje de cambio comparando los 2 meses anteriores
 const casosCambio = computed(() => {
-  if (esPatologo.value) {
-    // Para patólogos: usar datos específicos del patólogo
-    return Number(metricas.value?.casos?.cambio_porcentual ?? 0)
-  } else {
-    // Para otros roles: usar datos de la serie de 12 meses (generales del laboratorio)
-    const serie = casosPorMes.value?.datos
-    if (Array.isArray(serie) && serie.length === 12) {
-      const now = new Date()
-      const m = now.getMonth() // 0-11
-      if (m >= 2) {
-        const mesAnterior = serie[m - 1] || 0      // Mes anterior
-        const mesAnteriorAnterior = serie[m - 2] || 0  // Mes anterior al anterior
-        const denom = mesAnteriorAnterior === 0 ? 1 : mesAnteriorAnterior
-        return Math.round(((mesAnterior - mesAnteriorAnterior) / denom) * 100)
-      }
+  const backendCambio = Number(metricas.value?.casos?.cambio_porcentual ?? 0)
+  if (esPatologo.value) return backendCambio
+  // Para otros roles: priorizar backend (ya compara 2 meses previos). Si es 0, intentar serie local
+  if (backendCambio !== 0) return backendCambio
+  const serie = casosPorMes.value?.datos
+  if (Array.isArray(serie) && serie.length === 12) {
+    const now = new Date()
+    const m = now.getMonth() // 0-11
+    if (m >= 2) {
+      const mesAnterior = serie[m - 1] || 0
+      const mesAnteriorAnterior = serie[m - 2] || 0
+      const denom = mesAnteriorAnterior === 0 ? 1 : mesAnteriorAnterior
+      return Math.round(((mesAnterior - mesAnteriorAnterior) / denom) * 100)
     }
-    // Fallback a cambio_porcentual del backend
-    return Number(metricas.value?.casos?.cambio_porcentual ?? 0)
   }
+  return backendCambio
 })
 
 const cargarEstadisticas = async () => {

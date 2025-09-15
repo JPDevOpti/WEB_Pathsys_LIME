@@ -58,20 +58,19 @@ class DashboardApiService {
 
   async getMetricasDashboard(): Promise<DashboardMetrics> {
     try {
-      const [casosStats, pacientesStats] = await Promise.all([
-        this.getEstadisticasCasos(),
-        this.getEstadisticasPacientes()
-      ])
+      // Nuevo endpoint mensual (mes actual vs anterior)
+      const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas/mes-actual`)
+      const data = response?.data ?? response
       return {
         pacientes: {
-          mes_actual: pacientesStats.pacientes_mes_actual || 0,
-          mes_anterior: pacientesStats.pacientes_mes_anterior || 0,
-          cambio_porcentual: pacientesStats.cambio_porcentual || 0
+          mes_actual: Number(data?.pacientes?.mes_actual ?? 0),
+          mes_anterior: Number(data?.pacientes?.mes_anterior ?? 0),
+          cambio_porcentual: Number(data?.pacientes?.cambio_porcentual ?? 0)
         },
         casos: {
-          mes_actual: casosStats.casos_mes_actual || 0,
-          mes_anterior: casosStats.casos_mes_anterior || 0,
-          cambio_porcentual: casosStats.cambio_porcentual || 0
+          mes_actual: Number(data?.casos?.mes_actual ?? 0),
+          mes_anterior: Number(data?.casos?.mes_anterior ?? 0),
+          cambio_porcentual: Number(data?.casos?.cambio_porcentual ?? 0)
         }
       }
     } catch {
@@ -84,8 +83,22 @@ class DashboardApiService {
 
   async getMetricasPatologo(): Promise<DashboardMetrics> {
     try {
-      const response = await apiClient.get('/dashboard/metricas/patologo')
-      return response.data || response
+      // Obtener código del patólogo desde el store si es posible
+      const code = ''
+      const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas/mes-actual/patologo`, { params: { patologo_codigo: code } })
+      const data = response?.data ?? response
+      return {
+        pacientes: {
+          mes_actual: Number(data?.pacientes?.mes_actual ?? 0),
+          mes_anterior: Number(data?.pacientes?.mes_anterior ?? 0),
+          cambio_porcentual: Number(data?.pacientes?.cambio_porcentual ?? 0)
+        },
+        casos: {
+          mes_actual: Number(data?.casos?.mes_actual ?? 0),
+          mes_anterior: Number(data?.casos?.mes_anterior ?? 0),
+          cambio_porcentual: Number(data?.casos?.cambio_porcentual ?? 0)
+        }
+      }
     } catch {
       return await this._getMetricasPatologoFallback()
     }
@@ -183,7 +196,8 @@ class DashboardApiService {
     try {
       if (añoActual < 2020 || añoActual > 2030) return defaultResponse
 
-      const response = await apiClient.get<any>(`${this.baseUrl.CASES}/casos-por-mes/${añoActual}`)
+      // Endpoint nuevo de estadísticas para mensual por laboratorio
+      const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas/por-mes/${añoActual}`)
       const data = response?.data ?? response
       
       if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) return defaultResponse
@@ -201,7 +215,8 @@ class DashboardApiService {
     try {
       if (añoActual < 2020 || añoActual > 2030) return defaultResponse
 
-      const response = await apiClient.get<any>(`/dashboard/casos-por-mes/patologo/${añoActual}`)
+      // Endpoint nuevo de estadísticas para mensual por patólogo
+      const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas/por-mes/patologo/${añoActual}`)
       const data = response?.data ?? response
       
       if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) return defaultResponse

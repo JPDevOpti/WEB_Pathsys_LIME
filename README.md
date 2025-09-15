@@ -1,3 +1,7 @@
+"""Esquemas de estadísticas para el módulo de casos (placeholder)."""
+
+# Aquí se moverán/definirán: CasoStats, MuestraStats, estructuras de reportes, etc.
+
 # 🧬 WEB-LIS PathSys
 
 Sistema de gestión de muestras para laboratorio patológico.  
