@@ -1,5 +1,8 @@
 <template>
   <ComponentCard title="Rendimiento de Patólogos">
+    <template #icon>
+      <GraficoIcon class="w-5 h-5 text-blue-600 mr-2" />
+    </template>
     <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
       <div class="flex items-center justify-between mb-4">
         <h4 class="text-md font-medium text-gray-800">Comparativa por patólogo</h4>
@@ -15,6 +18,7 @@
 import { computed } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
 import type { PathologistPerformance } from '../../types/opportunity.types'
+import { GraficoIcon } from '@/assets/icons'
 
 const props = defineProps<{ datos: PathologistPerformance[] }>()
 

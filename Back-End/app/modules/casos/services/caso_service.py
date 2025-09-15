@@ -54,8 +54,8 @@ class CasoService:
             raise NotFoundError(f"Caso con código {CasoCode} no encontrado")
         return self._to_response(caso)
     
-    async def listar_casos(self, skip: int = 0, limit: int = 100, filtros: Optional[Dict[str, Any]] = None) -> List[CasoResponse]:
-        casos = await self.repository.get_multi(skip=skip, limit=limit, filters=filtros)
+    async def listar_casos(self, skip: int = 0, limit: int = 100, filtros: Optional[Dict[str, Any]] = None, sort_field: str = "caso_code", sort_direction: int = -1) -> List[CasoResponse]:
+        casos = await self.repository.get_multi(skip=skip, limit=limit, filters=filtros, sort_field=sort_field, sort_direction=sort_direction)
         return [self._to_response(caso) for caso in casos]
     
     async def buscar_casos(self, search_params: CasoSearch, skip: int = 0, limit: int = 1000) -> List[CasoResponse]:

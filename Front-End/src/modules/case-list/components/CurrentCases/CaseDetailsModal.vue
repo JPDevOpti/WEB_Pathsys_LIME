@@ -222,7 +222,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { Case } from '../types/case.types'
+import type { Case } from '../../types/case.types'
 import { DocsIcon } from '@/assets/icons'
 import { NotesDialog } from '@/shared/components/feedback'
 import { CloseButton, PrintPdfButton } from '@/shared/components/buttons'

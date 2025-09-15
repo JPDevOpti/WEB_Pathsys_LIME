@@ -1,5 +1,8 @@
 <template>
   <ComponentCard title="Resumen de Entidades">
+    <template #icon>
+      <PieChartIcon class="w-5 h-5 text-blue-600 mr-2" />
+    </template>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <div class="bg-yellow-50 p-4 rounded-md border border-yellow-100">
         <h4 class="text-sm font-semibold text-yellow-700 mb-1">Tiempo Promedio</h4>
@@ -37,6 +40,7 @@
 import { computed } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
 import type { EntityStats } from '../../types/entities.types'
+import { PieChartIcon } from '@/assets/icons'
 
 const props = defineProps<{
   datos: EntityStats[]

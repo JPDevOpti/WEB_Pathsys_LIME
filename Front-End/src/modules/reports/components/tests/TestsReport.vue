@@ -2,6 +2,9 @@
   <div class="space-y-6">
     <!-- Card de selección de período, entidad, estado y acciones -->
     <ComponentCard title="Reporte de pruebas realizadas" description="Seleccione período, entidad y estado para generar el informe.">
+      <template #icon>
+        <TestIcon class="w-5 h-5 text-blue-600 mr-2" />
+      </template>
 
       
       <div class="flex flex-wrap items-end gap-4">
@@ -113,6 +116,9 @@
       <TestsPerformanceChart :datos="testsData" />
 
       <ComponentCard title="Detalle por Prueba" description="Tabla con métricas detalladas. Haz clic en una fila para ver detalles completos.">
+        <template #icon>
+          <TableIcon class="w-5 h-5 text-blue-600 mr-2" />
+        </template>
         <div v-if="testsData.length === 0" class="text-gray-500">No hay pruebas con datos para el período seleccionado.</div>
         <div v-else>
           <TestsDetailTable :datos="testsData" @test-click="openTestModal" />
@@ -136,7 +142,7 @@ import { FormSelect } from '@/shared/components'
 import { EntityList } from '@/shared/components/List'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ComponentCard } from '@/shared/components/common'
-import { RefreshIcon } from '@/assets/icons'
+import { RefreshIcon, TestIcon, TableIcon } from '@/assets/icons'
 import TestsSummary from './TestsSummary.vue'
 import TestsPerformanceChart from './TestsPerformanceChart.vue'
 import TestsDetailTable from './TestsDetailTable.vue'

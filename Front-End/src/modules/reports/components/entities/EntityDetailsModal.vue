@@ -17,7 +17,7 @@
                 </svg>
               </div>
               <div>
-                <h4 class="text-2xl font-bold text-gray-900">{{ entity.nombre }}</h4>
+                <h4 class="text-2xl font-bold text-gray-900">{{ entity?.nombre || '' }}</h4>
                 <p class="text-blue-600 font-medium">Entidad</p>
               </div>
             </div>
@@ -29,7 +29,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-green-600 font-medium">Ambulatorios</p>
-                  <p class="text-2xl font-bold text-green-700">{{ entity.ambulatorios }}</p>
+                  <p class="text-2xl font-bold text-green-700">{{ entity?.ambulatorios ?? 0 }}</p>
                   <p class="text-xs text-green-600">pacientes</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -44,7 +44,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-blue-600 font-medium">Hospitalizados</p>
-                  <p class="text-2xl font-bold text-blue-700">{{ entity.hospitalizados }}</p>
+                  <p class="text-2xl font-bold text-blue-700">{{ entity?.hospitalizados ?? 0 }}</p>
                   <p class="text-xs text-blue-600">pacientes</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -59,7 +59,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-gray-600 font-medium">Total</p>
-                  <p class="text-2xl font-bold text-gray-700">{{ entity.total }}</p>
+                  <p class="text-2xl font-bold text-gray-700">{{ entity?.total ?? 0 }}</p>
                   <p class="text-xs text-gray-600">pacientes</p>
                 </div>
                 <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
@@ -78,7 +78,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
                 <h5 class="text-lg font-semibold text-yellow-800 mb-2">No hay datos disponibles</h5>
-                <p class="text-yellow-700 mb-4">No se encontraron datos para la entidad <strong>{{ entity.nombre }}</strong> en {{ formatPeriod() }}.</p>
+                <p class="text-yellow-700 mb-4">No se encontraron datos para la entidad <strong>{{ entity?.nombre || '' }}</strong> en {{ formatPeriod() }}.</p>
                 <div class="text-sm text-yellow-600">
                   <p>Sugerencias:</p>
                   <ul class="mt-2 space-y-1">
@@ -181,7 +181,7 @@
               </div>
             </template>
           </div>
-        </div>
+        
     
     <template #footer>
       <div class="flex justify-end">

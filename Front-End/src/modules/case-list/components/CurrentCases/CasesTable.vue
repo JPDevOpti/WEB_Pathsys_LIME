@@ -573,7 +573,7 @@ function handleBatchCompleted(_result: any) {
 
 // Handlers de navegación directa
 function handleEdit(c: Case) {
-  const code = c?.caseCode || c?.id || ''
+  const code = c?.caseCode || ''
   if (!code) return
   
   // Emitir evento para mantener compatibilidad
@@ -584,7 +584,7 @@ function handleEdit(c: Case) {
 }
 
 function handlePerform(c: Case) {
-  const code = c?.caseCode || c?.id || ''
+  const code = c?.caseCode || ''
   if (!code) return
   
   // Emitir evento para mantener compatibilidad
@@ -596,7 +596,7 @@ function handlePerform(c: Case) {
 }
 
 function handleValidate(c: Case) {
-  const code = c?.caseCode || c?.id || ''
+  const code = c?.caseCode || ''
   if (!code) return
   
   // Emitir evento para mantener compatibilidad
@@ -614,35 +614,35 @@ function formatDate(dateString: string) {
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-// ===== Agrupamiento de pruebas =====
+// ===== Agrupamiento de pruebas (memoizado) =====
+
+const groupedTestsCache = new Map<string, { code: string; count: number }[]>()
+const testsLayoutCache = new Map<string, { organized: { column1: { code: string; count: number }[]; column2: { code: string; count: number }[]; middle: { code: string; count: number } | null }; totalTests: number; hasMore: boolean; moreCount: number }>()
+
+function getTestsKeyFromStrings(tests: string[]): string {
+  const len = tests.length
+  const head = tests.slice(0, 3).join('|')
+  const tail = tests.slice(-3).join('|')
+  return `${len}|${head}||${tail}`
+}
 
 function groupTests(tests: string[]): { code: string; count: number }[] {
+  const key = getTestsKeyFromStrings(tests)
+  const cached = groupedTestsCache.get(key)
+  if (cached) return cached
   const counts: Record<string, number> = {}
   const seenOrder: string[] = []
-  
-  // Contar cada código exactamente como aparece (sin normalizar)
   tests.forEach((test) => {
-    const trimmed = test.trim()
+    const trimmed = (test || '').trim()
     if (!trimmed) return
-    
-    // Extraer solo el código inicial (antes del primer espacio o guión)
     let code = trimmed.split(/[\s-]/)[0]
-    
-    // Si no encontramos nada, usar el string completo truncado
     if (!code) code = trimmed.substring(0, 10)
-    
-    if (!counts[code]) {
-      counts[code] = 0
-      seenOrder.push(code)
-    }
+    if (!counts[code]) { counts[code] = 0; seenOrder.push(code) }
     counts[code] += 1
   })
-  
-  // Retornar en el orden que aparecieron por primera vez
-  return seenOrder.map(code => ({
-    code: code,
-    count: counts[code]
-  }))
+  const result = seenOrder.map(code => ({ code, count: counts[code] }))
+  groupedTestsCache.set(key, result)
+  return result
 }
 
 function organizeTestsInTwoColumns(tests: { code: string; count: number }[]): {
@@ -677,18 +677,18 @@ function organizeTestsInTwoColumns(tests: { code: string; count: number }[]): {
 }
 
 function getTestsLayout(c: Case) {
+  const id = c.id || c.caseCode || ''
+  const key = `${id}|${getTestsKeyFromStrings(c.tests)}`
+  const cached = testsLayoutCache.get(key)
+  if (cached) return cached
   const groupedTests = groupTests(c.tests)
   const organized = organizeTestsInTwoColumns(groupedTests)
   const totalTests = groupedTests.length
   const hasMore = totalTests > 6
   const moreCount = hasMore ? totalTests - 6 : 0
-  
-  return {
-    organized,
-    totalTests,
-    hasMore,
-    moreCount
-  }
+  const result = { organized, totalTests, hasMore, moreCount }
+  testsLayoutCache.set(key, result)
+  return result
 }
 
 function getTestTooltip(tests: string[], code: string, count: number): string {

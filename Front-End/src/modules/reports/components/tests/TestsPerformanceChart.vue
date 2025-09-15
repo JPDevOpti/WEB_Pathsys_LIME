@@ -1,5 +1,8 @@
 <template>
   <ComponentCard title="Distribución de Pruebas por Entidad" description="Gráfico de barras apiladas mostrando solicitadas y completadas por prueba.">
+    <template #icon>
+      <GraficoIcon class="w-5 h-5 text-blue-600 mr-2" />
+    </template>
     <apexchart type="bar" height="320" :options="chartOptions" :series="chartSeries" />
   </ComponentCard>
 </template>
@@ -8,6 +11,7 @@
 import { computed } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
 import type { TestStats } from '../../types/tests.types'
+import { GraficoIcon } from '@/assets/icons'
 
 const props = defineProps<{
   datos: TestStats[]

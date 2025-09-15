@@ -109,21 +109,31 @@ async def crear_caso_con_codigo(
 async def listar_casos(
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros"),
+    sort_field: str = Query("caso_code", description="Campo de ordenamiento"),
+    sort_direction: int = Query(-1, description="Dirección del ordenamiento (-1 desc, 1 asc)"),
     estado: Optional[EstadoCasoEnum] = Query(None, description="Filtrar por estado"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
     filtros = {"estado": estado.value} if estado else {}
-    return await caso_service.listar_casos(skip=skip, limit=limit, filtros=filtros)
+    return await caso_service.listar_casos(skip=skip, limit=limit, filtros=filtros, sort_field=sort_field, sort_direction=sort_direction)
 
 @router.post("/buscar", response_model=List[CasoResponse])
 @handle_exceptions
 async def buscar_casos(
     search_params: CasoSearch,
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
-    limit: int = Query(1000, ge=1, le=5000, description="Número máximo de registros"),
+    limit: int = Query(1000000, ge=1, le=2000000, description="Número máximo de registros"),
+    sort_field: str = Query("caso_code", description="Campo de ordenamiento"),
+    sort_direction: int = Query(-1, description="Dirección del ordenamiento (-1 desc, 1 asc)"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    return await caso_service.buscar_casos(search_params, skip=skip, limit=limit)
+    resultados = await caso_service.buscar_casos(search_params, skip=skip, limit=limit)
+    try:
+        reverse = sort_direction == -1
+        resultados.sort(key=lambda c: getattr(c, sort_field, None) or "", reverse=reverse)
+    except Exception:
+        pass
+    return resultados
 
 
 @router.get("/estadisticas", response_model=CasoStats)

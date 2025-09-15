@@ -19,9 +19,6 @@
           @keydown.enter.prevent
         />
       </div>
-      <div class="w-full md:w-auto flex items-end">
-        <SearchButton text="Buscar" size="md" :disabled="isLoading" @click="$emit('refresh')" />
-      </div>
       <div class="flex gap-3 items-end">
         <div class="w-44 md:w-56">
           <DateInputField v-model="local.dateFrom" label="Fecha desde" placeholder="DD/MM/AAAA" />
@@ -81,6 +78,7 @@
           </template>
           Actualizar
         </BaseButton>
+        <SearchButton text="Buscar" size="sm" :disabled="isLoading" @click="() => { emit('update:modelValue', { ...local }); emit('search', { ...local }) }" />
       </div>
     </template>
   </ComponentCard>
@@ -93,7 +91,7 @@ import { RefreshIcon, DocsIcon, TrashIcon } from '@/assets/icons'
 import { FormInputField, FormSelect, DateInputField } from '@/shared/components/forms'
 import { SearchButton } from '@/shared/components/buttons'
 import { EntityList, PathologistList, TestList } from '@/shared/components/List'
-import type { Filters } from '../types/case.types'
+import type { Filters } from '../../types/case.types'
 import { getDefaultDateRange } from '../../utils/dateUtils'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useAuthStore } from '@/stores/auth.store'
@@ -107,7 +105,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits<{ (e: 'update:modelValue', v: Filters): void; (e: 'refresh'): void; (e: 'export'): void }>()
+const emit = defineEmits<{ (e: 'update:modelValue', v: Filters): void; (e: 'refresh'): void; (e: 'export'): void; (e: 'search', v: Filters): void }>()
 
 // Composable para permisos y autenticación
 const { isPatologo } = usePermissions()
@@ -156,7 +154,6 @@ const statusOptions = [
 ]
 
 watch(() => props.modelValue, (v) => Object.assign(local, v))
-watch(local, () => emit('update:modelValue', { ...local }), { deep: true })
 
 // Watcher para mantener el patólogo logueado como filtro fijo
 watch(currentPathologistName, (newName) => {
@@ -170,6 +167,10 @@ onMounted(() => {
   if (currentPathologistName.value && isPatologo.value) {
     local.searchPathologist = currentPathologistName.value
   }
+  // Normalizar fechas iniciales
+  const defaults = getDefaultDateRange()
+  local.dateFrom = normalizeToDDMMYYYY(local.dateFrom || defaults.dateFrom)
+  local.dateTo = normalizeToDDMMYYYY(local.dateTo || defaults.dateTo)
 })
 
 function clearAll() {
@@ -182,13 +183,17 @@ function clearAll() {
   } else if (currentPathologistName.value) {
     local.searchPathologist = currentPathologistName.value
   }
-  local.dateFrom = defaultDates.dateFrom
-  local.dateTo = defaultDates.dateTo
+  local.dateFrom = normalizeToDDMMYYYY(defaultDates.dateFrom)
+  local.dateTo = normalizeToDDMMYYYY(defaultDates.dateTo)
   local.selectedEntity = ''
   local.selectedStatus = ''
   local.selectedTest = ''
   pathologistCode.value = ''
   entityCode.value = ''
+
+  // Actualizar el v-model del padre y recargar últimos 100
+  emit('update:modelValue', { ...local })
+  emit('refresh')
 }
 
 function onPathologistSelected(p: any | null) {
@@ -205,6 +210,63 @@ function onPathologistSelected(p: any | null) {
 function onEntitySelected(e: any | null) {
   local.selectedEntity = e?.nombre || ''
 }
+
+
+
+// --- Normalización y validación de fechas ---
+function normalizeToDDMMYYYY(value: string | null | undefined): string {
+  if (!value) return ''
+  const isoMatch = /^\d{4}-\d{2}-\d{2}/.test(value)
+  if (isoMatch) {
+    const [y, m, d] = value.slice(0, 10).split('-').map((v) => Number(v))
+    return pad2(d) + '/' + pad2(m) + '/' + String(y)
+  }
+  const ddmmyyyy = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value)
+  if (ddmmyyyy) return value
+  return ''
+}
+
+function pad2(n: number): string { return n < 10 ? '0' + n : String(n) }
+
+function parseDDMMYYYY(s: string): Date | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s)
+  if (!m) return null
+  const d = Number(m[1]), mo = Number(m[2]) - 1, y = Number(m[3])
+  const dt = new Date(y, mo, d)
+  return dt.getFullYear() === y && dt.getMonth() === mo && dt.getDate() === d ? dt : null
+}
+
+function clampToToday(s: string): string {
+  const dt = parseDDMMYYYY(s)
+  if (!dt) return ''
+  const today = new Date(); today.setHours(0,0,0,0)
+  if (dt > today) return normalizeToDDMMYYYY(`${today.getFullYear()}-${pad2(today.getMonth()+1)}-${pad2(today.getDate())}`)
+  return s
+}
+
+watch(() => local.dateFrom, (v) => {
+  if (!v) return
+  const norm = clampToToday(normalizeToDDMMYYYY(v))
+  if (norm !== v) local.dateFrom = norm
+  // Corregir rango si desde > hasta
+  if (local.dateTo) {
+    const a = parseDDMMYYYY(local.dateFrom)
+    const b = parseDDMMYYYY(local.dateTo)
+    if (a && b && a > b) local.dateTo = local.dateFrom
+  }
+})
+
+watch(() => local.dateTo, (v) => {
+  if (!v) return
+  const norm = clampToToday(normalizeToDDMMYYYY(v))
+  if (norm !== v) local.dateTo = norm
+  // Corregir rango si hasta < desde
+  if (local.dateFrom) {
+    const a = parseDDMMYYYY(local.dateFrom)
+    const b = parseDDMMYYYY(local.dateTo)
+    if (a && b && b < a) local.dateFrom = local.dateTo
+  }
+})
 </script>
 
 

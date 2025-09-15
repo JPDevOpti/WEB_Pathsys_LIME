@@ -59,35 +59,47 @@ export interface BackendTest {
 const CASES_BASE = API_CONFIG.ENDPOINTS.CASES
 
 export async function listCases(params: Record<string, any> = {}) {
-  // Función para obtener TODOS los casos, no solo los primeros 1000
-  const allCases: BackendCase[] = []
-  let skip = 0
-  const limit = 1000 // Máximo permitido por el backend
-  
-  while (true) {
-    const requestParams = {
-      skip,
-      limit,
-      ...params
-    }
-    
-    const data = await apiClient.get<BackendCase[]>(`${CASES_BASE}/`, { params: requestParams })
+  // Por defecto: traer 100 y ordenar por código desc en cliente (últimos 100)
+  const baseParams = { skip: 0, limit: 100 }
+  const requestParams = { ...baseParams, ...params }
+  const data = await apiClient.get<BackendCase[]>(`${CASES_BASE}/`, { params: requestParams })
+  const arr = (data as BackendCase[]) || []
+  return arr.sort((a, b) => String(b.caso_code || '').localeCompare(String(a.caso_code || '')))
+}
 
-    if (!data || (data as BackendCase[]).length === 0) {
-      break // No hay más casos
-    }
-    
-    allCases.push(...(data as BackendCase[]))
-    
-    // Si recibimos menos casos que el límite, significa que llegamos al final
-    if ((data as BackendCase[]).length < limit) {
-      break
-    }
-    
+export async function listAllCases(params: Record<string, any> = {}) {
+  // Traer TODOS los casos aplicando filtros, paginando en lotes de 1000 hasta agotar
+  const all: BackendCase[] = []
+  let skip = 0
+  const limit = 1000
+  while (true) {
+    const batchParams = { skip, limit, ...params }
+    const data = await apiClient.get<BackendCase[]>(`${CASES_BASE}/`, { params: batchParams })
+    const arr = (data as BackendCase[]) || []
+    if (arr.length === 0) break
+    all.push(...arr)
+    if (arr.length < limit) break
     skip += limit
   }
-  
-  return allCases
+  // Ordenar por caso_code desc si no lo garantiza el backend
+  return all.sort((a, b) => String(b.caso_code || '').localeCompare(String(a.caso_code || '')))
+}
+
+export async function searchCases(params: Record<string, any> = {}) {
+  // Buscar en backend con filtros y traer TODOS los resultados (hasta agotar) usando skip/limit
+  const all: BackendCase[] = []
+  let skip = 0
+  const limit = 1000
+  while (true) {
+    const batchParams = { skip, limit, ...params }
+    const data = await apiClient.post<BackendCase[]>(`${CASES_BASE}/buscar`, batchParams, { params: { skip, limit, sort_field: 'caso_code', sort_direction: -1 } })
+    const arr = (data as BackendCase[]) || []
+    if (arr.length === 0) break
+    all.push(...arr)
+    if (arr.length < limit) break
+    skip += limit
+  }
+  return all
 }
 
 export async function getCaseById(idOrCode: string) {

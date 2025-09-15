@@ -128,7 +128,7 @@
                           </div>
                           <div class="flex flex-wrap gap-1">
                             <span
-                              v-for="(t, tIdx) in expandTests(s.tests || [])"
+                              v-for="(t, tIdx) in getExpandedTestsCached(c.id, sIdx, s.tests || [])"
                               :key="tIdx"
                               class="relative inline-flex items-center bg-gray-100 text-gray-700 font-mono text-[11px] pl-2 pr-6 py-0.5 rounded border"
                               :class="{ 'opacity-40 line-through': isTestRemoved(c.id, sIdx, tIdx) || isSubsampleRemoved(c.id, sIdx) }"
@@ -200,7 +200,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { Case } from '../types/case.types'
+import type { Case } from '../../types/case.types'
 import { BaseButton } from '@/shared/components'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import casesApiService from '@/modules/cases/services/casesApi.service'
@@ -347,8 +347,8 @@ function emitConfirm() {
       .filter((_, sIdx) => !isSubsampleRemoved(c.id, sIdx))
       .map((s, sIdx) => {
         // Expandir pruebas según cantidad para permitir eliminación individual
-        const expanded = expandTests(s.tests || [])
-        const remainingExpanded = expanded.filter((_, eIdx) => !isTestRemoved(c.id, sIdx, eIdx))
+        const expanded = getExpandedTestsCached(c.id, sIdx, s.tests || [])
+        const remainingExpanded = expanded.filter((_t, eIdx: number) => !isTestRemoved(c.id, sIdx, eIdx))
         // Reagrupar por id para enviar payload correcto (cantidad ajustada)
         const grouped: Record<string, { id: string; nombre: string; cantidad: number }> = {}
         for (const t of remainingExpanded) {
@@ -393,14 +393,19 @@ function emitConfirm() {
 // ================= Helpers para pruebas duplicadas =================
 interface DrawerTestEntry { id: string; name?: string; quantity?: number }
 
-function expandTests(tests: DrawerTestEntry[]): DrawerTestEntry[] {
+// Cache de expansión por caso+submuestra para evitar recomputar en cada render
+const expandedTestsCache = new Map<string, DrawerTestEntry[]>()
+
+function getExpandedTestsCached(caseId: string, subsampleIndex: number, tests: DrawerTestEntry[]): DrawerTestEntry[] {
+  const key = `${caseId || ''}|${subsampleIndex}|${tests.length}`
+  const cached = expandedTestsCache.get(key)
+  if (cached) return cached
   const expanded: DrawerTestEntry[] = []
   for (const t of tests) {
     const qty = t.quantity && t.quantity > 1 ? t.quantity : 1
-    for (let i = 0; i < qty; i++) {
-      expanded.push({ id: t.id, name: t.name || t.id, quantity: 1 })
-    }
+    for (let i = 0; i < qty; i++) expanded.push({ id: t.id, name: t.name || t.id, quantity: 1 })
   }
+  expandedTestsCache.set(key, expanded)
   return expanded
 }
 

@@ -61,6 +61,7 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
             'paciente_nombre': ("paciente.nombre", "regex"),
             'medico_nombre': ("medico_solicitante", "regex"),
             'patologo_codigo': ("patologo_asignado.codigo", "exact"),
+            'patologo_nombre': ("patologo_asignado.nombre", "regex"),
             'estado': ("estado", "enum_value"),
             'prioridad': ("prioridad", "enum_value")
         }
@@ -75,6 +76,14 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
                 elif search_type == "enum_value":
                     query[field] = value.value
         
+        # Entidad por nombre
+        if getattr(search_params, 'entidad_nombre', None):
+            query["paciente.entidad_info.nombre"] = {"$regex": getattr(search_params, 'entidad_nombre'), "$options": "i"}
+
+        # Prueba por código (en anidado muestras.pruebas.id)
+        if getattr(search_params, 'prueba', None):
+            query["muestras.pruebas.id"] = getattr(search_params, 'prueba')
+
         if search_params.fecha_ingreso_desde or search_params.fecha_ingreso_hasta:
             fecha_query = {}
             if search_params.fecha_ingreso_desde:
@@ -98,7 +107,10 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
                 {"caso_code": {"$regex": search_params.query, "$options": "i"}},
                 {"paciente.nombre": {"$regex": search_params.query, "$options": "i"}},
                 {"paciente.paciente_code": {"$regex": search_params.query, "$options": "i"}},
-                {"medico_solicitante": {"$regex": search_params.query, "$options": "i"}}
+                {"medico_solicitante": {"$regex": search_params.query, "$options": "i"}},
+                {"patologo_asignado.nombre": {"$regex": search_params.query, "$options": "i"}},
+                {"paciente.entidad_info.nombre": {"$regex": search_params.query, "$options": "i"}},
+                {"muestras.pruebas.id": {"$regex": search_params.query, "$options": "i"}}
             ]
         
         return query
@@ -137,10 +149,17 @@ class CasoRepository(BaseRepository[Caso, CasoCreate, CasoUpdate]):
         document = await self.collection.find_one({"_id": ObjectId(id)})
         return self.model_class(**self._clean_active_fields(document)) if document else None
 
-    async def get_multi(self, skip: int = 0, limit: int = 100, filters: Optional[Dict[str, Any]] = None) -> List[Caso]:
-        """Obtener múltiples casos con paginación y filtros."""
+    async def get_multi(self, skip: int = 0, limit: int = 100, filters: Optional[Dict[str, Any]] = None, sort_field: str = "caso_code", sort_direction: int = -1) -> List[Caso]:
+        """Obtener múltiples casos con paginación, filtros y ordenamiento."""
         query = filters.copy() if filters else {}
-        documents = await self.collection.find(query).skip(skip).limit(limit).to_list(length=limit)
+        cursor = self.collection.find(query)
+        # Orden por defecto: últimos por código de caso (YYYY-#####) descendente
+        try:
+            cursor = cursor.sort(sort_field, sort_direction)
+        except Exception:
+            # Fallback si el campo no existe: ordenar por fecha_creacion descendente
+            cursor = cursor.sort("fecha_creacion", -1)
+        documents = await cursor.skip(skip).limit(limit).to_list(length=limit)
         return [self.model_class(**self._clean_active_fields(doc)) for doc in documents]
     
     async def update_by_caso_code(self, caso_code: str, update_data: Dict[str, Any]) -> Optional[Caso]:

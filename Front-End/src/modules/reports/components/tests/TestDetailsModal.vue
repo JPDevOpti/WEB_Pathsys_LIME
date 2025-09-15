@@ -171,7 +171,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </template>
     
     <template #footer>
       <div class="flex justify-end">

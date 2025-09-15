@@ -1,5 +1,8 @@
 <template>
   <ComponentCard title="Rendimiento por Patólogo" description="Gráfico de barras apiladas mostrando dentro/fuera de oportunidad por patólogo.">
+    <template #icon>
+      <UserGroupIcon class="w-5 h-5 text-blue-600 mr-2" />
+    </template>
     <apexchart type="bar" height="320" :options="chartOptions" :series="chartSeries" />
   </ComponentCard>
 </template>
@@ -8,6 +11,7 @@
 import { computed } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
 import type { PathologistMetrics } from '../../types/pathologists.types'
+import { UserGroupIcon } from '@/assets/icons'
 
 const props = defineProps<{ datos: PathologistMetrics[] }>()
 

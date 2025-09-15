@@ -1,6 +1,6 @@
 import { computed, onMounted, ref, watch, onUnmounted } from 'vue'
 import type { Case, Filters, SortKey, SortOrder } from '../types/case.types'
-import { listCases, listTests, type BackendCase, type BackendTest } from '../services/caseListApi'
+import { listCases, listAllCases, searchCases, listTests, type BackendCase, type BackendTest } from '../services/caseListApi'
 import { getDefaultDateRange } from '../utils/dateUtils'
 import { useCasesStore } from '@/stores/cases.store'
 
@@ -49,7 +49,7 @@ export function useCaseList() {
   const selectedCaseIds = ref<string[]>([])
   const selectedCase = ref<Case | null>(null)
 
-  async function loadCases() {
+  async function loadCases(fullSearch: boolean = false) {
     isLoading.value = true
     error.value = null
     try {
@@ -64,7 +64,17 @@ export function useCaseList() {
         // continuar sin catálogo
       }
 
-      const data: BackendCase[] = await listCases()
+      // Construir parámetros de servidor para paginado y filtros
+      const serverParams: Record<string, any> = { skip: 0, limit: 100, sort_field: 'caso_code', sort_direction: -1 }
+      if (filters.value.searchQuery) serverParams.query = filters.value.searchQuery
+      if (filters.value.searchPathologist) serverParams.patologo_nombre = filters.value.searchPathologist
+      if (filters.value.selectedEntity) serverParams.entidad_nombre = filters.value.selectedEntity
+      if (filters.value.selectedStatus) serverParams.estado = filters.value.selectedStatus
+      if (filters.value.selectedTest) serverParams.prueba = filters.value.selectedTest
+      if (filters.value.dateFrom) serverParams.fecha_ingreso_desde = ddmmyyyyToISO(filters.value.dateFrom)
+      if (filters.value.dateTo) serverParams.fecha_ingreso_hasta = ddmmyyyyToISO(filters.value.dateTo)
+
+      const data: BackendCase[] = fullSearch ? await searchCases(serverParams) : await listCases(serverParams)
       cases.value = data.map((bk) => transformBackendCase(bk, testsCatalog))
     } catch (e: any) {
       error.value = 'Error al cargar los casos'

@@ -19,7 +19,7 @@
 
       <template v-else>
         <FiltersBar v-model="filters" :totalFiltered="filteredCases.length" :totalAll="cases.length"
-          :isLoading="isLoading" :canExport="filteredCases.length > 0" @refresh="reload" @export="exportExcel" />
+          :isLoading="isLoading" :canExport="filteredCases.length > 0" @refresh="reload" @export="exportExcel" @search="(f:any) => searchFullWith(f)" />
 
         <div class="bg-white rounded-xl border border-gray-200">
           <CasesTable :cases="paginatedCases" :selected-ids="selectedCaseIds" :is-all-selected="isAllSelected"
@@ -111,7 +111,8 @@ const hasActiveFilters = computed(() => {
   )
 })
 
-function reload() { loadCases() }
+function reload() { loadCases(false) }
+function searchFullWith(_f:any) { loadCases(true) }
 function exportExcel() { exportCasesToExcel(filteredCases.value) }
 function performCase(_c: any) { /* navegación se integrará luego */ }
 function editCase(c: any) {
@@ -147,24 +148,17 @@ function previewCase(c: any) {
 
 function handleNotesUpdate(updatedCase: any) {
   // Buscar por caso_code si no hay caseCode
-  const caseCode = updatedCase.caseCode || updatedCase.caso_code
+  const caseCode = updatedCase.caseCode
   
   // Actualizar solo las notas adicionales en la lista local
-  const caseIndex = cases.value.findIndex(c => (c.caseCode || c.caso_code) === caseCode)
+  const caseIndex = cases.value.findIndex(c => c.caseCode === caseCode)
   if (caseIndex !== -1) {
-    // Solo actualizar las notas adicionales, mantener el resto del caso intacto
-    cases.value[caseIndex] = {
-      ...cases.value[caseIndex],
-      notas_adicionales: updatedCase.notas_adicionales
-    }
+    cases.value[caseIndex].notas_adicionales = updatedCase.notas_adicionales
   }
   
   // Si el caso actual es el mismo que se actualizó, actualizar solo las notas en selectedCase
-  if ((selectedCase.value?.caseCode || selectedCase.value?.caso_code) === caseCode) {
-    selectedCase.value = {
-      ...selectedCase.value,
-      notas_adicionales: updatedCase.notas_adicionales
-    }
+  if (selectedCase.value && selectedCase.value.caseCode === caseCode) {
+    selectedCase.value.notas_adicionales = updatedCase.notas_adicionales
   }
 }
 
@@ -190,7 +184,7 @@ async function navigateToPreview(c: any) {
   }
   
   const payload = {
-    sampleId: c.caseCode || c.caso_code || c.id,
+    sampleId: c.caseCode || c.id,
     patient: {
       document: c.patient?.dni || c.paciente?.cedula || '',
       fullName: c.patient?.fullName || c.paciente?.nombre || '',
@@ -199,7 +193,7 @@ async function navigateToPreview(c: any) {
       entity: c.patient?.entity || c.paciente?.entidad_info?.nombre || ''
     },
     caseDetails: {
-      caso_code: c.caseCode || c.caso_code || c.id || '',
+      caso_code: c.caseCode || c.id || '',
       fecha_creacion: c.receivedAt || (c as any).fecha_creacion || '',
       fecha_entrega: c.deliveredAt || (c as any).fecha_entrega || '',
       fecha_firma: (c as any).signedAt || c.deliveredAt || (c as any).fecha_firma || null,
