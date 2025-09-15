@@ -1,7 +1,6 @@
 <template>
   <div class="space-y-4">
     <form class="space-y-4" @submit.prevent="onSubmit">
-      <!-- Sección de búsqueda de paciente (solo visible cuando no hay caseCodeProp) -->
       <div v-if="!caseCodeProp" class="bg-gray-50 rounded-lg border border-gray-200 px-4 py-4">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
           <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -9,17 +8,15 @@
           </svg>
           Buscar paciente para editar
         </h3>
-        <!-- Campo de búsqueda por cédula -->
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
           <div class="flex-1">
-            <FormInputField v-model="searchPatientCedula" placeholder="Ingrese documento de identidad" :required="true" :max-length="10" inputmode="numeric" :disabled="isSearching" @update:model-value="handleCedulaInput" @keydown.enter.prevent="searchPatient" />
+            <FormInputField v-model="searchPatientCedula" placeholder="Ingrese documento de identidad" :required="true" :max-length="12" inputmode="numeric" :disabled="isSearching" @update:model-value="handleCedulaInput" @keydown.enter.prevent="searchPatient" />
           </div>
           <div class="flex gap-2 sm:gap-3">
             <SearchButton text="Buscar" loading-text="Buscando..." :loading="isSearching" @click="searchPatient" size="md" variant="primary" />
             <ClearButton v-if="patientFound" text="Limpiar" @click="onReset" />
           </div>
         </div>
-        <!-- Mensaje de error en búsqueda -->
         <div v-if="searchError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
           <div class="flex items-center">
             <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,8 +25,7 @@
             <p class="text-sm text-red-600">{{ searchError }}</p>
           </div>
         </div>
-        <!-- Información del paciente encontrado -->
-        <div v-if="patientFound && foundPatientInfo" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div v-if="patientFound" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div class="flex items-center">
             <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -39,7 +35,6 @@
         </div>
       </div>
 
-      <!-- Mensaje instructivo cuando no hay paciente seleccionado -->
       <div v-if="!patientFound && !notification.visible" class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
         <div class="flex flex-col items-center space-y-3">
           <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,44 +45,37 @@
         </div>
       </div>
 
-      <!-- Formulario de edición (visible solo cuando se encuentra un paciente) -->
       <div v-if="patientFound" class="space-y-6">
-        <!-- Campos de nombre y código del paciente -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormInputField v-model="form.nombrePaciente" label="Nombre completo" placeholder="Ingrese el nombre del paciente" required />
           <FormInputField v-model="form.pacienteCode" label="Documento de identidad" placeholder="Documento del paciente" :required="true" :max-length="12" inputmode="numeric" />
         </div>
         
-        <!-- Otros campos del formulario -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormInputField v-model="form.edad" type="number" label="Edad" placeholder="Ingrese la edad" required />
           <FormSelect v-model="form.sexo" :options="sexoOptions" label="Sexo" placeholder="Seleccione sexo" required />
           <FormSelect v-model="form.tipoAtencion" :options="tipoAtencionOptions" label="Tipo de atención" placeholder="Seleccione tipo de atención" required />
           <EntityList v-model="form.entidadCodigo" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :error="getEntidadError" @entity-selected="onEntitySelected" />
         </div>
-        <FormTextarea v-model="form.observaciones" label="Observaciones" placeholder="Observaciones del paciente" :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional sobre el paciente" />
-        <!-- Botones de acción -->
+        <FormTextarea v-model="form.observaciones" label="Observaciones" placeholder="Observaciones del paciente" :rows="3" :max-length="500" />
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
           <ClearButton @click="onReset" :disabled="isLoading" />
           <SaveButton text="Guardar Cambios" @click="onSubmit" :disabled="isLoading || !isFormValid" :loading="isLoading" />
         </div>
       </div>
 
-      <!-- Notificación de resultado -->
       <div ref="notificationContainer" v-if="notification.visible">
         <Notification :visible="notification.visible" :type="notification.type" :title="notification.title" :message="notification.message" :inline="true" :auto-close="false" @close="closeNotification">
           <template v-if="notification.type === 'success' && updatedPatient" #content>
             <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div class="space-y-4">
-                <!-- Título del paciente -->
                 <div class="mb-4 pb-3 border-b border-gray-100">
                   <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedPatient.nombre }}</h3>
                   <p class="text-gray-600">
                     <span class="font-medium">Documento de identidad:</span> 
-                    <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedPatient.paciente_code || updatedPatient.cedula }}</span>
+                    <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedPatient.paciente_code }}</span>
                   </p>
                 </div>
-                <!-- Información del paciente en layout vertical -->
                 <div class="space-y-3 text-sm">
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Edad:</span>
@@ -116,15 +104,15 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, watch, onMounted, nextTick } from 'vue'
+import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton, SearchButton } from '@/shared/components/buttons'
-import { useNotifications } from '../composables'
-import casesApiService from '../services/casesApi.service'
-import patientsApiService from '../services/patientsApi.service'
+import { useNotifications } from '../../composables'
+import casesApiService from '../../services/casesApi.service'
+import patientsApiService from '../../services/patientsApi.service'
 import { EntityList } from '@/shared/components/List'
 import Notification from '@/shared/components/feedback/Notification.vue'
-import type { PatientData } from '../types'
+import type { PatientData } from '../../types'
 
 // Props y emits del componente
 interface Props { caseCodeProp?: string }
@@ -143,7 +131,6 @@ const searchPatientCedula = ref('')
 const isSearching = ref(false)
 const searchError = ref('')
 const patientFound = ref(false)
-const foundPatientInfo = ref<PatientData | null>(null)
 const selectedEntity = ref<{ codigo: string; nombre: string } | null>(null)
 
 // Formulario reactivo con datos del paciente
@@ -151,9 +138,8 @@ const form = reactive<PatientData>({
   pacienteCode: '', nombrePaciente: '', sexo: '', edad: '', entidad: '', entidadCodigo: '', tipoAtencion: '', observaciones: ''
 })
 
-// Opciones para los campos select
-const sexoOptions = [{ value: 'masculino', label: 'Masculino' }, { value: 'femenino', label: 'Femenino' }]
-const tipoAtencionOptions = [{ value: 'ambulatorio', label: 'Ambulatorio' }, { value: 'hospitalizado', label: 'Hospitalizado' }]
+const sexoOptions = [{ value: 'Masculino', label: 'Masculino' }, { value: 'Femenino', label: 'Femenino' }]
+const tipoAtencionOptions = [{ value: 'Ambulatorio', label: 'Ambulatorio' }, { value: 'Hospitalizado', label: 'Hospitalizado' }]
 
 // Validación del formulario
 const isFormValid = computed(() => (
@@ -163,23 +149,15 @@ const isFormValid = computed(() => (
 
 const getEntidadError = computed(() => !form.entidadCodigo ? 'La entidad es obligatoria' : '')
 
-// Función para hacer scroll a la notificación
-const scrollToNotification = async () => {
-  await nextTick()
-  if (notificationContainer.value) {
-    notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
-}
 
-// Mapea la respuesta de la API al formato PatientData
 const mapApiResponseToPatientData = (patient: any): PatientData => ({
-  pacienteCode: patient.paciente_code || patient.cedula,
+  pacienteCode: patient.paciente_code,
   nombrePaciente: patient.nombre,
-  sexo: (patient.sexo?.toLowerCase() === 'masculino' ? 'masculino' : 'femenino'),
+  sexo: patient.sexo,
   edad: String(patient.edad),
   entidad: patient.entidad_info?.nombre || '',
   entidadCodigo: patient.entidad_info?.id || '',
-  tipoAtencion: (patient.tipo_atencion?.toLowerCase() === 'ambulatorio' ? 'ambulatorio' : 'hospitalizado'),
+  tipoAtencion: patient.tipo_atencion,
   observaciones: patient.observaciones || ''
 })
 
@@ -202,7 +180,6 @@ const resetFormData = () => {
   searchPatientCedula.value = ''
   searchError.value = ''
   patientFound.value = false
-  foundPatientInfo.value = null
   selectedEntity.value = null
   originalData.value = null
 }
@@ -224,7 +201,6 @@ const loadPatientData = async () => {
     originalData.value = { ...mapped }
     updateSelectedEntity(patient)
     patientFound.value = true
-    foundPatientInfo.value = mapped
   } catch (error: any) {
     showNotification('error', 'Error', error.message || 'Error al cargar los datos del paciente')
   } finally {
@@ -232,11 +208,9 @@ const loadPatientData = async () => {
   }
 }
 
-// Maneja el envío del formulario para actualizar el paciente
 const onSubmit = async () => {
   if (!isFormValid.value) return
   
-  // Usar el código original del paciente para el endpoint, no el nuevo código del formulario
   const originalPatientCode = originalData.value?.pacienteCode || searchPatientCedula.value
   if (!originalPatientCode) {
     showNotification('error', 'Error', 'Debe buscar un paciente primero para poder editar sus datos')
@@ -245,36 +219,27 @@ const onSubmit = async () => {
 
   isLoading.value = true
   try {
-    // Validación de datos antes de enviar
-    const validation = patientsApiService.validatePatientData(form as PatientData)
-    if (!validation.isValid) throw new Error(`Datos inválidos: ${validation.errors.join(', ')}`)
-
     if (selectedEntity.value) {
       form.entidadCodigo = selectedEntity.value.codigo
       form.entidad = selectedEntity.value.nombre
     }
 
-    // Verificar si el código del paciente cambió
     const codeChanged = form.pacienteCode.trim() !== originalPatientCode
-    
     let updatedPatientResponse: any
 
     if (codeChanged) {
-      // Si cambió el código, usar el endpoint específico para cambio de código
       updatedPatientResponse = await patientsApiService.changePatientCode(originalPatientCode, form.pacienteCode.trim())
       showNotification('success', '¡Código de Paciente Actualizado!', 'El código del paciente ha sido cambiado exitosamente', 5000)
     } else {
-      // Si no cambió el código, usar el endpoint normal de actualización
       const patientUpdateData = {
         nombre: form.nombrePaciente.trim(),
         edad: parseInt(form.edad),
-        sexo: form.sexo === 'masculino' ? 'Masculino' : 'Femenino',
+        sexo: form.sexo,
         entidad_info: { id: form.entidadCodigo || '', nombre: form.entidad.trim() },
-        tipo_atencion: form.tipoAtencion === 'ambulatorio' ? 'Ambulatorio' : 'Hospitalizado',
+        tipo_atencion: form.tipoAtencion,
         observaciones: form.observaciones.trim()
       }
       
-      // Validaciones adicionales
       if (!patientUpdateData.nombre || !patientUpdateData.entidad_info.nombre) {
         throw new Error('El nombre del paciente y la entidad son obligatorios')
       }
@@ -287,7 +252,6 @@ const onSubmit = async () => {
         throw new Error('El sexo y tipo de atención son obligatorios')
       }
       
-      // Actualiza el paciente en la API usando el código original para el endpoint
       updatedPatientResponse = await patientsApiService.updatePatient(originalPatientCode, patientUpdateData as any)
       showNotification('success', '¡Paciente Actualizado Exitosamente!', '', 0)
     }
@@ -311,17 +275,14 @@ const onReset = () => {
   updatedPatient.value = null
 }
 
-// Maneja la entrada de la cédula con validación de formato
 const handleCedulaInput = (value: string) => {
   let cleanValue = value.replace(/\D/g, '')
-  if (cleanValue.length > 10) cleanValue = cleanValue.substring(0, 10)
+  if (cleanValue.length > 12) cleanValue = cleanValue.substring(0, 12)
   searchPatientCedula.value = cleanValue
   searchError.value = ''
   patientFound.value = false
-  foundPatientInfo.value = null
 }
 
-// Busca un paciente por su cédula
 const searchPatient = async () => {
   if (!searchPatientCedula.value.trim()) {
     searchError.value = 'Por favor ingrese un documento de identidad'
@@ -341,7 +302,6 @@ const searchPatient = async () => {
     
     if (patient) {
       const mappedPatientData = mapApiResponseToPatientData(patient)
-      foundPatientInfo.value = mappedPatientData
       patientFound.value = true
       Object.assign(form, mappedPatientData)
       originalData.value = { ...mappedPatientData }
@@ -349,18 +309,22 @@ const searchPatient = async () => {
     } else {
       searchError.value = `No se encontró un paciente con el código ${searchPatientCedula.value}`
       patientFound.value = false
-      foundPatientInfo.value = null
     }
   } catch (error: any) {
-    showNotification('error', 'Error', error.message || 'Error al buscar el paciente. Verifique la cédula e intente nuevamente.')
+    // Manejar diferentes tipos de errores
+    if (error.message?.includes('ERR_CONNECTION_REFUSED') || error.code === 'ERR_NETWORK') {
+      searchError.value = 'Error de conexión: El servidor no está disponible. Verifique que el backend esté ejecutándose.'
+    } else if (error.message?.includes('404') || error.message?.includes('No encontrado')) {
+      searchError.value = `No se encontró un paciente con el código ${searchPatientCedula.value}`
+    } else {
+      searchError.value = error.message || 'Error al buscar el paciente. Verifique la cédula e intente nuevamente.'
+    }
     patientFound.value = false
-    foundPatientInfo.value = null
   } finally {
     isSearching.value = false
   }
 }
 
-// Maneja la selección de entidad desde el componente EntityList
 const onEntitySelected = (entity: { codigo: string; nombre: string } | null) => {
   selectedEntity.value = entity
   if (entity) {
@@ -372,10 +336,12 @@ const onEntitySelected = (entity: { codigo: string; nombre: string } | null) => 
   }
 }
 
-// Watchers para cambios en props y notificaciones
 watch(() => props.caseCodeProp, (newCode) => { if (newCode) loadPatientData() }, { immediate: true })
-watch(() => notification.visible, (newValue) => { if (newValue) scrollToNotification() })
+watch(() => notification.visible, (newValue) => { 
+  if (newValue && notificationContainer.value) {
+    notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+})
 
-// Carga inicial de datos si hay un caseCodeProp
 onMounted(() => { if (props.caseCodeProp) loadPatientData() })
 </script>

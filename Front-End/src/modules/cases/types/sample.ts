@@ -11,7 +11,7 @@ export interface FormSubSample {
 }
 
 export interface CaseFormData {
-  pacienteCedula: string
+  pacienteDocumento: string
   fechaIngreso: string
   medicoSolicitante: string
   servicio: string

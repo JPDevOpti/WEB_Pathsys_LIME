@@ -1,8 +1,6 @@
 import { ref } from 'vue'
-import { casesApiService } from '../services'
-import { patientsApiService } from '../services'
-import { entitiesApiService } from '../services'
-import type { CaseFormData, CaseCreationResult, CreateCaseRequest, CreatedCase, CaseState } from '../types'
+import { casesApiService, patientsApiService, entitiesApiService } from '../services'
+import type { CaseFormData, CaseCreationResult, CreateCaseRequest, CreatedCase } from '../types'
 
 export function useCaseAPI() {
   const isLoading = ref(false)
@@ -10,45 +8,42 @@ export function useCaseAPI() {
   const entitiesCache = ref<Map<string, string>>(new Map())
 
   const getEntityNameByCode = async (entityCode: string): Promise<string> => {
-    if (entitiesCache.value.has(entityCode)) {
-      return entitiesCache.value.get(entityCode) || entityCode
-    }
+    if (entitiesCache.value.has(entityCode)) return entitiesCache.value.get(entityCode) || entityCode
+    
+    if (!entityCode) return 'Entidad no especificada'
     
     try {
-      if (!entityCode) return 'Entidad no especificada'
-      
       const entity = await entitiesApiService.getEntityByCode(entityCode)
       const entityName = entity?.nombre || entityCode
       entitiesCache.value.set(entityCode, entityName)
       return entityName
     } catch {
-      return entityCode || 'Entidad no especificada'
+      return 'Entidad no especificada'
     }
   }
 
   const normalizeSexo = (sexo: string): string => {
     const sexoLower = sexo.toLowerCase()
-    if (sexoLower === 'masculino' || sexoLower === 'm' || sexoLower === 'hombre') return 'Masculino'
-    if (sexoLower === 'femenino' || sexoLower === 'f' || sexoLower === 'mujer') return 'Femenino'
+    if (['masculino', 'm', 'hombre'].includes(sexoLower)) return 'Masculino'
+    if (['femenino', 'f', 'mujer'].includes(sexoLower)) return 'Femenino'
     return 'Masculino'
   }
 
   const normalizeTipoAtencion = (tipoAtencion: string): string => {
     const tipoLower = tipoAtencion.toLowerCase()
-    if (tipoLower === 'ambulatorio' || tipoLower === 'ambulatoria') return 'Ambulatorio'
-    if (tipoLower === 'hospitalizado' || tipoLower === 'hospitalizada' || tipoLower === 'hospitalizacion') return 'Hospitalizado'
+    if (['ambulatorio', 'ambulatoria'].includes(tipoLower)) return 'Ambulatorio'
+    if (['hospitalizado', 'hospitalizada', 'hospitalizacion'].includes(tipoLower)) return 'Hospitalizado'
     return 'Ambulatorio'
   }
 
   const transformCaseFormToApiRequest = async (formData: CaseFormData, verifiedPatient: any): Promise<CreateCaseRequest> => {
-    let entidadNombre = verifiedPatient.entidad
-    if (formData.entidadPaciente) {
-      entidadNombre = await getEntityNameByCode(formData.entidadPaciente)
-    }
+    const entidadNombre = formData.entidadPaciente 
+      ? await getEntityNameByCode(formData.entidadPaciente)
+      : verifiedPatient.entidad
     
     return {
       paciente: {
-        paciente_code: verifiedPatient.pacienteCode || verifiedPatient.codigo || `PAC_${verifiedPatient.pacienteCode}`,
+        paciente_code: verifiedPatient.pacienteCode || verifiedPatient.codigo,
         nombre: verifiedPatient.nombrePaciente,
         edad: parseInt(verifiedPatient.edad),
         sexo: normalizeSexo(verifiedPatient.sexo),
@@ -69,21 +64,21 @@ export function useCaseAPI() {
           cantidad: prueba.cantidad || 1
         }))
       })),
-      estado: 'En proceso' as CaseState,
+      estado: 'En proceso',
       prioridad: formData.prioridadCaso || 'Normal',
       observaciones_generales: formData.observaciones || undefined
     }
   }
 
   const buildCreatedCase = (apiResponse: any, verifiedPatient: any, caseData: CaseFormData): CreatedCase => {
-    const codigoCaso = (apiResponse as any).caso_code || (apiResponse as any).CasoCode || (apiResponse as any).codigo || (apiResponse as any).code
+    const codigoCaso = apiResponse.caso_code || apiResponse.CasoCode || apiResponse.codigo || apiResponse.code
     
     return {
       id: apiResponse._id || apiResponse.id || codigoCaso,
       codigo: codigoCaso,
       paciente: {
         paciente_code: apiResponse.paciente?.paciente_code || verifiedPatient.pacienteCode,
-        cedula: apiResponse.paciente?.cedula || verifiedPatient.pacienteCode, // Mantener por compatibilidad
+        cedula: apiResponse.paciente?.cedula || verifiedPatient.pacienteCode,
         nombre: apiResponse.paciente?.nombre || verifiedPatient.nombrePaciente,
         edad: apiResponse.paciente?.edad || parseInt(verifiedPatient.edad),
         sexo: apiResponse.paciente?.sexo || verifiedPatient.sexo,
@@ -97,7 +92,7 @@ export function useCaseAPI() {
       muestras: caseData.muestras,
       observaciones: apiResponse.observaciones_generales || caseData.observaciones || '',
       estado: apiResponse.estado || 'Pendiente',
-      fechaCreacion: apiResponse.fecha_ingreso || new Date().toISOString()
+      fechaCreacion: apiResponse.fecha_creacion || apiResponse.fecha_ingreso || new Date().toISOString()
     }
   }
 
@@ -112,33 +107,34 @@ export function useCaseAPI() {
       const apiResponse = await casesApiService.createCase(apiRequest)
       
       try {
-        let entidadNombre = verifiedPatient.entidad
-        if (caseData.entidadPaciente && caseData.entidadPaciente !== verifiedPatient.entidadCodigo) {
-          entidadNombre = await getEntityNameByCode(caseData.entidadPaciente)
-        }
+        const entidadNombre = caseData.entidadPaciente && caseData.entidadPaciente !== verifiedPatient.entidadCodigo
+          ? await getEntityNameByCode(caseData.entidadPaciente)
+          : verifiedPatient.entidad
         
-        const patientUpdateData = {
-          numeroCedula: verifiedPatient.pacienteCode,
-          nombrePaciente: verifiedPatient.nombrePaciente,
-          sexo: verifiedPatient.sexo,
-          edad: verifiedPatient.edad,
-          entidad: entidadNombre,
-          entidadCodigo: caseData.entidadPaciente || verifiedPatient.entidadCodigo,
-          tipoAtencion: caseData.tipoAtencionPaciente || verifiedPatient.tipoAtencion,
-          observaciones: verifiedPatient.observaciones || ''
-        }
-        
-        await patientsApiService.updatePatient(verifiedPatient.pacienteCode, patientUpdateData)
+        await patientsApiService.updatePatient(verifiedPatient.pacienteCode, {
+          nombre: verifiedPatient.nombrePaciente,
+          edad: parseInt(verifiedPatient.edad),
+          sexo: normalizeSexo(verifiedPatient.sexo),
+          entidad_info: {
+            id: caseData.entidadPaciente || verifiedPatient.entidadCodigo || 'ent_default',
+            nombre: entidadNombre
+          },
+          tipo_atencion: normalizeTipoAtencion(caseData.tipoAtencionPaciente || verifiedPatient.tipoAtencion),
+          observaciones: verifiedPatient.observaciones || undefined
+        })
       } catch {
-        // No fallar la creación del caso por un error en la actualización del paciente
       }
       
-      return {
-        success: true,
-        codigo: apiResponse.caso_code,
-        message: 'Caso creado exitosamente',
-        case: buildCreatedCase(apiResponse, verifiedPatient, caseData)
+      if (apiResponse?.caso_code) {
+        return {
+          success: true,
+          codigo: apiResponse.caso_code,
+          message: 'Caso creado exitosamente',
+          case: buildCreatedCase(apiResponse, verifiedPatient, caseData)
+        }
       }
+      
+      throw new Error('Error al crear el caso: respuesta inválida del servidor')
       
     } catch (err: any) {
       error.value = err.message || 'Error desconocido al crear el caso'
@@ -148,32 +144,12 @@ export function useCaseAPI() {
     }
   }
 
-  const searchCases = async (searchTerm: string) => {
-    isLoading.value = true
-    error.value = ''
-
-    try {
-      const response = await casesApiService.searchCases({ query: searchTerm, limit: 10 })
-      return { success: true, cases: response.casos }
-    } catch (err: any) {
-      error.value = err.message || 'Error al buscar casos'
-      return { success: false, message: error.value, cases: [] }
-    } finally {
-      isLoading.value = false
-    }
-  }
 
   const clearState = () => {
     error.value = ''
     isLoading.value = false
   }
 
-  return {
-    isLoading,
-    error,
-    createCase,
-    searchCases,
-    clearState
-  }
+  return { isLoading, error, createCase, clearState }
 }
 

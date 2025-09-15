@@ -222,7 +222,7 @@ import { BaseButton } from '@/shared/components'
 import { ConfirmDialog } from '@/shared/components/feedback'
 import { computed } from 'vue'
 import { useSidebar } from '@/shared/composables/SidebarControl'
-import type { CaseApprovalDetails } from '../types/case-approval.types'
+import type { CaseApprovalDetails } from '../../types/case-approval.types'
 
 interface Props {
   caseItem: CaseApprovalDetails | null

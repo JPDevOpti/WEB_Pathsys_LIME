@@ -11,7 +11,7 @@ import { MAX_MUESTRAS } from '../types'
 
 export function useCaseForm() {
   const formData = reactive<CaseFormData>({
-    pacienteCedula: '',
+    pacienteDocumento: '',
     fechaIngreso: new Date().toISOString().split('T')[0],
     medicoSolicitante: '',
     servicio: '',
@@ -75,7 +75,7 @@ export function useCaseForm() {
     errors.medicoSolicitante = []
     warnings.medicoSolicitante = []
 
-    if (!formData.medicoSolicitante || !formData.medicoSolicitante.trim()) {
+    if (!formData.medicoSolicitante?.trim()) {
       errors.medicoSolicitante.push('El médico solicitante es requerido')
       return false
     }
@@ -92,9 +92,8 @@ export function useCaseForm() {
     errors.servicio = []
     warnings.servicio = []
 
-    // Solo validar servicio si hay un médico solicitante
-    if (formData.medicoSolicitante && formData.medicoSolicitante.trim()) {
-      if (!formData.servicio || !formData.servicio.trim()) {
+    if (formData.medicoSolicitante?.trim()) {
+      if (!formData.servicio?.trim()) {
         errors.servicio.push('El servicio es requerido cuando se especifica un médico')
         return false
       }
@@ -117,8 +116,7 @@ export function useCaseForm() {
       return false
     }
 
-    const prioridadesValidas = ['Normal', 'Prioritario']
-    if (!prioridadesValidas.includes(formData.prioridadCaso)) {
+    if (!['Normal', 'Prioritario'].includes(formData.prioridadCaso)) {
       errors.prioridadCaso.push('La prioridad seleccionada no es válida')
       return false
     }
@@ -181,24 +179,15 @@ export function useCaseForm() {
   }
 
   const validateRequiredFields = (): boolean => {
-    const requiredFields = [
-      'entidadPaciente', 
-      'tipoAtencionPaciente', 
-      'fechaIngreso', 
-      'prioridadCaso', 
-      'medicoSolicitante'
-    ]
+    const requiredFields = ['entidadPaciente', 'tipoAtencionPaciente', 'fechaIngreso', 'prioridadCaso', 'medicoSolicitante']
     
-    // Validar campos básicos obligatorios
     const basicFieldsValid = requiredFields.every(field => 
       formData[field as keyof CaseFormData] && 
       String(formData[field as keyof CaseFormData]).trim() !== ''
     )
     
-    // Validar servicio condicionalmente
-    const servicioValid = !formData.medicoSolicitante || 
-                         !formData.medicoSolicitante.trim() || 
-                         !!(formData.servicio && formData.servicio.trim() !== '')
+    const servicioValid = !formData.medicoSolicitante?.trim() || 
+                         !!(formData.servicio?.trim())
     
     return basicFieldsValid && servicioValid
   }
@@ -252,7 +241,7 @@ export function useCaseForm() {
 
   const clearForm = (): void => {
     Object.assign(formData, {
-      pacienteCedula: '',
+      pacienteDocumento: '',
       fechaIngreso: new Date().toISOString().split('T')[0],
       medicoSolicitante: '',
       servicio: '',
@@ -269,7 +258,6 @@ export function useCaseForm() {
   }
 
   const isFormValid = computed(() => {
-    // Verificar si los campos están completos sin ejecutar validaciones que modifiquen los errores
     const hasRequiredFields = formData.entidadPaciente && 
                               formData.tipoAtencionPaciente && 
                               formData.fechaIngreso && 
@@ -290,7 +278,6 @@ export function useCaseForm() {
   return {
     formData, validationState, errors, warnings, isLoading, isFormValid,
     validateForm, clearForm, handleNumeroMuestrasChange, addPruebaToMuestra,
-    removePruebaFromMuestra, createEmptySubSample, createEmptyTest,
-    validateFechaIngreso, validateMedicoSolicitante, validateServicio, validatePrioridad, validateNumeroMuestras, validateMuestras
+    removePruebaFromMuestra, createEmptySubSample, createEmptyTest
   }
 }

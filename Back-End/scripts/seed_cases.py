@@ -409,48 +409,105 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                         fecha_finalizacion = fecha_creacion + timedelta(days=random.randint(1, max(1, days_since_creation)))
                     
                 elif estado_final == EstadoCasoEnum.POR_ENTREGAR:
-                    # Por entregar: con fecha de firma pero SIN fecha de entrega
+                    # Por entregar: ya firmados pero aún sin entrega
+                    # Firma: mayoría 1-3 días, minoría 4-7 días
                     if days_since_creation == 0:
-                        # Si es de hoy, firmar el mismo día
                         firma_offset_days = 0
                     else:
-                        firma_offset_days = random.randint(1, min(3, max(1, days_since_creation)))
+                        r = random.random()
+                        if r < 0.8:
+                            upper = min(3, days_since_creation)
+                            if upper < 1:
+                                firma_offset_days = 0
+                            else:
+                                firma_offset_days = random.randint(1, upper)
+                        else:
+                            upper = min(7, days_since_creation)
+                            if upper < 4:
+                                firma_offset_days = random.randint(1, upper)
+                            else:
+                                firma_offset_days = random.randint(4, upper)
                     fecha_firma_final = fecha_creacion + timedelta(days=firma_offset_days)
-                    fecha_entrega = None  # IMPORTANTE: Sin fecha de entrega
+                    fecha_entrega = None
                     fecha_finalizacion = fecha_firma_final
                     
-                else:  # COMPLETADO - Solo unos pocos casos recientes
-                    # Completado: con todas las fechas
+                else:  # COMPLETADO - recientes
+                    # Completado: creación → firma → entrega (entrega >= firma)
                     if days_since_creation == 0:
-                        # Si es de hoy, completar el mismo día
                         days_to_delivery = 0
                         fecha_entrega = fecha_creacion
                         fecha_firma_final = fecha_creacion
                     else:
-                        max_delivery_days = max(1, min(days_since_creation, 5))  # Máximo 5 días para casos recientes
-                        days_to_delivery = random.randint(1, max_delivery_days)
-                        fecha_entrega = fecha_creacion + timedelta(days=days_to_delivery)
-                        
-                        firma_offset_days = random.randint(1, min(2, days_to_delivery))
-                        fecha_firma_final = fecha_creacion + timedelta(days=firma_offset_days)
-                        
-                        if fecha_firma_final > fecha_entrega:
-                            fecha_firma_final = fecha_entrega
+                        # Firma: 70% 1-3 días, 20% 4-7, 8% 8-10, 2% 11-14 días
+                        max_span = max(1, min(14, days_since_creation))
+                        r = random.random()
+                        if r < 0.70:
+                            upper = min(3, max_span)
+                            if upper < 1:
+                                firma_offset_days = 0
+                            else:
+                                firma_offset_days = random.randint(1, upper)
+                        elif r < 0.90:
+                            upper = min(7, max_span)
+                            if upper < 4:
+                                firma_offset_days = random.randint(1, upper)
+                            else:
+                                firma_offset_days = random.randint(4, upper)
+                        elif r < 0.98:
+                            upper = min(10, max_span)
+                            if upper < 8:
+                                firma_offset_days = random.randint(1, upper)
+                            else:
+                                firma_offset_days = random.randint(8, upper)
+                        else:
+                            if max_span < 11:
+                                firma_offset_days = random.randint(1, max_span)
+                            else:
+                                firma_offset_days = random.randint(11, max_span)
+                        fecha_firma_final = fecha_creacion + timedelta(days=firma_offset_days, hours=random.randint(0, 8))
+                        # Entrega: 0-3 días después de la firma (al menos mismo día)
+                        extra = random.randint(0, 3)
+                        days_to_delivery = max(firma_offset_days, firma_offset_days + extra)
+                        fecha_entrega = fecha_creacion + timedelta(days=days_to_delivery, hours=random.randint(0, 6))
                     
                     fecha_finalizacion = fecha_entrega
             else:
                 # Casos antiguos: TODOS completados con fecha de entrega
-                max_delivery_days = max(1, min(10, days_since_creation))
-                days_to_delivery = random.randint(1, max_delivery_days)
-                fecha_entrega = fecha_creacion + timedelta(days=days_to_delivery)
-                
-                # Validación adicional para evitar errores
-                max_firma_days = min(3, days_to_delivery)
-                firma_offset_days = random.randint(1, max(1, max_firma_days))
-                fecha_firma_final = fecha_creacion + timedelta(days=firma_offset_days)
-                
-                if fecha_firma_final > fecha_entrega:
-                    fecha_firma_final = fecha_entrega
+                # Entregas hasta 30 días para cubrir colas realistas
+                max_delivery_days = max(1, min(30, days_since_creation))
+                # Firma: 60% 1-3 días, 25% 4-7, 10% 8-12, 5% 13-20
+                r = random.random()
+                if r < 0.60:
+                    upper = min(3, max_delivery_days)
+                    if upper < 1:
+                        firma_offset_days = 0
+                    else:
+                        firma_offset_days = random.randint(1, upper)
+                elif r < 0.85:
+                    upper = min(7, max_delivery_days)
+                    if upper < 4:
+                        firma_offset_days = random.randint(1, upper)
+                    else:
+                        firma_offset_days = random.randint(4, upper)
+                elif r < 0.95:
+                    upper = min(12, max_delivery_days)
+                    if upper < 8:
+                        firma_offset_days = random.randint(1, upper)
+                    else:
+                        firma_offset_days = random.randint(8, upper)
+                else:
+                    # Proteger contra rango vacío cuando max_delivery_days < 13
+                    upper_cap = min(20, max_delivery_days)
+                    if upper_cap < 13:
+                        firma_offset_days = random.randint(1, upper_cap)
+                    else:
+                        firma_offset_days = random.randint(13, upper_cap)
+                # Asegurar que entrega sea >= firma
+                min_delivery = max(1, firma_offset_days)
+                max_delivery = max(min_delivery, max_delivery_days)
+                days_to_delivery = random.randint(min_delivery, max_delivery)
+                fecha_firma_final = fecha_creacion + timedelta(days=firma_offset_days, hours=random.randint(0, 10))
+                fecha_entrega = fecha_creacion + timedelta(days=days_to_delivery, hours=random.randint(0, 8))
                 
                 estado_final = EstadoCasoEnum.COMPLETADO
                 fecha_finalizacion = fecha_entrega

@@ -60,7 +60,8 @@ class AuxiliarService:
                 name=auxiliar_data.auxiliar_name,
                 email=auxiliar_data.auxiliar_email,
                 password=password,
-                is_active=auxiliar_data.is_active
+                is_active=auxiliar_data.is_active,
+                auxiliar_code=auxiliar_data.auxiliar_code
             )
             
             return self._to_response(auxiliar)

@@ -27,6 +27,27 @@ from .caso import (
     AgregarNotaAdicionalRequest
 )
 
+# Importar esquemas de gestión modular
+from .management import (
+    # Create schemas
+    CreateCaseRequest,
+    CreateCaseResponse,
+    CreatedCaseInfo,
+    PatientInfo as ManagementPatientInfo,
+    EntityInfo as ManagementEntityInfo,
+    Subsample,
+    SubsampleTest,
+    PatientSex,
+    AttentionType,
+    CasePriority,
+    CaseState,
+    
+    # Update schemas
+    UpdateCaseRequest,
+    UpdateCaseResponse,
+    UpdatedCaseInfo
+)
+
 __all__ = [
     "MuestraInfo",
     "PacienteInfo",
@@ -51,5 +72,21 @@ __all__ = [
     "PatologoPorPrueba",
     # Clases para notas adicionales
     "NotaAdicional",
-    "AgregarNotaAdicionalRequest"
+    "AgregarNotaAdicionalRequest",
+    
+    # Esquemas de gestión modular
+    "CreateCaseRequest",
+    "CreateCaseResponse",
+    "CreatedCaseInfo",
+    "ManagementPatientInfo",
+    "ManagementEntityInfo",
+    "Subsample",
+    "SubsampleTest",
+    "PatientSex",
+    "AttentionType",
+    "CasePriority",
+    "CaseState",
+    "UpdateCaseRequest",
+    "UpdateCaseResponse",
+    "UpdatedCaseInfo"
 ]

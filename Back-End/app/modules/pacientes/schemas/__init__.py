@@ -1,5 +1,3 @@
-"""Esquemas del módulo de pacientes"""
-
 from .paciente import (
     Sexo,
     TipoAtencion,
@@ -7,8 +5,7 @@ from .paciente import (
     PacienteCreate,
     PacienteUpdate,
     PacienteResponse,
-    PacienteSearch,
-    PacienteStats
+    PacienteSearch
 )
 
 __all__ = [
@@ -18,8 +15,7 @@ __all__ = [
     "PacienteCreate",
     "PacienteUpdate",
     "PacienteResponse",
-    "PacienteSearch",
-    "PacienteStats"
+    "PacienteSearch"
 ]
 
 

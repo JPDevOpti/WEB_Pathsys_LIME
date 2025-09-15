@@ -17,3 +17,13 @@ class DashboardMetricsResponse(BaseModel):
     pacientes: MesActualStats
     casos: MesActualStats
 
+
+class OpportunityStatsResponse(BaseModel):
+    porcentaje_oportunidad: float
+    cambio_porcentual: float
+    tiempo_promedio: float
+    casos_dentro_oportunidad: int
+    casos_fuera_oportunidad: int
+    total_casos_mes_anterior: int
+    mes_anterior: dict
+

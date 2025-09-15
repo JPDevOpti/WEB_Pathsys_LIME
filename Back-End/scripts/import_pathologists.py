@@ -134,6 +134,12 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
         user_service = UserManagementService(db)
         service = PatologoService(repo, user_service)
 
+        # Asegurar índice para búsquedas por código de patólogo en usuarios
+        try:
+            await db.usuarios.create_index("patologo_code")
+        except Exception:
+            pass
+
         for i, row in enumerate(PATHOLOGISTS_DOCENTES, 1):
             raw_code = str(row.get("raw_code", "")).strip()
             raw_name = str(row.get("raw_name", "")).strip()
@@ -186,12 +192,20 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                 )
 
                 await service.create_patologo(payload)
+
+                # Forzar que el usuario creado/actualizado tenga el campo patologo_code
+                await db.usuarios.update_one(
+                    {"email": email},
+                    {"$set": {"patologo_code": raw_code}},
+                    upsert=False
+                )
                 print(f"  [OK] Patólogo creado exitosamente")
                 print(f"    - Código: {raw_code}")
                 print(f"    - Email: {email}")
                 print(f"    - Iniciales: {initials}")
                 print(f"    - Registro médico: {registro_medico}")
                 print(f"    - Creado en: patologos + usuarios (rol: patologo)")
+                print(f"    - Usuario actualizado con patologo_code: {raw_code}")
                 created += 1
                 
             except ValueError as e:

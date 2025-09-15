@@ -1,11 +1,5 @@
 <template>
-  <Modal
-    v-model="isOpen"
-    title="Detalles del Caso"
-    size="lg"
-    @close="emit('close')"
-    class="debug-modal"
-  >
+  <Modal v-model="isOpen" title="Detalles del Caso" size="lg" @close="emit('close')" class="debug-modal">
     <div v-if="caseItem" class="space-y-4">
       <div class="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
         <div>
@@ -21,8 +15,8 @@
           <p class="text-base font-medium text-gray-900">{{ caseItem.paciente.nombre }}</p>
         </div>
         <div>
-          <p class="text-sm text-gray-500">Cédula</p>
-          <p class="text-base font-medium text-gray-900">{{ caseItem.paciente.cedula }}</p>
+          <p class="text-sm text-gray-500">Documento</p>
+          <p class="text-base font-medium text-gray-900">{{ caseItem.paciente.cedula || 'N/A' }}</p>
         </div>
         <div>
           <p class="text-sm text-gray-500">Entidad</p>
@@ -38,7 +32,7 @@
         </div>
         <div>
           <p class="text-sm text-gray-500">Días en Sistema</p>
-          <p class="text-base font-medium text-gray-900" :class="daysClass(caseItem)">
+          <p class="text-base font-medium text-gray-900" :class="urgencyClass(caseItem)">
             {{ caseItem.dias_en_sistema }} días
           </p>
         </div>
@@ -46,7 +40,7 @@
 
       <div class="bg-gray-50 rounded-xl p-4 space-y-3">
         <h5 class="text-sm font-medium text-gray-700">Pruebas Solicitadas</h5>
-        <div v-if="caseItem.pruebas && caseItem.pruebas.length" class="space-y-3">
+        <div v-if="caseItem.pruebas?.length" class="space-y-3">
           <div v-for="(prueba, pIdx) in caseItem.pruebas" :key="pIdx" class="border border-gray-200 rounded-lg p-3 bg-white">
             <span class="text-sm font-medium text-gray-900">{{ extractTestCode(prueba) }} - {{ getTestName(prueba) }}</span>
           </div>
@@ -59,13 +53,13 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <p class="text-sm text-gray-500">Prioridad</p>
-            <p class="text-sm font-medium text-gray-900" :class="priorityClass(caseItem)">
+            <p class="text-sm font-medium text-gray-900" :class="urgencyClass(caseItem)">
               {{ getPriorityLabel(caseItem) }}
             </p>
           </div>
           <div>
             <p class="text-sm text-gray-500">Tiempo Restante</p>
-            <p class="text-sm font-medium text-gray-900" :class="timeRemainingClass(caseItem)">
+            <p class="text-sm font-medium text-gray-900" :class="urgencyClass(caseItem)">
               {{ getTimeRemaining(caseItem) }}
             </p>
           </div>
@@ -76,12 +70,7 @@
     <template #footer>
       <div v-if="caseItem" class="flex justify-end gap-2">
         <PrintPdfButton text="Imprimir PDF" :caseCode="caseItem.codigo" />
-        <CloseButton
-          @click="emit('close')"
-          variant="danger-outline"
-          size="md"
-          text="Cerrar"
-        />
+        <CloseButton @click="emit('close')" variant="danger-outline" size="md" text="Cerrar" />
       </div>
     </template>
   </Modal>
@@ -94,58 +83,26 @@ import { CloseButton, PrintPdfButton } from '@/shared/components/buttons'
 import { Modal } from '@/shared/components/layout'
 
 const props = defineProps<{ caseItem: CasoUrgente | null }>()
-const emit = defineEmits<{ 
-  (e: 'close'): void; 
-  (e: 'edit', caso: CasoUrgente): void; 
-  (e: 'preview', caso: CasoUrgente): void; 
-}>()
+const emit = defineEmits<{ (e: 'close'): void }>()
 
 const isOpen = computed(() => !!props.caseItem)
 
-function formatDate(dateString: string) {
+const formatDate = (dateString: string) => {
   if (!dateString) return 'N/A'
-  const d = new Date(dateString)
-  return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return new Date(dateString).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-function daysClass(caso: CasoUrgente): string {
-  const days = caso.dias_en_sistema
-  if (days >= 5 && caso.estado !== 'Completado') return 'text-red-700'
-  return 'text-blue-700'
-}
+const isUrgent = (caso: CasoUrgente) => caso.dias_en_sistema >= 5 && caso.estado !== 'Completado'
 
-function priorityClass(caso: CasoUrgente): string {
-  const days = caso.dias_en_sistema
-  if (days >= 5 && caso.estado !== 'Completado') return 'text-red-700 font-semibold'
-  return 'text-green-700'
-}
+const urgencyClass = (caso: CasoUrgente) => isUrgent(caso) ? 'text-red-700 font-semibold' : 'text-green-700'
 
-function getPriorityLabel(caso: CasoUrgente): string {
-  const days = caso.dias_en_sistema
-  if (days >= 5 && caso.estado !== 'Completado') return 'URGENTE'
-  return 'NORMAL'
-}
+const getPriorityLabel = (caso: CasoUrgente) => isUrgent(caso) ? 'URGENTE' : 'NORMAL'
 
-function timeRemainingClass(caso: CasoUrgente): string {
-  const days = caso.dias_en_sistema
-  if (days >= 5 && caso.estado !== 'Completado') return 'text-red-700 font-semibold'
-  return 'text-green-700'
-}
+const getTimeRemaining = (caso: CasoUrgente) => isUrgent(caso) ? `${caso.dias_en_sistema} días en sistema` : 'Dentro del tiempo límite'
 
-function getTimeRemaining(caso: CasoUrgente): string {
-  const days = caso.dias_en_sistema
-  if (days >= 5 && caso.estado !== 'Completado') {
-    return `${days} días en sistema`
-  }
-  return 'Dentro del tiempo límite'
-}
+const extractTestCode = (testString: string) => testString.match(/^\d{6}/)?.[0] || testString.split(' - ')[0]
 
-function extractTestCode(testString: string): string {
-  const match = testString.match(/^\d{6}/)
-  return match ? match[0] : testString.split(' - ')[0]
-}
-
-function getTestName(testString: string): string {
+const getTestName = (testString: string) => {
   const parts = testString.split(' - ')
   return parts.length > 1 ? parts.slice(1).join(' - ') : testString
 }

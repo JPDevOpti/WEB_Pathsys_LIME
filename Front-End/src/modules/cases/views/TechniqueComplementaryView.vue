@@ -4,7 +4,10 @@
     <div class="p-6">
       <div class="grid grid-cols-1 gap-6">
         <!-- Componente principal de Nueva técnica complementaria -->
-        <NewTechniqueComplementary />
+        <!-- Placeholder: componente no disponible tras reorganización -->
+        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
+          Pending: Complementary Technique form component
+        </div>
       </div>
     </div>
   </AdminLayout>
@@ -14,7 +17,7 @@
 import { ref } from 'vue'
 import { AdminLayout } from '@/shared'
 import { PageBreadcrumb } from '@/shared/components/navigation'
-import NewTechniqueComplementary from '../components/NewTechniqueComplementary.vue'
+// import NewTechniqueComplementary from '../components/create/NewTechniqueComplementary.vue'
 
 // ============================================================================
 // ESTADO DEL COMPONENTE

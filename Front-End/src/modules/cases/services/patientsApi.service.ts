@@ -28,6 +28,15 @@ interface PatientResponse {
 
 export class PatientsApiService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.PATIENTS
+  async getPatientByDocumento(documento: string): Promise<PatientResponse | null> {
+    try {
+      const response = await apiClient.get<PatientResponse>(`${this.endpoint}/documento/${documento}`)
+      return response
+    } catch (error: any) {
+      if (error.response?.status === 404) return null
+      throw new Error(`Error al buscar paciente: ${error.message}`)
+    }
+  }
 
   async createPatient(patientData: PatientData): Promise<PatientResponse> {
     try {
@@ -73,13 +82,8 @@ export class PatientsApiService {
   }
 
   async getPatientByCedula(cedula: string): Promise<PatientResponse | null> {
-    try {
-      const response = await apiClient.get<PatientResponse>(`${this.endpoint}/codigo/${cedula}`)
-      return response
-    } catch (error: any) {
-      if (error.response?.status === 404) return null
-      throw new Error(`Error al buscar paciente: ${error.message}`)
-    }
+    // Mantener por compatibilidad en otros lugares por ahora si existiera
+    return this.getPatientByDocumento(cedula)
   }
 
   async updatePatient(cedula: string, patientData: any): Promise<PatientResponse> {

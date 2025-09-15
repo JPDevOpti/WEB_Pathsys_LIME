@@ -1,3 +1,5 @@
-export { default as NewPatient } from './NewPatient.vue'
-export { default as NewTechniqueComplementary } from './NewTechniqueComplementary.vue'
-export { default as CasesToApproveList } from './CasesToApproveList.vue'
+// Exportar desde carpetas organizadas por funcionalidad
+export * from './edit'
+export * from './create'
+export * from './management'
+export * from './review'

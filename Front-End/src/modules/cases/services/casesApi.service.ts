@@ -9,10 +9,6 @@ import type {
 export class CasesApiService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.CASES
 
-  /**
-   * Limpia campos duplicados de estado activo que puede agregar el backend
-   * Mantiene snake_case (is_active) y elimina camelCase (isActive)
-   */
   private cleanDuplicateActiveFields(data: any): any {
     if (!data || typeof data !== 'object') return data
     
@@ -114,6 +110,7 @@ export class CasesApiService {
 
   async createCase(caseData: CreateCaseRequest): Promise<CreateCaseResponse> {
     try {
+      // Usar el nuevo endpoint optimizado de management/create
       const response = await apiClient.post<CreateCaseResponse>(this.endpoint, caseData)
       return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
@@ -123,27 +120,37 @@ export class CasesApiService {
 
   async updateCase(caseCode: string, updateData: UpdateCaseRequest): Promise<UpdateCaseResponse> {
     try {
-      const response = await apiClient.put<UpdateCaseResponse>(`${this.endpoint}/caso-code/${caseCode}`, updateData)
+      // Usar el nuevo endpoint de management/update
+      const response = await apiClient.put<UpdateCaseResponse>(`${this.endpoint}/${caseCode}`, updateData)
       return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
-  // Reutilizar formateo de errores de validación
-  throw this.handleValidationError(error)
+      // Reutilizar formateo de errores de validación
+      throw this.handleValidationError(error)
     }
   }
 
-  async assignPathologist(caseCode: string, pathologistData: { codigo: string; nombre: string }): Promise<CaseModel> {
+  async assignPathologist(caseCode: string, pathologistData: { codigo: string; nombre: string }): Promise<UpdateCaseResponse> {
     try {
-      const response = await apiClient.put<CaseModel>(`${this.endpoint}/caso-code/${caseCode}/asignar-patologo`, pathologistData)
-      return response
+      // Usar el nuevo endpoint de actualización para asignar patólogo
+      const updateData: UpdateCaseRequest = {
+        patologo_asignado: {
+          codigo: pathologistData.codigo,
+          nombre: pathologistData.nombre
+        }
+      }
+      return await this.updateCase(caseCode, updateData)
     } catch (error: any) {
       throw new Error(error.message || `Error al asignar patólogo al caso ${caseCode}`)
     }
   }
 
-  async unassignPathologist(caseCode: string): Promise<CaseModel> {
+  async unassignPathologist(caseCode: string): Promise<UpdateCaseResponse> {
     try {
-      const response = await apiClient.delete<CaseModel>(`${this.endpoint}/caso-code/${caseCode}/desasignar-patologo`)
-      return response
+      // Usar el nuevo endpoint de actualización para desasignar patólogo
+      const updateData: UpdateCaseRequest = {
+        patologo_asignado: undefined
+      }
+      return await this.updateCase(caseCode, updateData)
     } catch (error: any) {
       throw new Error(error.message || `Error al desasignar patólogo del caso ${caseCode}`)
     }
@@ -160,11 +167,15 @@ export class CasesApiService {
 
   async addAdditionalNote(caseCode: string, note: string, addedBy?: string): Promise<UpdateCaseResponse> {
     try {
-      const response = await apiClient.post<UpdateCaseResponse>(`${this.endpoint}/caso-code/${caseCode}/notas-adicionales`, {
-        nota: note,
-        agregado_por: addedBy || 'Usuario'
-      })
-      return this.cleanDuplicateActiveFields(response)
+      // Usar el nuevo endpoint de actualización para agregar nota
+      const updateData: any = {
+        notas_adicionales: [{
+          fecha: new Date().toISOString(),
+          nota: note,
+          agregado_por: addedBy || 'Usuario'
+        }]
+      }
+      return await this.updateCase(caseCode, updateData)
     } catch (error: any) {
       throw new Error(error.message || `Error al agregar nota adicional al caso ${caseCode}`)
     }
@@ -172,7 +183,7 @@ export class CasesApiService {
 
   /**
    * Marca múltiples casos como Completado aplicando cambios en sus muestras.
-   * Genera múltiples peticiones secuenciales al endpoint updateCase existente.
+   * Usa el nuevo endpoint de actualización unificado.
    * pendingCases: array de objetos con { caseCode, remainingSubsamples, oportunidad, entregadoA, fechaEntrega } donde remainingSubsamples es el arreglo final que debe persistir.
    */
   async batchCompleteCases(pendingCases: Array<{ 
@@ -185,25 +196,18 @@ export class CasesApiService {
     const results: any[] = []
     for (const item of pendingCases) {
       try {
-        const payload: any = {
+        const updateData: any = {
           estado: 'Completado',
-          muestras: item.remainingSubsamples
+          muestras: item.remainingSubsamples,
+          oportunidad: item.oportunidad,
+          entregado_a: item.entregadoA,
+          fecha_entrega: item.fechaEntrega ? new Date(item.fechaEntrega) : undefined
         }
         
-        // Incluir campo oportunidad si está presente
-        if (item.oportunidad !== undefined) {
-          payload.oportunidad = item.oportunidad
-        }
+        // Eliminar campos undefined para payload más limpio
+        Object.keys(updateData).forEach(k => (updateData as any)[k] === undefined && delete (updateData as any)[k])
         
-        // Incluir campos de entrega si están presentes
-        if (item.entregadoA) {
-          payload.entregado_a = item.entregadoA
-        }
-        
-        if (item.fechaEntrega) {
-          payload.fecha_entrega = item.fechaEntrega
-        }
-        const updated = await this.updateCase(item.caseCode, payload)
+        const updated = await this.updateCase(item.caseCode, updateData)
         results.push({ caseCode: item.caseCode, success: true, data: updated })
       } catch (err: any) {
         results.push({ caseCode: item.caseCode, success: false, error: err.message || String(err) })

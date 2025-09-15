@@ -81,6 +81,8 @@ interface Props {
   isValidating?: boolean
   inputRef?: string
   dense?: boolean
+  onlyNumbers?: boolean
+  onlyLetters?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -94,7 +96,9 @@ const props = withDefaults(defineProps<Props>(), {
   autocomplete: 'off',
   inputmode: 'text',
   isValidating: false,
-  dense: false
+  dense: false,
+  onlyNumbers: false,
+  onlyLetters: false
 })
 
 const emit = defineEmits<{
@@ -105,7 +109,20 @@ const emit = defineEmits<{
 
 const handleInput = (event: Event) => {
   const target = event.target as HTMLInputElement
-  const value = target.value
+  let value = target.value
+  
+  // Filtrar caracteres según las restricciones
+  if (props.onlyNumbers) {
+    value = value.replace(/\D/g, '') // Solo números
+  } else if (props.onlyLetters) {
+    value = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\-']/g, '') // Solo letras, espacios, guiones y apostrofes
+  }
+  
+  // Actualizar el valor del input si fue filtrado
+  if (value !== target.value) {
+    target.value = value
+  }
+  
   emit('update:modelValue', value)
   emit('input', value)
 }

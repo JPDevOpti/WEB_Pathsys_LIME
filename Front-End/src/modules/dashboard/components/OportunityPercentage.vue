@@ -125,6 +125,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, useAttrs, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth.store'
 import VueApexCharts from 'vue3-apexcharts'
 import { Card } from '@/shared/components/layout'
 import { useDashboard } from '../composables/useDashboard'
@@ -135,6 +136,9 @@ const {
   error,
   cargarEstadisticasOportunidad
 } = useDashboard()
+
+const authStore = useAuthStore()
+const esPatologo = computed(() => authStore.user?.rol === 'patologo' && authStore.userRole !== 'administrador')
 
 const datosOportunidad = estadisticasOportunidad
 const chartReady = ref(false)
@@ -152,7 +156,8 @@ watch(datosOportunidad, (nuevosDatos) => {
 }, { immediate: true })
 
 const cargarDatos = async () => {
-  await cargarEstadisticasOportunidad()
+  // Resolver rol antes de cargar
+  await cargarEstadisticasOportunidad(!!esPatologo.value)
   await nextTick()
   chartReady.value = true
 }

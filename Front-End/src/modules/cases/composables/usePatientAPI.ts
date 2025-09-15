@@ -14,7 +14,7 @@ export function usePatientAPI() {
     success.value = false
 
     try {
-      const validation = validatePatientData(patientData)
+      const validation = patientsApiService.validatePatientData(patientData)
       if (!validation.isValid) throw new Error(validation.errors.join(', '))
 
       const newPatient = await patientsApiService.createPatient(patientData)
@@ -39,33 +39,6 @@ export function usePatientAPI() {
     }
   }
 
-  async function findPatientByCedula(cedula: string) {
-    isLoading.value = true
-    error.value = null
-
-    try {
-      const patient = await patientsApiService.getPatientByCedula(cedula)
-      return { success: true, patient, found: patient !== null }
-    } catch (err: any) {
-      error.value = err.message || 'Error al buscar el paciente'
-      return { success: false, patient: null, found: false }
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  async function checkPatientExists(cedula: string): Promise<boolean> {
-    try {
-      return await patientsApiService.checkPatientExists(cedula)
-    } catch {
-      return false
-    }
-  }
-
-  function validatePatientData(patientData: PatientData) {
-    return patientsApiService.validatePatientData(patientData)
-  }
-
   function updateStats(patientId: string): void {
     stats.totalCreated++
     stats.lastCreatedId = patientId
@@ -77,13 +50,8 @@ export function usePatientAPI() {
     isLoading.value = false
   }
 
-  function resetStats(): void {
-    stats.totalCreated = 0
-    stats.lastCreatedId = null
-  }
 
   return {
-    isLoading, error, success, stats, createPatient, findPatientByCedula,
-    checkPatientExists, validatePatientData, clearState, resetStats
+    isLoading, error, success, stats, createPatient, clearState
   }
 }

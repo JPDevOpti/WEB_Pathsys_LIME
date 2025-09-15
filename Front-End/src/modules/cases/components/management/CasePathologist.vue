@@ -192,13 +192,13 @@
 
 <script setup lang="ts">
 import { computed, ref, reactive, watch } from 'vue'
-import { usePathologistAPI } from '../composables/usePathologistAPI'
-import { useNotifications } from '../composables/useNotifications'
-import casesApiService from '../services/casesApi.service'
+import { usePathologistAPI } from '../../composables/usePathologistAPI'
+import { useNotifications } from '../../composables/useNotifications'
+import casesApiService from '../../services/casesApi.service'
 import type { 
   PathologistFormData, 
   CaseModel
-} from '../types'
+} from '../../types'
 
 // Componentes UI
 import { ComponentCard } from '@/shared/components'

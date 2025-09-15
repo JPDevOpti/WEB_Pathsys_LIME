@@ -3,6 +3,7 @@
     <template #icon>
       <DocsIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
+    
 
     <div class="space-y-6">
       <!-- Sección de verificación del paciente -->
@@ -14,7 +15,7 @@
         
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
           <div class="flex-1">
-            <FormInputField v-model="pacienteCodeBusqueda" placeholder="Ingrese código del paciente" :required="true" :max-length="12" inputmode="numeric" :disabled="patientVerified" @input="handlePacienteCodeInput" />
+            <FormInputField v-model="pacienteCodeBusqueda" placeholder="Ingrese código del paciente" :required="true" :max-length="12" type="number" inputmode="numeric" :disabled="patientVerified" @input="handlePacienteCodeInput" />
           </div>
           
           <div class="flex gap-2 sm:gap-3">
@@ -23,7 +24,6 @@
           </div>
         </div>
 
-        <!-- Mensaje de error en búsqueda -->
         <div v-if="searchError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
           <p class="text-sm text-red-600">{{ searchError }}</p>
         </div>
@@ -139,7 +139,6 @@
         <!-- Campo de observaciones -->
         <FormTextarea v-model="formData.observaciones" label="Observaciones del caso" placeholder="Observaciones adicionales sobre el caso o procedimiento..." :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional relevante para el procesamiento del caso" />
 
-        <!-- Errores de validación de muestras -->
         <div v-if="errors.muestras.length > 0" class="bg-red-50 border border-red-200 rounded-lg p-4">
           <h4 class="text-sm font-semibold text-red-800 mb-2">Errores en las Submuestras:</h4>
           <ul class="list-disc list-inside space-y-1">
@@ -147,13 +146,11 @@
           </ul>
         </div>
 
-        <!-- Botones de acción -->
         <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
           <ClearButton @click="clearForm" />
           <SaveButton text="Guardar Caso" @click="handleSaveClick" :disabled="!isFormValid" />
         </div>
 
-        <!-- Notificación de campos faltantes -->
         <div v-if="patientVerified && !isFormValid" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div class="flex items-start">
             <svg class="w-5 h-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,11 +166,9 @@
           </div>
         </div>
 
-        <!-- Alerta de validación -->
         <ValidationAlert :visible="validationState.showValidationError" :errors="validationErrors" />
       </div>
 
-      <!-- Contenedor de notificaciones -->
       <div ref="notificationContainer">
         <Notification :visible="notification.visible" :type="notification.type" :title="notification.title" :message="notification.message" :inline="true" :auto-close="false" @close="closeNotification">
           <template v-if="notification.type === 'success' && createdCase" #content>
@@ -205,7 +200,7 @@
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Información del Paciente</h4>
                     <div class="space-y-2 text-sm">
                       <div><span class="text-gray-500 font-medium">Nombre:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.nombre || verifiedPatient?.nombrePaciente }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Documento de identidad:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.paciente?.paciente_code || createdCase.paciente?.cedula || verifiedPatient?.pacienteCode || 'NO DISPONIBLE' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Documento:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.paciente?.paciente_code || verifiedPatient?.pacienteCode || 'NO DISPONIBLE' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Edad:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.edad || verifiedPatient?.edad }} años</p></div>
                       <div><span class="text-gray-500 font-medium">Sexo:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.sexo || verifiedPatient?.sexo }}</p></div>
                       <div><span class="text-gray-500 font-medium">Entidad:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.entidad || verifiedPatient?.entidad }}</p></div>
@@ -254,11 +249,11 @@
 
 <script setup lang="ts">
 import { computed, ref, nextTick, watch } from 'vue'
-import { useCaseForm } from '../composables/useCaseForm'
-import { usePatientVerification } from '../composables/usePatientVerification'
-import { useNotifications } from '../composables/useNotifications'
-import { useCaseAPI } from '../composables/useCaseAPI'
-import type { PatientData, CreatedCase } from '../types'
+import { useCaseForm } from '../../composables/useCaseForm'
+import { usePatientVerification } from '../../composables/usePatientVerification'
+import { useNotifications } from '../../composables/useNotifications'
+import { useCaseAPI } from '../../composables/useCaseAPI'
+import type { PatientData, CreatedCase } from '../../types'
 import { ComponentCard } from '@/shared/components'
 import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
@@ -275,7 +270,7 @@ const emit = defineEmits(['case-saved', 'patient-verified'])
 
 // Composables para manejo del formulario, verificación de pacientes, notificaciones y API
 const { formData, validationState, errors, warnings, isFormValid, validateForm, clearForm: clearCaseForm, handleNumeroMuestrasChange, addPruebaToMuestra, removePruebaFromMuestra } = useCaseForm()
-const { searchError, patientVerified, verifiedPatient, searchPatientByCedula, useNewPatient, clearVerification } = usePatientVerification()
+const { searchError, patientVerified, verifiedPatient, searchPatientByDocumento, useNewPatient, clearVerification } = usePatientVerification()
 const { notification, showNotification, closeNotification } = useNotifications()
 const { createCase, error: apiError, clearState } = useCaseAPI()
 
@@ -293,109 +288,60 @@ const prioridadOptions = [
   { value: 'Prioritario', label: 'Prioritario' }
 ]
 
-// Validación de errores del formulario
 const validationErrors = computed(() => {
-  const validationErrorsList: string[] = []
+  const errorsList: string[] = []
+  const fields = [
+    { value: formData.fechaIngreso, name: 'Fecha de ingreso' },
+    { value: formData.medicoSolicitante, name: 'Médico solicitante' },
+    { value: formData.servicio, name: 'Servicio' },
+    { value: formData.prioridadCaso, name: 'Prioridad del caso' },
+    { value: formData.numeroMuestras, name: 'Número de muestras' },
+    { value: formData.entidadPaciente, name: 'Entidad del paciente' },
+    { value: formData.tipoAtencionPaciente, name: 'Tipo de atención' }
+  ]
   
-  // Campos básicos del formulario
-  if (!formData.fechaIngreso) validationErrorsList.push('Fecha de ingreso')
-  if (!formData.medicoSolicitante) validationErrorsList.push('Médico solicitante')
-  if (!formData.servicio) validationErrorsList.push('Servicio')
-  if (!formData.prioridadCaso) validationErrorsList.push('Prioridad del caso')
-  if (!formData.numeroMuestras) validationErrorsList.push('Número de muestras')
-  if (!formData.entidadPaciente) validationErrorsList.push('Entidad del paciente')
-  if (!formData.tipoAtencionPaciente) validationErrorsList.push('Tipo de atención')
+  fields.forEach(field => !field.value && errorsList.push(field.name))
   
-  // Validaciones específicas
-  if (errors.fechaIngreso?.length > 0) validationErrorsList.push('Fecha de ingreso (formato inválido)')
-  if (errors.medicoSolicitante?.length > 0) validationErrorsList.push('Médico solicitante (formato inválido)')
-  if (errors.prioridadCaso?.length > 0) validationErrorsList.push('Prioridad del caso (valor inválido)')
-  if (errors.numeroMuestras?.length > 0) validationErrorsList.push('Número de muestras (valor inválido)')
-  
-  // Validación detallada de submuestras
-  if (formData.muestras && formData.muestras.length > 0) {
-    formData.muestras.forEach((muestra, index) => {
-      if (!muestra.regionCuerpo) {
-        validationErrorsList.push(`Submuestra ${index + 1}: Región del cuerpo`)
-      }
-      if (!muestra.pruebas || muestra.pruebas.length === 0) {
-        validationErrorsList.push(`Submuestra ${index + 1}: Al menos una prueba`)
-      } else {
-        muestra.pruebas.forEach((prueba, pruebaIndex) => {
-          if (!prueba.code) {
-            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${pruebaIndex + 1}: Código de prueba`)
-          }
-          if (!prueba.cantidad || prueba.cantidad < 1) {
-            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${pruebaIndex + 1}: Cantidad`)
-          }
-        })
-      }
+  formData.muestras?.forEach((muestra, i) => {
+    if (!muestra.regionCuerpo) errorsList.push(`Submuestra ${i + 1}: Región del cuerpo`)
+    if (!muestra.pruebas?.length) errorsList.push(`Submuestra ${i + 1}: Al menos una prueba`)
+    muestra.pruebas?.forEach((prueba, j) => {
+      if (!prueba.code) errorsList.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Código de prueba`)
+      if (!prueba.cantidad || prueba.cantidad < 1) errorsList.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Cantidad`)
     })
-  }
+  })
   
-  // Errores generales de muestras del composable
-  if (errors.muestras?.length > 0) {
-    errors.muestras.forEach(error => validationErrorsList.push(`Submuestras: ${error}`))
-  }
-  
-  return validationErrorsList
+  errors.muestras?.forEach(error => errorsList.push(`Submuestras: ${error}`))
+  return errorsList
 })
 
-// Formateo de fecha legible en español
-const formatDateDisplay = (value: string | undefined | null): string => {
+const createdDateDisplay = computed(() => {
+  const value = createdCase.value?.fechaIngreso || formData.fechaIngreso
   if (!value) return ''
-  let date: Date
   const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(String(value))
-  if (isDateOnly) {
-    date = new Date(`${value}T00:00:00`)
-  } else {
-    date = new Date(String(value))
-  }
+  const date = new Date(isDateOnly ? `${value}T00:00:00` : String(value))
   if (isNaN(date.getTime())) return String(value)
   const datePart = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }).format(date)
-  if (isDateOnly) return datePart
-  const timePart = new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit' }).format(date)
-  return `${datePart} ${timePart}`
-}
-
-// Fecha de creación formateada
-const createdDateDisplay = computed(() => {
-  const raw = createdCase.value?.fechaIngreso || formData.fechaIngreso
-  return formatDateDisplay(raw)
+  return isDateOnly ? datePart : `${datePart} ${new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit' }).format(date)}`
 })
 
-// Función para obtener muestras combinando datos del backend y formulario
 const getMuestrasForNotification = () => {
   const backendMuestras = createdCase.value?.muestras || []
   const formMuestras = formData.muestras || []
-  
-  // Si no hay datos del backend, usar los del formulario
-  if (!backendMuestras.length) {
-    return formMuestras
-  }
-  
-  // Combinar datos del backend con información faltante del formulario
-  return backendMuestras.map((backendMuestra: any, index: number) => {
-    const formMuestra = formMuestras[index]
-    return {
-      ...backendMuestra,
-      // Preservar regionCuerpo del formulario si no viene del backend
-      regionCuerpo: backendMuestra.regionCuerpo || 
-                   backendMuestra.region_cuerpo || 
-                   formMuestra?.regionCuerpo || 
-                   'Sin especificar',
-      // Asegurar que las pruebas incluyan cantidad
-      pruebas: (backendMuestra.pruebas || []).map((prueba: any, pIndex: number) => ({
-        ...prueba,
-        cantidad: prueba.cantidad || formMuestra?.pruebas?.[pIndex]?.cantidad || 1
-      }))
-    }
-  })
+  return !backendMuestras.length ? formMuestras : backendMuestras.map((backendMuestra: any, index: number) => ({
+    ...backendMuestra,
+    regionCuerpo: backendMuestra.regionCuerpo || backendMuestra.region_cuerpo || formMuestras[index]?.regionCuerpo || 'Sin especificar',
+    pruebas: (backendMuestra.pruebas || []).map((prueba: any, pIndex: number) => ({
+      ...prueba,
+      cantidad: prueba.cantidad || formMuestras[index]?.pruebas?.[pIndex]?.cantidad || 1
+    }))
+  }))
 }
 
 // Handlers de eventos
 const handlePacienteCodeInput = (value: string) => {
-  const numericValue = value.replace(/\D/g, '')
+  // Solo permitir números y limitar a 12 dígitos
+  const numericValue = value.replace(/\D/g, '').substring(0, 12)
   pacienteCodeBusqueda.value = numericValue
 }
 
@@ -410,39 +356,33 @@ const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any
   }
 }
 
-// Búsqueda y verificación de pacientes
 const searchPatient = async () => {
   if (!pacienteCodeBusqueda.value.trim()) return
-  const result = await searchPatientByCedula(pacienteCodeBusqueda.value)
-  if ((result as any).found && 'patient' in (result as any) && (result as any).patient) {
+  const result = await searchPatientByDocumento(pacienteCodeBusqueda.value)
+  if ((result as any).found && (result as any).patient) {
     const patient = (result as any).patient as PatientData
     updateFormDataWithPatient(patient)
     emit('patient-verified', patient)
   }
 }
 
-// Normalización del tipo de atención
-const normalizeAttentionType = (value: string): string => {
-  const v = String(value || '').toLowerCase()
-  if (v.includes('ambulator') || v === 'ambulatorio') return 'Ambulatorio'
-  if (v.includes('hospital') || v === 'hospitalizado') return 'Hospitalizado'
-  return ''
-}
-
-// Actualización del formulario con datos del paciente
 const updateFormDataWithPatient = (patientData: PatientData) => {
-  formData.pacienteCedula = patientData.pacienteCode
-  formData.entidadPaciente = patientData.entidadCodigo || ''
-  formData.tipoAtencionPaciente = normalizeAttentionType(patientData.tipoAtencion)
+  const tipo = String(patientData.tipoAtencion || '').toLowerCase()
+  Object.assign(formData, {
+    pacienteDocumento: patientData.pacienteCode,
+    entidadPaciente: patientData.entidadCodigo || '',
+    tipoAtencionPaciente: tipo.includes('ambulator') || tipo === 'ambulatorio' ? 'Ambulatorio' : tipo.includes('hospital') || tipo === 'hospitalizado' ? 'Hospitalizado' : ''
+  })
 }
 
-// Limpieza de datos relacionados con el paciente
 const clearPatientFormData = () => {
-  formData.pacienteCedula = ''
-  formData.entidadPaciente = ''
-  formData.tipoAtencionPaciente = ''
-  formData.prioridadCaso = 'Normal'
-  formData.servicio = ''
+  Object.assign(formData, {
+    pacienteDocumento: '',
+    entidadPaciente: '',
+    tipoAtencionPaciente: '',
+    prioridadCaso: 'Normal',
+    servicio: ''
+  })
 }
 
 // Limpieza de la verificación del paciente
@@ -452,7 +392,6 @@ const clearPatientVerification = () => {
   clearPatientFormData()
 }
 
-// Manejo de paciente recién creado
 const handleNewPatient = (patientData: PatientData) => {
   useNewPatient(patientData)
   pacienteCodeBusqueda.value = patientData.pacienteCode
@@ -473,40 +412,32 @@ watch(() => notification.visible, (newValue) => {
   if (newValue) scrollToNotification()
 })
 
-// Función para copiar el código del caso al portapapeles
 const copyCaseCode = async () => {
   if (!createdCase.value?.codigo) return
+  const code = createdCase.value.codigo
+  const message = `El código ${code} se ha copiado al portapapeles.`
   
   try {
-    await navigator.clipboard.writeText(createdCase.value.codigo)
-    showNotification('success', 'Código copiado', `El código ${createdCase.value.codigo} se ha copiado al portapapeles.`, 3000)
-  } catch (error) {
-    // Fallback para navegadores que no soportan la API del portapapeles
+    await navigator.clipboard.writeText(code)
+    showNotification('success', 'Código copiado', message, 3000)
+  } catch {
     const textArea = document.createElement('textarea')
-    textArea.value = createdCase.value.codigo
+    textArea.value = code
     document.body.appendChild(textArea)
     textArea.select()
     document.execCommand('copy')
     document.body.removeChild(textArea)
-    showNotification('success', 'Código copiado', `El código ${createdCase.value.codigo} se ha copiado al portapapeles.`, 3000)
+    showNotification('success', 'Código copiado', message, 3000)
   }
 }
 
-// Limpieza completa del formulario
 const clearForm = () => {
   clearCaseForm()
   clearPatientVerification()
 }
 
-// Manejo del guardado del caso
 const handleSaveClick = async () => {
-  if (!patientVerified.value || !verifiedPatient.value) {
-    validationState.showValidationError = true
-    return
-  }
-
-  const isValid = validateForm()
-  if (!isValid) {
+  if (!patientVerified.value || !verifiedPatient.value || !validateForm()) {
     validationState.showValidationError = true
     return
   }
@@ -525,8 +456,7 @@ const handleSaveClick = async () => {
       throw new Error(result.message || 'Error desconocido al crear el caso')
     }
   } catch (error: any) {
-    const errorMessage = apiError.value || error.message || 'No se pudo guardar el caso. Por favor, inténtelo nuevamente.'
-    showNotification('error', 'Error al Guardar Caso', errorMessage, 0)
+    showNotification('error', 'Error al Guardar Caso', apiError.value || error.message || 'No se pudo guardar el caso. Por favor, inténtelo nuevamente.', 0)
   }
 }
 

@@ -39,6 +39,18 @@ class AuthService:
         
         return valid_roles
     
+    def _get_role_code(self, user: AuthUser, primary_role: str) -> Optional[str]:
+        """Obtener el código asociado al rol principal del usuario."""
+        role_to_field = {
+            "patologo": "patologo_code",
+            "auxiliar": "auxiliar_code",
+            "residente": "residente_code",
+            "administrador": "administrador_code",
+            "facturacion": "facturacion_code",
+        }
+        field = role_to_field.get(primary_role)
+        return getattr(user, field, None) if field else None
+    
     async def authenticate_user(self, login_data: LoginRequest) -> LoginResponse:
         """Autenticar usuario y generar token"""
         # Verificar credenciales
@@ -85,15 +97,24 @@ class AuthService:
         await self.auth_repository.update_last_login(user.id)
         
         # Preparar respuesta usando solo campos que existen en la BD
+        primary_role = user.get_primary_role()
         user_data = {
             "id": user.id,
             "email": user.email,
             "nombre": user.nombre or "",
-            "rol": user.get_primary_role(),
-            "roles": validated_roles
+            "rol": primary_role,
+            "roles": validated_roles,
+            "patologo_code": getattr(user, "patologo_code", None),
+            "auxiliar_code": getattr(user, "auxiliar_code", None),
+            "residente_code": getattr(user, "residente_code", None),
+            "administrador_code": getattr(user, "administrador_code", None),
+            "facturacion_code": getattr(user, "facturacion_code", None),
+            "role_code": self._get_role_code(user, primary_role)
         }
         
-        logger.info(f"Login exitoso para usuario: {user.email} con roles: {validated_roles}")
+        logger.info(
+            f"Login exitoso | email={user.email} rol={primary_role} role_code={user_data.get('role_code')} roles={validated_roles}"
+        )
         
         return LoginResponse(
             access_token=token_data["access_token"],

@@ -19,7 +19,9 @@ class UserManagementService:
         name: str,
         email: str,
         password: str,
-        is_active: bool = True
+        is_active: bool = True,
+        *,
+        patologo_code: Optional[str] = None
     ) -> Optional[dict]:
         """
         Crear un usuario en la colección usuarios para un patólogo
@@ -33,14 +35,16 @@ class UserManagementService:
         Returns:
             dict: Documento del usuario creado o None si falla
         """
-        return await self._create_user_with_role(name, email, password, "patologo", is_active)
+        return await self._create_user_with_role(name, email, password, "patologo", is_active, extra_fields={"patologo_code": patologo_code} if patologo_code else None)
     
     async def create_user_for_auxiliary(
         self,
         name: str,
         email: str,
         password: str,
-        is_active: bool = True
+        is_active: bool = True,
+        *,
+        auxiliar_code: Optional[str] = None
     ) -> Optional[dict]:
         """
         Crear un usuario en la colección usuarios para un auxiliar
@@ -54,14 +58,19 @@ class UserManagementService:
         Returns:
             dict: Documento del usuario creado o None si falla
         """
-        return await self._create_user_with_role(name, email, password, "auxiliar", is_active)
+        return await self._create_user_with_role(
+            name, email, password, "auxiliar", is_active,
+            extra_fields={"auxiliar_code": auxiliar_code} if auxiliar_code else None
+        )
     
     async def create_user_for_resident(
         self,
         name: str,
         email: str,
         password: str,
-        is_active: bool = True
+        is_active: bool = True,
+        *,
+        residente_code: Optional[str] = None
     ) -> Optional[dict]:
         """
         Crear un usuario en la colección usuarios para un residente
@@ -75,14 +84,19 @@ class UserManagementService:
         Returns:
             dict: Documento del usuario creado o None si falla
         """
-        return await self._create_user_with_role(name, email, password, "residente", is_active)
+        return await self._create_user_with_role(
+            name, email, password, "residente", is_active,
+            extra_fields={"residente_code": residente_code} if residente_code else None
+        )
     
     async def create_user_for_administrator(
         self,
         name: str,
         email: str,
         password: str,
-        is_active: bool = True
+        is_active: bool = True,
+        *,
+        administrador_code: Optional[str] = None
     ) -> Optional[dict]:
         """
         Crear un usuario en la colección usuarios para un administrador
@@ -96,14 +110,19 @@ class UserManagementService:
         Returns:
             dict: Documento del usuario creado o None si falla
         """
-        return await self._create_user_with_role(name, email, password, "administrador", is_active)
+        return await self._create_user_with_role(
+            name, email, password, "administrador", is_active,
+            extra_fields={"administrador_code": administrador_code} if administrador_code else None
+        )
     
     async def create_user_for_facturacion(
         self,
         name: str,
         email: str,
         password: str,
-        is_active: bool = True
+        is_active: bool = True,
+        *,
+        facturacion_code: Optional[str] = None
     ) -> Optional[dict]:
         """
         Crear un usuario en la colección usuarios para facturación
@@ -118,7 +137,10 @@ class UserManagementService:
             dict: Documento del usuario creado o None si falla
         """
         print(f"🔧 Creando usuario de facturación: {name} ({email}) con rol 'facturacion'")
-        result = await self._create_user_with_role(name, email, password, "facturacion", is_active)
+        result = await self._create_user_with_role(
+            name, email, password, "facturacion", is_active,
+            extra_fields={"facturacion_code": facturacion_code} if facturacion_code else None
+        )
         print(f"✅ Usuario de facturación creado: {result}")
         return result
     
@@ -128,7 +150,9 @@ class UserManagementService:
         email: str,
         password: str,
         role: str,
-        is_active: bool = True
+        is_active: bool = True,
+        *,
+        extra_fields: Optional[dict] = None
     ) -> Optional[dict]:
         """
         Método privado para crear usuarios con un rol específico
@@ -162,6 +186,11 @@ class UserManagementService:
                 "fecha_creacion": datetime.now(timezone.utc),
                 "fecha_actualizacion": datetime.now(timezone.utc)
             }
+            if extra_fields:
+                # Solo añadir claves con valores no None
+                for k, v in extra_fields.items():
+                    if v is not None:
+                        user_document[k] = v
             
             print(f"🔧 Documento de usuario a crear: {user_document}")
             

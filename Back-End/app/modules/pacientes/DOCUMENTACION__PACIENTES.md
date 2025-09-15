@@ -35,7 +35,7 @@ pacientes/
 
 ### Iniciar el Servidor
 ```bash
-cd New-Back-end
+cd Back-End
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -56,8 +56,7 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     "tipo_atencion": "string (Ambulatorio, Hospitalizado)",
     "observaciones": "string (opcional, máx 500 caracteres)",
     "fecha_creacion": "datetime",
-    "fecha_actualizacion": "datetime",
-    "id_casos": "array (IDs de casos asociados, formato YYYY-NNNNN)"
+    "fecha_actualizacion": "datetime"
 }
 ```
 
@@ -126,8 +125,7 @@ Respuesta (201):
   "tipo_atencion": "Ambulatorio",
   "observaciones": "Paciente con antecedentes de hipertensión",
   "fecha_creacion": "2024-01-15T10:30:00.000Z",
-  "fecha_actualizacion": "2024-01-15T10:30:00.000Z",
-  "id_casos": []
+  "fecha_actualizacion": "2024-01-15T10:30:00.000Z"
 }
 ```
 
@@ -167,8 +165,7 @@ Respuesta (200):
     "tipo_atencion": "Ambulatorio",
     "observaciones": "Paciente con antecedentes de hipertensión",
     "fecha_creacion": "2024-01-15T10:30:00.000Z",
-    "fecha_actualizacion": "2024-01-15T10:30:00.000Z",
-    "id_casos": ["2025-00001"]
+    "fecha_actualizacion": "2024-01-15T10:30:00.000Z"
   }
 ]
 ```
@@ -187,7 +184,6 @@ Respuesta (200):
 - `entidad`: Filtrar por entidad de salud
 - `sexo`: Filtrar por sexo (Masculino, Femenino)
 - `tipo_atencion`: Filtrar por tipo de atención
-- `tiene_casos`: Filtrar pacientes con/sin casos (true/false)
 - `fecha_desde`: Fecha de creación desde (formato: YYYY-MM-DD)
 - `fecha_hasta`: Fecha de creación hasta (formato: YYYY-MM-DD)
 - `skip`: Registros a omitir para paginación
@@ -195,8 +191,8 @@ Respuesta (200):
 
 **Ejemplos de uso**:
 ```bash
-# Buscar pacientes masculinos entre 30 y 50 años con casos
-GET /api/v1/pacientes/buscar/avanzada?sexo=Masculino&edad_min=30&edad_max=50&tiene_casos=true
+# Buscar pacientes masculinos entre 30 y 50 años
+GET /api/v1/pacientes/buscar/avanzada?sexo=Masculino&edad_min=30&edad_max=50
 
 # Buscar pacientes de una entidad específica
 GET /api/v1/pacientes/buscar/avanzada?entidad=Sanitas&limit=50
@@ -222,8 +218,7 @@ Respuesta (200):
       "tipo_atencion": "Ambulatorio",
       "observaciones": "Paciente con antecedentes de hipertensión",
       "fecha_creacion": "2024-01-15T10:30:00.000Z",
-      "fecha_actualizacion": "2024-01-15T10:30:00.000Z",
-      "id_casos": ["2025-00001"]
+      "fecha_actualizacion": "2024-01-15T10:30:00.000Z"
     }
   ],
   "total": 1,
@@ -232,19 +227,7 @@ Respuesta (200):
 }
 ```
 
-### 4. GET http://localhost:8000/api/v1/pacientes/codigo/{paciente_code}
-**Obtener paciente por código**
-
-**Autenticación**: Requerida  
-**Roles permitidos**: admin, patologo, auxiliar
-
-Ejemplos de URL:
-- `http://localhost:8000/api/v1/pacientes/codigo/12345678`
-- `http://localhost:8000/api/v1/pacientes/codigo/87654321`
-
-Respuesta (200): (paciente completo como en la respuesta de creación)
-
-### 5. GET http://localhost:8000/api/v1/pacientes/{paciente_id}
+### 4. GET http://localhost:8000/api/v1/pacientes/{paciente_id}
 **Obtener paciente por ID**
 
 **Autenticación**: Requerida  
@@ -256,7 +239,7 @@ Ejemplos de URL:
 
 Respuesta (200): (paciente completo como en la respuesta de creación)
 
-### 6. PUT http://localhost:8000/api/v1/pacientes/{paciente_id}
+### 5. PUT http://localhost:8000/api/v1/pacientes/{paciente_id}
 **Actualizar paciente**
 
 **Autenticación**: Requerida  
@@ -304,10 +287,21 @@ Respuesta (200):
   "tipo_atencion": "Hospitalizado",
   "observaciones": "Paciente con hipertensión controlada y diabetes tipo 2",
   "fecha_creacion": "2024-01-15T10:30:00.000Z",
-  "fecha_actualizacion": "2024-01-15T11:15:00.000Z",
-  "id_casos": ["2025-00001"]
+  "fecha_actualizacion": "2024-01-15T11:15:00.000Z"
 }
 ```
+
+### 6. PUT http://localhost:8000/api/v1/pacientes/{paciente_id}/change-code
+**Cambiar código del paciente**
+
+**Autenticación**: Requerida  
+**Roles permitidos**: admin, auxiliar
+
+Ejemplos de URL:
+- `http://localhost:8000/api/v1/pacientes/12345678/change-code?new_code=87654321`
+- `http://localhost:8000/api/v1/pacientes/87654321/change-code?new_code=11223344`
+
+Respuesta (200): (paciente actualizado con nuevo código)
 
 ### 7. DELETE http://localhost:8000/api/v1/pacientes/{paciente_id}
 **Eliminar paciente**
@@ -322,49 +316,13 @@ Ejemplos de URL:
 Respuesta (200):
 ```json
 {
-  "message": "Paciente eliminado exitosamente",
-  "paciente_id": "12345678",
-  "eliminado": true
+  "message": "Paciente 12345678 eliminado exitosamente"
 }
 ```
 
 ⚠️ **IMPORTANTE**: No se puede eliminar un paciente que tiene casos asociados. Primero debe eliminar o reasignar los casos.
 
-### 8. POST http://localhost:8000/api/v1/pacientes/{paciente_id}/casos/{id_caso}
-**Agregar caso a paciente**
-
-**Autenticación**: Requerida  
-**Roles permitidos**: admin, auxiliar
-
-Ejemplos de URL:
-- `http://localhost:8000/api/v1/pacientes/12345678/casos/2025-00001`
-- `http://localhost:8000/api/v1/pacientes/87654321/casos/2025-00002`
-
-Respuesta (200):
-```json
-{
-  "message": "Caso 2025-00001 agregado al paciente 12345678"
-}
-```
-
-### 9. DELETE http://localhost:8000/api/v1/pacientes/{paciente_id}/casos/{id_caso}
-**Remover caso de paciente**
-
-**Autenticación**: Requerida  
-**Roles permitidos**: admin, auxiliar
-
-Ejemplos de URL:
-- `http://localhost:8000/api/v1/pacientes/12345678/casos/2025-00001`
-- `http://localhost:8000/api/v1/pacientes/87654321/casos/2025-00002`
-
-Respuesta (200):
-```json
-{
-  "message": "Caso 2025-00001 removido del paciente 12345678"
-}
-```
-
-### 10. GET http://localhost:8000/api/v1/pacientes/count
+### 8. GET http://localhost:8000/api/v1/pacientes/count
 **Obtener total de pacientes**
 
 **Autenticación**: Requerida  
@@ -377,7 +335,7 @@ Respuesta (200):
 }
 ```
 
-### 11. GET http://localhost:8000/api/v1/pacientes/entidades/lista
+### 9. GET http://localhost:8000/api/v1/pacientes/entidades/lista
 **Listar entidades únicas**
 
 **Autenticación**: Requerida  
@@ -392,41 +350,6 @@ Respuesta (200):
   "Medimás",
   "Coomeva"
 ]
-```
-
-### 12. GET http://localhost:8000/api/v1/pacientes/estadisticas
-**Obtener estadísticas de pacientes**
-
-**Autenticación**: Requerida  
-**Roles permitidos**: admin, patologo, auxiliar
-
-Respuesta (200):
-```json
-{
-  "total_pacientes": 150,
-  "total_hombres": 75,
-  "total_mujeres": 75,
-  "promedio_edad": 42.5,
-  "edad_min": 18,
-  "edad_max": 89,
-  "total_ambulatorios": 120,
-  "total_hospitalizados": 30,
-  "entidades_mas_frecuentes": [
-    {
-      "_id": "EPS Sanitas",
-      "count": 45
-    },
-    {
-      "_id": "Sura",
-      "count": 32
-    },
-    {
-      "_id": "Nueva EPS",
-      "count": 28
-    }
-  ],
-  "pacientes_con_casos": 95
-}
 ```
 
 ## Valores de Enumeraciones
@@ -462,7 +385,6 @@ Respuesta (200):
 6. **entidad_info.id**: Requerido cuando se proporciona entidad_info
 7. **entidad_info.nombre**: Requerido cuando se proporciona entidad_info
 8. **observaciones**: Opcional, máximo 500 caracteres
-9. **id_casos**: Array de strings con formato YYYY-NNNNN
 
 ## Casos de Error Comunes
 
@@ -514,21 +436,14 @@ Respuesta (200):
 }
 ```
 
-### 6. Caso Ya Asociado al Paciente (400 Bad Request)
-```json
-{
-  "detail": "El caso ya está asociado a este paciente"
-}
-```
-
-### 7. Formato de Fecha Inválido en Búsqueda Avanzada (400 Bad Request)
+### 6. Formato de Fecha Inválido en Búsqueda Avanzada (400 Bad Request)
 ```json
 {
   "detail": "Formato de fecha inválido. Use YYYY-MM-DD"
 }
 ```
 
-### 8. Rango de Fechas Inválido (400 Bad Request)
+### 7. Rango de Fechas Inválido (400 Bad Request)
 ```json
 {
   "detail": "La fecha de inicio no puede ser posterior a la fecha de fin"
@@ -545,21 +460,17 @@ Estas interfaces proporcionan documentación interactiva y permiten probar los e
 
 ## Notas Importantes
 
-1. **Gestión de Casos**: Los pacientes pueden tener casos asociados a través del campo `id_casos`
-2. **Validación de Código**: El `paciente_code` se usa como identificador principal del paciente y debe ser único en el sistema
-3. **Capitalización Automática**: Los nombres se capitalizan automáticamente
-4. **Limpieza de Datos**: El código del paciente se limpia automáticamente removiendo caracteres no numéricos
-5. **Campos Opcionales**: Solo "observaciones" es opcional en la creación
-6. **Respuestas Consistentes**: Todas las respuestas incluyen timestamps y arrays de casos
-7. **Búsqueda Avanzada**: Endpoint especializado con múltiples filtros y paginación completa
-8. **Restricciones de Eliminación**: No se puede eliminar un paciente con casos asociados
-9. **Filtros Flexibles**: Los endpoints de listado soportan múltiples filtros combinables
-10. **Validación de Fechas**: Las fechas de búsqueda deben usar formato ISO (YYYY-MM-DD)
-11. **Paginación**: Todos los endpoints de listado soportan paginación con skip/limit
-12. **Entidades**: Sistema de gestión de entidades de salud separado del modelo de paciente
-13. **Estadísticas**: Endpoint especializado que proporciona métricas detalladas del sistema
-14. **Filtros de Entidad**: Los filtros de entidad buscan en el campo `entidad_info.nombre`
-15. **Formato de IDs de Casos**: Los casos siguen el formato YYYY-NNNNN (ejemplo: 2025-00001)
+1. **Validación de Código**: El `paciente_code` se usa como identificador principal del paciente y debe ser único en el sistema
+2. **Capitalización Automática**: Los nombres se capitalizan automáticamente
+3. **Limpieza de Datos**: El código del paciente se limpia automáticamente removiendo caracteres no numéricos
+4. **Campos Opcionales**: Solo "observaciones" es opcional en la creación
+5. **Respuestas Consistentes**: Todas las respuestas incluyen timestamps
+6. **Búsqueda Avanzada**: Endpoint especializado con múltiples filtros y paginación completa
+7. **Filtros Flexibles**: Los endpoints de listado soportan múltiples filtros combinables
+8. **Validación de Fechas**: Las fechas de búsqueda deben usar formato ISO (YYYY-MM-DD)
+9. **Paginación**: Todos los endpoints de listado soportan paginación con skip/limit
+10. **Entidades**: Sistema de gestión de entidades de salud separado del modelo de paciente
+11. **Filtros de Entidad**: Los filtros de entidad buscan en el campo `entidad_info.nombre`
 
 ## Troubleshooting
 

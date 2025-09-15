@@ -66,7 +66,8 @@ class PatologoService:
                 name=patologo_data.patologo_name,
                 email=patologo_data.patologo_email,
                 password=password,
-                is_active=patologo_data.is_active
+                is_active=patologo_data.is_active,
+                patologo_code=patologo_data.patologo_code
             )
             
             return self._to_response(patologo)

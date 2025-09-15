@@ -115,12 +115,14 @@ async def create_administrators(dry_run: bool = False):
                     print(f"    - Validación: ✅ Datos válidos")
                     created += 1
                 else:
-                    # Crear el administrador
+                    # Crear el administrador, usando el nombre como código administrativo por defecto
+                    admin_code = admin_schema.nombre.replace(" ", "_").lower()[:20]
                     user = await user_service.create_user_for_administrator(
                         name=admin_schema.nombre,
                         email=admin_schema.email,
                         password=admin_schema.password,
-                        is_active=admin_schema.is_active
+                        is_active=admin_schema.is_active,
+                        administrador_code=admin_code
                     )
                     
                     if user:

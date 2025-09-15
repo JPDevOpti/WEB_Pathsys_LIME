@@ -46,8 +46,7 @@ import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { AdminLayout } from '@/shared'
 import { PageBreadcrumb, ComponentCard } from '@/shared/components/common'
-import EditCaseForm from '../components/EditCaseForm.vue'
-import EditPatientForm from '../components/EditPatientForm.vue'
+import { EditCaseForm, EditPatientForm } from '../components'
 import type { CaseModel, PatientData } from '../types'
 
 // ============================================================================

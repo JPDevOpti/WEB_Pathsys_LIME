@@ -18,7 +18,7 @@ export function usePatientVerification() {
     })()
     const entidadCodigo = apiPatient.entidad_info?.codigo || apiPatient.entidad_info?.id
     return {
-      pacienteCode: apiPatient.paciente_code || apiPatient.cedula,
+      pacienteCode: apiPatient.documento || apiPatient.paciente_code || apiPatient.cedula,
       nombrePaciente: apiPatient.nombre,
       sexo: apiPatient.sexo.toLowerCase(),
       edad: apiPatient.edad.toString(),
@@ -29,39 +29,25 @@ export function usePatientVerification() {
       codigo: apiPatient.id
     }
   }
-
-  const searchPatientByCedula = async (cedula: string) => {
-    if (!cedula.trim()) {
-      searchError.value = 'La cédula es obligatoria'
-      return { found: false }
-    }
-
+  const searchPatientByDocumento = async (documento: string) => {
     isSearching.value = true
     searchError.value = ''
-    
     try {
-      const apiPatient = await patientsApiService.getPatientByCedula(cedula)
-      
-      if (apiPatient) {
-        const patientData = transformApiPatientToFormData(apiPatient)
-        verifiedPatient.value = patientData
-        patientVerified.value = true
-        return { found: true, patient: patientData }
-      } else {
-        searchError.value = 'Paciente no encontrado en el sistema'
-        patientVerified.value = false
-        verifiedPatient.value = null
-        return { found: false, message: 'Paciente no encontrado' }
-      }
-    } catch (error: any) {
-      searchError.value = error.message || 'Error al buscar el paciente'
+      const apiPatient = await patientsApiService.getPatientByDocumento(documento)
+      patientVerified.value = !!apiPatient
+      verifiedPatient.value = apiPatient ? transformApiPatientToFormData(apiPatient) : null
+      return { found: !!apiPatient, patient: verifiedPatient.value }
+    } catch (e: any) {
+      searchError.value = e.message || 'Error al buscar paciente'
       patientVerified.value = false
       verifiedPatient.value = null
-      return { found: false, error: searchError.value }
+      return { found: false }
     } finally {
       isSearching.value = false
     }
   }
+
+
 
   const useNewPatient = (patientData: PatientData): void => {
     verifiedPatient.value = patientData
@@ -77,6 +63,6 @@ export function usePatientVerification() {
 
   return {
     isSearching, searchError, patientVerified, verifiedPatient,
-    searchPatientByCedula, useNewPatient, clearVerification
+    searchPatientByDocumento, useNewPatient, clearVerification
   }
 }

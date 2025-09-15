@@ -28,23 +28,6 @@ export function usePathologistAPI() {
     }
   }
 
-  const searchPathologists = async (searchTerm: string, includeInactive: boolean = false) => {
-    if (!searchTerm.trim()) return await loadPathologists()
-
-    isLoading.value = true
-    error.value = ''
-
-    try {
-      const results = await pathologistApi.searchPathologists(searchTerm, includeInactive)
-      pathologists.value = results
-      return { success: true, pathologists: results }
-    } catch (err: any) {
-      error.value = err.message || 'Error al buscar patólogos'
-      return { success: false, message: error.value, pathologists: [] }
-    } finally {
-      isLoading.value = false
-    }
-  }
 
   const assignPathologist = async (
     caseId: string, assignmentData: PathologistFormData
@@ -117,7 +100,7 @@ export function usePathologistAPI() {
   }
 
   return {
-    isLoading, error, pathologists, loadPathologists, searchPathologists,
+    isLoading, error, pathologists, loadPathologists,
     assignPathologist, unassignPathologist, clearState
   }
 }

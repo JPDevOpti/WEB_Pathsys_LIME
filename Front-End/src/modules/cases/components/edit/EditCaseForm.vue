@@ -303,13 +303,13 @@ import { reactive, ref, computed, watch, onMounted, nextTick } from 'vue'
 import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { EntityList, TestList, BodyRegionList, PathologistList } from '@/shared/components/List'
-import { useNotifications } from '../composables/useNotifications'
+import { useNotifications } from '../../composables/useNotifications'
 import Notification from '@/shared/components/feedback/Notification.vue'
-import { useCaseForm } from '../composables/useCaseForm'
-import { casesApiService } from '../services/casesApi.service'
-import { patientsApiService } from '../services/patientsApi.service'
-import pathologistApi from '../services/pathologistApi.service'
-import type { CaseFormData, CaseModel, CaseState, PatientData } from '../types'
+import { useCaseForm } from '../../composables/useCaseForm'
+import { casesApiService } from '../../services/casesApi.service'
+import { patientsApiService } from '../../services/patientsApi.service'
+import pathologistApi from '../../services/pathologistApi.service'
+import type { CaseFormData, CaseModel, CaseState, PatientData } from '../../types'
 import { TestIcon } from '@/assets/icons'
 
 // ============================================================================
@@ -369,7 +369,7 @@ const caseFound = ref(false)
 const foundCaseInfo = ref<CaseModel | null>(null)
 
 const form = reactive<CaseFormData & { estado: string; patologoAsignado?: string; servicio: string }>({
-  pacienteCedula: '',
+  pacienteDocumento: '',
   fechaIngreso: '',
   medicoSolicitante: '',
   servicio: '',
@@ -548,7 +548,7 @@ const onSubmit = async () => {
   }
 
   // Validar que hay información del paciente cargada
-  const cedulaToUse = form.pacienteCedula || foundCaseInfo.value?.paciente?.paciente_code
+  const cedulaToUse = form.pacienteDocumento || foundCaseInfo.value?.paciente?.paciente_code
   if (!cedulaToUse) {
     showError('Información incompleta', 'No se encontró información del paciente para este caso')
     return
@@ -846,7 +846,7 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
     // Mapear datos del caso al formulario con información completa
     // Intentar múltiples posibles estructuras de datos del backend
     const formData = {
-      pacienteCedula: 
+      pacienteDocumento: 
         caseData.paciente?.paciente_code || 
         (caseData.paciente as any)?.numeroCedula ||
         (caseData as any).cedula_paciente || 
@@ -975,7 +975,7 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
         caseData.paciente?.paciente_code || 
         (caseData.paciente as any)?.numeroCedula ||
         (caseData as any).cedula_paciente ||
-        formData.pacienteCedula ||
+        formData.pacienteDocumento ||
         '',
       edad: 
         caseData.paciente?.edad || 
@@ -1112,7 +1112,7 @@ const onReset = () => {
   
   // Limpiar formulario
   Object.assign(form, {
-    pacienteCedula: '',
+    pacienteDocumento: '',
     fechaIngreso: '',
     medicoSolicitante: '',
     servicio: '',
@@ -1255,7 +1255,7 @@ const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any
 const clearFormAfterSave = () => {
   // Limpiar campos del formulario y dejar valores por defecto
   Object.assign(form, {
-    pacienteCedula: '',
+    pacienteDocumento: '',
     fechaIngreso: '',
     medicoSolicitante: '',
     servicio: '',

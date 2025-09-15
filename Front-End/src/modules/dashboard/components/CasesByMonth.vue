@@ -23,8 +23,8 @@
       </div>
     </div>
 
-    <div v-else-if="totalCasos > 0" class="max-w-full overflow-x-auto custom-scrollbar">
-      <div id="chartOne" class="-ml-5 min-w-[650px] xl:min-w-full pl-2">
+    <div v-else-if="totalCasosAño > 0" class="max-w-full overflow-x-auto custom-scrollbar">
+      <div class="-ml-5 min-w-[650px] xl:min-w-full pl-2">
         <VueApexCharts v-if="chartReady" type="bar" height="180" :options="chartOptions" :series="series" :key="chartKey" />
         <div v-else class="h-[180px] flex items-center justify-center">
           <div class="text-gray-400 text-sm">Preparando gráfico...</div>
@@ -64,12 +64,10 @@ const lastLoadTime = ref(0)
 const localError = ref<string | null>(null)
 
 const esPatologo = computed(() => authStore.user?.rol === 'patologo' && authStore.userRole !== 'administrador')
-const estadisticas = casosPorMes
-const totalCasos = totalCasosAño
 
 const series = computed(() => [{
   name: esPatologo.value ? 'Casos asignados' : 'Casos',
-  data: Array.isArray(estadisticas.value?.datos) ? estadisticas.value.datos : Array(12).fill(0)
+  data: Array.isArray(casosPorMes.value?.datos) ? casosPorMes.value.datos : Array(12).fill(0)
 }])
 
 const chartOptions = ref({
@@ -95,7 +93,7 @@ const cargarEstadisticas = async (forceRefresh = false) => {
     localError.value = null
     loadingMessage.value = esPatologo.value ? 'Cargando casos asignados...' : 'Cargando casos del laboratorio...'
     chartReady.value = false
-    await cargarCasosPorMes(anioActual.value, esPatologo.value, forceRefresh)
+    await cargarCasosPorMes(anioActual.value, esPatologo.value)
     await nextTick()
     chartReady.value = true
     chartKey.value++

@@ -11,19 +11,16 @@
       </div>
 
       <div class="col-span-12">
-        <UrgentCases @show-details="handleShowDetails" @edit="handleEdit" @perform="handlePerform"
-          @validate="handleValidate" />
+        <UrgentCases @show-details="handleShowDetails" />
       </div>
     </div>
 
-    <UrgentCaseDetailsModal :case-item="selectedUrgentCase" @close="closeUrgentCaseDetails" @edit="handleEdit"
-      @preview="handlePerform" />
+    <UrgentCaseDetailsModal :case-item="selectedUrgentCase" @close="closeUrgentCaseDetails" />
   </AdminLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import AdminLayout from '@/shared/layouts/AdminLayout.vue'
 import MetricsBlocks from '../components/MetricsBlocks.vue'
 import CasesByMonth from '../components/CasesByMonth.vue'
@@ -32,7 +29,6 @@ import OportunityPercentage from '../components/OportunityPercentage.vue'
 import UrgentCaseDetailsModal from '../components/UrgentCaseDetailsModal.vue'
 import type { CasoUrgente } from '../types/dashboard.types'
 
-const router = useRouter()
 const selectedUrgentCase = ref<CasoUrgente | null>(null)
 
 function handleShowDetails(caso: CasoUrgente) {
@@ -42,33 +38,9 @@ function handleShowDetails(caso: CasoUrgente) {
 function closeUrgentCaseDetails() {
   selectedUrgentCase.value = null
 }
-
-function handleEdit(caso: CasoUrgente) {
-  router.push(`/cases/edit/${caso.codigo}`)
-}
-
-function handlePerform(caso: CasoUrgente) {
-  router.push(`/results/perform?case=${caso.codigo}`)
-}
-
-function handleValidate(caso: CasoUrgente) {
-  router.push(`/results/sign?case=${caso.codigo}`)
-}
 </script>
 
 <style scoped>
-.grid {
-  transition: all 0.3s ease-in-out;
-}
-
-.grid > div > * {
-  transition: transform 0.2s ease-in-out;
-}
-
-.grid > div > *:hover {
-  transform: translateY(-2px);
-}
-
 @media (max-width: 768px) {
   .grid {
     gap: 1rem;

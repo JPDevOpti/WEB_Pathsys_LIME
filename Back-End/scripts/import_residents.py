@@ -128,6 +128,12 @@ async def import_residents(dry_run: bool) -> Tuple[int, int]:
         user_service = UserManagementService(db)
         service = ResidenteService(repo, user_service)
 
+        # Índice para acelerar búsquedas por código en usuarios
+        try:
+            await db.usuarios.create_index("residente_code")
+        except Exception:
+            pass
+
         for i, row in enumerate(RESIDENTS_LIST, 1):
             raw_code = str(row.get("raw_code", "")).strip()
             raw_name = str(row.get("raw_name", "")).strip()

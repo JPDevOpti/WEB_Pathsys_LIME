@@ -53,7 +53,12 @@ export interface UpdateCaseRequest {
   }
 }
 
-export interface CreateCaseResponse extends CaseModel {}
+export interface CreateCaseResponse {
+  success: boolean
+  message: string
+  caso_code: string
+  case: CaseModel
+}
 export interface UpdateCaseResponse extends CaseModel {}
 
 export interface CaseListResponse {

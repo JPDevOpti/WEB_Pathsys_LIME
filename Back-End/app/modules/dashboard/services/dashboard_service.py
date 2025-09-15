@@ -22,14 +22,14 @@ class DashboardService:
         # Obtener estadísticas de casos
         casos_stats = await self.caso_repository.get_estadisticas()
         
-        # Obtener estadísticas de pacientes
-        pacientes_stats = await self.paciente_repository.get_statistics()
+        # Obtener estadísticas básicas de pacientes
+        total_pacientes = await self.paciente_repository.count_total()
         
         return DashboardMetrics(
             pacientes={
-                "mes_actual": pacientes_stats["mensuales"]["pacientes_mes_actual"],
-                "mes_anterior": pacientes_stats["mensuales"]["pacientes_mes_anterior"],
-                "cambio_porcentual": pacientes_stats["mensuales"]["cambio_porcentual"]
+                "mes_actual": 0,
+                "mes_anterior": 0,
+                "cambio_porcentual": 0.0
             },
             casos={
                 "mes_actual": casos_stats.casos_mes_actual,

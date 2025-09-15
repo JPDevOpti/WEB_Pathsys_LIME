@@ -24,19 +24,12 @@ export function useNotifications() {
     showNotification('error', title, message, duration)
   }
 
-  const showWarning = (title: string, message: string, duration = 0): void => {
-    showNotification('warning', title, message, duration)
-  }
-
-  const showInfo = (title: string, message: string, duration = 0): void => {
-    showNotification('info', title, message, duration)
-  }
 
   const closeNotification = (): void => {
     notification.visible = false
   }
 
   return {
-    notification, showNotification, showSuccess, showError, showWarning, showInfo, closeNotification
+    notification, showNotification, showSuccess, showError, closeNotification
   }
 }

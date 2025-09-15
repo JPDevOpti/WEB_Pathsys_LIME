@@ -53,7 +53,8 @@ class FacturacionService:
                 name=facturacion_data.facturacion_name,
                 email=facturacion_data.facturacion_email,
                 password=password,
-                is_active=facturacion_data.is_active
+                is_active=facturacion_data.is_active,
+                facturacion_code=facturacion_data.facturacion_code
             )
             
             return self._to_response(facturacion)

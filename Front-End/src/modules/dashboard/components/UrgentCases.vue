@@ -43,10 +43,7 @@
         <div class="text-center px-3 sm:px-4">
           <h3 class="text-sm sm:text-base lg:text-lg font-semibold text-red-800 mb-1 sm:mb-2">Error al cargar casos urgentes</h3>
           <p class="text-xs sm:text-sm text-red-600 mb-3 sm:mb-4 max-w-sm mx-auto">{{ errorCarga }}</p>
-          <button
-            @click="cargarCasosUrgentesConFiltros"
-            class="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 border border-red-300 text-red-700 bg-red-50 rounded-lg font-medium hover:bg-red-100 transition-colors text-xs sm:text-sm"
-          >
+          <button @click="cargarCasosUrgentesConFiltros" class="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 border border-red-300 text-red-700 bg-red-50 rounded-lg font-medium hover:bg-red-100 transition-colors text-xs sm:text-sm">
             <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
@@ -134,42 +131,23 @@
                 
                 <td class="px-1 sm:px-2 py-2 sm:py-3 text-center">
                   <div class="flex gap-1 justify-center min-w-[100px] sm:min-w-[120px]">
-                    <button
-                      class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                      @click.stop="() => emit('show-details', caso)"
-                      title="Ver detalles"
-                    >
+                    <button class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="() => emit('show-details', caso)" title="Ver detalles">
                       <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </button>
-                    <button
-                      v-if="!isPatologo && !isResidente && !isFacturacion"
-                      class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                      @click.stop="handleEdit(caso)"
-                      title="Editar caso"
-                    >
+                    <button v-if="!isPatologo && !isResidente && !isFacturacion" class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="handleEdit(caso)" title="Editar caso">
                       <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </button>
-                    <button
-                      v-if="caso.estado === 'En proceso' && !isFacturacion"
-                      class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                      @click.stop="handlePerform(caso)"
-                      title="Realizar resultados"
-                    >
+                    <button v-if="caso.estado === 'En proceso' && !isFacturacion" class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="handlePerform(caso)" title="Realizar resultados">
                       <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                       </svg>
                     </button>
-                    <button
-                      v-if="['Por firmar','Por entregar'].includes(caso.estado) && !isFacturacion"
-                      class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                      @click.stop="handleValidate(caso)"
-                      :title="caso.estado === 'Por firmar' ? 'Realizar validación del informe' : 'Validar'"
-                    >
+                    <button v-if="['Por firmar','Por entregar'].includes(caso.estado) && !isFacturacion" class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="handleValidate(caso)" :title="caso.estado === 'Por firmar' ? 'Realizar validación del informe' : 'Validar'">
                       <svg v-if="caso.estado === 'Por firmar'" class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                       </svg>
@@ -248,42 +226,27 @@
               </div>
 
               <div class="flex gap-1 sm:gap-2 pt-2 border-t border-gray-100">
-                <button
-                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
-                  @click.stop="() => emit('show-details', caso)"
-                >
+                <button class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium" @click.stop="() => emit('show-details', caso)">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span class="hidden xs:inline">Ver detalles</span>
                   <span class="xs:hidden">Ver</span>
                 </button>
-                <button
-                  v-if="!isPatologo && !isResidente && !isFacturacion"
-                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
-                  @click.stop="handleEdit(caso)"
-                >
+                <button v-if="!isPatologo && !isResidente && !isFacturacion" class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium" @click.stop="handleEdit(caso)">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   Editar
                 </button>
-                <button
-                  v-if="caso.estado === 'En proceso' && !isFacturacion"
-                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
-                  @click.stop="handlePerform(caso)"
-                >
+                <button v-if="caso.estado === 'En proceso' && !isFacturacion" class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium" @click.stop="handlePerform(caso)">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                   </svg>
                   Realizar
                 </button>
-                <button
-                  v-if="['Por firmar','Por entregar'].includes(caso.estado) && !isFacturacion"
-                  class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
-                  @click.stop="handleValidate(caso)"
-                >
+                <button v-if="['Por firmar','Por entregar'].includes(caso.estado) && !isFacturacion" class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium" @click.stop="handleValidate(caso)">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -370,76 +333,41 @@ import type { FormPathologistInfo } from '@/modules/cases/types'
 // Definir los eventos que emite el componente
 const emit = defineEmits<{
   'show-details': [caso: CasoUrgente]
-  'edit': [caso: CasoUrgente]
-  'perform': [caso: CasoUrgente]
-  'validate': [caso: CasoUrgente]
 }>()
 
-const { 
-  casosUrgentes: casos,
-  loadingCasosUrgentes: isLoading,
-  error,
-  cargarCasosUrgentes
-} = useDashboard()
-
+const { casosUrgentes: casos, loadingCasosUrgentes: isLoading, error, cargarCasosUrgentes } = useDashboard()
 const router = useRouter()
-
-// Permisos del usuario
 const { isPatologo, isResidente, isFacturacion } = usePermissions()
 
 const errorCarga = error
 const patologoSeleccionado = ref('')
-
 const sortKey = ref('codigo')
 const sortOrder = ref('desc')
 
 const casosUrgentes = computed(() => {
   return casos.value.slice().sort((a, b) => {
-    let aVal: any, bVal: any
-    
-    if (sortKey.value === 'codigo') {
-      const getNumeroFromCodigo = (codigo: string): number => {
-        const match = codigo.match(/(\d{4})-(\d{5})/)
-        if (match) {
-          const año = parseInt(match[1])
-          const numero = parseInt(match[2])
-          return año * 100000 + numero
+    const getVal = (caso: CasoUrgente) => {
+      switch (sortKey.value) {
+        case 'codigo': {
+          const match = caso.codigo.match(/(\d{4})-(\d{5})/)
+          return match ? parseInt(match[1]) * 100000 + parseInt(match[2]) : 0
         }
-        return 0
+        case 'paciente': return caso.paciente.nombre.toLowerCase()
+        case 'pruebas': return caso.pruebas.join(', ').toLowerCase()
+        case 'patologo': return (caso.patologo || '').toLowerCase()
+        case 'fechaCreacion': return new Date(caso.fecha_creacion).getTime()
+        case 'diasSistema': return caso.dias_en_sistema
+        default: return caso.estado.toLowerCase()
       }
-      aVal = getNumeroFromCodigo(a.codigo)
-      bVal = getNumeroFromCodigo(b.codigo)
-    } else if (sortKey.value === 'paciente') {
-      aVal = a.paciente.nombre
-      bVal = b.paciente.nombre
-    } else if (sortKey.value === 'pruebas') {
-      aVal = a.pruebas.join(', ')
-      bVal = b.pruebas.join(', ')
-    } else if (sortKey.value === 'patologo') {
-      aVal = a.patologo
-      bVal = b.patologo
-    } else if (sortKey.value === 'fechaCreacion') {
-      aVal = new Date(a.fecha_creacion)
-      bVal = new Date(b.fecha_creacion)
-    } else if (sortKey.value === 'diasSistema') {
-      aVal = a.dias_en_sistema
-      bVal = b.dias_en_sistema
-    } else {
-      aVal = a.estado
-      bVal = b.estado
     }
     
+    const aVal = getVal(a)
+    const bVal = getVal(b)
     if (aVal == null) return 1
     if (bVal == null) return -1
     
-    if (typeof aVal === 'string' && typeof bVal === 'string') {
-      aVal = aVal.toLowerCase()
-      bVal = bVal.toLowerCase()
-    }
-    
-    if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1
-    if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1
-    return 0
+    const result = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+    return sortOrder.value === 'asc' ? result : -result
   })
 })
 
@@ -447,27 +375,16 @@ const itemsPerPageOptions = [10, 20, 50, 100]
 const itemsPerPage = ref(10)
 const currentPage = ref(1)
 
-const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(casosUrgentes.value.length / itemsPerPage.value))
-})
-
+const totalPages = computed(() => Math.max(1, Math.ceil(casosUrgentes.value.length / itemsPerPage.value)))
 const casosPaginados = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return casosUrgentes.value.slice(start, end)
+  return casosUrgentes.value.slice(start, start + itemsPerPage.value)
 })
 
-function goToPrevPage() {
-  if (currentPage.value > 1) currentPage.value--
-}
-
-function goToNextPage() {
-  if (currentPage.value < totalPages.value) currentPage.value++
-}
-
-function updateItemsPerPage(event: Event) {
-  const val = Number((event.target as HTMLSelectElement).value)
-  itemsPerPage.value = val
+const goToPrevPage = () => currentPage.value > 1 && currentPage.value--
+const goToNextPage = () => currentPage.value < totalPages.value && currentPage.value++
+const updateItemsPerPage = (event: Event) => {
+  itemsPerPage.value = Number((event.target as HTMLSelectElement).value)
   currentPage.value = 1
 }
 
@@ -475,29 +392,18 @@ watch([casosUrgentes, itemsPerPage], () => {
   currentPage.value = 1
 })
 
-watch(patologoSeleccionado, (newValue) => {
-  // Solo cargar si el valor ha cambiado realmente
-  if (newValue !== undefined) {
-    cargarCasosUrgentesConFiltros()
-  }
-})
+watch(patologoSeleccionado, () => cargarCasosUrgentesConFiltros())
 
-async function cargarCasosUrgentesConFiltros() {
-  const filtros = {
-    patologo: patologoSeleccionado.value || undefined,
-  }
-  
-  await cargarCasosUrgentes(filtros)
+const cargarCasosUrgentesConFiltros = async () => {
+  await cargarCasosUrgentes({ patologo: patologoSeleccionado.value || undefined })
 }
 
-function onPathologistSelected(pathologist: FormPathologistInfo | null) {
-  // Actualizar el valor seleccionado con el documento del patólogo
+const onPathologistSelected = (pathologist: FormPathologistInfo | null) => {
   patologoSeleccionado.value = pathologist?.documento || ''
   cargarCasosUrgentesConFiltros()
 }
 
-function onPathologistLoadError() {
-}
+const onPathologistLoadError = () => {}
 
 const columnasDesktop = [
   { key: 'codigo', label: 'Código', class: 'w-[12%]' },
@@ -518,18 +424,17 @@ const sortBy = (key: string) => {
   }
 }
 
-function formatDate(dateString: string) {
+const formatDate = (dateString: string) => {
   if (!dateString) return 'N/A'
-  const d = new Date(dateString)
-  return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return new Date(dateString).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-function extractTestCode(testString: string) {
+const extractTestCode = (testString: string) => {
   const match = testString.match(/^\d{6}/)
   return match ? match[0] : testString.split(' ')[0]
 }
 
-function groupTests(tests: string[]): { code: string; count: number }[] {
+const groupTests = (tests: string[]): { code: string; count: number }[] => {
   const groups: Record<string, number> = {}
   tests.forEach(t => {
     const code = extractTestCode(t)
@@ -538,22 +443,18 @@ function groupTests(tests: string[]): { code: string; count: number }[] {
   return Object.entries(groups).map(([code, count]) => ({ code, count }))
 }
 
-function getTestTooltip(tests: string[], code: string, count: number): string {
+const getTestTooltip = (tests: string[], code: string, count: number): string => {
   const normalizedCode = extractTestCode(code)
   const matching = tests.filter(t => extractTestCode(t) === normalizedCode)
-  const names = matching
-    .map(t => (t.includes(' - ') ? t.split(' - ').slice(1).join(' - ') : t))
-    .filter(Boolean)
+  const names = matching.map(t => (t.includes(' - ') ? t.split(' - ').slice(1).join(' - ') : t)).filter(Boolean)
   const uniqueNames = Array.from(new Set(names))
   const nameStr = uniqueNames.length ? uniqueNames.join(', ') : `Código ${normalizedCode}`
   return `${nameStr} • ${count} vez${count > 1 ? 'es' : ''}`
 }
 
-function statusLabel(caso: CasoUrgente): string {
-  return caso.estado
-}
+const statusLabel = (caso: CasoUrgente) => caso.estado
 
-function statusClass(caso: CasoUrgente): string {
+const statusClass = (caso: CasoUrgente) => {
   const days = caso.dias_en_sistema
   if (caso.estado === 'Por entregar') return 'bg-red-50 text-red-700 font-semibold'
   if (days >= 5 && caso.estado !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
@@ -563,26 +464,14 @@ function statusClass(caso: CasoUrgente): string {
   return ''
 }
 
-function daysClass(caso: CasoUrgente): string {
+const daysClass = (caso: CasoUrgente) => {
   const days = caso.dias_en_sistema
-  if (days >= 5 && caso.estado !== 'Completado') return 'bg-red-50 text-red-700'
-  return 'bg-blue-50 text-blue-700'
+  return days >= 5 && caso.estado !== 'Completado' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'
 }
 
-function handleEdit(caso: CasoUrgente) {
-  emit('edit', caso)
-  router.push(`/cases/edit/${caso.codigo}`)
-}
-
-function handlePerform(caso: CasoUrgente) {
-  emit('perform', caso)
-  router.push(`/results/perform?case=${caso.codigo}&auto=1`)
-}
-
-function handleValidate(caso: CasoUrgente) {
-  emit('validate', caso)
-  router.push(`/results/sign?case=${caso.codigo}&auto=1`)
-}
+const handleEdit = (caso: CasoUrgente) => router.push(`/cases/edit/${caso.codigo}`)
+const handlePerform = (caso: CasoUrgente) => router.push(`/results/perform?case=${caso.codigo}&auto=1`)
+const handleValidate = (caso: CasoUrgente) => router.push(`/results/sign?case=${caso.codigo}&auto=1`)
 
 onMounted(() => {
   cargarCasosUrgentesConFiltros()
@@ -590,97 +479,22 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  height: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-@media (min-width: 640px) {
-  .custom-scrollbar::-webkit-scrollbar {
-    height: 6px;
-  }
-}
-
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.custom-scrollbar::-webkit-scrollbar { height: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+@media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 6px; } }
 @media (hover: none) and (pointer: coarse) {
-  .hover\:bg-gray-50:hover,
-  .hover\:shadow-md:hover,
-  .hover\:bg-green-50:hover,
-  .hover\:bg-blue-50:hover,
-  .hover\:bg-purple-50:hover,
-  .hover\:bg-orange-50:hover {
-    background-color: transparent;
-    box-shadow: none;
-  }
+  .hover\:bg-gray-50:hover, .hover\:shadow-md:hover, .hover\:bg-green-50:hover, .hover\:bg-blue-50:hover, .hover\:bg-purple-50:hover, .hover\:bg-orange-50:hover { background-color: transparent; box-shadow: none; }
 }
-
-.transition-shadow {
-  transition: box-shadow 0.2s ease-in-out;
-}
-
-.transition-colors {
-  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
-}
-
-button:focus-visible,
-select:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-.test-code {
-  font-family: 'Courier New', monospace;
-  font-size: 0.75rem;
-  line-height: 1;
-}
-
-.test-badge {
-  transition: all 0.2s ease-in-out;
-}
-
-.test-badge:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 480px) {
-  .xs\:hidden {
-    display: none;
-  }
-  
-  .xs\:inline {
-    display: inline;
-  }
-}
-
-@media (min-width: 481px) {
-  .xs\:hidden {
-    display: inline;
-  }
-  
-  .xs\:inline {
-    display: none;
-  }
-}
+.transition-shadow { transition: box-shadow 0.2s ease-in-out; }
+.transition-colors { transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out; }
+button:focus-visible, select:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
+.test-code { font-family: 'Courier New', monospace; font-size: 0.75rem; line-height: 1; }
+.test-badge { transition: all 0.2s ease-in-out; }
+.test-badge:hover { transform: scale(1.05); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+@media (max-width: 480px) { .xs\:hidden { display: none; } .xs\:inline { display: inline; } }
+@media (min-width: 481px) { .xs\:hidden { display: inline; } .xs\:inline { display: none; } }
 </style>

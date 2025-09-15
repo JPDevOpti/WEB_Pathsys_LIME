@@ -111,15 +111,26 @@ async def get_current_user_endpoint(
         token = credentials.credentials
         user = await auth_service.get_current_user(token)
         
+        primary_role = user.get_primary_role()
         # Usar solo campos que existen en la BD
-        return {
+        response = {
             "id": user.id,
             "email": user.email,
             "nombre": user.nombre or "",
-            "rol": user.get_primary_role(),
+            "rol": primary_role,
             "is_active": user.is_active,
-            "ultimo_acceso": user.ultimo_acceso
+            "ultimo_acceso": user.ultimo_acceso,
+            "patologo_code": getattr(user, "patologo_code", None),
+            "auxiliar_code": getattr(user, "auxiliar_code", None),
+            "residente_code": getattr(user, "residente_code", None),
+            "administrador_code": getattr(user, "administrador_code", None),
+            "facturacion_code": getattr(user, "facturacion_code", None),
+            "role_code": getattr(user, f"{primary_role}_code", None)
         }
+        logger.info(
+            f"/auth/me | user={user.email} rol={primary_role} role_code={response.get('role_code')}"
+        )
+        return response
     except (UnauthorizedError, NotFoundError) as e:
         logger.warning(f"Error obteniendo usuario actual: {str(e)}")
         raise HTTPException(

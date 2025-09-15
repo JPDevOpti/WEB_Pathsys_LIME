@@ -15,17 +15,8 @@ export const casesRoutes: RouteRecordRaw[] = [
         }
       },
       {
-        path: 'edit',
+        path: 'edit/:code?',
         name: 'cases-edit',
-        component: () => import('../views/EditCaseView.vue'),
-        meta: {
-          title: 'Editar Caso',
-          requiresAuth: true
-        }
-      },
-      {
-        path: 'edit/:code',
-        name: 'cases-edit-with-code',
         component: () => import('../views/EditCaseView.vue'),
         meta: {
           title: 'Editar Caso',

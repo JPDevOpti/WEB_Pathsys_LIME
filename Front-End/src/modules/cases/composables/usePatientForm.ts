@@ -1,4 +1,4 @@
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive } from 'vue'
 import type { PatientData, PatientFormErrors, PatientFormWarnings, ValidationState } from '../types'
 
 export function usePatientForm() {
@@ -121,7 +121,9 @@ export function usePatientForm() {
   }
 
   const handleNombreInput = (value: string): void => {
-    const capitalizedValue = value.replace(/\b\w/g, (char) => char.toUpperCase())
+    // Solo permitir letras, espacios, guiones y apostrofes
+    const lettersOnly = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\-']/g, '')
+    const capitalizedValue = lettersOnly.replace(/\b\w/g, (char) => char.toUpperCase())
     formData.nombrePaciente = capitalizedValue
     
     if (capitalizedValue.length > 0) validateNombre()
@@ -153,31 +155,9 @@ export function usePatientForm() {
     clearValidationState()
   }
 
-  const baseClasses = "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-
-  const getCedulaFieldClasses = computed(() => {
-    if (errors.pacienteCode.length > 0) return `${baseClasses} border-red-500 bg-red-50`
-    if (warnings.pacienteCode.length > 0) return `${baseClasses} border-yellow-500 bg-yellow-50`
-    if (formData.pacienteCode && errors.pacienteCode.length === 0) return `${baseClasses} border-green-500 bg-green-50`
-    return `${baseClasses} border-gray-300`
-  })
-
-  const getNombreFieldClasses = computed(() => {
-    if (errors.nombrePaciente.length > 0) return `${baseClasses} border-red-500 bg-red-50`
-    if (formData.nombrePaciente && errors.nombrePaciente.length === 0) return `${baseClasses} border-green-500 bg-green-50`
-    return `${baseClasses} border-gray-300`
-  })
-
-  const getEdadFieldClasses = computed(() => {
-    if (errors.edad.length > 0) return `${baseClasses} border-red-500 bg-red-50`
-    if (warnings.edad.length > 0) return `${baseClasses} border-yellow-500 bg-yellow-50`
-    if (formData.edad && errors.edad.length === 0) return `${baseClasses} border-green-500 bg-green-50`
-    return `${baseClasses} border-gray-300`
-  })
 
   return {
-    formData, validationState, errors, warnings, isLoading, validateForm, validateCedula,
-    validateNombre, validateEdad, handleCedulaInput, handleNombreInput, handleEdadInput,
-    clearForm, getCedulaFieldClasses, getNombreFieldClasses, getEdadFieldClasses
+    formData, validationState, errors, warnings, isLoading, validateForm,
+    handleCedulaInput, handleNombreInput, handleEdadInput, clearForm
   }
 }

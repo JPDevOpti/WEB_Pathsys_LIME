@@ -1,14 +1,2 @@
-/**
- * Exportaciones de tipos del módulo dashboard
- */
-
-export type {
-  PacienteStats,
-  CasoStats,
-  CasosPorMes,
-  CasoUrgente,
-  DashboardMetrics,
-  EstadisticasOportunidad,
-  FiltrosCasosUrgentes,
-  CasosPorMesResponse
-} from './dashboard.types'
+export type { CasoUrgente, DashboardMetrics, EstadisticasOportunidad, FiltrosCasosUrgentes, CasosPorMesResponse } from './dashboard.types'
+export { CasePriority, CaseStatus } from './dashboard.types'

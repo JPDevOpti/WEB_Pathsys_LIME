@@ -61,7 +61,8 @@ class ResidenteService:
                 name=residente_data.residente_name,
                 email=residente_data.residente_email,
                 password=password,
-                is_active=residente_data.is_active
+                is_active=residente_data.is_active,
+                residente_code=residente_data.residente_code
             )
             
             return self._to_response(residente)
