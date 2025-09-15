@@ -73,3 +73,24 @@ async def get_casos_por_mes_patologo(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error obteniendo casos por mes del patólogo: {str(e)}"
         )
+
+@router.get("/casos-por-mes/general/{year}")
+async def get_casos_por_mes_general(
+    year: int,
+    current_user: AuthUser = Depends(get_current_active_user),
+    dashboard_service: DashboardService = Depends(get_dashboard_service)
+):
+    """Obtener casos por mes generales del laboratorio - OPTIMIZADO"""
+    try:
+        if year < 2020 or year > 2030:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El año debe estar entre 2020 y 2030"
+            )
+        
+        return await dashboard_service.get_casos_por_mes_general(year)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error obteniendo casos por mes generales: {str(e)}"
+        )

@@ -4,71 +4,58 @@ from typing import List, Optional, Dict, Any
 from functools import wraps
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Body
+from fastapi.responses import StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 import logging
 
 from app.modules.casos.services.caso_service import CasoService
 from app.modules.casos.schemas.caso import (
-    CasoCreateRequest,
-    CasoCreateWithCode,
-    CasoUpdate,
-    CasoResponse,
-    CasoSearch,
-    CasoStats,
-    MuestraStats,
-    CasoDeleteResponse,
-    PatologoInfo,
-    ResultadoInfo,
-    AgregarNotaAdicionalRequest
+    CasoCreateRequest, CasoCreateWithCode, CasoUpdate, CasoResponse,
+    CasoSearch, CasoStats, MuestraStats, CasoDeleteResponse,
+    PatologoInfo, ResultadoInfo, AgregarNotaAdicionalRequest
 )
 from app.config.database import get_database
 from app.shared.schemas.common import EstadoCasoEnum
 from app.core.exceptions import ConflictError, NotFoundError, BadRequestError
-from fastapi.responses import StreamingResponse
 
-# Configurar logger
 logger = logging.getLogger(__name__)
-
 router = APIRouter(tags=["casos"])
 
 
 def get_caso_service(database: AsyncIOMotorDatabase = Depends(get_database)) -> CasoService:
-    """Dependencia para el servicio de casos."""
     return CasoService(database)
+
+def validate_year(year: int) -> None:
+    if year < 2020 or year > 2030:
+        raise HTTPException(status_code=400, detail="El año debe estar entre 2020 y 2030")
 
 
 def handle_exceptions(func):
-    """Decorador para manejo centralizado de excepciones."""
     @wraps(func)
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
         except ConflictError as e:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+            raise HTTPException(status_code=409, detail=str(e))
         except NotFoundError as e:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+            raise HTTPException(status_code=404, detail=str(e))
         except BadRequestError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            logger.error(f"Error in {func.__name__}: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
     return wrapper
 
 
 @router.get("/siguiente-consecutivo", response_model=dict)
 @handle_exceptions
 async def obtener_siguiente_consecutivo(caso_service: CasoService = Depends(get_caso_service)):
-    """Consultar el siguiente código consecutivo disponible (NO lo consume)."""
     codigo = await caso_service.obtener_siguiente_consecutivo()
-    return {
-        "codigo_consecutivo": codigo,
-        "mensaje": "Este es el próximo código disponible. No se ha consumido."
-    }
-
+    return {"codigo_consecutivo": codigo, "mensaje": "Este es el próximo código disponible. No se ha consumido."}
 
 @router.get("/test", response_model=dict)
 @handle_exceptions
 async def test_endpoint():
-    """Endpoint de prueba simple."""
     return {"message": "Casos router funcionando correctamente"}
 
 
@@ -80,27 +67,16 @@ async def debug_entidades(
     entity: Optional[str] = Query(None, description="Nombre de la entidad (opcional)"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Endpoint de depuración para ver los datos reales de entidades."""
     from datetime import datetime, timedelta
     
-    # Si no se proporcionan parámetros, usar el mes anterior
     if not month or not year:
         now = datetime.now()
-        if now.month == 1:
-            month = 12
-            year = now.year - 1
-        else:
-            month = now.month - 1
-            year = now.year
+        month = 12 if now.month == 1 else now.month - 1
+        year = now.year - 1 if now.month == 1 else now.year
     
-    # Construir filtros de fecha
     inicio = datetime(year, month, 1)
-    if month == 12:
-        fin = datetime(year + 1, 1, 1) - timedelta(seconds=1)
-    else:
-        fin = datetime(year, month + 1, 1) - timedelta(seconds=1)
+    fin = datetime(year + 1, 1, 1) - timedelta(seconds=1) if month == 12 else datetime(year, month + 1, 1) - timedelta(seconds=1)
     
-    # Obtener datos de depuración desde el repositorio
     debug_data = await caso_service.repository.get_debug_entidades(inicio, fin, entity)
     
     return {
@@ -110,27 +86,21 @@ async def debug_entidades(
     }
 
 
-# -------------------------------
-# Endpoints de gestión de casos
-# -------------------------------
-
-@router.post("/", response_model=CasoResponse, status_code=status.HTTP_201_CREATED)
+# Gestión de casos
+@router.post("/", response_model=CasoResponse, status_code=201)
 @handle_exceptions
 async def crear_caso(
     caso_data: CasoCreateRequest,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Crear un nuevo caso."""
     return await caso_service.crear_caso(caso_data, "sistema")
 
-
-@router.post("/con-codigo", response_model=CasoResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/con-codigo", response_model=CasoResponse, status_code=201)
 @handle_exceptions
 async def crear_caso_con_codigo(
     caso_data: CasoCreateWithCode,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Crear un nuevo caso con código específico."""
     return await caso_service.crear_caso_con_codigo(caso_data, "sistema")
 
 
@@ -142,10 +112,8 @@ async def listar_casos(
     estado: Optional[EstadoCasoEnum] = Query(None, description="Filtrar por estado"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Listar casos con paginación y filtros básicos."""
     filtros = {"estado": estado.value} if estado else {}
     return await caso_service.listar_casos(skip=skip, limit=limit, filtros=filtros)
-
 
 @router.post("/buscar", response_model=List[CasoResponse])
 @handle_exceptions
@@ -155,21 +123,17 @@ async def buscar_casos(
     limit: int = Query(1000, ge=1, le=5000, description="Número máximo de registros"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Búsqueda avanzada de casos con paginación."""
     return await caso_service.buscar_casos(search_params, skip=skip, limit=limit)
 
 
 @router.get("/estadisticas", response_model=CasoStats)
 @handle_exceptions
 async def obtener_estadisticas(caso_service: CasoService = Depends(get_caso_service)):
-    """Obtener estadísticas de casos."""
     return await caso_service.obtener_estadisticas()
-
 
 @router.get("/estadisticas-muestras", response_model=MuestraStats)
 @handle_exceptions
 async def obtener_estadisticas_muestras(caso_service: CasoService = Depends(get_caso_service)):
-    """Obtener estadísticas de muestras."""
     return await caso_service.obtener_estadisticas_muestras()
 
 
@@ -179,16 +143,8 @@ async def obtener_casos_por_mes(
     year: int,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener estadísticas de casos por mes para un año específico."""
-    # Validar que el año sea razonable
-    if year < 2020 or year > 2030:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="El año debe estar entre 2020 y 2030"
-        )
-    
+    validate_year(year)
     return await caso_service.obtener_casos_por_mes(year)
-
 
 @router.get("/oportunidad-por-mes/{year}", response_model=dict)
 @handle_exceptions
@@ -196,9 +152,7 @@ async def obtener_oportunidad_por_mes(
     year: int,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Porcentaje de oportunidad por cada mes del año: (entregados <=6 días) / entregados."""
-    if year < 2020 or year > 2030:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El año debe estar entre 2020 y 2030")
+    validate_year(year)
     return await caso_service.obtener_oportunidad_por_mes(year)
 
 
@@ -207,18 +161,14 @@ async def obtener_oportunidad_por_mes(
 @router.get("/estadisticas/test", response_model=dict)
 @handle_exceptions
 async def test_estadisticas():
-    """Endpoint de prueba para verificar que las rutas funcionan."""
     return {"message": "Endpoint de estadísticas funcionando correctamente"}
-
 
 @router.get("/estadisticas-oportunidad-mensual", response_model=dict)
 @handle_exceptions
 async def obtener_estadisticas_oportunidad_mensual(
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener estadísticas de oportunidad del mes anterior y comparación con el mes anterior a este."""
     return await caso_service.obtener_estadisticas_oportunidad_mensual()
-
 
 @router.get("/estadisticas-oportunidad-mensual-detalle", response_model=dict)
 @handle_exceptions
@@ -227,39 +177,27 @@ async def obtener_estadisticas_oportunidad_mensual_detalle(
     month: Optional[int] = Query(None, description="Mes (1-12)"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener detalle de oportunidad por prueba y por patólogo para el mes/año indicado.
-    Si no se envían parámetros, usa el mes inmediatamente anterior.
-    """
     return await caso_service.obtener_estadisticas_oportunidad_mensual_detalle(year, month)
 
 
-# -------------------------------
-# Endpoints de consulta por código
-# -------------------------------
-
+# Consulta por código
 @router.get("/caso-code/{caso_code}", response_model=CasoResponse)
 @handle_exceptions
 async def obtener_caso_por_codigo(
     caso_code: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener un caso por código de caso."""
     return await caso_service.obtener_caso_por_caso_code(caso_code)
 
 
-# -------------------------------
-# Endpoints de consulta por criterios
-# -------------------------------
-
+# Consulta por criterios
 @router.get("/paciente/{numero_documento}", response_model=List[CasoResponse])
 @handle_exceptions
 async def obtener_casos_por_paciente(
     numero_documento: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener casos de un paciente por documento."""
     return await caso_service.obtener_casos_por_paciente(numero_documento)
-
 
 @router.get("/patologo/{patologo_codigo}", response_model=List[CasoResponse])
 @handle_exceptions
@@ -267,9 +205,7 @@ async def obtener_casos_por_patologo(
     patologo_codigo: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener casos asignados a un patólogo."""
     return await caso_service.obtener_casos_por_patologo(patologo_codigo)
-
 
 @router.get("/estado/{estado}", response_model=List[CasoResponse])
 @handle_exceptions
@@ -277,39 +213,27 @@ async def obtener_casos_por_estado(
     estado: EstadoCasoEnum,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener casos por estado."""
     return await caso_service.obtener_casos_por_estado(estado)
 
 
-# -------------------------------
-# Endpoints de filtros especiales
-# -------------------------------
-
+# Filtros especiales
 @router.get("/sin-patologo", response_model=List[CasoResponse])
 @handle_exceptions
 async def obtener_casos_sin_patologo(caso_service: CasoService = Depends(get_caso_service)):
-    """Obtener casos sin patólogo asignado."""
     return await caso_service.obtener_casos_sin_patologo()
-
 
 @router.get("/vencidos", response_model=List[CasoResponse])
 @handle_exceptions
 async def obtener_casos_vencidos(caso_service: CasoService = Depends(get_caso_service)):
-    """Obtener casos vencidos."""
     return await caso_service.obtener_casos_vencidos()
-
 
 @router.get("/firmados", response_model=List[CasoResponse])
 @handle_exceptions
 async def obtener_casos_firmados(caso_service: CasoService = Depends(get_caso_service)):
-    """Obtener casos con resultados firmados."""
     return await caso_service.obtener_casos_firmados()
 
 
-# -------------------------------
-# Endpoints de gestión de patólogos
-# -------------------------------
-
+# Gestión de patólogos
 @router.put("/caso-code/{caso_code}/asignar-patologo", response_model=CasoResponse)
 @handle_exceptions
 async def asignar_patologo(
@@ -317,7 +241,6 @@ async def asignar_patologo(
     patologo_info: PatologoInfo,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Asignar patólogo a un caso por código de caso."""
     return await caso_service.asignar_patologo_por_caso_code(caso_code, patologo_info, "sistema")
 
 @router.put("/caso-code/{caso_code}/asignar-patologo-por-codigo", response_model=CasoResponse)
@@ -327,7 +250,6 @@ async def asignar_patologo_por_codigo(
     patologo_codigo: str = Query(..., description="Código del patólogo a asignar"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Asignar patólogo a un caso usando solo el código del patólogo (obtiene información completa automáticamente)."""
     return await caso_service.asignar_patologo_por_codigo(caso_code, patologo_codigo, "sistema")
 
 @router.put("/caso-code/{caso_code}/sincronizar-firma-patologo", response_model=CasoResponse)
@@ -336,7 +258,6 @@ async def sincronizar_firma_patologo(
     caso_code: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Sincronizar la firma del patólogo asignado a un caso."""
     return await caso_service.sincronizar_firma_patologo(caso_code)
 
 @router.put("/sincronizar-firmas-patologos")
@@ -344,9 +265,7 @@ async def sincronizar_firma_patologo(
 async def sincronizar_firmas_patologos_masivo(
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Sincronizar las firmas de todos los patólogos asignados en todos los casos."""
     return await caso_service.sincronizar_firmas_patologos_masivo()
-
 
 @router.delete("/caso-code/{caso_code}/desasignar-patologo", response_model=CasoResponse)
 @handle_exceptions
@@ -354,14 +273,10 @@ async def desasignar_patologo(
     caso_code: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Desasignar patólogo de un caso por código de caso."""
     return await caso_service.desasignar_patologo_por_caso_code(caso_code, "sistema")
 
 
-# -------------------------------
-# Endpoints de gestión de casos
-# -------------------------------
-
+# Gestión de casos
 @router.put("/caso-code/{caso_code}", response_model=CasoResponse)
 @handle_exceptions
 async def actualizar_caso(
@@ -369,9 +284,7 @@ async def actualizar_caso(
     caso_update: CasoUpdate,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Actualizar un caso por código de caso."""
     return await caso_service.actualizar_caso_por_caso_code(caso_code, caso_update, "sistema")
-
 
 @router.delete("/caso-code/{caso_code}", response_model=CasoDeleteResponse)
 @handle_exceptions
@@ -379,26 +292,20 @@ async def eliminar_caso(
     caso_code: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Eliminar un caso por código de caso (eliminación permanente)."""
     await caso_service.eliminar_caso_por_caso_code(caso_code)
     return CasoDeleteResponse(
         message=f"El caso {caso_code} ha sido eliminado exitosamente",
         caso_code=caso_code
     )
 
-# -------------------------------
-# Endpoints de resultados del caso
-# -------------------------------
-
+# Resultados del caso
 @router.get("/caso-code/{caso_code}/resultado", response_model=ResultadoInfo)
 @handle_exceptions
 async def obtener_resultado(
     caso_code: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener resultado del caso por código de caso."""
     return await caso_service.obtener_resultado_por_caso_code(caso_code)
-
 
 @router.put("/caso-code/{caso_code}/resultado", response_model=CasoResponse)
 @handle_exceptions
@@ -407,7 +314,6 @@ async def upsert_resultado(
     resultado: ResultadoInfo,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Crear o actualizar resultado del caso por código de caso."""
     return await caso_service.agregar_o_actualizar_resultado_por_caso_code(caso_code, resultado, "sistema")
 
 
@@ -417,7 +323,6 @@ async def generar_pdf_caso(
     caso_code: str,
     database: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    """Generar PDF del caso usando Playwright y plantilla HTML."""
     from app.modules.casos.services.pdf_service import CasePdfService
     service = CasePdfService(database)
     pdf_bytes = await service.generate_case_pdf(caso_code)
@@ -433,9 +338,7 @@ async def firmar_resultado(
     patologo_codigo: str,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Firmar el resultado del caso por código de caso."""
     return await caso_service.firmar_resultado_por_caso_code(caso_code, patologo_codigo)
-
 
 @router.post("/caso-code/{caso_code}/resultado/firmar-con-diagnosticos", response_model=CasoResponse)
 @handle_exceptions
@@ -446,19 +349,12 @@ async def firmar_resultado_con_diagnosticos(
     diagnostico_cieo: Optional[Dict[str, Any]] = Body(None, description="Diagnóstico CIEO"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Firmar el resultado del caso incluyendo diagnósticos CIE-10 y CIEO."""
     return await caso_service.firmar_resultado_con_diagnosticos(
-        caso_code, 
-        patologo_codigo, 
-        diagnostico_cie10, 
-        diagnostico_cieo
+        caso_code, patologo_codigo, diagnostico_cie10, diagnostico_cieo
     )
 
 
-# -------------------------------
-# Endpoints de estadísticas
-# -------------------------------
-
+# Estadísticas
 @router.get("/entidades-por-patologo", response_model=dict)
 @handle_exceptions
 async def obtener_entidades_por_patologo(
@@ -467,9 +363,7 @@ async def obtener_entidades_por_patologo(
     year: Optional[int] = Query(None, description="Año"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener entidades donde ha trabajado un patólogo específico."""
     return await caso_service.obtener_entidades_por_patologo(patologo, month, year)
-
 
 @router.get("/pruebas-por-patologo", response_model=dict)
 @handle_exceptions
@@ -479,14 +373,10 @@ async def obtener_pruebas_por_patologo(
     year: Optional[int] = Query(None, description="Año"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener pruebas realizadas por un patólogo específico."""
     return await caso_service.obtener_pruebas_por_patologo(patologo, month, year)
 
 
-# -------------------------------
-# Endpoints de estadísticas de entidades
-# -------------------------------
-
+# Estadísticas de entidades
 @router.get("/estadisticas-entidades-mensual", response_model=dict)
 @handle_exceptions
 async def obtener_estadisticas_entidades_mensual(
@@ -495,12 +385,7 @@ async def obtener_estadisticas_entidades_mensual(
     entity: Optional[str] = Query(None, description="Nombre de la entidad (opcional)"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener estadísticas de entidades por mes/año con distribución de ambulatorios y hospitalizados.
-
-    Nota: Se revirtió parámetro experimental 'all_states' para mantener la firma original.
-    """
     return await caso_service.obtener_estadisticas_entidades_mensual(month, year, entity)
-
 
 @router.get("/detalle-entidad", response_model=dict)
 @handle_exceptions
@@ -510,9 +395,7 @@ async def obtener_detalle_entidad(
     year: Optional[int] = Query(None, description="Año"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener detalles completos de una entidad específica."""
     return await caso_service.obtener_detalle_entidad(entidad, month, year)
-
 
 @router.get("/patologos-por-entidad", response_model=dict)
 @handle_exceptions
@@ -522,39 +405,27 @@ async def obtener_patologos_por_entidad(
     year: Optional[int] = Query(None, description="Año"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener patólogos que han trabajado en una entidad específica."""
     return await caso_service.obtener_patologos_por_entidad(entidad, month, year)
 
-# ============================================================================
-# ENDPOINTS PARA ESTADÍSTICAS DE PRUEBAS
-# ============================================================================
-
+# Estadísticas de pruebas
 @router.get("/estadisticas-pruebas-mensual")
+@handle_exceptions
 async def obtener_estadisticas_pruebas_mensual(
     month: int = Query(..., description="Mes (1-12)", ge=1, le=12),
     year: int = Query(..., description="Año (2020-2030)", ge=2020, le=2030),
     entity: Optional[str] = Query(None, description="Nombre de la entidad (opcional)"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener estadísticas de pruebas por mes/año y opcionalmente por entidad."""
-    try:
-        result = await caso_service.obtener_estadisticas_pruebas_mensual(month, year, entity)
-        return {
-            "success": True,
-            "data": result,
-            "message": f"Estadísticas de pruebas obtenidas exitosamente para {month}/{year}"
-        }
-    except BadRequestError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error al obtener estadísticas de pruebas: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
+    result = await caso_service.obtener_estadisticas_pruebas_mensual(month, year, entity)
+    return {
+        "success": True,
+        "data": result,
+        "message": f"Estadísticas de pruebas obtenidas exitosamente para {month}/{year}"
+    }
 
 
 @router.get("/detalle-prueba/{codigo_prueba}")
+@handle_exceptions
 async def obtener_detalle_prueba(
     codigo_prueba: str,
     month: int = Query(..., description="Mes (1-12)", ge=1, le=12),
@@ -562,25 +433,15 @@ async def obtener_detalle_prueba(
     entity: Optional[str] = Query(None, description="Nombre de la entidad (opcional)"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener detalles completos de una prueba específica."""
-    try:
-        result = await caso_service.obtener_detalle_prueba(codigo_prueba, month, year, entity)
-        return {
-            "success": True,
-            "data": result,
-            "message": f"Detalles de la prueba {codigo_prueba} obtenidos exitosamente"
-        }
-    except BadRequestError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error al obtener detalle de prueba: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
-
+    result = await caso_service.obtener_detalle_prueba(codigo_prueba, month, year, entity)
+    return {
+        "success": True,
+        "data": result,
+        "message": f"Detalles de la prueba {codigo_prueba} obtenidos exitosamente"
+    }
 
 @router.get("/patologos-por-prueba/{codigo_prueba}")
+@handle_exceptions
 async def obtener_patologos_por_prueba(
     codigo_prueba: str,
     month: int = Query(..., description="Mes (1-12)", ge=1, le=12),
@@ -588,22 +449,12 @@ async def obtener_patologos_por_prueba(
     entity: Optional[str] = Query(None, description="Nombre de la entidad (opcional)"),
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Obtener patólogos que han trabajado en una prueba específica."""
-    try:
-        result = await caso_service.obtener_patologos_por_prueba(codigo_prueba, month, year, entity)
-        return {
-            "success": True,
-            "data": result,
-            "message": f"Patólogos de la prueba {codigo_prueba} obtenidos exitosamente"
-        }
-    except BadRequestError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error al obtener patólogos por prueba: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
+    result = await caso_service.obtener_patologos_por_prueba(codigo_prueba, month, year, entity)
+    return {
+        "success": True,
+        "data": result,
+        "message": f"Patólogos de la prueba {codigo_prueba} obtenidos exitosamente"
+    }
 
 @router.post("/caso-code/{caso_code}/notas-adicionales", response_model=CasoResponse)
 @handle_exceptions
@@ -612,5 +463,230 @@ async def agregar_nota_adicional(
     nota_data: AgregarNotaAdicionalRequest,
     caso_service: CasoService = Depends(get_caso_service)
 ):
-    """Agregar una nota adicional a un caso completado."""
     return await caso_service.agregar_nota_adicional(caso_code, nota_data.model_dump(), "sistema")
+
+# ============================================================================
+# ENDPOINTS OPTIMIZADOS CON CACHÉ Y PAGINACIÓN
+# ============================================================================
+
+@router.get("/optimized/{caso_code}", response_model=CasoResponse)
+@handle_exceptions
+async def obtener_caso_optimized(
+    caso_code: str,
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Obtener caso por código con caché optimizado."""
+    return await caso_service.obtener_caso_por_caso_code_cached(caso_code)
+
+@router.get("/optimized/list", response_model=Dict[str, Any])
+@handle_exceptions
+async def listar_casos_optimized(
+    cursor: Optional[str] = Query(None, description="Cursor para paginación"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de resultados"),
+    estado: Optional[EstadoCasoEnum] = Query(None, description="Filtrar por estado"),
+    patologo_codigo: Optional[str] = Query(None, description="Filtrar por patólogo"),
+    entidad_id: Optional[str] = Query(None, description="Filtrar por entidad"),
+    sort_field: str = Query("fecha_creacion", description="Campo de ordenamiento"),
+    sort_direction: int = Query(-1, description="Dirección del ordenamiento (-1: desc, 1: asc)"),
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Listar casos con paginación cursor-based optimizada."""
+    # Construir filtros
+    filtros = {}
+    if estado:
+        filtros["estado"] = estado.value
+    if patologo_codigo:
+        filtros["patologo_asignado.codigo"] = patologo_codigo
+    if entidad_id:
+        filtros["paciente.entidad_info.id"] = entidad_id
+    
+    return await caso_service.listar_casos_optimized(
+        cursor=cursor,
+        limit=limit,
+        filtros=filtros,
+        sort_field=sort_field,
+        sort_direction=sort_direction
+    )
+
+@router.get("/optimized/stats", response_model=CasoStats)
+@handle_exceptions
+async def obtener_estadisticas_optimized(
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Obtener estadísticas con caché optimizado."""
+    return await caso_service.obtener_estadisticas_cached()
+
+@router.get("/optimized/muestras/stats", response_model=MuestraStats)
+@handle_exceptions
+async def obtener_estadisticas_muestras_optimized(
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Obtener estadísticas de muestras con caché optimizado."""
+    return await caso_service.obtener_estadisticas_muestras_cached()
+
+@router.get("/optimized/por-mes/{año}", response_model=Dict[str, Any])
+@handle_exceptions
+async def obtener_casos_por_mes_optimized(
+    año: int,
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Obtener casos por mes con caché optimizado."""
+    validate_year(año)
+    return await caso_service.obtener_casos_por_mes_cached(año)
+
+@router.get("/optimized/oportunidad/{año}", response_model=Dict[str, Any])
+@handle_exceptions
+async def obtener_oportunidad_por_mes_optimized(
+    año: int,
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Obtener oportunidad por mes con caché optimizado."""
+    validate_year(año)
+    return await caso_service.obtener_oportunidad_por_mes_cached(año)
+
+@router.post("/optimized/search", response_model=Dict[str, Any])
+@handle_exceptions
+async def buscar_casos_optimized(
+    search_params: CasoSearch = Body(..., description="Parámetros de búsqueda"),
+    cursor: Optional[str] = Query(None, description="Cursor para paginación"),
+    limit: int = Query(1000, ge=1, le=5000, description="Número máximo de resultados"),
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Búsqueda optimizada con paginación cursor-based."""
+    return await caso_service.buscar_casos_optimized(
+        search_params=search_params,
+        cursor=cursor,
+        limit=limit
+    )
+
+@router.get("/optimized/por-estado/{estado}", response_model=Dict[str, Any])
+@handle_exceptions
+async def obtener_casos_por_estado_optimized(
+    estado: EstadoCasoEnum,
+    cursor: Optional[str] = Query(None, description="Cursor para paginación"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de resultados"),
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Obtener casos por estado con paginación optimizada."""
+    return await caso_service.obtener_casos_por_estado_optimized(
+        estado=estado,
+        cursor=cursor,
+        limit=limit
+    )
+
+@router.get("/optimized/por-patologo/{patologo_codigo}", response_model=Dict[str, Any])
+@handle_exceptions
+async def obtener_casos_por_patologo_optimized(
+    patologo_codigo: str,
+    cursor: Optional[str] = Query(None, description="Cursor para paginación"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de resultados"),
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Obtener casos por patólogo con paginación optimizada."""
+    return await caso_service.obtener_casos_por_patologo_optimized(
+        patologo_codigo=patologo_codigo,
+        cursor=cursor,
+        limit=limit
+    )
+
+@router.put("/optimized/{caso_code}", response_model=CasoResponse)
+@handle_exceptions
+async def actualizar_caso_optimized(
+    caso_code: str,
+    caso_update: CasoUpdate,
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Actualizar caso con invalidación de caché optimizada."""
+    return await caso_service.actualizar_caso_por_caso_code_optimized(
+        caso_code=caso_code,
+        caso_update=caso_update,
+        usuario_id="sistema"
+    )
+
+@router.delete("/optimized/{caso_code}")
+@handle_exceptions
+async def eliminar_caso_optimized(
+    caso_code: str,
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Eliminar caso con invalidación de caché optimizada."""
+    result = await caso_service.eliminar_caso_por_caso_code_optimized(caso_code)
+    return {"message": "Caso eliminado exitosamente", "success": result}
+
+# ============================================================================
+# ENDPOINTS DE OPTIMIZACIÓN AVANZADA
+# ============================================================================
+
+@router.post("/bulk-update")
+@handle_exceptions
+async def bulk_update_casos(
+    updates: List[Dict[str, Any]] = Body(..., description="Lista de actualizaciones"),
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Actualizar múltiples casos en una sola operación."""
+    return await caso_service.bulk_update_casos(
+        updates=updates,
+        usuario_id="sistema"
+    )
+
+@router.get("/projection")
+@handle_exceptions
+async def get_casos_with_projection(
+    projection: str = Query(..., description="Campos a incluir (JSON string)"),
+    estado: Optional[EstadoCasoEnum] = Query(None, description="Filtrar por estado"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de resultados"),
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Obtener casos con proyección específica para optimizar transferencia de datos."""
+    import json
+    projection_dict = json.loads(projection)
+    
+    filtros = {}
+    if estado:
+        filtros["estado"] = estado.value
+    
+    return await caso_service.get_casos_with_projection(
+        projection=projection_dict,
+        filters=filtros,
+        limit=limit
+    )
+
+@router.get("/stats/optimized", response_model=CasoStats)
+@handle_exceptions
+async def get_estadisticas_optimized(
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Obtener estadísticas usando agregaciones optimizadas."""
+    return await caso_service.get_estadisticas_optimized()
+
+# ============================================================================
+# ENDPOINTS DE GESTIÓN DE CACHÉ
+# ============================================================================
+
+@router.post("/cache/invalidate/{caso_code}")
+@handle_exceptions
+async def invalidate_caso_cache(
+    caso_code: str,
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Invalidar caché de un caso específico."""
+    await caso_service.invalidate_caso_cache(caso_code)
+    return {"message": f"Caché del caso {caso_code} invalidado exitosamente"}
+
+@router.post("/cache/invalidate-stats")
+@handle_exceptions
+async def invalidate_stats_cache(
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Invalidar caché de estadísticas."""
+    await caso_service.invalidate_stats_cache()
+    return {"message": "Caché de estadísticas invalidado exitosamente"}
+
+@router.post("/cache/clear")
+@handle_exceptions
+async def clear_all_cache(
+    caso_service: CasoService = Depends(get_caso_service)
+):
+    """Limpiar todo el caché del módulo de casos."""
+    await caso_service.clear_all_cache()
+    return {"message": "Todo el caché del módulo de casos ha sido limpiado"}

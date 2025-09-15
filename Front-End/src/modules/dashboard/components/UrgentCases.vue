@@ -5,7 +5,7 @@
         <div class="flex-1 min-w-0">
           <h3 class="text-sm sm:text-base lg:text-lg font-semibold text-gray-800">Casos urgentes</h3>
           <p class="mt-1 text-xs sm:text-sm text-gray-500">
-            {{ isLoading ? 'Cargando...' : `${casosUrgentes.length} casos urgentes (>6 días)` }}
+            {{ isLoading ? 'Cargando...' : `${casosUrgentes.length} casos urgentes (≥5 días)` }}
           </p>
         </div>
         <div class="w-full sm:w-auto lg:w-80 flex-shrink-0">
@@ -556,7 +556,7 @@ function statusLabel(caso: CasoUrgente): string {
 function statusClass(caso: CasoUrgente): string {
   const days = caso.dias_en_sistema
   if (caso.estado === 'Por entregar') return 'bg-red-50 text-red-700 font-semibold'
-  if (days > 6 && caso.estado !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
+  if (days >= 5 && caso.estado !== 'Completado') return 'bg-red-50 text-red-700 font-semibold'
   if (caso.estado === 'Por firmar') return 'bg-yellow-50 text-yellow-700'
   if (caso.estado === 'En proceso') return 'bg-blue-50 text-blue-700'
   if (caso.estado === 'Completado') return 'bg-green-50 text-green-700'
@@ -565,7 +565,7 @@ function statusClass(caso: CasoUrgente): string {
 
 function daysClass(caso: CasoUrgente): string {
   const days = caso.dias_en_sistema
-  if (days > 6 && caso.estado !== 'Completado') return 'bg-red-50 text-red-700'
+  if (days >= 5 && caso.estado !== 'Completado') return 'bg-red-50 text-red-700'
   return 'bg-blue-50 text-blue-700'
 }
 

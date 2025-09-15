@@ -9,6 +9,25 @@ import type {
   MuestraStats
 } from '../types/dashboard.types'
 
+// Cache global para optimizar rendimiento
+const globalCache = new Map<string, { data: any; timestamp: number }>()
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutos
+// Coalescencia de peticiones en curso por clave
+const inflightCasosPorMes = new Map<string, Promise<CasosPorMesResponse>>()
+
+// Función helper para cache
+const getCachedData = (key: string) => {
+  const cached = globalCache.get(key)
+  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+    return cached.data
+  }
+  return null
+}
+
+const setCachedData = (key: string, data: any) => {
+  globalCache.set(key, { data, timestamp: Date.now() })
+}
+
 export function useDashboard() {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
@@ -45,21 +64,46 @@ export function useDashboard() {
     }
   }
 
-  const cargarCasosPorMes = async (año?: number, esPatologo: boolean = false) => {
+  const cargarCasosPorMes = async (año?: number, esPatologo: boolean = false, forceRefresh = false) => {
+    const añoActual = año || new Date().getFullYear()
+    const cacheKey = `casos-por-mes-${añoActual}-${esPatologo}`
+    
+    // Verificar cache si no es refresh forzado
+    if (!forceRefresh) {
+      const cachedData = getCachedData(cacheKey)
+      if (cachedData) {
+        casosPorMes.value = cachedData
+        return
+      }
+      // Si hay una petición en curso con la misma clave, reutilizar
+      const inflight = inflightCasosPorMes.get(cacheKey)
+      if (inflight) {
+        const data = await inflight
+        casosPorMes.value = data
+        return
+      }
+    }
+    
     try {
       loadingCasosPorMes.value = true
       error.value = null
       
-      if (esPatologo) {
-        casosPorMes.value = await dashboardApiService.getCasosPorMesPatologo(año)
-      } else {
-        casosPorMes.value = await dashboardApiService.getCasosPorMes(año)
-      }
+      // Crear petición y registrarla para coalescencia
+      const fetchPromise = (async (): Promise<CasosPorMesResponse> => {
+        if (esPatologo) return await dashboardApiService.getCasosPorMesPatologo(año)
+        return await dashboardApiService.getCasosPorMes(año)
+      })()
+      inflightCasosPorMes.set(cacheKey, fetchPromise)
+      const data = await fetchPromise
+      
+      casosPorMes.value = data
+      setCachedData(cacheKey, data)
     } catch (err: any) {
       error.value = err.message || 'Error al cargar estadísticas de casos por mes'
       throw err
     } finally {
       loadingCasosPorMes.value = false
+      inflightCasosPorMes.delete(cacheKey)
     }
   }
 

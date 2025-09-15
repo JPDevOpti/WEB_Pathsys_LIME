@@ -17,71 +17,51 @@ class DashboardApiService {
   private readonly baseUrl = API_CONFIG.ENDPOINTS
 
   async getEstadisticasPacientes(): Promise<PacienteStats> {
-    try {
-      const response = await apiClient.get<any>(`${this.baseUrl.PATIENTS}/estadisticas`)
-      return response?.data ?? response
-    } catch (error) {
-      throw error
-    }
+    const response = await apiClient.get<any>(`${this.baseUrl.PATIENTS}/estadisticas`)
+    return response?.data ?? response
   }
 
   async getEstadisticasCasos(): Promise<CasoStats> {
-    try {
-      // Endpoint según documentación: GET /api/v1/casos/estadisticas
-      const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas`)
-      const data = response?.data ?? response
-      
-      // Validar que los datos tengan la estructura esperada según documentación
-      return {
-        total_casos: data.total_casos || 0,
-        casos_en_proceso: data.casos_en_proceso || 0,
-        casos_por_firmar: data.casos_por_firmar || 0,
-        casos_por_entregar: data.casos_por_entregar || 0,
-        casos_completados: data.casos_completados || 0,
-        casos_vencidos: data.casos_vencidos || 0,
-        casos_sin_patologo: data.casos_sin_patologo || 0,
-        tiempo_promedio_procesamiento: data.tiempo_promedio_procesamiento || null,
-        casos_mes_actual: data.casos_mes_actual || 0,
-        casos_mes_anterior: data.casos_mes_anterior || 0,
-        casos_semana_actual: data.casos_semana_actual || 0,
-        cambio_porcentual: data.cambio_porcentual || 0,
-        casos_por_patologo: data.casos_por_patologo || {},
-        casos_por_tipo_prueba: data.casos_por_tipo_prueba || {}
-      }
-    } catch (error) {
-      throw error
+    const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas`)
+    const data = response?.data ?? response
+    return {
+      total_casos: data.total_casos || 0,
+      casos_en_proceso: data.casos_en_proceso || 0,
+      casos_por_firmar: data.casos_por_firmar || 0,
+      casos_por_entregar: data.casos_por_entregar || 0,
+      casos_completados: data.casos_completados || 0,
+      casos_vencidos: data.casos_vencidos || 0,
+      casos_sin_patologo: data.casos_sin_patologo || 0,
+      tiempo_promedio_procesamiento: data.tiempo_promedio_procesamiento || null,
+      casos_mes_actual: data.casos_mes_actual || 0,
+      casos_mes_anterior: data.casos_mes_anterior || 0,
+      casos_semana_actual: data.casos_semana_actual || 0,
+      cambio_porcentual: data.cambio_porcentual || 0,
+      casos_por_patologo: data.casos_por_patologo || {},
+      casos_por_tipo_prueba: data.casos_por_tipo_prueba || {}
     }
   }
 
   async getEstadisticasMuestras(): Promise<MuestraStats> {
-    try {
-      // Endpoint según documentación: GET /api/v1/casos/estadisticas-muestras
-      const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas-muestras`)
-      const data = response?.data ?? response
-      
-      // Validar estructura según documentación
-      return {
-        total_muestras: data.total_muestras || 0,
-        muestras_mes_anterior: data.muestras_mes_anterior || 0,
-        muestras_mes_anterior_anterior: data.muestras_mes_anterior_anterior || 0,
-        cambio_porcentual: data.cambio_porcentual || 0,
-        muestras_por_region: data.muestras_por_region || {},
-        muestras_por_tipo_prueba: data.muestras_por_tipo_prueba || {},
-        tiempo_promedio_procesamiento: data.tiempo_promedio_procesamiento || 0
-      }
-    } catch (error) {
-      throw error
+    const response = await apiClient.get<any>(`${this.baseUrl.CASES}/estadisticas-muestras`)
+    const data = response?.data ?? response
+    return {
+      total_muestras: data.total_muestras || 0,
+      muestras_mes_anterior: data.muestras_mes_anterior || 0,
+      muestras_mes_anterior_anterior: data.muestras_mes_anterior_anterior || 0,
+      cambio_porcentual: data.cambio_porcentual || 0,
+      muestras_por_region: data.muestras_por_region || {},
+      muestras_por_tipo_prueba: data.muestras_por_tipo_prueba || {},
+      tiempo_promedio_procesamiento: data.tiempo_promedio_procesamiento || 0
     }
   }
 
   async getMetricasDashboard(): Promise<DashboardMetrics> {
-    // Usar el método de fallback por ahora hasta que el endpoint esté disponible
     try {
       const [casosStats, pacientesStats] = await Promise.all([
         this.getEstadisticasCasos(),
         this.getEstadisticasPacientes()
       ])
-
       return {
         pacientes: {
           mes_actual: pacientesStats.pacientes_mes_actual || 0,
@@ -94,7 +74,7 @@ class DashboardApiService {
           cambio_porcentual: casosStats.cambio_porcentual || 0
         }
       }
-    } catch (error) {
+    } catch {
       return {
         pacientes: { mes_actual: 0, mes_anterior: 0, cambio_porcentual: 0 },
         casos: { mes_actual: 0, mes_anterior: 0, cambio_porcentual: 0 }
@@ -106,7 +86,7 @@ class DashboardApiService {
     try {
       const response = await apiClient.get('/dashboard/metricas/patologo')
       return response.data || response
-    } catch (error: any) {
+    } catch {
       return await this._getMetricasPatologoFallback()
     }
   }
@@ -117,53 +97,37 @@ class DashboardApiService {
       const authStore = useAuthStore()
       const user = authStore.user
       
-      if (!user || user.rol !== 'patologo') {
-        return await this.getMetricasDashboard()
-      }
+      if (!user || user.rol !== 'patologo') return await this.getMetricasDashboard()
 
       const patologosResponse = await apiClient.get(`${this.baseUrl.PATHOLOGISTS}/search?q=${user.nombre}`)
-      const patologos = patologosResponse.data || []
+      let patologos = patologosResponse.data || []
       
       if (patologos.length === 0) {
         const patologosEmailResponse = await apiClient.get(`${this.baseUrl.PATHOLOGISTS}/search?q=${user.email}`)
         const patologosEmail = patologosEmailResponse.data || []
-        
-        if (patologosEmail.length === 0) {
-          return await this.getMetricasDashboard()
-        }
-        
+        if (patologosEmail.length === 0) return await this.getMetricasDashboard()
         patologos.push(...patologosEmail)
       }
 
-      const nombreUsuario = user.nombre || ''
-      const nombreUsuarioLower = nombreUsuario.toLowerCase()
-      
+      const nombreUsuarioLower = (user.nombre || '').toLowerCase()
       const patologoEncontrado = patologos.find((p: any) => {
         if (!p.patologo_name) return false
-        
         const nombrePatologo = p.patologo_name.toLowerCase()
-        
         return nombrePatologo.includes(nombreUsuarioLower) || 
                nombreUsuarioLower.includes(nombrePatologo) ||
                (p.iniciales_patologo && p.iniciales_patologo.toLowerCase().includes(nombreUsuarioLower))
       })
 
-      if (!patologoEncontrado) {
-        return await this.getMetricasDashboard()
-      }
+      if (!patologoEncontrado) return await this.getMetricasDashboard()
 
-      const patologoCode = patologoEncontrado.patologo_code
-      const casosResponse = await apiClient.get(`${this.baseUrl.CASES}/patologo/${patologoCode}`)
+      const casosResponse = await apiClient.get(`${this.baseUrl.CASES}/patologo/${patologoEncontrado.patologo_code}`)
       const casos = casosResponse.data || []
 
-      const casosStats = this._calcularMetricasCasos(casos)
-      const pacientesStats = this._calcularMetricasPacientes(casos)
-
       return {
-        pacientes: pacientesStats,
-        casos: casosStats
+        pacientes: this._calcularMetricasPacientes(casos),
+        casos: this._calcularMetricasCasos(casos)
       }
-    } catch (error) {
+    } catch {
       return await this.getMetricasDashboard()
     }
   }
@@ -174,32 +138,21 @@ class DashboardApiService {
     const inicioMesAnterior = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)
     const inicioMesAnteriorAnterior = new Date(ahora.getFullYear(), ahora.getMonth() - 2, 1)
 
-    const casosMesActual = casos.filter(caso => 
-      new Date(caso.fecha_creacion) >= inicioMesActual
-    ).length
-
+    const casosMesActual = casos.filter(caso => new Date(caso.fecha_creacion) >= inicioMesActual).length
     const casosMesAnterior = casos.filter(caso => {
       const fecha = new Date(caso.fecha_creacion)
       return fecha >= inicioMesAnterior && fecha < inicioMesActual
     }).length
-
     const casosMesAnteriorAnterior = casos.filter(caso => {
       const fecha = new Date(caso.fecha_creacion)
       return fecha >= inicioMesAnteriorAnterior && fecha < inicioMesAnterior
     }).length
 
-    let cambioPorcentual = 0
-    if (casosMesAnteriorAnterior > 0) {
-      cambioPorcentual = Math.round(((casosMesAnterior - casosMesAnteriorAnterior) / casosMesAnteriorAnterior) * 100)
-    } else if (casosMesAnterior > 0) {
-      cambioPorcentual = 100
-    }
+    const cambioPorcentual = casosMesAnteriorAnterior > 0 
+      ? Math.round(((casosMesAnterior - casosMesAnteriorAnterior) / casosMesAnteriorAnterior) * 100)
+      : casosMesAnterior > 0 ? 100 : 0
 
-    return {
-      mes_actual: casosMesActual,
-      mes_anterior: casosMesAnterior,
-      cambio_porcentual: cambioPorcentual
-    }
+    return { mes_actual: casosMesActual, mes_anterior: casosMesAnterior, cambio_porcentual: cambioPorcentual }
   }
 
   private _calcularMetricasPacientes(casos: any[]): any {
@@ -207,156 +160,86 @@ class DashboardApiService {
     const inicioMesActual = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
     const inicioMesAnterior = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1)
 
-    // Filtrar casos por mes y obtener pacientes únicos
-    const casosMesActual = casos.filter(caso => 
-      new Date(caso.fecha_creacion) >= inicioMesActual
-    )
-    
+    const casosMesActual = casos.filter(caso => new Date(caso.fecha_creacion) >= inicioMesActual)
     const casosMesAnterior = casos.filter(caso => {
       const fecha = new Date(caso.fecha_creacion)
       return fecha >= inicioMesAnterior && fecha < inicioMesActual
     })
 
-    // Obtener pacientes únicos por mes
     const pacientesMesActual = [...new Set(casosMesActual.map(caso => caso.paciente?.id).filter(Boolean))].length
     const pacientesMesAnterior = [...new Set(casosMesAnterior.map(caso => caso.paciente?.id).filter(Boolean))].length
 
-    let cambioPorcentual = 0
-    if (pacientesMesAnterior > 0) {
-      cambioPorcentual = Math.round(((pacientesMesActual - pacientesMesAnterior) / pacientesMesAnterior) * 100)
-    } else if (pacientesMesActual > 0) {
-      cambioPorcentual = 100
-    }
+    const cambioPorcentual = pacientesMesAnterior > 0 
+      ? Math.round(((pacientesMesActual - pacientesMesAnterior) / pacientesMesAnterior) * 100)
+      : pacientesMesActual > 0 ? 100 : 0
 
-    return {
-      mes_actual: pacientesMesActual,
-      mes_anterior: pacientesMesAnterior,
-      cambio_porcentual: cambioPorcentual
-    }
+    return { mes_actual: pacientesMesActual, mes_anterior: pacientesMesAnterior, cambio_porcentual: cambioPorcentual }
   }
 
   async getCasosPorMes(año?: number): Promise<CasosPorMesResponse> {
     const añoActual = año || new Date().getFullYear()
-    const defaultResponse = {
-      datos: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      total: 0,
-      año: añoActual
-    }
+    const defaultResponse = { datos: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], total: 0, año: añoActual }
 
     try {
-      // Endpoint según documentación: GET /api/v1/casos/casos-por-mes/{year}
-      // Rango permitido: 2020-2030
-      if (añoActual < 2020 || añoActual > 2030) {
-        return defaultResponse
-      }
+      if (añoActual < 2020 || añoActual > 2030) return defaultResponse
 
       const response = await apiClient.get<any>(`${this.baseUrl.CASES}/casos-por-mes/${añoActual}`)
       const data = response?.data ?? response
       
-      if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) {
-        return defaultResponse
-      }
+      if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) return defaultResponse
       
-      return {
-        datos: data.datos,
-        total: data.total || 0,
-        año: data.año || añoActual
-      }
-    } catch (error) {
+      return { datos: data.datos, total: data.total || 0, año: data.año || añoActual }
+    } catch {
       return defaultResponse
     }
   }
 
   async getCasosPorMesPatologo(año?: number): Promise<CasosPorMesResponse> {
     const añoActual = año || new Date().getFullYear()
-    const defaultResponse = {
-      datos: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      total: 0,
-      año: añoActual
-    }
+    const defaultResponse = { datos: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], total: 0, año: añoActual }
 
     try {
-      // Endpoint específico para patólogos: GET /api/v1/dashboard/casos-por-mes/patologo/{year}
-      if (añoActual < 2020 || añoActual > 2030) {
-        return defaultResponse
-      }
+      if (añoActual < 2020 || añoActual > 2030) return defaultResponse
 
       const response = await apiClient.get<any>(`/dashboard/casos-por-mes/patologo/${añoActual}`)
       const data = response?.data ?? response
       
-      if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) {
-        return defaultResponse
-      }
+      if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) return defaultResponse
       
-      return {
-        datos: data.datos,
-        total: data.total || 0,
-        año: data.año || añoActual
-      }
-    } catch (error) {
-      // Fallback temporal: usar el endpoint general hasta que se reinicie el servidor
-      console.warn('Endpoint de patólogo no disponible, usando fallback temporal')
+      return { datos: data.datos, total: data.total || 0, año: data.año || añoActual }
+    } catch {
       return await this.getCasosPorMes(año)
     }
   }
 
   async getCasosUrgentes(filtros: FiltrosCasosUrgentes = {}): Promise<CasoUrgente[]> {
-    try {
-      const searchParams: any = {}
+    const searchParams: any = {}
+    if (filtros.patologo) searchParams.patologo_codigo = filtros.patologo
+    if (filtros.estado) searchParams.estado = filtros.estado
       
-      if (filtros.patologo) {
-        searchParams.patologo_codigo = filtros.patologo
+    const url = `${this.baseUrl.CASES}/buscar?skip=0&limit=1000`
+    const response = await apiClient.post<any>(url, searchParams)
+    const data = Array.isArray(response) ? response : (response?.data ?? response?.items ?? [])
+    
+    const todosCasos = this.transformarCasosUrgentes(data)
+    const casosUrgentes = todosCasos.filter(caso => caso.dias_en_sistema >= 5 && caso.estado !== 'Completado')
+    
+    casosUrgentes.sort((a, b) => {
+      const getNumeroFromCodigo = (codigo: string): number => {
+        const match = codigo.match(/(\d{4})-(\d{5})/)
+        return match ? parseInt(match[1]) * 100000 + parseInt(match[2]) : 0
       }
-      
-      if (filtros.estado) {
-        searchParams.estado = filtros.estado
-      }
-      
-      const url = `${this.baseUrl.CASES}/buscar?skip=0&limit=1000`
-      const response = await apiClient.post<any>(url, searchParams)
-      const data = Array.isArray(response) ? response : (response?.data ?? response?.items ?? [])
-      
-      const todosCasos = this.transformarCasosUrgentes(data)
-      
-      const casosUrgentes = todosCasos.filter(caso => 
-        caso.dias_en_sistema > 6 && caso.estado !== 'Completado'
-      )
-      
-      casosUrgentes.sort((a, b) => {
-        const getNumeroFromCodigo = (codigo: string): number => {
-          const match = codigo.match(/(\d{4})-(\d{5})/)
-          if (match) {
-            const año = parseInt(match[1])
-            const numero = parseInt(match[2])
-            return año * 100000 + numero
-          }
-          return 0
-        }
-        
-        return getNumeroFromCodigo(b.codigo) - getNumeroFromCodigo(a.codigo)
-      })
-      
-      const limite = filtros.limite || casosUrgentes.length
-      return casosUrgentes.slice(0, limite)
-      
-    } catch (error) {
-      throw error
-    }
+      return getNumeroFromCodigo(b.codigo) - getNumeroFromCodigo(a.codigo)
+    })
+    
+    return casosUrgentes.slice(0, filtros.limite || casosUrgentes.length)
   }
 
   async getEstadisticasOportunidad(): Promise<EstadisticasOportunidad> {
     const defaultResponse = {
-      porcentaje_oportunidad: 0,
-      cambio_porcentual: 0,
-      tiempo_promedio: 0,
-      casos_dentro_oportunidad: 0,
-      casos_fuera_oportunidad: 0,
-      total_casos_mes_anterior: 0,
-      mes_anterior: {
-        nombre: 'Mes anterior',
-        inicio: '',
-        fin: ''
-      }
+      porcentaje_oportunidad: 0, cambio_porcentual: 0, tiempo_promedio: 0,
+      casos_dentro_oportunidad: 0, casos_fuera_oportunidad: 0, total_casos_mes_anterior: 0,
+      mes_anterior: { nombre: 'Mes anterior', inicio: '', fin: '' }
     }
 
     try {
@@ -376,33 +259,25 @@ class DashboardApiService {
           fin: data?.mes_anterior?.fin || ''
         }
       }
-    } catch (error) {
+    } catch {
       return defaultResponse
     }
   }
 
-
-
   private transformarCasosUrgentes(casos: any[]): CasoUrgente[] {
     return casos.map((caso: any) => {
       const fechaCreacion = new Date(caso.fecha_creacion)
-      const hoy = new Date()
-      const diasEnSistema = Math.floor((hoy.getTime() - fechaCreacion.getTime()) / (1000 * 60 * 60 * 24))
+      const diasEnSistema = Math.floor((Date.now() - fechaCreacion.getTime()) / (1000 * 60 * 60 * 24))
 
       const pruebas: string[] = []
-      if (caso.muestras && Array.isArray(caso.muestras)) {
+      if (caso.muestras?.length) {
         caso.muestras.forEach((muestra: any) => {
-          if (muestra.pruebas && Array.isArray(muestra.pruebas)) {
+          if (muestra.pruebas?.length) {
             muestra.pruebas.forEach((prueba: any) => {
               const code = prueba.id || ''
               const name = prueba.nombre || ''
-              
-              if (code) {
-                const pruebaFormateada = name ? `${code} - ${name}` : code
-                pruebas.push(pruebaFormateada)
-              } else if (name) {
-                pruebas.push(name)
-              }
+              if (code) pruebas.push(name ? `${code} - ${name}` : code)
+              else if (name) pruebas.push(name)
             })
           }
         })
