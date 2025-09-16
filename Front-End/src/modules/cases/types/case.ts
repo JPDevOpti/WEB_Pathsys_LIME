@@ -15,14 +15,22 @@ export interface EntityInfo {
 }
 
 export interface PatientInfo {
-  paciente_code: string
-  nombre: string
-  edad: number
-  sexo: Gender
-  entidad_info: EntityInfo
-  tipo_atencion: AttentionType
-  observaciones?: string
-  fecha_actualizacion: string
+  patient_code: string
+  name: string
+  age: number
+  gender: Gender
+  entity_info: EntityInfo
+  care_type: AttentionType
+  observations?: string
+  updated_at?: string
+  // Campos en español para compatibilidad
+  paciente_code?: string
+  nombre?: string
+  edad?: number
+  sexo?: Gender
+  entidad_info?: EntityInfo
+  tipo_atencion?: AttentionType
+  fecha_actualizacion?: string
 }
 
 export interface DoctorInfo {
@@ -31,12 +39,19 @@ export interface DoctorInfo {
 
 export interface TestInfo {
   id: string
-  nombre: string
+  name: string
+  quantity?: number
+  // Campos en español para compatibilidad
+  nombre?: string
+  cantidad?: number
 }
 
 export interface SampleInfo {
-  region_cuerpo: string
-  pruebas: TestInfo[]
+  body_region: string
+  tests: TestInfo[]
+  // Campos en español para compatibilidad
+  region_cuerpo?: string
+  pruebas?: TestInfo[]
 }
 
 export interface PathologistInfo {
@@ -57,24 +72,36 @@ export interface CaseResult {
 }
 
 export interface CaseModel {
-  _id?: string
-  caso_code: string
-  paciente: PatientInfo
-  medico_solicitante?: string
-  servicio?: string
-  muestras: SampleInfo[]
-  estado: CaseState
-  prioridad?: CasePriority
-  fecha_ingreso: string
-  fecha_firma?: string
-  fecha_actualizacion: string
-  observaciones_generales?: string
+  id?: string
+  case_code: string
+  patient_info: PatientInfo
+  requesting_physician?: string
+  service?: string
+  samples: SampleInfo[]
+  state: CaseState
+  priority?: CasePriority
+  created_at: string
+  updated_at: string
+  observations?: string
   patologo_asignado?: PathologistInfo
   entidad_info?: EntityInfo
   resultado?: CaseResult
   creado_por?: string
   actualizado_por?: string
   activo?: boolean
+  // Campos en español para compatibilidad
+  _id?: string
+  caso_code?: string
+  paciente?: PatientInfo
+  medico_solicitante?: string
+  servicio?: string
+  muestras?: SampleInfo[]
+  estado?: CaseState
+  prioridad?: CasePriority
+  fecha_ingreso?: string
+  fecha_firma?: string
+  fecha_actualizacion?: string
+  observaciones_generales?: string
 }
 
 export interface CaseListItem {

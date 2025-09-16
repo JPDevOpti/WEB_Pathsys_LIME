@@ -47,7 +47,7 @@ export class CasesApiService {
 
   async getCaseByCode(caseCode: string): Promise<CaseModel> {
     try {
-      const response = await apiClient.get<CaseModel>(`${this.endpoint}/caso-code/${caseCode}`)
+      const response = await apiClient.get<CaseModel>(`${this.endpoint}/${encodeURIComponent(caseCode)}`)
       return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
       throw new Error(error.message || `Error al obtener el caso ${caseCode}`)
@@ -108,9 +108,8 @@ export class CasesApiService {
     }
   }
 
-  async createCase(caseData: CreateCaseRequest): Promise<CreateCaseResponse> {
+  async createCase(caseData: any): Promise<any> {
     try {
-      // Usar el nuevo endpoint optimizado de management/create
       const response = await apiClient.post<CreateCaseResponse>(this.endpoint, caseData)
       return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
@@ -118,9 +117,8 @@ export class CasesApiService {
     }
   }
 
-  async updateCase(caseCode: string, updateData: UpdateCaseRequest): Promise<UpdateCaseResponse> {
+  async updateCase(caseCode: string, updateData: any): Promise<any> {
     try {
-      // Usar el nuevo endpoint de management/update
       const response = await apiClient.put<UpdateCaseResponse>(`${this.endpoint}/${caseCode}`, updateData)
       return this.cleanDuplicateActiveFields(response)
     } catch (error: any) {
@@ -156,9 +154,9 @@ export class CasesApiService {
     }
   }
 
-  async deleteCase(caseCode: string): Promise<DeleteCaseResponse> {
+  async deleteCase(caseCode: string): Promise<any> {
     try {
-      const response = await apiClient.delete<DeleteCaseResponse>(`${this.endpoint}/caso-code/${caseCode}`)
+      const response = await apiClient.delete<DeleteCaseResponse>(`${this.endpoint}/${caseCode}`)
       return response
     } catch (error: any) {
       throw new Error(error.message || `Error al eliminar el caso ${caseCode}`)

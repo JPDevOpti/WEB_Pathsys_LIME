@@ -11,16 +11,16 @@ import { MAX_MUESTRAS } from '../types'
 
 export function useCaseForm() {
   const formData = reactive<CaseFormData>({
-    pacienteDocumento: '',
-    fechaIngreso: new Date().toISOString().split('T')[0],
-    medicoSolicitante: '',
-    servicio: '',
-    entidadPaciente: '',
-    tipoAtencionPaciente: '',
-    prioridadCaso: '',
-    numeroMuestras: '1',
-    muestras: [{ numero: 1, regionCuerpo: '', pruebas: [{ code: '', cantidad: 1, nombre: '' }] }],
-    observaciones: ''
+    patientDocument: '',
+    entryDate: new Date().toISOString().split('T')[0],
+    requestingPhysician: '',
+    service: '',
+    patientEntity: '',
+    patientCareType: '',
+    casePriority: '',
+    numberOfSamples: '1',
+    samples: [{ number: 1, bodyRegion: '', tests: [{ code: '', quantity: 1, name: '' }] }],
+    observations: ''
   })
 
   const validationState = reactive<CaseValidationState>({
@@ -30,76 +30,76 @@ export function useCaseForm() {
   })
 
   const errors = reactive<CaseFormErrors>({
-    fechaIngreso: [], medicoSolicitante: [], servicio: [], entidadPaciente: [],
-    tipoAtencionPaciente: [], prioridadCaso: [], numeroMuestras: [], muestras: [], observaciones: []
+    entryDate: [], requestingPhysician: [], service: [], patientEntity: [],
+    patientCareType: [], casePriority: [], numberOfSamples: [], samples: [], observations: []
   })
 
   const warnings = reactive<CaseFormWarnings>({
-    fechaIngreso: [], medicoSolicitante: [], servicio: [], prioridadCaso: [], numeroMuestras: []
+    entryDate: [], requestingPhysician: [], service: [], casePriority: [], numberOfSamples: []
   })
 
   const isLoading = ref(false)
 
-  const createEmptySubSample = (numero: number): FormSubSample => ({
-    numero, regionCuerpo: '', pruebas: [{ code: '', cantidad: 1, nombre: '' }]
+  const createEmptySubSample = (number: number): FormSubSample => ({
+    number, bodyRegion: '', tests: [{ code: '', quantity: 1, name: '' }]
   })
 
-  const createEmptyTest = (): FormTestInfo => ({ code: '', cantidad: 1, nombre: '' })
+  const createEmptyTest = (): FormTestInfo => ({ code: '', quantity: 1, name: '' })
 
-  const validateFechaIngreso = (): boolean => {
-    errors.fechaIngreso = []
-    warnings.fechaIngreso = []
+  const validateEntryDate = (): boolean => {
+    errors.entryDate = []
+    warnings.entryDate = []
 
-    if (!formData.fechaIngreso) {
-      errors.fechaIngreso.push('La fecha de ingreso es obligatoria')
+    if (!formData.entryDate) {
+      errors.entryDate.push('La fecha de ingreso es obligatoria')
       return false
     }
 
-    const fechaIngreso = new Date(formData.fechaIngreso)
-    const hoy = new Date()
+    const entryDate = new Date(formData.entryDate)
+    const today = new Date()
     
-    if (fechaIngreso > hoy) {
-      errors.fechaIngreso.push('La fecha de ingreso no puede ser futura')
+    if (entryDate > today) {
+      errors.entryDate.push('La fecha de ingreso no puede ser futura')
       return false
     }
 
-    const diferenciaDias = Math.ceil((hoy.getTime() - fechaIngreso.getTime()) / (1000 * 3600 * 24))
-    if (diferenciaDias > 30) {
-      warnings.fechaIngreso.push('La fecha de ingreso es muy antigua (más de 30 días)')
+    const daysDifference = Math.ceil((today.getTime() - entryDate.getTime()) / (1000 * 3600 * 24))
+    if (daysDifference > 30) {
+      warnings.entryDate.push('La fecha de ingreso es muy antigua (más de 30 días)')
     }
 
     return true
   }
 
-  const validateMedicoSolicitante = (): boolean => {
-    errors.medicoSolicitante = []
-    warnings.medicoSolicitante = []
+  const validateRequestingPhysician = (): boolean => {
+    errors.requestingPhysician = []
+    warnings.requestingPhysician = []
 
-    if (!formData.medicoSolicitante?.trim()) {
-      errors.medicoSolicitante.push('El médico solicitante es requerido')
+    if (!formData.requestingPhysician?.trim()) {
+      errors.requestingPhysician.push('El médico solicitante es requerido')
       return false
     }
 
-    if (formData.medicoSolicitante.trim().length < 3) {
-      errors.medicoSolicitante.push('El nombre del médico debe tener al menos 3 caracteres')
+    if (formData.requestingPhysician.trim().length < 3) {
+      errors.requestingPhysician.push('El nombre del médico debe tener al menos 3 caracteres')
       return false
     }
 
     return true
   }
 
-  const validateServicio = (): boolean => {
-    errors.servicio = []
-    warnings.servicio = []
+  const validateService = (): boolean => {
+    errors.service = []
+    warnings.service = []
 
-    if (formData.medicoSolicitante?.trim()) {
-      if (!formData.servicio?.trim()) {
-        errors.servicio.push('El servicio es requerido cuando se especifica un médico')
+    if (formData.requestingPhysician?.trim()) {
+      if (!formData.service?.trim()) {
+        errors.service.push('El servicio es requerido cuando se especifica un médico')
         return false
       }
 
-      if (formData.servicio.trim().length < 2) {
-        errors.servicio.push('El servicio debe tener al menos 2 caracteres')
+      if (formData.service.trim().length < 2) {
+        errors.service.push('El servicio debe tener al menos 2 caracteres')
         return false
       }
     }
@@ -107,73 +107,73 @@ export function useCaseForm() {
     return true
   }
 
-  const validatePrioridad = (): boolean => {
-    errors.prioridadCaso = []
-    warnings.prioridadCaso = []
+  const validatePriority = (): boolean => {
+    errors.casePriority = []
+    warnings.casePriority = []
 
-    if (!formData.prioridadCaso) {
-      errors.prioridadCaso.push('La prioridad del caso es requerida')
+    if (!formData.casePriority) {
+      errors.casePriority.push('La prioridad del caso es requerida')
       return false
     }
 
-    if (!['Normal', 'Prioritario'].includes(formData.prioridadCaso)) {
-      errors.prioridadCaso.push('La prioridad seleccionada no es válida')
+    if (!['Normal', 'Prioritario'].includes(formData.casePriority)) {
+      errors.casePriority.push('La prioridad seleccionada no es válida')
       return false
     }
 
     return true
   }
 
-  const validateNumeroMuestras = (): boolean => {
-    errors.numeroMuestras = []
-    warnings.numeroMuestras = []
+  const validateNumberOfSamples = (): boolean => {
+    errors.numberOfSamples = []
+    warnings.numberOfSamples = []
 
-    const numero = parseInt(formData.numeroMuestras)
+    const number = parseInt(formData.numberOfSamples)
     
-    if (isNaN(numero) || numero < 1) {
-      errors.numeroMuestras.push('Debe especificar al menos 1 muestra')
+    if (isNaN(number) || number < 1) {
+      errors.numberOfSamples.push('Debe especificar al menos 1 muestra')
       return false
     }
 
-    if (numero > MAX_MUESTRAS) {
-      errors.numeroMuestras.push(`No se pueden crear más de ${MAX_MUESTRAS} muestras`)
+    if (number > MAX_MUESTRAS) {
+      errors.numberOfSamples.push(`No se pueden crear más de ${MAX_MUESTRAS} muestras`)
       return false
     }
 
-    if (numero > 5) {
-      warnings.numeroMuestras.push('Número alto de muestras, verifique que sea correcto')
+    if (number > 5) {
+      warnings.numberOfSamples.push('Número alto de muestras, verifique que sea correcto')
     }
 
     return true
   }
 
-  const validateMuestras = (): boolean => {
-    errors.muestras = []
+  const validateSamples = (): boolean => {
+    errors.samples = []
 
-    if (formData.muestras.length === 0) {
-      errors.muestras.push('Debe tener al menos una muestra')
+    if (formData.samples.length === 0) {
+      errors.samples.push('Debe tener al menos una muestra')
       return false
     }
 
     let hasErrors = false
 
-    formData.muestras.forEach((muestra, index) => {
-      if (!muestra.regionCuerpo.trim()) {
-        errors.muestras.push(`Muestra ${index + 1}: La región del cuerpo es obligatoria`)
+    formData.samples.forEach((sample, index) => {
+      if (!sample.bodyRegion.trim()) {
+        errors.samples.push(`Muestra ${index + 1}: La región del cuerpo es obligatoria`)
         hasErrors = true
       }
 
-      if (muestra.pruebas.length === 0) {
-        errors.muestras.push(`Muestra ${index + 1}: Debe tener al menos una prueba`)
+      if (sample.tests.length === 0) {
+        errors.samples.push(`Muestra ${index + 1}: Debe tener al menos una prueba`)
         hasErrors = true
       } else {
         // Nuevo requisito: todas las pruebas deben tener código
-        const pruebasSinCodigo = muestra.pruebas
-          .map((prueba, pIndex) => ({ prueba, pIndex }))
-          .filter(x => x.prueba.code.trim() === '')
-        if (pruebasSinCodigo.length > 0) {
-          pruebasSinCodigo.forEach(x => {
-            errors.muestras.push(`Muestra ${index + 1}, Prueba ${x.pIndex + 1}: El código de la prueba es obligatorio`)
+        const testsWithoutCode = sample.tests
+          .map((test, tIndex) => ({ test, tIndex }))
+          .filter(x => x.test.code.trim() === '')
+        if (testsWithoutCode.length > 0) {
+          testsWithoutCode.forEach(x => {
+            errors.samples.push(`Muestra ${index + 1}, Prueba ${x.tIndex + 1}: El código de la prueba es obligatorio`)
           })
           hasErrors = true
         }
@@ -184,51 +184,51 @@ export function useCaseForm() {
   }
 
   const validateRequiredFields = (): boolean => {
-    const requiredFields = ['entidadPaciente', 'tipoAtencionPaciente', 'fechaIngreso', 'prioridadCaso', 'medicoSolicitante']
+    const requiredFields = ['patientEntity', 'patientCareType', 'entryDate', 'casePriority', 'requestingPhysician']
     
     const basicFieldsValid = requiredFields.every(field => 
       formData[field as keyof CaseFormData] && 
       String(formData[field as keyof CaseFormData]).trim() !== ''
     )
     
-    const servicioValid = !formData.medicoSolicitante?.trim() || 
-                         !!(formData.servicio?.trim())
+    const serviceValid = !formData.requestingPhysician?.trim() || 
+                         !!(formData.service?.trim())
     
-    return basicFieldsValid && servicioValid
+    return basicFieldsValid && serviceValid
   }
 
   const validateForm = (): boolean => {
     validationState.hasAttemptedSubmit = true
-    return validateFechaIngreso() && validateMedicoSolicitante() && validateServicio() && validatePrioridad() &&
-           validateNumeroMuestras() && validateMuestras() && validateRequiredFields()
+    return validateEntryDate() && validateRequestingPhysician() && validateService() && validatePriority() &&
+           validateNumberOfSamples() && validateSamples() && validateRequiredFields()
   }
 
-  const handleNumeroMuestrasChange = (nuevoNumero: string): void => {
-    const numero = parseInt(nuevoNumero)
-    if (isNaN(numero) || numero < 1) return
+  const handleNumberOfSamplesChange = (newNumber: string): void => {
+    const number = parseInt(newNumber)
+    if (isNaN(number) || number < 1) return
     
-    formData.numeroMuestras = nuevoNumero
+    formData.numberOfSamples = newNumber
     
-    if (numero > formData.muestras.length) {
-      while (formData.muestras.length < numero) {
-        formData.muestras.push(createEmptySubSample(formData.muestras.length + 1))
+    if (number > formData.samples.length) {
+      while (formData.samples.length < number) {
+        formData.samples.push(createEmptySubSample(formData.samples.length + 1))
       }
-    } else if (numero < formData.muestras.length) {
-      formData.muestras = formData.muestras.slice(0, numero)
+    } else if (number < formData.samples.length) {
+      formData.samples = formData.samples.slice(0, number)
     }
   }
 
-  const addPruebaToMuestra = (muestraIndex: number): void => {
-    if (muestraIndex >= 0 && muestraIndex < formData.muestras.length) {
-      formData.muestras[muestraIndex].pruebas.push(createEmptyTest())
+  const addTestToSample = (sampleIndex: number): void => {
+    if (sampleIndex >= 0 && sampleIndex < formData.samples.length) {
+      formData.samples[sampleIndex].tests.push(createEmptyTest())
     }
   }
 
-  const removePruebaFromMuestra = (muestraIndex: number, pruebaIndex: number): void => {
-    if (muestraIndex >= 0 && muestraIndex < formData.muestras.length) {
-      const muestra = formData.muestras[muestraIndex]
-      if (muestra.pruebas.length > 1 && pruebaIndex >= 0 && pruebaIndex < muestra.pruebas.length) {
-        muestra.pruebas.splice(pruebaIndex, 1)
+  const removeTestFromSample = (sampleIndex: number, testIndex: number): void => {
+    if (sampleIndex >= 0 && sampleIndex < formData.samples.length) {
+      const sample = formData.samples[sampleIndex]
+      if (sample.tests.length > 1 && testIndex >= 0 && testIndex < sample.tests.length) {
+        sample.tests.splice(testIndex, 1)
       }
     }
   }
@@ -246,16 +246,16 @@ export function useCaseForm() {
 
   const clearForm = (): void => {
     Object.assign(formData, {
-      pacienteDocumento: '',
-      fechaIngreso: new Date().toISOString().split('T')[0],
-      medicoSolicitante: '',
-      servicio: '',
-      entidadPaciente: '',
-      tipoAtencionPaciente: '',
-      prioridadCaso: '',
-      numeroMuestras: '1',
-      muestras: [{ numero: 1, regionCuerpo: '', pruebas: [{ code: '', cantidad: 1, nombre: '' }] }],
-      observaciones: ''
+      patientDocument: '',
+      entryDate: new Date().toISOString().split('T')[0],
+      requestingPhysician: '',
+      service: '',
+      patientEntity: '',
+      patientCareType: '',
+      casePriority: '',
+      numberOfSamples: '1',
+      samples: [{ number: 1, bodyRegion: '', tests: [{ code: '', quantity: 1, name: '' }] }],
+      observations: ''
     })
     
     clearValidationState()
@@ -263,26 +263,26 @@ export function useCaseForm() {
   }
 
   const isFormValid = computed(() => {
-    const hasRequiredFields = formData.entidadPaciente && 
-                              formData.tipoAtencionPaciente && 
-                              formData.fechaIngreso && 
-                              formData.prioridadCaso && 
-                              formData.medicoSolicitante &&
-                              formData.numeroMuestras &&
-                              (!formData.medicoSolicitante.trim() || formData.servicio.trim())
+    const hasRequiredFields = formData.patientEntity && 
+                              formData.patientCareType && 
+                              formData.entryDate && 
+                              formData.casePriority && 
+                              formData.requestingPhysician &&
+                              formData.numberOfSamples &&
+                              (!formData.requestingPhysician.trim() || formData.service.trim())
     
-    const hasMuestrasValid = formData.muestras.length > 0 && 
-                           formData.muestras.every(muestra => 
-                             muestra.regionCuerpo.trim() !== '' && 
-                             muestra.pruebas.some(prueba => prueba.code.trim() !== '')
+    const hasSamplesValid = formData.samples.length > 0 && 
+                           formData.samples.every(sample => 
+                             sample.bodyRegion.trim() !== '' && 
+                             sample.tests.some(test => test.code.trim() !== '')
                            )
     
-    return hasRequiredFields && hasMuestrasValid
+    return hasRequiredFields && hasSamplesValid
   })
 
   return {
     formData, validationState, errors, warnings, isLoading, isFormValid,
-    validateForm, clearForm, handleNumeroMuestrasChange, addPruebaToMuestra,
-    removePruebaFromMuestra, createEmptySubSample, createEmptyTest
+    validateForm, clearForm, handleNumberOfSamplesChange, addTestToSample,
+    removeTestFromSample, createEmptySubSample, createEmptyTest
   }
 }

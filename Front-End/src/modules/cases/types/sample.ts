@@ -1,38 +1,38 @@
 export interface FormTestInfo {
   code: string
-  cantidad: number
-  nombre?: string
+  quantity: number
+  name?: string
 }
 
 export interface FormSubSample {
-  numero: number
-  regionCuerpo: string
-  pruebas: FormTestInfo[]
+  number: number
+  bodyRegion: string
+  tests: FormTestInfo[]
 }
 
 export interface CaseFormData {
-  pacienteDocumento: string
-  fechaIngreso: string
-  medicoSolicitante: string
-  servicio: string
-  entidadPaciente: string
-  tipoAtencionPaciente: string
-  prioridadCaso: string
-  numeroMuestras: string
-  muestras: FormSubSample[]
-  observaciones: string
+  patientDocument: string
+  entryDate: string
+  requestingPhysician: string
+  service: string
+  patientEntity: string
+  patientCareType: string
+  casePriority: string
+  numberOfSamples: string
+  samples: FormSubSample[]
+  observations: string
 }
 
 export interface CaseFormDefaults {
-  fechaIngreso: string
-  medicoSolicitante: string
-  servicio: string
-  entidadPaciente: string
-  tipoAtencionPaciente: string
-  prioridadCaso: string
-  numeroMuestras: string
-  muestras: FormSubSample[]
-  observaciones: string
+  entryDate: string
+  requestingPhysician: string
+  service: string
+  patientEntity: string
+  patientCareType: string
+  casePriority: string
+  numberOfSamples: string
+  samples: FormSubSample[]
+  observations: string
 }
 
 export interface CaseValidationState {
@@ -42,23 +42,23 @@ export interface CaseValidationState {
 }
 
 export interface CaseFormErrors {
-  fechaIngreso: string[]
-  medicoSolicitante: string[]
-  servicio: string[]
-  entidadPaciente: string[]
-  tipoAtencionPaciente: string[]
-  prioridadCaso: string[]
-  numeroMuestras: string[]
-  muestras: string[]
-  observaciones: string[]
+  entryDate: string[]
+  requestingPhysician: string[]
+  service: string[]
+  patientEntity: string[]
+  patientCareType: string[]
+  casePriority: string[]
+  numberOfSamples: string[]
+  samples: string[]
+  observations: string[]
 }
 
 export interface CaseFormWarnings {
-  fechaIngreso: string[]
-  medicoSolicitante: string[]
-  servicio: string[]
-  prioridadCaso: string[]
-  numeroMuestras: string[]
+  entryDate: string[]
+  requestingPhysician: string[]
+  service: string[]
+  casePriority: string[]
+  numberOfSamples: string[]
 }
 
 export interface CaseCreationResult {
@@ -70,24 +70,24 @@ export interface CaseCreationResult {
 
 export interface CreatedCase {
   id: string
-  codigo: string
-  paciente: {
-    paciente_code?: string
+  code: string
+  patient: {
+    patient_code?: string
     cedula?: string  // Mantener por compatibilidad
-    nombre: string
-    edad: number
-    sexo: string
-    entidad: string
-    tipoAtencion: string
+    name: string
+    age: number
+    gender: string
+    entity: string
+    careType: string
   }
-  fechaIngreso: string
-  medicoSolicitante: string
-  servicio: string
-  prioridad: string
-  muestras: FormSubSample[]
-  observaciones: string
-  estado: string
-  fechaCreacion: string
+  entryDate: string
+  requestingPhysician: string
+  service: string
+  priority: string
+  samples: FormSubSample[]
+  observations: string
+  state: string
+  creationDate: string
 }
 
 export interface SelectOption {

@@ -47,17 +47,17 @@
 
       <div v-if="patientFound" class="space-y-6">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormInputField v-model="form.nombrePaciente" label="Nombre completo" placeholder="Ingrese el nombre del paciente" required />
-          <FormInputField v-model="form.pacienteCode" label="Documento de identidad" placeholder="Documento del paciente" :required="true" :max-length="12" inputmode="numeric" />
+          <FormInputField v-model="form.name" label="Nombre completo" placeholder="Ingrese el nombre del paciente" required />
+          <FormInputField v-model="form.patientCode" label="Documento de identidad" placeholder="Documento del paciente" :required="true" :max-length="12" inputmode="numeric" />
         </div>
         
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormInputField v-model="form.edad" type="number" label="Edad" placeholder="Ingrese la edad" required />
-          <FormSelect v-model="form.sexo" :options="sexoOptions" label="Sexo" placeholder="Seleccione sexo" required />
-          <FormSelect v-model="form.tipoAtencion" :options="tipoAtencionOptions" label="Tipo de atención" placeholder="Seleccione tipo de atención" required />
-          <EntityList v-model="form.entidadCodigo" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :error="getEntidadError" @entity-selected="onEntitySelected" />
+          <FormInputField v-model="form.age" type="number" label="Edad" placeholder="Ingrese la edad" required />
+          <FormSelect v-model="form.gender" :options="sexoOptions" label="Sexo" placeholder="Seleccione sexo" required />
+          <FormSelect v-model="form.careType" :options="tipoAtencionOptions" label="Tipo de atención" placeholder="Seleccione tipo de atención" required />
+          <EntityList v-model="form.entityCode" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :error="getEntidadError" @entity-selected="onEntitySelected" />
         </div>
-        <FormTextarea v-model="form.observaciones" label="Observaciones" placeholder="Observaciones del paciente" :rows="3" :max-length="500" />
+        <FormTextarea v-model="form.observations" label="Observaciones" placeholder="Observaciones del paciente" :rows="3" :max-length="500" />
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
           <ClearButton @click="onReset" :disabled="isLoading" />
           <SaveButton text="Guardar Cambios" @click="onSubmit" :disabled="isLoading || !isFormValid" :loading="isLoading" />
@@ -70,28 +70,28 @@
             <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div class="space-y-4">
                 <div class="mb-4 pb-3 border-b border-gray-100">
-                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedPatient.nombre }}</h3>
+                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedPatient.name || updatedPatient.nombre || 'Paciente' }}</h3>
                   <p class="text-gray-600">
                     <span class="font-medium">Documento de identidad:</span> 
-                    <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedPatient.paciente_code }}</span>
+                    <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedPatient.patient_code || updatedPatient.paciente_code || updatedPatient.cedula || 'N/A' }}</span>
                   </p>
                 </div>
                 <div class="space-y-3 text-sm">
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Edad:</span>
-                    <span class="text-gray-800 font-semibold">{{ updatedPatient.edad }} años</span>
+                    <span class="text-gray-800 font-semibold">{{ updatedPatient.age || updatedPatient.edad || 'N/A' }} años</span>
                   </div>
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Sexo:</span>
-                    <span class="text-gray-800 font-semibold">{{ updatedPatient.sexo }}</span>
+                    <span class="text-gray-800 font-semibold">{{ updatedPatient.gender === 'Male' ? 'Masculino' : updatedPatient.gender === 'Female' ? 'Femenino' : updatedPatient.sexo || 'N/A' }}</span>
                   </div>
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Entidad:</span>
-                    <span class="text-gray-800 font-semibold text-right max-w-64 truncate">{{ updatedPatient.entidad_info?.nombre }}</span>
+                    <span class="text-gray-800 font-semibold text-right max-w-64 truncate">{{ updatedPatient.entity_info?.name || updatedPatient.entidad_info?.nombre || 'N/A' }}</span>
                   </div>
                   <div class="flex justify-between py-2">
                     <span class="text-gray-500 font-medium">Tipo de Atención:</span>
-                    <span class="text-gray-800 font-semibold">{{ updatedPatient.tipo_atencion }}</span>
+                    <span class="text-gray-800 font-semibold">{{ updatedPatient.care_type === 'Outpatient' ? 'Ambulatorio' : updatedPatient.care_type === 'Inpatient' ? 'Hospitalizado' : updatedPatient.tipo_atencion || 'N/A' }}</span>
                   </div>
                 </div>
               </div>
@@ -135,47 +135,53 @@ const selectedEntity = ref<{ codigo: string; nombre: string } | null>(null)
 
 // Formulario reactivo con datos del paciente
 const form = reactive<PatientData>({
-  pacienteCode: '', nombrePaciente: '', sexo: '', edad: '', entidad: '', entidadCodigo: '', tipoAtencion: '', observaciones: ''
+  patientCode: '', name: '', gender: '', age: '', entity: '', entityCode: '', careType: '', observations: ''
 })
 
-const sexoOptions = [{ value: 'Masculino', label: 'Masculino' }, { value: 'Femenino', label: 'Femenino' }]
-const tipoAtencionOptions = [{ value: 'Ambulatorio', label: 'Ambulatorio' }, { value: 'Hospitalizado', label: 'Hospitalizado' }]
+const sexoOptions = [{ value: 'masculino', label: 'Masculino' }, { value: 'femenino', label: 'Femenino' }]
+const tipoAtencionOptions = [{ value: 'ambulatorio', label: 'Ambulatorio' }, { value: 'hospitalizado', label: 'Hospitalizado' }]
 
 // Validación del formulario
 const isFormValid = computed(() => (
-  form.nombrePaciente.trim() !== '' && form.sexo !== '' && form.edad.trim() !== '' && 
-  form.entidadCodigo && form.tipoAtencion !== ''
+  form.name.trim() !== '' && form.gender !== '' && form.age.trim() !== '' && 
+  form.entityCode && form.careType !== ''
 ))
 
-const getEntidadError = computed(() => !form.entidadCodigo ? 'La entidad es obligatoria' : '')
+const getEntidadError = computed(() => !form.entityCode ? 'La entidad es obligatoria' : '')
 
 
-const mapApiResponseToPatientData = (patient: any): PatientData => ({
-  pacienteCode: patient.paciente_code,
-  nombrePaciente: patient.nombre,
-  sexo: patient.sexo,
-  edad: String(patient.edad),
-  entidad: patient.entidad_info?.nombre || '',
-  entidadCodigo: patient.entidad_info?.id || '',
-  tipoAtencion: patient.tipo_atencion,
-  observaciones: patient.observaciones || ''
-})
+const mapApiResponseToPatientData = (patient: any): PatientData => {
+  console.log('Mapeando paciente:', patient) // Debug log
+  
+  // Mapear datos que vienen en español a valores internos en minúsculas
+  return {
+    patientCode: patient.cedula || patient.paciente_code || patient.patient_code || '',
+    name: patient.nombre || patient.name || '',
+    gender: patient.sexo === 'Masculino' ? 'masculino' : patient.sexo === 'Femenino' ? 'femenino' : (patient.sexo || ''),
+    age: String(patient.edad || patient.age || ''),
+    entity: patient.entidad_info?.nombre || patient.entity_info?.name || '',
+    entityCode: patient.entidad_info?.id || patient.entity_info?.id || '',
+    careType: patient.tipo_atencion === 'Ambulatorio' ? 'ambulatorio' : patient.tipo_atencion === 'Hospitalizado' ? 'hospitalizado' : (patient.tipo_atencion || ''),
+    observations: patient.observaciones || patient.observations || ''
+  }
+}
 
 // Actualiza la entidad seleccionada del paciente
 const updateSelectedEntity = (patient: any) => {
-  if (patient.entidad_info) {
-    selectedEntity.value = { codigo: patient.entidad_info.id, nombre: patient.entidad_info.nombre }
-    form.entidadCodigo = patient.entidad_info.id
+  const entityInfo = patient.entidad_info || patient.entity_info
+  if (entityInfo) {
+    selectedEntity.value = { codigo: entityInfo.id, nombre: entityInfo.nombre || entityInfo.name }
+    form.entityCode = entityInfo.id
   } else {
     selectedEntity.value = null
-    form.entidadCodigo = undefined
+    form.entityCode = undefined
   }
 }
 
 // Resetea todos los datos del formulario
 const resetFormData = () => {
   Object.assign(form, {
-    pacienteCode: '', nombrePaciente: '', sexo: '', edad: '', entidad: '', entidadCodigo: '', tipoAtencion: '', observaciones: ''
+    patientCode: '', name: '', gender: '', age: '', entity: '', entityCode: '', careType: '', observations: ''
   })
   searchPatientCedula.value = ''
   searchError.value = ''
@@ -197,7 +203,17 @@ const loadPatientData = async () => {
     if (!patient) throw new Error('Paciente no encontrado en la colección de pacientes')
     
     const mapped = mapApiResponseToPatientData(patient)
-    Object.assign(form, mapped)
+    
+    // Asignar cada campo individualmente para asegurar reactividad
+    form.patientCode = mapped.patientCode
+    form.name = mapped.name
+    form.gender = mapped.gender
+    form.age = mapped.age
+    form.entity = mapped.entity
+    form.entityCode = mapped.entityCode
+    form.careType = mapped.careType
+    form.observations = mapped.observations
+    
     originalData.value = { ...mapped }
     updateSelectedEntity(patient)
     patientFound.value = true
@@ -211,7 +227,7 @@ const loadPatientData = async () => {
 const onSubmit = async () => {
   if (!isFormValid.value) return
   
-  const originalPatientCode = originalData.value?.pacienteCode || searchPatientCedula.value
+  const originalPatientCode = originalData.value?.patientCode || searchPatientCedula.value
   if (!originalPatientCode) {
     showNotification('error', 'Error', 'Debe buscar un paciente primero para poder editar sus datos')
     return
@@ -220,35 +236,35 @@ const onSubmit = async () => {
   isLoading.value = true
   try {
     if (selectedEntity.value) {
-      form.entidadCodigo = selectedEntity.value.codigo
-      form.entidad = selectedEntity.value.nombre
+      form.entityCode = selectedEntity.value.codigo
+      form.entity = selectedEntity.value.nombre
     }
 
-    const codeChanged = form.pacienteCode.trim() !== originalPatientCode
+    const codeChanged = form.patientCode.trim() !== originalPatientCode
     let updatedPatientResponse: any
 
     if (codeChanged) {
-      updatedPatientResponse = await patientsApiService.changePatientCode(originalPatientCode, form.pacienteCode.trim())
+      updatedPatientResponse = await patientsApiService.changePatientCode(originalPatientCode, form.patientCode.trim())
       showNotification('success', '¡Código de Paciente Actualizado!', 'El código del paciente ha sido cambiado exitosamente', 5000)
     } else {
       const patientUpdateData = {
-        nombre: form.nombrePaciente.trim(),
-        edad: parseInt(form.edad),
-        sexo: form.sexo,
-        entidad_info: { id: form.entidadCodigo || '', nombre: form.entidad.trim() },
-        tipo_atencion: form.tipoAtencion,
-        observaciones: form.observaciones.trim()
+        name: form.name.trim(),
+        age: parseInt(form.age),
+        gender: form.gender === 'masculino' ? 'Male' : form.gender === 'femenino' ? 'Female' : form.gender,
+        entity_info: { id: form.entityCode || '', name: form.entity.trim() },
+        care_type: form.careType === 'ambulatorio' ? 'Outpatient' : form.careType === 'hospitalizado' ? 'Inpatient' : form.careType,
+        observations: form.observations.trim() || null
       }
       
-      if (!patientUpdateData.nombre || !patientUpdateData.entidad_info.nombre) {
+      if (!patientUpdateData.name || !patientUpdateData.entity_info.name) {
         throw new Error('El nombre del paciente y la entidad son obligatorios')
       }
       
-      if (patientUpdateData.edad <= 0 || patientUpdateData.edad > 150) {
+      if (patientUpdateData.age <= 0 || patientUpdateData.age > 150) {
         throw new Error('La edad debe estar entre 1 y 150 años')
       }
       
-      if (!patientUpdateData.sexo || !patientUpdateData.tipo_atencion) {
+      if (!patientUpdateData.gender || !patientUpdateData.care_type) {
         throw new Error('El sexo y tipo de atención son obligatorios')
       }
       
@@ -260,7 +276,10 @@ const onSubmit = async () => {
     originalData.value = { ...mappedUpdatedData }
     updatedPatient.value = updatedPatientResponse
     emit('patient-updated', mappedUpdatedData)
-    resetFormData()
+    
+    if (!codeChanged) {
+      resetFormData()
+    }
   } catch (error: any) {
     showNotification('error', 'Error de Validación', error.message || 'Error al actualizar los datos del paciente')
   } finally {
@@ -299,13 +318,29 @@ const searchPatient = async () => {
 
   try {
     const patient = await patientsApiService.getPatientByCedula(searchPatientCedula.value)
+    console.log('Paciente encontrado:', patient) // Debug log
     
     if (patient) {
       const mappedPatientData = mapApiResponseToPatientData(patient)
+      console.log('Datos mapeados:', mappedPatientData) // Debug log
+      
       patientFound.value = true
-      Object.assign(form, mappedPatientData)
+      
+      // Asignar cada campo individualmente para asegurar reactividad
+      form.patientCode = mappedPatientData.patientCode
+      form.name = mappedPatientData.name
+      form.gender = mappedPatientData.gender
+      form.age = mappedPatientData.age
+      form.entity = mappedPatientData.entity
+      form.entityCode = mappedPatientData.entityCode
+      form.careType = mappedPatientData.careType
+      form.observations = mappedPatientData.observations
+      
       originalData.value = { ...mappedPatientData }
       updateSelectedEntity(patient)
+      searchPatientCedula.value = mappedPatientData.patientCode
+      
+      console.log('Formulario después de asignar:', form) // Debug log
     } else {
       searchError.value = `No se encontró un paciente con el código ${searchPatientCedula.value}`
       patientFound.value = false
@@ -328,11 +363,11 @@ const searchPatient = async () => {
 const onEntitySelected = (entity: { codigo: string; nombre: string } | null) => {
   selectedEntity.value = entity
   if (entity) {
-    form.entidad = entity.nombre
-    form.entidadCodigo = entity.codigo
+    form.entity = entity.nombre
+    form.entityCode = entity.codigo
   } else {
-    form.entidad = ''
-    form.entidadCodigo = undefined
+    form.entity = ''
+    form.entityCode = undefined
   }
 }
 

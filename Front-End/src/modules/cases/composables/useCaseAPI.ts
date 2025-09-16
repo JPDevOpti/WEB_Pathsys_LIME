@@ -22,77 +22,72 @@ export function useCaseAPI() {
     }
   }
 
-  const normalizeSexo = (sexo: string): string => {
-    const sexoLower = sexo.toLowerCase()
+  const normalizeSexo = (sexo?: string): string => {
+    const sexoLower = String(sexo || '').toLowerCase()
     if (['masculino', 'm', 'hombre'].includes(sexoLower)) return 'Masculino'
     if (['femenino', 'f', 'mujer'].includes(sexoLower)) return 'Femenino'
     return 'Masculino'
   }
 
-  const normalizeTipoAtencion = (tipoAtencion: string): string => {
-    const tipoLower = tipoAtencion.toLowerCase()
+  const normalizeTipoAtencion = (tipoAtencion?: string): string => {
+    const tipoLower = String(tipoAtencion || '').toLowerCase()
     if (['ambulatorio', 'ambulatoria'].includes(tipoLower)) return 'Ambulatorio'
     if (['hospitalizado', 'hospitalizada', 'hospitalizacion'].includes(tipoLower)) return 'Hospitalizado'
     return 'Ambulatorio'
   }
 
-  const transformCaseFormToApiRequest = async (formData: CaseFormData, verifiedPatient: any): Promise<CreateCaseRequest> => {
-    const entidadNombre = formData.entidadPaciente 
-      ? await getEntityNameByCode(formData.entidadPaciente)
-      : verifiedPatient.entidad
-    
+  const transformCaseFormToApiRequest = async (formData: CaseFormData, verifiedPatient: any): Promise<any> => {
+    const entityName = formData.patientEntity 
+      ? await getEntityNameByCode(formData.patientEntity)
+      : (verifiedPatient?.entity || 'Entidad no especificada')
     return {
-      paciente: {
-        paciente_code: verifiedPatient.pacienteCode || verifiedPatient.codigo,
-        nombre: verifiedPatient.nombrePaciente,
-        edad: parseInt(verifiedPatient.edad),
-        sexo: normalizeSexo(verifiedPatient.sexo),
-        entidad_info: {
-          id: formData.entidadPaciente || verifiedPatient.entidadCodigo || 'ent_default',
-          nombre: entidadNombre
+      patient_info: {
+        patient_code: verifiedPatient?.patientCode || verifiedPatient?.codigo || '',
+        name: verifiedPatient?.name || '',
+        age: Number(verifiedPatient?.age || 0),
+        gender: normalizeSexo(verifiedPatient?.gender),
+        entity_info: {
+          id: formData.patientEntity || verifiedPatient?.entityCode || 'ent_default',
+          name: entityName
         },
-        tipo_atencion: normalizeTipoAtencion(formData.tipoAtencionPaciente),
-        observaciones: verifiedPatient.observaciones || undefined
+        care_type: normalizeTipoAtencion(formData?.patientCareType),
+        observations: verifiedPatient?.observations || undefined
       },
-      medico_solicitante: formData.medicoSolicitante || undefined,
-      servicio: formData.servicio || undefined,
-      muestras: formData.muestras.map(muestra => ({
-        region_cuerpo: muestra.regionCuerpo,
-        pruebas: muestra.pruebas.map(prueba => ({
-          id: prueba.code,
-          nombre: prueba.nombre || prueba.code,
-          cantidad: prueba.cantidad || 1
-        }))
+      requesting_physician: formData?.requestingPhysician || undefined,
+      service: formData?.service || undefined,
+      samples: (formData?.samples || []).map(s => ({
+        body_region: s?.bodyRegion || '',
+        tests: (s?.tests || []).map(t => ({ id: t?.code || '', name: t?.name || t?.code || '', quantity: t?.quantity || 1 }))
       })),
-      estado: 'En proceso',
-      prioridad: formData.prioridadCaso || 'Normal',
-      observaciones_generales: formData.observaciones || undefined
+      state: 'In process',
+      priority: formData?.casePriority || 'Normal',
+      observations: formData?.observations || undefined
     }
   }
 
   const buildCreatedCase = (apiResponse: any, verifiedPatient: any, caseData: CaseFormData): CreatedCase => {
-    const codigoCaso = apiResponse.caso_code || apiResponse.CasoCode || apiResponse.codigo || apiResponse.code
+    const codigoCaso = apiResponse.case_code || apiResponse.caso_code || apiResponse.code || apiResponse.codigo
     
     return {
       id: apiResponse._id || apiResponse.id || codigoCaso,
-      codigo: codigoCaso,
-      paciente: {
-        paciente_code: apiResponse.paciente?.paciente_code || verifiedPatient.pacienteCode,
-        cedula: apiResponse.paciente?.cedula || verifiedPatient.pacienteCode,
-        nombre: apiResponse.paciente?.nombre || verifiedPatient.nombrePaciente,
-        edad: apiResponse.paciente?.edad || parseInt(verifiedPatient.edad),
-        sexo: apiResponse.paciente?.sexo || verifiedPatient.sexo,
-        entidad: apiResponse.paciente?.entidad_info?.nombre || verifiedPatient.entidad,
-        tipoAtencion: apiResponse.paciente?.tipo_atencion || caseData.tipoAtencionPaciente
+      code: codigoCaso,
+      patient: {
+        patient_code: apiResponse.patient_info?.patient_code || verifiedPatient.patientCode,
+        cedula: apiResponse.patient_info?.patient_code || verifiedPatient.patientCode,
+        name: apiResponse.patient_info?.name || verifiedPatient.name,
+        age: apiResponse.patient_info?.age || parseInt(verifiedPatient.age),
+        gender: apiResponse.patient_info?.gender || verifiedPatient.gender,
+        entity: apiResponse.patient_info?.entity_info?.name || verifiedPatient.entity,
+        careType: apiResponse.patient_info?.care_type || caseData.patientCareType
       },
-      fechaIngreso: apiResponse.fecha_ingreso || caseData.fechaIngreso,
-      medicoSolicitante: apiResponse.medico_solicitante || caseData.medicoSolicitante,
-      servicio: caseData.servicio,
-      prioridad: apiResponse.prioridad || caseData.prioridadCaso || 'Normal',
-      muestras: caseData.muestras,
-      observaciones: apiResponse.observaciones_generales || caseData.observaciones || '',
-      estado: apiResponse.estado || 'Pendiente',
-      fechaCreacion: apiResponse.fecha_creacion || apiResponse.fecha_ingreso || new Date().toISOString()
+      entryDate: caseData.entryDate,
+      requestingPhysician: apiResponse.requesting_physician || caseData.requestingPhysician,
+      service: caseData.service,
+      priority: apiResponse.priority || caseData.casePriority || 'Normal',
+      samples: caseData.samples,
+      observations: apiResponse.observations || caseData.observations || '',
+      state: apiResponse.state || 'En proceso',
+      creationDate: apiResponse.created_at || new Date().toISOString()
     }
   }
 
@@ -107,28 +102,28 @@ export function useCaseAPI() {
       const apiResponse = await casesApiService.createCase(apiRequest)
       
       try {
-        const entidadNombre = caseData.entidadPaciente && caseData.entidadPaciente !== verifiedPatient.entidadCodigo
-          ? await getEntityNameByCode(caseData.entidadPaciente)
-          : verifiedPatient.entidad
+        const entidadNombre = caseData.patientEntity && caseData.patientEntity !== verifiedPatient.entityCode
+          ? await getEntityNameByCode(caseData.patientEntity)
+          : verifiedPatient.entity
         
-        await patientsApiService.updatePatient(verifiedPatient.pacienteCode, {
-          nombre: verifiedPatient.nombrePaciente,
-          edad: parseInt(verifiedPatient.edad),
-          sexo: normalizeSexo(verifiedPatient.sexo),
-          entidad_info: {
-            id: caseData.entidadPaciente || verifiedPatient.entidadCodigo || 'ent_default',
-            nombre: entidadNombre
+        await patientsApiService.updatePatient(verifiedPatient.patientCode, {
+          name: verifiedPatient.name,
+          age: parseInt(verifiedPatient.age),
+          gender: normalizeSexo(verifiedPatient.gender),
+          entity_info: {
+            id: caseData.patientEntity || verifiedPatient.entityCode || 'ent_default',
+            name: entidadNombre
           },
-          tipo_atencion: normalizeTipoAtencion(caseData.tipoAtencionPaciente || verifiedPatient.tipoAtencion),
-          observaciones: verifiedPatient.observaciones || undefined
+          care_type: normalizeTipoAtencion(caseData.patientCareType || verifiedPatient.careType),
+          observations: verifiedPatient.observations || undefined
         })
       } catch {
       }
       
-      if (apiResponse?.caso_code) {
+      if (apiResponse?.case_code) {
         return {
           success: true,
-          codigo: apiResponse.caso_code,
+          codigo: apiResponse.case_code,
           message: 'Caso creado exitosamente',
           case: buildCreatedCase(apiResponse, verifiedPatient, caseData)
         }

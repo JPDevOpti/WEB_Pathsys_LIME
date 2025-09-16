@@ -98,41 +98,42 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Nombre</p>
-                  <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.paciente?.nombre || 'N/A' }}</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ getPatientInfo('nombre') }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Código</p>
-                  <p class="text-gray-900 font-mono font-semibold">{{ foundCaseInfo.paciente?.paciente_code || 'N/A' }}</p>
+                  <p class="text-gray-900 font-mono font-semibold">{{ getPatientInfo('cedula') }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Edad</p>
-                  <p class="text-gray-900 font-semibold">{{ (foundCaseInfo.paciente?.edad ?? 'N/A') + (foundCaseInfo.paciente?.edad ? ' años' : '') }}</p>
+                  <p class="text-gray-900 font-semibold">{{ getPatientInfo('edad') }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Sexo</p>
-                  <p class="text-gray-900 font-semibold capitalize">{{ foundCaseInfo.paciente?.sexo || 'N/A' }}</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ getPatientInfo('sexo') }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Tipo de Atención</p>
-                  <p class="text-gray-900 font-semibold capitalize">{{ foundCaseInfo.paciente?.tipo_atencion || 'N/A' }}</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ getPatientInfo('tipoAtencion') }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Entidad</p>
-                  <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.paciente?.entidad_info?.nombre || foundCaseInfo.entidad_info?.nombre || 'N/A' }}</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ getPatientInfo('entidad') }}</p>
                 </div>
-                <div class="space-y-1">
-                  <p class="text-gray-600 font-medium">Prioridad</p>
-                  <p class="text-gray-900 font-semibold">{{ foundCaseInfo.prioridad || 'N/A' }}</p>
-                </div>
-                <div class="space-y-1 sm:col-span-2">
-                  <p class="text-gray-600 font-medium">Estado del Caso</p>
-                  <p class="text-gray-900 font-semibold">{{ foundCaseInfo.estado || 'N/A' }}</p>
-                </div>
+                  <div class="space-y-1">
+                    <p class="text-gray-600 font-medium">Prioridad</p>
+                    <p class="text-gray-900 font-semibold">{{ getPrioridad() }}</p>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-gray-600 font-medium">Estado del Caso</p>
+                    <p class="text-gray-900 font-semibold">{{ updatedCase?.state || updatedCase?.estado || 'Pendiente' }}</p>
+                  </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
 
       <div v-if="!caseFound && !notification.visible" class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
         <div class="flex flex-col items-center space-y-3">
@@ -147,65 +148,65 @@
       <div v-if="caseFound && !isCaseCompleted" class="space-y-6">
         <!-- Campos de entidad y tipo de atención -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <EntityList :key="'entity-' + resetKey" v-model="form.entidadPaciente" label="Entidad del Paciente" placeholder="Seleciona la entidad" :required="true" :auto-load="true" @entity-selected="onEntitySelected" />
-          <FormSelect :key="'tipoAtencion-' + resetKey + '-' + form.tipoAtencionPaciente" v-model="form.tipoAtencionPaciente" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" />
+          <EntityList :key="'entity-' + resetKey" v-model="form.patientEntity" label="Entidad del Paciente" placeholder="Seleciona la entidad" :required="true" :auto-load="true" @entity-selected="onEntitySelected" />
+          <FormSelect :key="'tipoAtencion-' + resetKey + '-' + form.patientCareType" v-model="form.patientCareType" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" />
         </div>
 
         <!-- Campos de fecha de ingreso y prioridad -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="form.fechaIngreso" label="Fecha de Ingreso" type="date" :required="true" help-text="Fecha en que ingresa el caso al sistema" />
-          <FormSelect v-model="form.prioridadCaso" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" help-text="Nivel de urgencia del caso" />
+          <FormInputField v-model="form.entryDate" label="Fecha de Ingreso" type="date" :required="true" help-text="Fecha en que ingresa el caso al sistema" />
+          <FormSelect v-model="form.casePriority" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" help-text="Nivel de urgencia del caso" />
         </div>
 
         <!-- Campos de médico solicitante y servicio -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="form.medicoSolicitante" label="Médico Solicitante" placeholder="Ejemplo: Alberto Perez" :required="true" :max-length="200" help-text="Medico solicitante del estudio" />
-          <FormInputField v-model="form.servicio" label="Servicio" placeholder="Ejemplo: Medicina Interna" :required="true" :max-length="100" help-text="Área de procedencia del caso" />
+          <FormInputField v-model="form.requestingPhysician" label="Médico Solicitante" placeholder="Ejemplo: Alberto Perez" :required="true" :max-length="200" help-text="Medico solicitante del estudio" />
+          <FormInputField v-model="form.service" label="Servicio" placeholder="Ejemplo: Medicina Interna" :required="true" :max-length="100" help-text="Área de procedencia del caso" />
         </div>
 
         <!-- Estado y Patólogo en una sola línea -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormSelect :key="'estado-' + resetKey" v-model="form.estado" label="Estado del Caso" placeholder="Seleccione el estado" :required="true" :options="estadoOptions" />
-          <PathologistList :key="'pathologist-' + resetKey" v-model="form.patologoAsignado" label="Patólogo Asignado" placeholder="Buscar patólogo..." :required="false" :auto-load="true" @pathologist-selected="onPathologistSelected" />
+          <FormSelect :key="'estado-' + resetKey" v-model="form.state" label="Estado del Caso" placeholder="Seleccione el estado" :required="true" :options="estadoOptions" />
+          <PathologistList :key="'pathologist-' + resetKey" v-model="form.assignedPathologist" label="Patólogo Asignado" placeholder="Buscar patólogo..." :required="false" :auto-load="true" @pathologist-selected="onPathologistSelected" />
         </div>
 
         <!-- Número de muestras debajo -->
         <div>
-          <FormInputField class="max-w-xs" v-model="form.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="99" :required="true" @input="handleLocalNumeroMuestrasChange" />
+          <FormInputField class="max-w-xs" v-model="form.numberOfSamples" label="Número de Muestras" type="number" :min="1" :max="99" :required="true" @input="handleLocalNumberOfSamplesChange" />
         </div>
 
-        <div v-if="form.muestras.length > 0" class="space-y-4">
+        <div v-if="form.samples.length > 0" class="space-y-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center">
             <TestIcon class="w-5 h-5 mr-2 text-blue-600" />
             Información de Submuestras
           </h3>
           
           <div class="space-y-6">
-            <div v-for="(muestra, muestraIndex) in form.muestras" :key="muestra.numero + '-' + resetKey" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ muestra.numero }}</h4>
+            <div v-for="(sample, sampleIndex) in form.samples" :key="sample.number + '-' + resetKey" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ sample.number }}</h4>
               
               <div class="mb-4">
-                <BodyRegionList :key="'region-' + muestraIndex + '-' + resetKey" v-model="muestra.regionCuerpo" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
+                <BodyRegionList :key="'region-' + sampleIndex + '-' + resetKey" v-model="sample.bodyRegion" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
               </div>
               
               <div class="space-y-3">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label class="block text-sm font-medium text-gray-700">Pruebas a realizar</label>
                   <div class="self-end sm:self-auto">
-                    <AddButton text="Agregar Prueba" @click="addLocalPruebaToMuestra(muestraIndex)" />
+                    <AddButton text="Agregar Prueba" @click="addLocalTestToSample(sampleIndex)" />
                   </div>
                 </div>
                 
                 <div class="space-y-2">
-                  <div v-for="(prueba, pruebaIndex) in muestra.pruebas" :key="pruebaIndex + '-' + resetKey" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-end">
+                  <div v-for="(test, testIndex) in sample.tests" :key="testIndex + '-' + resetKey" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-end">
                     <div class="flex-1 min-w-0">
-                      <TestList :key="'test-' + muestraIndex + '-' + pruebaIndex + '-' + resetKey" v-model="prueba.code" :label="`Prueba ${pruebaIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${pruebaIndex + 1}...`" :required="true" :auto-load="true" @test-selected="(test) => handleTestSelected(muestraIndex, pruebaIndex, test)" />
+                      <TestList :key="'test-' + sampleIndex + '-' + testIndex + '-' + resetKey" v-model="test.code" :label="`Prueba ${testIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${testIndex + 1}...`" :required="true" :auto-load="true" @test-selected="(test) => handleTestSelected(sampleIndex, testIndex, test)" />
                     </div>
                     <div class="w-full sm:w-24">
-                      <FormInputField v-model.number="prueba.cantidad" label="Cantidad" type="number" :min="1" :max="10" placeholder="Cantidad" />
+                      <FormInputField v-model.number="test.quantity" label="Cantidad" type="number" :min="1" :max="10" placeholder="Cantidad" />
                     </div>
                     <div class="flex items-end justify-center sm:w-10 pb-1">
-                      <RemoveButton @click="removeLocalPruebaFromMuestra(muestraIndex, pruebaIndex)" title="Eliminar prueba" />
+                      <RemoveButton @click="removeLocalTestFromSample(sampleIndex, testIndex)" title="Eliminar prueba" />
                     </div>
                   </div>
                 </div>
@@ -214,7 +215,7 @@
           </div>
         </div>
 
-        <FormTextarea v-model="form.observaciones" label="Observaciones del Caso" placeholder="Observaciones adicionales sobre el caso o procedimiento..." :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional relevante para el procesamiento del caso" />
+        <FormTextarea v-model="form.observations" label="Observaciones del Caso" placeholder="Observaciones adicionales sobre el caso o procedimiento..." :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional relevante para el procesamiento del caso" />
 
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
           <ClearButton @click="onReset" :disabled="isLoading" />
@@ -252,6 +253,7 @@
                   <p class="font-mono font-bold text-2xl text-gray-900">{{ getCaseCode() }}</p>
                 </div>
 
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Información del Paciente</h4>
@@ -268,7 +270,7 @@
                   <div>
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Detalles del Caso</h4>
                     <div class="space-y-2 text-sm">
-                      <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ updatedCase.estado || 'Pendiente' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ updatedCase?.state || updatedCase?.estado || 'Pendiente' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Prioridad:</span><p class="text-gray-900 font-semibold">{{ getPrioridad() }}</p></div>
                       <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ getMedicoSolicitante() }}</p></div>
                       <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ getServicio() }}</p></div>
@@ -281,14 +283,14 @@
                 <div>
                   <h4 class="font-semibold text-gray-800 mb-3 text-base">Submuestras Actualizadas</h4>
                   <div class="space-y-3">
-                    <div v-for="(muestra, index) in getMuestras()" :key="index" class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <div v-for="(sample, index) in getMuestras()" :key="index" class="border border-gray-200 rounded-lg p-3 bg-gray-50">
                       <div class="flex items-center justify-between mb-2">
                         <span class="font-medium text-gray-900 text-sm">Submuestra #{{ index + 1 }}</span>
-                        <span class="text-sm text-gray-500">{{ getPruebasCount(muestra) }} prueba{{ getPruebasCount(muestra) !== 1 ? 's' : '' }}</span>
+                        <span class="text-sm text-gray-500">{{ getPruebasCount(sample) }} prueba{{ getPruebasCount(sample) !== 1 ? 's' : '' }}</span>
                       </div>
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                        <div><span class="text-gray-500 font-medium">Región:</span><p class="text-gray-900">{{ muestra.regionCuerpo || 'Sin especificar' }}</p></div>
-                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="muestra.pruebas?.length > 0">{{ getPruebasText(muestra) }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
+                        <div><span class="text-gray-500 font-medium">Región:</span><p class="text-gray-900">{{ sample.bodyRegion || 'Sin especificar' }}</p></div>
+                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="sample.tests?.length > 0">{{ getPruebasText(sample) }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
                       </div>
                     </div>
                   </div>
@@ -313,7 +315,7 @@ import { useCaseForm } from '../../composables/useCaseForm'
 import { casesApiService } from '../../services/casesApi.service'
 import { patientsApiService } from '../../services/patientsApi.service'
 import pathologistApi from '../../services/pathologistApi.service'
-import type { CaseFormData, CaseModel, CaseState, PatientData } from '../../types'
+import type { CaseFormData, CaseModel } from '../../types'
 import { TestIcon } from '@/assets/icons'
 
 // ============================================================================
@@ -372,19 +374,19 @@ const searchError = ref('')
 const caseFound = ref(false)
 const foundCaseInfo = ref<CaseModel | null>(null)
 
-const form = reactive<CaseFormData & { estado: string; patologoAsignado?: string; servicio: string }>({
-  pacienteDocumento: '',
-  fechaIngreso: '',
-  medicoSolicitante: '',
-  servicio: '',
-  entidadPaciente: '',
-  tipoAtencionPaciente: '',
-  prioridadCaso: '',
-  numeroMuestras: '0',
-  muestras: [],
-  observaciones: '',
-  estado: '',
-  patologoAsignado: ''
+const form = reactive<CaseFormData & { state: string; assignedPathologist?: string; service: string }>({
+  patientDocument: '',
+  entryDate: '',
+  requestingPhysician: '',
+  service: '',
+  patientEntity: '',
+  patientCareType: '',
+  casePriority: '',
+  numberOfSamples: '0',
+  samples: [],
+  observations: '',
+  state: '',
+  assignedPathologist: ''
 })
 
 const tipoAtencionOptions = [
@@ -410,28 +412,29 @@ const estadoOptions = [
 
 const isFormValid = computed(() => {
   const baseOk = (
-    form.fechaIngreso.trim() !== '' &&
-    form.medicoSolicitante.trim() !== '' &&
-    form.servicio.trim() !== '' &&
-    form.entidadPaciente.trim() !== '' &&
-    form.tipoAtencionPaciente !== '' &&
-    form.prioridadCaso !== '' &&
-    form.estado !== '' &&
-    form.numeroMuestras !== ''
+    form.entryDate.trim() !== '' &&
+    form.requestingPhysician.trim() !== '' &&
+    form.service.trim() !== '' &&
+    form.patientEntity.trim() !== '' &&
+    form.patientCareType !== '' &&
+    form.casePriority !== '' &&
+    form.state !== '' &&
+    form.numberOfSamples !== ''
   )
-  const muestrasOk = form.muestras.length > 0 && form.muestras.every(m => {
-    if (!String(m.regionCuerpo || '').trim()) return false
-    if (!m.pruebas || m.pruebas.length === 0) return false
-    return m.pruebas.every(p => String(p.code || '').trim() !== '' && (p.cantidad ?? 0) >= 1)
+  const samplesOk = form.samples.length > 0 && form.samples.every(s => {
+    if (!String(s.bodyRegion || '').trim()) return false
+    if (!s.tests || s.tests.length === 0) return false
+    return s.tests.every(t => String(t.code || '').trim() !== '' && (t.quantity ?? 0) >= 1)
   })
-  return baseOk && muestrasOk
+  return baseOk && samplesOk
 })
 
 // Computed para verificar si el caso está completado
 const isCaseCompleted = computed(() => {
-  if (!foundCaseInfo.value?.estado) return false
-  const estado = foundCaseInfo.value.estado
-  return estado.toLowerCase() === 'completado'
+  const fc: any = foundCaseInfo.value || {}
+  const estado = fc.estado || fc.state || ''
+  const v = String(estado).toLowerCase()
+  return v === 'completado' || v === 'completed'
 })
 
 // Validación de errores del formulario
@@ -439,30 +442,30 @@ const validationErrors = computed(() => {
   const validationErrorsList: string[] = []
   
   // Campos básicos del formulario
-  if (!form.fechaIngreso) validationErrorsList.push('Fecha de ingreso')
-  if (!form.medicoSolicitante) validationErrorsList.push('Médico solicitante')
-  if (!form.servicio) validationErrorsList.push('Servicio')
-  if (!form.prioridadCaso) validationErrorsList.push('Prioridad del caso')
-  if (!form.estado) validationErrorsList.push('Estado del caso')
-  if (!form.numeroMuestras) validationErrorsList.push('Número de muestras')
-  if (!form.entidadPaciente) validationErrorsList.push('Entidad del paciente')
-  if (!form.tipoAtencionPaciente) validationErrorsList.push('Tipo de atención')
+  if (!form.entryDate) validationErrorsList.push('Fecha de ingreso')
+  if (!form.requestingPhysician) validationErrorsList.push('Médico solicitante')
+  if (!form.service) validationErrorsList.push('Servicio')
+  if (!form.casePriority) validationErrorsList.push('Prioridad del caso')
+  if (!form.state) validationErrorsList.push('Estado del caso')
+  if (!form.numberOfSamples) validationErrorsList.push('Número de muestras')
+  if (!form.patientEntity) validationErrorsList.push('Entidad del paciente')
+  if (!form.patientCareType) validationErrorsList.push('Tipo de atención')
   
   // Validación detallada de submuestras
-  if (form.muestras && form.muestras.length > 0) {
-    form.muestras.forEach((muestra, index) => {
-      if (!muestra.regionCuerpo) {
+  if (form.samples && form.samples.length > 0) {
+    form.samples.forEach((sample, index) => {
+      if (!sample.bodyRegion) {
         validationErrorsList.push(`Submuestra ${index + 1}: Región del cuerpo`)
       }
-      if (!muestra.pruebas || muestra.pruebas.length === 0) {
+      if (!sample.tests || sample.tests.length === 0) {
         validationErrorsList.push(`Submuestra ${index + 1}: Al menos una prueba`)
       } else {
-        muestra.pruebas.forEach((prueba, pruebaIndex) => {
-          if (!prueba.code) {
-            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${pruebaIndex + 1}: Código de prueba`)
+        sample.tests.forEach((test, testIndex) => {
+          if (!test.code) {
+            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${testIndex + 1}: Código de prueba`)
           }
-          if (!prueba.cantidad || prueba.cantidad < 1) {
-            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${pruebaIndex + 1}: Cantidad`)
+          if (!test.quantity || test.quantity < 1) {
+            validationErrorsList.push(`Submuestra ${index + 1}, Prueba ${testIndex + 1}: Cantidad`)
           }
         })
       }
@@ -534,7 +537,7 @@ const loadCaseData = async () => {
  */
 const onSubmit = async () => {
   // Validar que hay datos para actualizar (ya sea desde props o búsqueda)
-  const caseCode = props.caseCodeProp || foundCaseInfo.value?.caso_code
+  const caseCode = props.caseCodeProp || (foundCaseInfo.value as any)?.case_code || (foundCaseInfo.value as any)?.caso_code
   
   // Validar que el caso no esté completado
   if (isCaseCompleted.value) {
@@ -558,7 +561,7 @@ const onSubmit = async () => {
   }
 
   // Validar que hay información del paciente cargada
-  const cedulaToUse = form.pacienteDocumento || foundCaseInfo.value?.paciente?.paciente_code
+  const cedulaToUse = form.patientDocument || foundCaseInfo.value?.paciente?.paciente_code
   if (!cedulaToUse) {
     showError('Información incompleta', 'No se encontró información del paciente para este caso')
     return
@@ -575,9 +578,9 @@ const onSubmit = async () => {
       if (fromCase?.codigo && fromCase?.nombre) {
         return { id: fromCase.codigo, nombre: fromCase.nombre }
       }
-      if (form.entidadPaciente) {
+      if (form.patientEntity) {
         const nombre = selectedEntity.value?.nombre || (foundCaseInfo.value as any)?.paciente?.entidad_info?.nombre || ''
-        if (nombre) return { id: form.entidadPaciente, nombre }
+        if (nombre) return { id: form.patientEntity, nombre }
       }
       return undefined
     })()
@@ -585,92 +588,89 @@ const onSubmit = async () => {
     // Mapear tipo de atención del frontend al formato del backend
     const mapTipoAtencionToBackend = (tipo: string): string => {
       const mapping: Record<string, string> = {
-        'ambulatorio': 'Ambulatorio',
-        'hospitalizado': 'Hospitalizado'
+        'ambulatorio': 'Outpatient',
+        'hospitalizado': 'Inpatient',
+        'Ambulatorio': 'Outpatient',
+        'Hospitalizado': 'Inpatient'
       }
-      return mapping[tipo] || 'Ambulatorio'
+      return mapping[tipo] || 'Outpatient'
     }
 
-    // Normalizar estado a uno de los valores válidos del backend
+    // Normalizar estado a uno de los valores válidos del backend (español -> inglés)
     const estadoBackendMap: Record<string, string> = {
-      'Requiere cambios': 'Por entregar', // UI -> backend enum existente
-      'cancelado': 'Completado' // fallback (estado cancelado no existe ya)
+      'En proceso': 'In process',
+      'Por firmar': 'To sign',
+      'Por entregar': 'To deliver', 
+      'Completado': 'Completed',
+      'Requiere cambios': 'To deliver',
+      'cancelado': 'Completed'
     }
     const estadoToSend = ((): string => {
-      const raw = form.estado
-      if (!raw) return 'En proceso'
+      const raw = form.state
+      if (!raw) return 'In process'
       return estadoBackendMap[raw] || raw
     })()
 
     const prioridadToSend = ((): string => {
-      const p = form.prioridadCaso || 'Normal'
+      const p = form.casePriority || 'Normal'
       if (['Normal','Prioritario'].includes(p)) return p
       return 'Normal'
     })()
 
     // Construir muestras replicando lógica de creación (sin descartar por region vacía aún)
-    const existingMuestras = (foundCaseInfo.value?.muestras || []) as any[]
-    const muestrasClean = form.muestras.map((m, idx) => {
+    const existingSamples = (foundCaseInfo.value?.muestras || []) as any[]
+    const samplesClean = form.samples.map((s, idx) => {
       // Fallback: si el usuario no tocó la región, usar la existente
-      const region = m.regionCuerpo || existingMuestras[idx]?.region_cuerpo || existingMuestras[idx]?.regionCuerpo || ''
+      const region = s.bodyRegion || existingSamples[idx]?.region_cuerpo || existingSamples[idx]?.regionCuerpo || ''
       return {
-        region_cuerpo: region,
-        pruebas: m.pruebas
-          .filter(p => String(p.code).trim() !== '')
-          .map(p => ({
-            id: p.code,
-            nombre: p.nombre || p.code,
-            cantidad: p.cantidad || 1
-          }))
+        body_region: region,
+        tests: s.tests
+          .filter(t => String(t.code).trim() !== '')
+          .map(t => ({ id: t.code, name: t.name || t.code, quantity: t.quantity || 1 }))
       }
     })
     // Si todas las regiones quedaron vacías y ya existían muestras, no enviar campo para no sobrescribir
-    const allEmptyRegions = muestrasClean.every(m => !m.region_cuerpo)
-    if (allEmptyRegions && existingMuestras.length) {
+    const allEmptyRegions = samplesClean.every(s => !s.body_region)
+    if (allEmptyRegions && existingSamples.length) {
       // Reutilizar las existentes (no enviar muestras en updateData posteriormente)
     }
 
-    const pacienteEntidad = entityInfoToSend || (form.entidadPaciente && selectedEntity.value?.nombre
-      ? { id: form.entidadPaciente, nombre: selectedEntity.value?.nombre || '' }
+    const pacienteEntidad = entityInfoToSend || (form.patientEntity && selectedEntity.value?.nombre
+      ? { id: form.patientEntity, nombre: selectedEntity.value?.nombre || '' }
       : undefined)
 
     const updateData: any = {
-      estado: estadoToSend as CaseState,
-      medico_solicitante: form.medicoSolicitante || undefined,
-      servicio: form.servicio || undefined,
-      prioridad: prioridadToSend,
-      observaciones_generales: form.observaciones || undefined,
-      muestras: allEmptyRegions && existingMuestras.length ? undefined : muestrasClean,
-      patologo_asignado: form.patologoAsignado ? { 
-        codigo: selectedPathologist.value?.codigo || form.patologoAsignado, 
-        nombre: selectedPathologist.value?.nombre || '' 
-      } : undefined,
-      entidad_info: pacienteEntidad,
-      paciente: {
-        paciente_code: patientInfo.value?.codigo || cedulaToUse,
-        nombre: patientInfo.value?.nombre || '',
-        edad: patientInfo.value?.edad || 0,
-        sexo: patientInfo.value?.sexo || '',
-        entidad_info: pacienteEntidad || { id: '', nombre: '' },
-        tipo_atencion: mapTipoAtencionToBackend(form.tipoAtencionPaciente),
-        observaciones: patientInfo.value?.observaciones || undefined
+      state: estadoToSend as unknown as string,
+      requesting_physician: form.requestingPhysician || undefined,
+      service: form.service || undefined,
+      priority: prioridadToSend,
+      observations: form.observations || undefined,
+      samples: allEmptyRegions && existingSamples.length ? undefined : samplesClean,
+      patient_info: {
+        patient_code: (patientInfo.value as any)?.codigo || cedulaToUse,
+        name: (patientInfo.value as any)?.nombre || '',
+        age: (patientInfo.value as any)?.edad || 0,
+        gender: (patientInfo.value as any)?.sexo || '',
+        entity_info: pacienteEntidad ? { id: pacienteEntidad.id, name: pacienteEntidad.nombre } : { id: '', name: '' },
+        care_type: mapTipoAtencionToBackend(form.patientCareType),
+        observations: (patientInfo.value as any)?.observaciones || undefined
       }
     }
 
     // El backend requiere al menos una muestra; si quedó vacío, mantener la anterior del caso existente
-    if (updateData.muestras && updateData.muestras.length) {
+    if (updateData.samples && updateData.samples.length) {
       // Eliminar posibles entradas con region vacía para no violar validación backend
-      updateData.muestras = updateData.muestras.filter((m: any) => m.region_cuerpo)
-      if (!updateData.muestras.length) delete updateData.muestras
-    } else if (!updateData.muestras && foundCaseInfo.value?.muestras?.length) {
+      updateData.samples = updateData.samples.filter((s: any) => s.body_region)
+      if (!updateData.samples.length) delete updateData.samples
+    } else if (!updateData.samples && foundCaseInfo.value?.muestras?.length) {
       // Mantener sin cambio
-      delete updateData.muestras
+      delete updateData.samples
     }
 
     // Eliminar campos undefined para payload más limpio
     Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k])
-    if (updateData.paciente) {
-      Object.keys(updateData.paciente).forEach(k => updateData.paciente[k] === undefined && delete updateData.paciente[k])
+    if (updateData.patient_info) {
+      Object.keys(updateData.patient_info).forEach(k => updateData.patient_info[k] === undefined && delete updateData.patient_info[k])
     }
     
 
@@ -684,24 +684,47 @@ const onSubmit = async () => {
       return 'Masculino'
     })()
     
-    const patientDataToUpdate: PatientData = {
-      pacienteCode: cedulaToUse,
-      nombrePaciente: String(patientInfo.value?.nombre || ''),
-      sexo: sexoForm as any,
-      edad: String(patientInfo.value?.edad || ''),
-      entidad: String(selectedEntity.value?.nombre || foundCaseInfo.value?.entidad_info?.nombre || ''),
-      entidadCodigo: form.entidadPaciente,
-      tipoAtencion: mapTipoAtencionToBackend(form.tipoAtencionPaciente) as any,
-      observaciones: ''
+    const patientName = String(patientInfo.value?.nombre || patientInfo.value?.nombrePaciente || '').trim()
+    const patientDataToUpdate = {
+      ...(patientName && { name: patientName }),
+      age: parseInt(String(patientInfo.value?.edad || '0'), 10),
+      gender: sexoForm === 'Masculino' ? 'Male' : 'Female',
+      entity_info: {
+        id: form.patientEntity || '',
+        name: String(selectedEntity.value?.nombre || foundCaseInfo.value?.entidad_info?.nombre || '')
+      },
+      care_type: mapTipoAtencionToBackend(form.patientCareType),
+      observations: (patientInfo.value as any)?.observaciones || undefined
     }
+    
     try {
       await patientsApiService.updatePatient(cedulaToUse, patientDataToUpdate)
     } catch (e: any) {
       throw new Error('El caso se actualizó, pero falló la actualización del paciente')
     }
     
-    // Guardar caso actualizado para la notificación
-    updatedCase.value = updatedCaseResponse
+    // Adaptar respuesta inglesa a campos esperados por la UI para la notificación
+    const uc = updatedCaseResponse as any
+    const adapted = {
+      ...uc,
+      caso_code: uc.case_code || (foundCaseInfo.value as any)?.caso_code,
+      paciente: uc.patient_info ? {
+        paciente_code: uc.patient_info.patient_code,
+        nombre: uc.patient_info.name,
+        edad: uc.patient_info.age,
+        sexo: uc.patient_info.gender,
+        entidad_info: { nombre: uc.patient_info.entity_info?.name, id: uc.patient_info.entity_info?.id },
+        tipo_atencion: uc.patient_info.care_type
+      } : (updatedCase.value?.paciente || {}),
+      prioridad: uc.priority || form.casePriority,
+      observaciones_generales: uc.observations || form.observations,
+      muestras: Array.isArray(uc.samples) ? uc.samples.map((s: any) => ({
+        regionCuerpo: s.body_region,
+        region_cuerpo: s.body_region,
+        pruebas: (s.tests || []).map((t: any) => ({ id: t.id, nombre: t.name, cantidad: t.quantity }))
+      })) : updatedCase.value?.muestras
+    }
+    updatedCase.value = adapted
     // Normalizar prioridad en el objeto actualizado para garantizar que la notificación la muestre
     if (updatedCase.value) {
       // Si el backend devolvió 'prioridad' simple, mapear a prioridad_caso
@@ -709,8 +732,8 @@ const onSubmit = async () => {
         updatedCase.value.prioridad_caso = (updatedCase.value as any).prioridad
       }
       // Si no devolvió ningún campo de prioridad, usar la del formulario
-      if (!updatedCase.value.prioridad_caso && !updatedCase.value.prioridadCaso && form.prioridadCaso) {
-        updatedCase.value.prioridad_caso = form.prioridadCaso
+      if (!updatedCase.value.prioridad_caso && !updatedCase.value.prioridadCaso && form.casePriority) {
+        updatedCase.value.prioridad_caso = form.casePriority
       }
     }
     
@@ -816,6 +839,7 @@ const searchCase = async () => {
     if (caseData) {
       // Guardar información del caso encontrado para mostrar
       foundCaseInfo.value = caseData
+      updatedCase.value = caseData  // También poblar updatedCase para las notificaciones
       caseFound.value = true
       
       // Cargar automáticamente los datos en el formulario
@@ -843,33 +867,35 @@ const searchCase = async () => {
  */
 const loadCaseDataFromFound = async (caseData: CaseModel) => {
   try {
-
     
     // Guardar el código del caso para usar en la notificación
-    currentCaseCode.value = (caseData as any).codigo || (caseData as any).code || searchCaseCode.value || props.caseCodeProp || ''
+    currentCaseCode.value = (caseData as any).case_code || (caseData as any).caso_code || (caseData as any).codigo || (caseData as any).code || searchCaseCode.value || props.caseCodeProp || ''
 
     
-    // Marcar como encontrado cuando proviene de navegación con código
     foundCaseInfo.value = caseData
+    updatedCase.value = caseData
     caseFound.value = true
+    
 
-    // Mapear datos del caso al formulario con información completa
-    // Intentar múltiples posibles estructuras de datos del backend
+    // Mapear datos del caso al formulario
     const formData = {
-      pacienteDocumento: 
+      patientDocument: 
+        (caseData as any).patient_info?.patient_code ||
         caseData.paciente?.paciente_code || 
         (caseData.paciente as any)?.numeroCedula ||
         (caseData as any).cedula_paciente || 
         '',
         
-      fechaIngreso: toInputDate(
+      entryDate: toInputDate(
+        (caseData as any).created_at ||
         (caseData as any).fecha_creacion ||
         (caseData as any).fechaCreacion ||
         (caseData as any).fecha_creacion?.$date ||
         ''
       ),
         
-      medicoSolicitante: 
+      requestingPhysician: 
+        (caseData as any).requesting_physician ||
         (() => {
           const medico = caseData.medico_solicitante;
           if (typeof medico === 'object' && medico && 'nombre' in medico) {
@@ -881,85 +907,104 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
           return (caseData as any).medicoSolicitante || '';
         })(),
         
-      servicio: 
+      service: 
+        (caseData as any).service ||
         caseData.servicio ||
         (caseData as any).servicio ||
         '',
 
-      prioridadCaso:
+      casePriority:
+        (caseData as any).priority ||
         (caseData as any).prioridad_caso ||
         (caseData as any).prioridadCaso ||
         (caseData as any).prioridad ||
         'Normal',
         
-      entidadPaciente: 
-        caseData.entidad_info?.codigo || 
+      patientEntity: 
+        (caseData as any).patient_info?.entity_info?.id ||
+        (caseData as any).entidad_info?.id ||
+        (caseData as any).entidad_info?.codigo ||
         (caseData.paciente?.entidad_info as any)?.id || 
-        caseData.paciente?.entidad_info?.codigo || 
+        (caseData.paciente?.entidad_info as any)?.codigo || 
         (caseData as any).entidadPaciente ||
         (caseData as any).entidad_codigo ||
         '',
         
-      tipoAtencionPaciente: normalizeAttentionType(
+      patientCareType: normalizeAttentionType(
+        (caseData as any).patient_info?.care_type ||
         caseData.paciente?.tipo_atencion || 
         (caseData as any).tipo_atencion ||
         (caseData as any).tipoAtencionPaciente ||
         ''
       ),
         
-      estado: 
-        caseData.estado || 
-        (caseData as any).estado ||
-        'En proceso',
+      state: (() => {
+        const rawState = (caseData as any).state ||
+          caseData.estado || 
+          (caseData as any).estado ||
+          'En proceso';
+        
+        // Mapear estados del backend (inglés) al frontend (español)
+        const estadoMap: Record<string, string> = {
+          'In process': 'En proceso',
+          'To sign': 'Por firmar', 
+          'To deliver': 'Por entregar',
+          'Completed': 'Completado'
+        };
+        
+        return estadoMap[rawState] || rawState;
+      })(),
       
       // Código del patólogo asignado (si existe)
-      patologoAsignado: 
+      assignedPathologist: 
+        (caseData as any).assigned_pathologist?.pathologist_code ||
         (caseData as any).patologo_asignado?.codigo ||
         '',
         
-      numeroMuestras: 
+      numberOfSamples: 
         (caseData.muestras?.length || 
          (caseData as any).numeroMuestras || 
          1).toString(),
          
-      muestras: (() => {
-        const muestras = caseData.muestras || (caseData as any).muestras || [];
-        if (muestras && muestras.length > 0) {
-          return muestras.map((muestra: any, index: number) => ({
-            numero: index + 1,
+      samples: (() => {
+        const samples = (caseData as any).samples || caseData.muestras || (caseData as any).muestras || [];
+        if (samples && samples.length > 0) {
+          return samples.map((sample: any, index: number) => ({
+            number: index + 1,
             // Usar directamente el valor devuelto por el backend (slug o label). El componente BodyRegionList
             // acepta tanto el label completo como el value en formato snake_case y se encarga de mostrar el label.
             // Se evita la normalización agresiva previa (normalizeBodyRegion) que reducía valores legítimos a
             // 'no_especificado' al tener una lista limitada de allowedValues.
-            regionCuerpo: (
-              muestra.region_cuerpo ||
-              muestra.regionCuerpo ||
+            bodyRegion: (
+              sample.body_region ||
+              sample.region_cuerpo ||
+              sample.regionCuerpo ||
               ''
             ),
-            pruebas: (() => {
-              const pruebas = muestra.pruebas || muestra.tests || [];
-              if (pruebas && pruebas.length > 0) {
-                return pruebas.map((prueba: any) => ({
+            tests: (() => {
+              const tests = sample.tests || sample.pruebas || [];
+              if (tests && tests.length > 0) {
+                return tests.map((test: any) => ({
                   code: 
-                    prueba.id || 
-                    prueba.code || 
-                    prueba.codigo ||
+                    test.id || 
+                    test.code || 
+                    test.codigo ||
                     '',
-                  cantidad: prueba.cantidad || 1,
-                  nombre: 
-                    prueba.nombre || 
-                    prueba.name ||
+                  quantity: test.quantity || test.cantidad || 1,
+                  name: 
+                    test.name || 
+                    test.nombre || 
                     ''
                 }));
               }
-              return [{ code: '', cantidad: 1, nombre: '' }];
+              return [{ code: '', quantity: 1, name: '' }];
             })()
           }));
         }
         return [createEmptySubSample(1)];
       })(),
       
-      observaciones: 
+      observations: 
         caseData.observaciones_generales || 
         (caseData as any).observaciones ||
         (caseData as any).observacionesGenerales ||
@@ -968,53 +1013,64 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
     
 
 
-    // Asignar datos al formulario
     Object.assign(form, formData)
-    
-    // Verificar después de asignación
     originalData.value = { ...formData }
-
-    // Guardar información del paciente para mostrar
     patientInfo.value = {
-      nombre: 
-        caseData.paciente?.nombre || 
-        (caseData.paciente as any)?.nombrePaciente ||
-        (caseData as any).nombre_paciente ||
-        '',
-      cedula: 
+      pacienteCode: 
+        (caseData as any).patient_info?.patient_code ||
         caseData.paciente?.paciente_code || 
         (caseData.paciente as any)?.numeroCedula ||
         (caseData as any).cedula_paciente ||
-        formData.pacienteDocumento ||
+        formData.patientDocument ||
         '',
+      nombrePaciente: 
+        (caseData as any).patient_info?.name ||
+        caseData.paciente?.nombre || 
+        (caseData.paciente as any)?.nombrePaciente ||
+        (caseData as any).nombre_paciente ||
+        'Sin nombre',
       edad: 
+        String((caseData as any).patient_info?.age ||
         caseData.paciente?.edad || 
         (caseData as any).edad_paciente ||
-        0,
+        0),
       sexo: 
+        (caseData as any).patient_info?.gender ||
         caseData.paciente?.sexo || 
         (caseData as any).sexo_paciente ||
-        ''
+        'Sin especificar',
+      entidad: 
+        (caseData as any).patient_info?.entity_info?.name ||
+        caseData.entidad_info?.nombre ||
+        caseData.paciente?.entidad_info?.nombre ||
+        'Sin especificar',
+      tipoAtencion: 
+        (caseData as any).patient_info?.care_type ||
+        caseData.paciente?.tipo_atencion ||
+        'Sin especificar',
+      observaciones: 
+        (caseData as any).patient_info?.observations ||
+        (caseData.paciente as any)?.observaciones ||
+        '',
+      codigo: (caseData as any).id || caseData._id || ''
     }
     
-    // Guardar patólogo seleccionado (si viene en el caso) - mapeo consistente
-    const patologoAsignado = (caseData as any).patologo_asignado
     
-    if (patologoAsignado?.codigo) {
-      // Si el codigo parece ser un ObjectId (24 hex), necesitamos buscar el patologo_code real
-      const codigo = patologoAsignado.codigo
+    const patologoAsignado = (caseData as any).assigned_pathologist || (caseData as any).patologo_asignado
+    
+    if (patologoAsignado?.pathologist_code || patologoAsignado?.codigo) {
+      const codigo = patologoAsignado.pathologist_code || patologoAsignado.codigo
       if (codigo && codigo.length === 24 && /^[0-9a-fA-F]{24}$/.test(codigo)) {
-        // Es un ObjectId, necesitamos buscar el patólogo para obtener el patologo_code
         try {
           const pathologist = await pathologistApi.getPathologist(codigo)
           if (pathologist) {
             const patologoCode = pathologist.patologo_code || codigo
             const patologoData = {
               codigo: patologoCode,
-              nombre: pathologist.patologo_name || pathologist.nombre || patologoAsignado.nombre || ''
+              nombre: pathologist.patologo_name || pathologist.nombre || patologoAsignado.pathologist_name || patologoAsignado.nombre || ''
             }
             selectedPathologist.value = patologoData
-            form.patologoAsignado = patologoCode // Usar patologo_code para el v-model
+            form.assignedPathologist = patologoCode // Usar patologo_code para el v-model
             // Disparar el evento para que el componente se actualice
             onPathologistSelected(patologoData)
           } else {
@@ -1024,7 +1080,7 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
               nombre: patologoAsignado.nombre || ''
             }
             selectedPathologist.value = patologoData
-            form.patologoAsignado = codigo
+            form.assignedPathologist = codigo
             onPathologistSelected(patologoData)
           }
         } catch (error) {
@@ -1034,7 +1090,7 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
             nombre: patologoAsignado.nombre || ''
           }
           selectedPathologist.value = patologoData
-          form.patologoAsignado = codigo
+          form.assignedPathologist = codigo
           onPathologistSelected(patologoData)
         }
       } else {
@@ -1045,10 +1101,10 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
             const patologoCode = pathologist.patologo_code || codigo
             const patologoData = {
               codigo: patologoCode,
-              nombre: pathologist.patologo_name || pathologist.nombre || patologoAsignado.nombre || ''
+              nombre: pathologist.patologo_name || pathologist.nombre || patologoAsignado.pathologist_name || patologoAsignado.nombre || ''
             }
             selectedPathologist.value = patologoData
-            form.patologoAsignado = patologoCode // Usar patologo_code para el v-model
+            form.assignedPathologist = patologoCode // Usar patologo_code para el v-model
             onPathologistSelected(patologoData)
           } else {
             // Fallback si no se encuentra
@@ -1057,7 +1113,7 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
               nombre: patologoAsignado.nombre || ''
             }
             selectedPathologist.value = patologoData
-            form.patologoAsignado = codigo
+            form.assignedPathologist = codigo
             console.log('⚠️ DEBUG - Patólogo no encontrado, usando código como fallback:', patologoData)
             onPathologistSelected(patologoData)
           }
@@ -1068,31 +1124,38 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
             nombre: patologoAsignado.nombre || ''
           }
           selectedPathologist.value = patologoData
-          form.patologoAsignado = codigo
+          form.assignedPathologist = codigo
           onPathologistSelected(patologoData)
         }
       }
     } else {
       selectedPathologist.value = null
-      form.patologoAsignado = ''
+      form.assignedPathologist = ''
     }
     
     // Guardar entidad seleccionada (si viene en el caso)
-    if (caseData.entidad_info?.codigo) {
+    if ((caseData as any).patient_info?.entity_info?.id) {
+      // Nuevo backend - usar patient_info.entity_info
+      selectedEntity.value = {
+        codigo: (caseData as any).patient_info.entity_info.id,
+        nombre: (caseData as any).patient_info.entity_info.name
+      }
+    } else if (caseData.entidad_info?.codigo) {
+      // Backend anterior - usar entidad_info
       selectedEntity.value = {
         codigo: caseData.entidad_info.codigo,
         nombre: caseData.entidad_info.nombre
       }
-    } else if ((caseData.paciente?.entidad_info as any)?.id) {
+    } else if ((caseData.paciente as any)?.entidad_info?.id) {
       // El backend usa 'id' en lugar de 'codigo' para entidades
       selectedEntity.value = {
-        codigo: (caseData.paciente.entidad_info as any).id,
-        nombre: caseData.paciente.entidad_info.nombre
+        codigo: (caseData.paciente as any).entidad_info.id,
+        nombre: (caseData.paciente as any).entidad_info.nombre
       }
-    } else if (caseData.paciente?.entidad_info?.codigo) {
+    } else if ((caseData.paciente as any)?.entidad_info?.codigo) {
       selectedEntity.value = {
-        codigo: caseData.paciente.entidad_info.codigo,
-        nombre: caseData.paciente.entidad_info.nombre
+        codigo: (caseData.paciente as any).entidad_info.codigo,
+        nombre: (caseData.paciente as any).entidad_info.nombre
       }
     } else {
       selectedEntity.value = null
@@ -1122,18 +1185,18 @@ const onReset = () => {
   
   // Limpiar formulario
   Object.assign(form, {
-    pacienteDocumento: '',
-    fechaIngreso: '',
-    medicoSolicitante: '',
-    servicio: '',
-    entidadPaciente: '',
-    tipoAtencionPaciente: '',
-    prioridadCaso: '',
-    estado: '',
-    numeroMuestras: '1',
-    muestras: [createEmptySubSample(1)],
-    observaciones: '',
-    patologoAsignado: ''
+    patientDocument: '',
+    entryDate: '',
+    requestingPhysician: '',
+    service: '',
+    patientEntity: '',
+    patientCareType: '',
+    casePriority: '',
+    state: '',
+    numberOfSamples: '1',
+    samples: [createEmptySubSample(1)],
+    observations: '',
+    assignedPathologist: ''
   })
   
   // Limpiar información del paciente completamente
@@ -1187,44 +1250,44 @@ const onPathologistSelected = (pathologist: any | null) => {
     const codigo = pathologist.patologo_code || pathologist.codigo || pathologist.code || pathologist.documento || pathologist.id || ''
     const nombre = pathologist.patologo_name || pathologist.nombre || pathologist.name || ''
     selectedPathologist.value = { codigo, nombre }
-    form.patologoAsignado = codigo
+    form.assignedPathologist = codigo
   } else {
     selectedPathologist.value = null
-    form.patologoAsignado = ''
+    form.assignedPathologist = ''
   }
 }
 
 /**
  * Maneja cambios en el número de muestras (adaptado al formulario local)
  */
-const handleLocalNumeroMuestrasChange = (nuevoNumero: string): void => {
-  const numero = parseInt(nuevoNumero)
+const handleLocalNumberOfSamplesChange = (newNumber: string): void => {
+  const number = parseInt(newNumber)
   
-  if (isNaN(numero) || numero < 1) return
+  if (isNaN(number) || number < 1) return
   
-  form.numeroMuestras = nuevoNumero
+  form.numberOfSamples = newNumber
   
   // Ajustar array de muestras
-  if (numero > form.muestras.length) {
+  if (number > form.samples.length) {
     // Agregar muestras
-    while (form.muestras.length < numero) {
-      form.muestras.push(createEmptySubSample(form.muestras.length + 1))
+    while (form.samples.length < number) {
+      form.samples.push(createEmptySubSample(form.samples.length + 1))
     }
-  } else if (numero < form.muestras.length) {
+  } else if (number < form.samples.length) {
     // Remover muestras
-    form.muestras = form.muestras.slice(0, numero)
+    form.samples = form.samples.slice(0, number)
   }
 }
 
 /**
  * Agrega una prueba a una muestra específica (adaptado al formulario local)
  */
-const addLocalPruebaToMuestra = (muestraIndex: number): void => {
-  if (muestraIndex >= 0 && muestraIndex < form.muestras.length) {
-    form.muestras[muestraIndex].pruebas.push({
+const addLocalTestToSample = (sampleIndex: number): void => {
+  if (sampleIndex >= 0 && sampleIndex < form.samples.length) {
+    form.samples[sampleIndex].tests.push({
       code: '',
-      cantidad: 1,
-      nombre: ''
+      quantity: 1,
+      name: ''
     })
   }
 }
@@ -1232,11 +1295,11 @@ const addLocalPruebaToMuestra = (muestraIndex: number): void => {
 /**
  * Remueve una prueba de una muestra específica (adaptado al formulario local)
  */
-const removeLocalPruebaFromMuestra = (muestraIndex: number, pruebaIndex: number): void => {
-  if (muestraIndex >= 0 && muestraIndex < form.muestras.length) {
-    const muestra = form.muestras[muestraIndex]
-    if (muestra.pruebas.length > 1 && pruebaIndex >= 0 && pruebaIndex < muestra.pruebas.length) {
-      muestra.pruebas.splice(pruebaIndex, 1)
+const removeLocalTestFromSample = (sampleIndex: number, testIndex: number): void => {
+  if (sampleIndex >= 0 && sampleIndex < form.samples.length) {
+    const sample = form.samples[sampleIndex]
+    if (sample.tests.length > 1 && testIndex >= 0 && testIndex < sample.tests.length) {
+      sample.tests.splice(testIndex, 1)
     }
   }
 }
@@ -1244,13 +1307,13 @@ const removeLocalPruebaFromMuestra = (muestraIndex: number, pruebaIndex: number)
 /**
  * Maneja la selección de una prueba en una muestra
  */
-const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any) => {
-  if (test && muestraIndex >= 0 && muestraIndex < form.muestras.length) {
-    const muestra = form.muestras[muestraIndex]
-    if (pruebaIndex >= 0 && pruebaIndex < muestra.pruebas.length) {
+const handleTestSelected = (sampleIndex: number, testIndex: number, test: any) => {
+  if (test && sampleIndex >= 0 && sampleIndex < form.samples.length) {
+    const sample = form.samples[sampleIndex]
+    if (testIndex >= 0 && testIndex < sample.tests.length) {
       // Asignar correctamente el código y nombre de la prueba
-      muestra.pruebas[pruebaIndex].code = test.pruebaCode || test.code || ''
-      muestra.pruebas[pruebaIndex].nombre = test.pruebasName || test.nombre || test.label || ''
+      sample.tests[testIndex].code = test.pruebaCode || test.code || ''
+      sample.tests[testIndex].name = test.pruebasName || test.nombre || test.label || ''
     }
   }
 }
@@ -1265,18 +1328,18 @@ const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any
 const clearFormAfterSave = () => {
   // Limpiar campos del formulario y dejar valores por defecto
   Object.assign(form, {
-    pacienteDocumento: '',
-    fechaIngreso: '',
-    medicoSolicitante: '',
-    servicio: '',
-    entidadPaciente: '',
-    tipoAtencionPaciente: '',
-    prioridadCaso: '',
-    estado: '',
-    numeroMuestras: '1',
-    muestras: [createEmptySubSample(1)],
-    observaciones: '',
-    patologoAsignado: ''
+    patientDocument: '',
+    entryDate: '',
+    requestingPhysician: '',
+    service: '',
+    patientEntity: '',
+    patientCareType: '',
+    casePriority: '',
+    state: '',
+    numberOfSamples: '1',
+    samples: [createEmptySubSample(1)],
+    observations: '',
+    assignedPathologist: ''
   })
 
   // Limpiar estados de búsqueda
@@ -1297,50 +1360,29 @@ const clearFormAfterSave = () => {
  * Obtiene información del paciente desde diferentes fuentes
  */
 const getPatientInfo = (field: string): string => {
+  const cp: any = patientInfo.value || {}
   const uc: any = updatedCase.value || {}
   const fc: any = foundCaseInfo.value || {}
-  const cp: any = patientInfo.value || {}
 
   switch (field) {
     case 'nombre': {
-      return (
-        uc.paciente?.nombre || fc.paciente?.nombre || cp.nombre || 'N/A'
-      )
+      return cp.nombrePaciente || uc.patient_info?.name || fc.patient_info?.name || 'N/A'
     }
     case 'cedula': {
-      return (
-        uc.paciente?.paciente_code || fc.paciente?.paciente_code || cp.cedula || 'N/A'
-      )
+      return cp.pacienteCode || uc.patient_info?.patient_code || fc.patient_info?.patient_code || 'N/A'
     }
     case 'edad': {
-      const edad = uc.paciente?.edad ?? fc.paciente?.edad ?? cp.edad
+      const edad = cp.edad ?? uc.patient_info?.age ?? fc.patient_info?.age
       return (edad !== undefined && edad !== null) ? String(edad) : 'N/A'
     }
     case 'sexo': {
-      return (
-        uc.paciente?.sexo || fc.paciente?.sexo || cp.sexo || 'N/A'
-      )
+      return cp.sexo || uc.patient_info?.gender || fc.patient_info?.gender || 'N/A'
     }
     case 'entidad': {
-      return (
-        uc.entidad_info?.nombre ||
-        uc.paciente?.entidad_info?.nombre ||
-        fc.entidad_info?.nombre ||
-        fc.paciente?.entidad_info?.nombre ||
-        cp.entidad ||
-        (selectedEntity.value?.nombre || '') ||
-        'N/A'
-      )
+      return cp.entidad || uc.patient_info?.entity_info?.name || fc.patient_info?.entity_info?.name || 'N/A'
     }
     case 'tipoAtencion': {
-      return (
-        uc.paciente?.tipo_atencion ||
-        uc.tipo_atencion ||
-        fc.paciente?.tipo_atencion ||
-        fc.tipo_atencion ||
-        cp.tipoAtencion ||
-        'N/A'
-      )
+      return cp.tipoAtencion || uc.patient_info?.care_type || fc.patient_info?.care_type || 'N/A'
     }
     default:
       return 'N/A'
@@ -1351,7 +1393,7 @@ const getPatientInfo = (field: string): string => {
  * Obtiene el conteo de muestras
  */
 const getMuestrasCount = (): number => {
-  return updatedCase.value?.muestras?.length || form.muestras.length
+  return (updatedCase.value as any)?.samples?.length || (updatedCase.value as any)?.muestras?.length || form.samples.length
 }
 
 /**
@@ -1360,7 +1402,7 @@ const getMuestrasCount = (): number => {
 const getObservaciones = (): string => {
   const uc: any = updatedCase.value || {}
   return (
-    uc.observaciones_generales || uc.observaciones || uc.observacionesGenerales || form.observaciones || ''
+    uc.observations || uc.observaciones_generales || uc.observaciones || uc.observacionesGenerales || form.observations || ''
   )
 }
 
@@ -1368,28 +1410,31 @@ const getObservaciones = (): string => {
  * Obtiene las muestras del caso, combinando datos del backend y formulario
  */
 const getMuestras = () => {
-  const backendMuestras = (updatedCase.value as any)?.muestras || []
-  const formMuestras = form.muestras || []
+  const backendSamples = (updatedCase.value as any)?.samples || (updatedCase.value as any)?.muestras || []
+  const formSamples = form.samples || []
   
   // Si no hay datos del backend, usar los del formulario
-  if (!backendMuestras.length) {
-    return formMuestras
+  if (!backendSamples.length) {
+    return formSamples
   }
   
   // Combinar datos del backend con información faltante del formulario
-  return backendMuestras.map((backendMuestra: any, index: number) => {
-    const formMuestra = formMuestras[index]
+  return backendSamples.map((backendSample: any, index: number) => {
+    const formSample = formSamples[index]
     return {
-      ...backendMuestra,
-      // Preservar region_cuerpo del formulario si no viene del backend
-      regionCuerpo: backendMuestra.regionCuerpo || 
-                   backendMuestra.region_cuerpo || 
-                   formMuestra?.regionCuerpo || 
+      ...backendSample,
+      // Preservar bodyRegion del formulario si no viene del backend
+      bodyRegion: backendSample.body_region || 
+                   backendSample.regionCuerpo || 
+                   backendSample.region_cuerpo || 
+                   formSample?.bodyRegion || 
                    'Sin especificar',
       // Asegurar que las pruebas incluyan cantidad
-      pruebas: (backendMuestra.pruebas || []).map((prueba: any, pIndex: number) => ({
-        ...prueba,
-        cantidad: prueba.cantidad || formMuestra?.pruebas?.[pIndex]?.cantidad || 1
+      tests: (backendSample.tests || backendSample.pruebas || []).map((test: any, tIndex: number) => ({
+        ...test,
+        id: test.id || test.code || test.codigo,
+        name: test.name || test.nombre,
+        quantity: test.quantity || test.cantidad || formSample?.tests?.[tIndex]?.quantity || 1
       }))
     }
   })
@@ -1398,19 +1443,19 @@ const getMuestras = () => {
 /**
  * Obtiene el conteo de pruebas en una muestra
  */
-const getPruebasCount = (muestra: any): number => {
-  return (muestra.pruebas && muestra.pruebas.length) || 0
+const getPruebasCount = (sample: any): number => {
+  return (sample.tests && sample.tests.length) || (sample.pruebas && sample.pruebas.length) || 0
 }
 
 /**
  * Obtiene el texto de las pruebas de una muestra
  */
-const getPruebasText = (muestra: any): string => {
-  return (muestra.pruebas || []).map((p: any) => {
-    const codigo = p.id || p.codigo || p.code || ''
-    const nombre = p.nombre || p.name || ''
+const getPruebasText = (sample: any): string => {
+  return (sample.tests || sample.pruebas || []).map((t: any) => {
+    const codigo = t.id || t.code || t.codigo || ''
+    const nombre = t.name || t.nombre || ''
     const etiqueta = codigo || nombre || 'Sin código'
-    return `${etiqueta} (${p.cantidad || 1})`
+    return `${etiqueta} (${t.quantity || t.cantidad || 1})`
   }).join(', ')
 }
 
@@ -1421,14 +1466,7 @@ const getMedicoSolicitante = (): string => {
   const uc: any = updatedCase.value || {}
   const fc: any = foundCaseInfo.value || {}
   return (
-  (typeof uc.medico_solicitante === 'string' && uc.medico_solicitante) ||
-  (typeof fc.medico_solicitante === 'string' && fc.medico_solicitante) ||
-  uc.medico_solicitante?.nombre ||
-  uc.medicoSolicitante?.nombre ||
-  fc.medico_solicitante?.nombre ||
-  fc.medicoSolicitante ||
-  form.medicoSolicitante ||
-  'No especificado'
+  uc.requesting_physician || fc.requesting_physician || form.requestingPhysician || 'No especificado'
   )
 }
 
@@ -1439,10 +1477,7 @@ const getServicio = (): string => {
   const uc: any = updatedCase.value || {}
   const fc: any = foundCaseInfo.value || {}
   return (
-    uc.servicio ||
-    fc.servicio ||
-    form.servicio ||
-    'No especificado'
+    uc.service || fc.service || form.service || 'No especificado'
   )
 }
 
@@ -1453,14 +1488,7 @@ const getPrioridad = (): string => {
   const uc: any = updatedCase.value || {}
   const fc: any = foundCaseInfo.value || {}
   return (
-    uc.prioridad_caso ||
-    uc.prioridadCaso ||
-  uc.prioridad ||
-    fc.prioridad_caso ||
-    fc.prioridadCaso ||
-  fc.prioridad ||
-    form.prioridadCaso ||
-    'Normal'
+    uc.priority || fc.priority || form.casePriority || 'Normal'
   )
 }
 
@@ -1469,6 +1497,7 @@ const getPrioridad = (): string => {
  */
 const getCaseCode = (): string => {
   return currentCaseCode.value || 
+         (updatedCase.value as any)?.case_code || 
          (updatedCase.value as any)?.CasoCode || 
          (updatedCase.value as any)?.code || 
          searchCaseCode.value || 

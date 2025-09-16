@@ -5,16 +5,16 @@ import type { FormPathologistInfo } from '../types'
 export interface PathologistBackendResponse {
   id?: string
   _id?: string
-  patologo_name: string
-  iniciales_patologo?: string
-  patologo_code: string
-  patologo_email?: string
-  registro_medico: string
+  pathologist_name: string
+  initials?: string
+  pathologist_code: string
+  pathologist_email?: string
+  medical_license: string
   is_active?: boolean
-  firma?: string
-  observaciones?: string
-  fecha_creacion?: string
-  fecha_actualizacion?: string
+  signature?: string
+  observations?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export class PathologistApiService {
@@ -22,7 +22,7 @@ export class PathologistApiService {
 
   async getPathologists(): Promise<FormPathologistInfo[]> {
     try {
-      const response = await apiClient.get<PathologistBackendResponse[]>(`${this.endpoint}/search/active`, {
+      const response = await apiClient.get<PathologistBackendResponse[]>(`${this.endpoint}/`, {
         params: { skip: 0, limit: 100 }
       })
       
@@ -34,7 +34,7 @@ export class PathologistApiService {
 
   async getAllPathologistsIncludingInactive(): Promise<FormPathologistInfo[]> {
     try {
-      const response = await apiClient.get<PathologistBackendResponse[]>(`${this.endpoint}/search/all-including-inactive`, {
+      const response = await apiClient.get<PathologistBackendResponse[]>(`${this.endpoint}/search`, {
         params: { skip: 0, limit: 100 }
       })
       
@@ -65,15 +65,7 @@ export class PathologistApiService {
 
   async searchPathologists(query: string, includeInactive: boolean = false): Promise<FormPathologistInfo[]> {
     try {
-      let endpoint: string
-      
-      if (includeInactive) {
-        endpoint = `${this.endpoint}/search/all-including-inactive`
-      } else {
-        endpoint = `${this.endpoint}/search/active`
-      }
-      
-      const response = await apiClient.get<PathologistBackendResponse[]>(endpoint, {
+      const response = await apiClient.get<PathologistBackendResponse[]>(`${this.endpoint}/search`, {
         params: { q: query }
       })
       
@@ -102,14 +94,14 @@ export class PathologistApiService {
 
   private transformPathologistResponse(pathologist: PathologistBackendResponse): FormPathologistInfo {
     return {
-      id: pathologist.id || pathologist._id || pathologist.patologo_code || 'N/A',
-      patologo_code: pathologist.patologo_code,
-      patologo_name: pathologist.patologo_name,
-      nombre: pathologist.patologo_name || 'Sin nombre',
-      iniciales: pathologist.iniciales_patologo || this.generateInitials(pathologist.patologo_name),
-      documento: pathologist.patologo_code || 'N/A',
-      email: pathologist.patologo_email || '',
-      medicalLicense: pathologist.registro_medico || 'N/A',
+      id: pathologist.id || pathologist._id || pathologist.pathologist_code || 'N/A',
+      patologo_code: pathologist.pathologist_code,
+      patologo_name: pathologist.pathologist_name,
+      nombre: pathologist.pathologist_name || 'Sin nombre',
+      iniciales: pathologist.initials || this.generateInitials(pathologist.pathologist_name),
+      documento: pathologist.pathologist_code || 'N/A',
+      email: pathologist.pathologist_email || '',
+      medicalLicense: pathologist.medical_license || 'N/A',
       isActive: pathologist.is_active ?? true
     }
   }

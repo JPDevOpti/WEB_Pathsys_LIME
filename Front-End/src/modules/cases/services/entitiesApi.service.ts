@@ -22,14 +22,10 @@ export class EntitiesApiService {
 
   async getEntities(): Promise<EntityInfo[]> {
     try {
-      const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}/active`)
-      
-      if (response.entidades && Array.isArray(response.entidades)) {
-        return response.entidades.map((entity: any) => ({
-          codigo: entity.entidad_code || '', nombre: entity.entidad_name || ''
-        }))
+      const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}`)
+      if (Array.isArray(response)) {
+        return response.map((e: any) => ({ codigo: e.entity_code || e.code || '', nombre: e.name || '' }))
       }
-      
       return []
     } catch (error) {
       throw error
@@ -38,14 +34,10 @@ export class EntitiesApiService {
 
   async getAllEntitiesIncludingInactive(): Promise<EntityInfo[]> {
     try {
-      const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}/all-including-inactive`)
-      
-      if (response.entidades && Array.isArray(response.entidades)) {
-        return response.entidades.map((entity: any) => ({
-          codigo: entity.entidad_code || '', nombre: entity.entidad_name || '', activo: entity.is_active
-        }))
+      const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}/inactive`)
+      if (Array.isArray(response)) {
+        return response.map((e: any) => ({ codigo: e.entity_code || e.code || '', nombre: e.name || '', activo: e.is_active }))
       }
-      
       return []
     } catch (error) {
       throw error
@@ -56,12 +48,10 @@ export class EntitiesApiService {
     if (!code || code.trim() === '') return null
     
     try {
-      const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}/code/${code}`)
-      
-      if (response && response.entidad_code) {
-        return { codigo: response.entidad_code, nombre: response.entidad_name }
+      const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}/${encodeURIComponent(code)}`)
+      if (response && (response.entity_code || response.code)) {
+        return { codigo: response.entity_code || response.code, nombre: response.name || '' }
       }
-      
       return null
     } catch (error) {
       return null
@@ -70,24 +60,13 @@ export class EntitiesApiService {
 
   async searchEntities(query: string, includeInactive: boolean = false): Promise<EntityInfo[]> {
     try {
-      let endpoint: string
-      
-      if (includeInactive) {
-        endpoint = `${API_CONFIG.ENDPOINTS.ENTITIES}/all-including-inactive?query=${encodeURIComponent(query)}`
-      } else {
-        endpoint = `${API_CONFIG.ENDPOINTS.ENTITIES}/active?query=${encodeURIComponent(query)}`
-      }
-      
+      const endpoint = includeInactive
+        ? `${API_CONFIG.ENDPOINTS.ENTITIES}/inactive?query=${encodeURIComponent(query)}`
+        : `${API_CONFIG.ENDPOINTS.ENTITIES}?query=${encodeURIComponent(query)}`
       const response = await this.makeRequest<any>(endpoint)
-      
-      if (response.entidades && Array.isArray(response.entidades)) {
-        return response.entidades.map((entity: any) => ({
-          codigo: entity.entidad_code || '', 
-          nombre: entity.entidad_name || '',
-          activo: entity.is_active
-        }))
+      if (Array.isArray(response)) {
+        return response.map((e: any) => ({ codigo: e.entity_code || e.code || '', nombre: e.name || '', activo: e.is_active }))
       }
-      
       return []
     } catch (error) {
       throw error

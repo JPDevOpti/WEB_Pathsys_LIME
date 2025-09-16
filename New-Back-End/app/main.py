@@ -16,7 +16,7 @@ app.add_middleware(
 
 # Incluir router principal v1 si existe; si falla, montar al menos auth
 try:
-    from app.api.v1.router import api_router as api_v1_router  # type: ignore
+    from .api.v1.router import api_router as api_v1_router  # type: ignore
     app.include_router(api_v1_router, prefix="/api/v1")
 except Exception:
     try:

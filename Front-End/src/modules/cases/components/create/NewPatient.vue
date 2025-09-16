@@ -7,17 +7,17 @@
     </template>
 
     <div class="space-y-6">
-      <FormInputField v-model="formData.pacienteCode" label="Documento de identidad" placeholder="Ejemplo: 12345678" :required="true" :max-length="12" inputmode="numeric" :only-numbers="true" :errors="getDocumentoErrors" @input="handleCedulaInput" />
-      <FormInputField v-model="formData.nombrePaciente" label="Nombre del Paciente" placeholder="Ejemplo: Juan Perez" :required="true" :max-length="200" :only-letters="true" :errors="getNombreErrors" @input="handleNombreInput" />
+      <FormInputField v-model="formData.patientCode" label="Documento de identidad" placeholder="Ejemplo: 12345678" :required="true" :max-length="12" inputmode="numeric" :only-numbers="true" :errors="getDocumentoErrors" @input="handleCedulaInput" />
+      <FormInputField v-model="formData.name" label="Nombre del Paciente" placeholder="Ejemplo: Juan Perez" :required="true" :max-length="200" :only-letters="true" :errors="getNombreErrors" @input="handleNombreInput" />
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormInputField v-model="formData.edad" label="Edad" placeholder="Edad en años" :required="true" :max-length="3" inputmode="numeric" :only-numbers="true" :errors="getEdadErrors" @input="handleEdadInput" />
-        <FormSelect v-model="formData.sexo" label="Sexo" placeholder="Seleccione el sexo" :required="true" :options="sexoOptions" :error="getSexoError" />
+        <FormInputField v-model="formData.age" label="Edad" placeholder="Edad en años" :required="true" :max-length="3" inputmode="numeric" :only-numbers="true" :errors="getEdadErrors" @input="handleEdadInput" />
+        <FormSelect v-model="formData.gender" label="Sexo" placeholder="Seleccione el sexo" :required="true" :options="sexoOptions" :error="getSexoError" />
       </div>
 
-      <EntityList v-model="formData.entidad" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :errors="entidadErrors" :key="entityListKey" @entity-selected="onEntitySelected" />
-      <FormSelect v-model="formData.tipoAtencion" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="getTipoAtencionError" />
-      <FormTextarea v-model="formData.observaciones" label="Observaciones del paciente" placeholder="Observaciones adicionales del paciente" :rows="3" :max-length="500" />
+      <EntityList v-model="formData.entity" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :errors="entidadErrors" :key="entityListKey" @entity-selected="onEntitySelected" />
+      <FormSelect v-model="formData.careType" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="getTipoAtencionError" />
+      <FormTextarea v-model="formData.observations" label="Observaciones del paciente" placeholder="Observaciones adicionales del paciente" :rows="3" :max-length="500" />
 
       <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
         <ClearButton @click="handleClearForm" :disabled="isLoading" />
@@ -33,7 +33,7 @@
                   <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdPatient.nombre }}</h3>
                   <p class="text-gray-600">
                     <span class="font-medium">Documento de identidad:</span> 
-                    <span class="font-mono font-bold text-gray-800 ml-1">{{ createdPatient.paciente_code || 'NO DISPONIBLE' }}</span>
+                    <span class="font-mono font-bold text-gray-800 ml-1">{{ createdPatient.cedula || 'NO DISPONIBLE' }}</span>
                   </p>
                 </div>
                 
@@ -99,52 +99,52 @@ const validationErrors = computed(() => {
   const errorsList: string[] = []
   
   // Errores de campos requeridos
-  if (!formData.pacienteCode?.trim()) errorsList.push('Documento de identidad')
-  if (!formData.nombrePaciente?.trim()) errorsList.push('Nombre del paciente')
-  if (!formData.edad?.trim()) errorsList.push('Edad')
-  if (!formData.sexo) errorsList.push('Sexo')
-  if (!formData.entidad) errorsList.push('Entidad')
-  if (!formData.tipoAtencion) errorsList.push('Tipo de atención')
+  if (!formData.patientCode?.trim()) errorsList.push('Documento de identidad')
+  if (!formData.name?.trim()) errorsList.push('Nombre del paciente')
+  if (!formData.age?.trim()) errorsList.push('Edad')
+  if (!formData.gender) errorsList.push('Sexo')
+  if (!formData.entity) errorsList.push('Entidad')
+  if (!formData.careType) errorsList.push('Tipo de atención')
   
   // Errores de validación específicos
-  if (errors.pacienteCode.length > 0) errorsList.push(`Documento: ${errors.pacienteCode[0]}`)
-  if (errors.nombrePaciente.length > 0) errorsList.push(`Nombre: ${errors.nombrePaciente[0]}`)
-  if (errors.edad.length > 0) errorsList.push(`Edad: ${errors.edad[0]}`)
+  if (errors.patientCode.length > 0) errorsList.push(`Documento: ${errors.patientCode[0]}`)
+  if (errors.name.length > 0) errorsList.push(`Nombre: ${errors.name[0]}`)
+  if (errors.age.length > 0) errorsList.push(`Edad: ${errors.age[0]}`)
   
   return errorsList
 })
 
 const getDocumentoErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
-  if (errors.pacienteCode.length > 0) return errors.pacienteCode
-  if (!formData.pacienteCode?.trim()) return ['El documento de identidad es obligatorio']
+  if (errors.patientCode.length > 0) return errors.patientCode
+  if (!formData.patientCode?.trim()) return ['El documento de identidad es obligatorio']
   return []
 })
 
 const getNombreErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
-  if (errors.nombrePaciente.length > 0) return errors.nombrePaciente
-  if (!formData.nombrePaciente?.trim()) return ['El nombre del paciente es obligatorio']
+  if (errors.name.length > 0) return errors.name
+  if (!formData.name?.trim()) return ['El nombre del paciente es obligatorio']
   return []
 })
 
 const getEdadErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
-  if (errors.edad.length > 0) return errors.edad
-  if (!formData.edad?.trim()) return ['La edad es obligatoria']
+  if (errors.age.length > 0) return errors.age
+  if (!formData.age?.trim()) return ['La edad es obligatoria']
   return []
 })
 
 const getSexoError = computed(() => {
-  return !validationState.hasAttemptedSubmit ? '' : (!formData.sexo ? 'Por favor seleccione el sexo' : '')
+  return !validationState.hasAttemptedSubmit ? '' : (!formData.gender ? 'Por favor seleccione el sexo' : '')
 })
 
 const getTipoAtencionError = computed(() => {
-  return !validationState.hasAttemptedSubmit ? '' : (!formData.tipoAtencion ? 'Por favor seleccione el tipo de atención' : '')
+  return !validationState.hasAttemptedSubmit ? '' : (!formData.careType ? 'Por favor seleccione el tipo de atención' : '')
 })
 
 const entidadErrors = computed(() => {
-  return !validationState.hasAttemptedSubmit ? [] : (!formData.entidad ? ['La entidad es obligatoria'] : [])
+  return !validationState.hasAttemptedSubmit ? [] : (!formData.entity ? ['La entidad es obligatoria'] : [])
 })
 
 const onEntitySelected = (entity: { codigo: string; nombre: string } | null) => selectedEntity.value = entity
@@ -164,14 +164,14 @@ const handleSaveClick = async () => {
 
   try {
     const patientData: PatientData = {
-      pacienteCode: formData.pacienteCode,
-      nombrePaciente: formData.nombrePaciente,
-      sexo: formData.sexo,
-      edad: formData.edad,
-      entidad: selectedEntity.value?.nombre || formData.entidad,
-      entidadCodigo: selectedEntity.value?.codigo,
-      tipoAtencion: formData.tipoAtencion,
-      observaciones: formData.observaciones
+      patientCode: formData.patientCode,
+      name: formData.name,
+      gender: formData.gender,
+      age: formData.age,
+      entity: selectedEntity.value?.nombre || formData.entity,
+      entityCode: selectedEntity.value?.codigo,
+      careType: formData.careType,
+      observations: formData.observations
     }
     
     const result = await createPatient(patientData)

@@ -3,13 +3,13 @@ import { API_CONFIG } from '@/core/config/api.config'
 import type { PatientData } from '../types'
 
 interface CreatePatientRequest {
-  paciente_code: string
-  nombre: string
-  edad: number
-  sexo: string
-  entidad_info: { id: string; nombre: string }
-  tipo_atencion: string
-  observaciones?: string
+  patient_code: string
+  name: string
+  age: number
+  gender: string
+  entity_info: { id: string; name: string }
+  care_type: string
+  observations?: string
 }
 
 interface PatientResponse {
@@ -30,8 +30,15 @@ export class PatientsApiService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.PATIENTS
   async getPatientByDocumento(documento: string): Promise<PatientResponse | null> {
     try {
-      const response = await apiClient.get<PatientResponse>(`${this.endpoint}/documento/${documento}`)
-      return response
+      const response = await apiClient.get<any>(`${this.endpoint}/${documento}`)
+      // Verificar si los datos ya vienen en español o necesitan transformación
+      if (response.nombre || response.cedula || response.sexo) {
+        // Ya vienen en español, devolver directamente
+        return response
+      } else {
+        // Vienen en inglés, transformar a español
+        return this.transformToSpanishResponse(response)
+      }
     } catch (error: any) {
       if (error.response?.status === 404) return null
       throw new Error(`Error al buscar paciente: ${error.message}`)
@@ -41,8 +48,8 @@ export class PatientsApiService {
   async createPatient(patientData: PatientData): Promise<PatientResponse> {
     try {
       const patientRequest = this.buildPatientRequest(patientData)
-      const response = await apiClient.post<PatientResponse>(this.endpoint, patientRequest)
-      return response
+      const response = await apiClient.post<any>(this.endpoint, patientRequest)
+      return this.transformToSpanishResponse(response)
     } catch (error: any) {
       if (error.response?.data?.detail) {
         let errorMessage = 'Error de validación: '
@@ -88,7 +95,7 @@ export class PatientsApiService {
 
   async updatePatient(cedula: string, patientData: any): Promise<PatientResponse> {
     try {
-      const patientRequest = patientData.pacienteCode ? this.buildPatientRequest(patientData) : patientData
+      const patientRequest = patientData.patientCode ? this.buildPatientRequest(patientData) : patientData
       const response = await apiClient.put<PatientResponse>(`${this.endpoint}/${cedula}`, patientRequest)
       return response
     } catch (error: any) {
@@ -151,49 +158,56 @@ export class PatientsApiService {
   validatePatientData(patientData: PatientData): { isValid: boolean; errors: string[] } {
     const errors: string[] = []
 
-    if (!patientData.pacienteCode || patientData.pacienteCode.length < 6 || patientData.pacienteCode.length > 10) {
+    if (!patientData.patientCode || patientData.patientCode.length < 6 || patientData.patientCode.length > 10) {
       errors.push('La cédula debe tener entre 6 y 10 dígitos')
     }
 
-    if (!patientData.nombrePaciente || patientData.nombrePaciente.length < 2) {
+    if (!patientData.name || patientData.name.length < 2) {
       errors.push('El nombre debe tener al menos 2 caracteres')
     }
 
-    const edad = parseInt(patientData.edad)
+    const edad = parseInt(patientData.age)
     if (!edad || edad < 0 || edad > 150) {
       errors.push('La edad debe ser un número válido entre 0 y 150')
     }
 
-    if (!patientData.sexo) errors.push('Debe seleccionar el sexo del paciente')
-    if (!patientData.entidad) errors.push('Debe seleccionar una entidad de salud')
-    if (!patientData.tipoAtencion) errors.push('Debe seleccionar el tipo de atención')
+    if (!patientData.gender) errors.push('Debe seleccionar el sexo del paciente')
+    if (!patientData.entity) errors.push('Debe seleccionar una entidad de salud')
+    if (!patientData.careType) errors.push('Debe seleccionar el tipo de atención')
 
     return { isValid: errors.length === 0, errors }
   }
 
   private buildPatientRequest(patientData: PatientData): CreatePatientRequest {
+    const entidadNombre = (patientData.entity || '').toString().trim() || 'UNKNOWN'
+    const entidadCodigo = (patientData.entityCode || entidadNombre || 'UNKNOWN').toString().trim()
     return {
-      paciente_code: patientData.pacienteCode,
-      nombre: patientData.nombrePaciente,
-      edad: parseInt(patientData.edad),
-      sexo: patientData.sexo,
-      entidad_info: {
-        id: patientData.entidadCodigo || this.extractEntityId(patientData.entidad),
-        nombre: patientData.entidad
-      },
-      tipo_atencion: patientData.tipoAtencion,
-      observaciones: patientData.observaciones || undefined
+      patient_code: String(patientData.patientCode || '').trim(),
+      name: String(patientData.name || '').trim(),
+      age: parseInt(String(patientData.age || '0'), 10),
+      gender: String(patientData.gender || '').trim() === 'masculino' ? 'Male' : 'Female',
+      entity_info: { id: entidadCodigo, name: entidadNombre },
+      care_type: String(patientData.careType || '').trim() === 'ambulatorio' ? 'Outpatient' : 'Inpatient',
+      observations: patientData.observations?.toString().trim() || undefined
     }
   }
 
-  private extractEntityId(entityName: string): string {
-    const entityMap: Record<string, string> = {
-      'EPS Sanitas': 'ent_001', 'Sura': 'ent_002', 'Nueva EPS': 'ent_003',
-      'Compensar': 'ent_004', 'Particular': 'ent_999'
+  private transformToSpanishResponse(api: any): PatientResponse {
+    return {
+      id: api.id,
+      nombre: api.name,
+      edad: api.age,
+      sexo: api.gender === 'Male' ? 'Masculino' : 'Femenino',
+      entidad_info: { id: api.entity_info?.id, nombre: api.entity_info?.name },
+      tipo_atencion: api.care_type === 'Outpatient' ? 'Ambulatorio' : 'Hospitalizado',
+      cedula: api.patient_code,
+      observaciones: api.observations,
+      fecha_creacion: api.created_at,
+      fecha_actualizacion: api.updated_at,
+      id_casos: []
     }
-    
-    return entityMap[entityName] || 'ent_001'
   }
+
 }
 
 export const patientsApiService = new PatientsApiService()

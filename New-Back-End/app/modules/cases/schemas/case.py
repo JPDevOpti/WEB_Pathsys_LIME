@@ -1,0 +1,80 @@
+from typing import Optional, List
+from datetime import datetime
+from pydantic import BaseModel, Field
+
+
+class EntityInfo(BaseModel):
+    id: str = Field(..., max_length=50)
+    name: str = Field(..., max_length=200)
+
+
+class PatientInfo(BaseModel):
+    patient_code: str = Field(..., max_length=50)
+    name: str = Field(..., max_length=200)
+    age: int = Field(..., ge=0, le=150)
+    gender: str = Field(..., max_length=20)
+    entity_info: EntityInfo
+    care_type: str = Field(..., max_length=50)
+    observations: Optional[str] = Field(None, max_length=1000)
+
+
+class SampleTest(BaseModel):
+    id: str = Field(..., max_length=50)
+    name: str = Field(..., max_length=200)
+    quantity: int = Field(default=1, ge=1, le=10)
+
+
+class SampleInfo(BaseModel):
+    body_region: str = Field(..., max_length=100)
+    tests: List[SampleTest] = Field(default_factory=list)
+
+
+class CasePriority(str):
+    NORMAL = "Normal"
+    PRIORITY = "Priority"
+
+
+class CaseState(str):
+    IN_PROCESS = "In process"
+    TO_SIGN = "To sign"
+    TO_DELIVER = "To deliver"
+    COMPLETED = "Completed"
+
+
+class CaseCreate(BaseModel):
+    patient_info: PatientInfo
+    requesting_physician: Optional[str] = Field(None, max_length=200)
+    service: Optional[str] = Field(None, max_length=100)
+    samples: Optional[List[SampleInfo]] = Field(default_factory=list)
+    state: str = Field(default=CaseState.IN_PROCESS)
+    priority: str = Field(default=CasePriority.NORMAL)
+    observations: Optional[str] = Field(None, max_length=1000)
+
+
+class CaseUpdate(BaseModel):
+    patient_info: Optional[PatientInfo] = None
+    requesting_physician: Optional[str] = Field(None, max_length=200)
+    service: Optional[str] = Field(None, max_length=100)
+    samples: Optional[List[SampleInfo]] = None
+    state: Optional[str] = None
+    priority: Optional[str] = None
+    observations: Optional[str] = Field(None, max_length=1000)
+
+
+class CaseResponse(BaseModel):
+    id: str
+    case_code: str
+    patient_info: PatientInfo
+    requesting_physician: Optional[str] = None
+    service: Optional[str] = None
+    samples: List[SampleInfo] = Field(default_factory=list)
+    state: str
+    priority: str
+    observations: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+

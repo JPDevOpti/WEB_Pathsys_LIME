@@ -7,14 +7,14 @@ class TestsApiService {
   
   private transformTestData(prueba: any): TestDetails {
     return {
-      id: prueba.id,
-      pruebaCode: prueba.prueba_code,
-      pruebasName: prueba.prueba_name,
-      pruebasDescription: prueba.prueba_description || '',
-      tiempo: prueba.tiempo || 0,
-      isActive: prueba.is_active,
-      fechaCreacion: prueba.fecha_creacion,
-      fechaActualizacion: prueba.fecha_actualizacion
+      id: prueba.id || prueba._id || '',
+      pruebaCode: prueba.test_code || prueba.prueba_code,
+      pruebasName: prueba.name || prueba.prueba_name,
+      pruebasDescription: prueba.description || prueba.prueba_description || '',
+      tiempo: (prueba.time ?? prueba.tiempo ?? 0),
+      isActive: typeof prueba.is_active === 'boolean' ? prueba.is_active : true,
+      fechaCreacion: prueba.created_at || prueba.fecha_creacion,
+      fechaActualizacion: prueba.updated_at || prueba.fecha_actualizacion
     }
   }
   
@@ -26,22 +26,16 @@ class TestsApiService {
       if (params.skip !== undefined) searchParams.append('skip', params.skip.toString())
       if (params.limit !== undefined) searchParams.append('limit', params.limit.toString())
       
-      // Usar el endpoint específico para pruebas activas
-      const response = await apiClient.get(`${this.endpoint}/active?${searchParams.toString()}`)
+      const url = searchParams.toString() ? `${this.endpoint}?${searchParams.toString()}` : this.endpoint
+      const response = await apiClient.get(url)
       
       if (!response) throw new Error('Respuesta vacía del servidor')
       
       const data = response
       
       if (Array.isArray(data)) {
-        return {
-          pruebas: data,
-          total: data.length,
-          skip: 0,
-          limit: data.length,
-          has_next: false,
-          has_prev: false
-        }
+        const pruebas = data.map((p: any) => this.transformTestData(p))
+        return { pruebas, total: pruebas.length, skip: 0, limit: pruebas.length, has_next: false, has_prev: false }
       }
       
       if (data.pruebas && Array.isArray(data.pruebas)) {
@@ -87,21 +81,21 @@ class TestsApiService {
   
   async getAllActiveTests(): Promise<TestDetails[]> {
     try {
-      const response = await apiClient.get(`${this.endpoint}/active?limit=1000`)
+      const response = await apiClient.get(`${this.endpoint}?limit=1000`)
       
       if (!response) throw new Error('Respuesta vacía del servidor')
       
       const data = response
       
-      if (Array.isArray(data)) return data
+      if (Array.isArray(data)) return data.map((p: any) => this.transformTestData(p)).filter(t => t.isActive)
       
       if (data.pruebas && Array.isArray(data.pruebas)) {
-        return data.pruebas.map((prueba: any) => this.transformTestData(prueba))
+        return data.pruebas.map((prueba: any) => this.transformTestData(prueba)).filter((t: TestDetails) => t.isActive)
       }
       
       const dataKeys = Object.keys(data)
       for (const key of dataKeys) {
-        if (Array.isArray(data[key])) return data[key]
+        if (Array.isArray(data[key])) return data[key].map((p: any) => this.transformTestData(p)).filter((t: TestDetails) => t.isActive)
       }
       
       return []
@@ -113,13 +107,13 @@ class TestsApiService {
 
   async getAllTestsIncludingInactive(): Promise<TestDetails[]> {
     try {
-      const response = await apiClient.get(`${this.endpoint}/all-including-inactive?limit=1000`)
+      const response = await apiClient.get(`${this.endpoint}?limit=1000`)
       
       if (!response) throw new Error('Respuesta vacía del servidor')
       
       const data = response
       
-      if (Array.isArray(data)) return data
+      if (Array.isArray(data)) return data.map((p: any) => this.transformTestData(p))
       
       if (data.pruebas && Array.isArray(data.pruebas)) {
         return data.pruebas.map((prueba: any) => this.transformTestData(prueba))
@@ -127,7 +121,7 @@ class TestsApiService {
       
       const dataKeys = Object.keys(data)
       for (const key of dataKeys) {
-        if (Array.isArray(data[key])) return data[key]
+        if (Array.isArray(data[key])) return data[key].map((p: any) => this.transformTestData(p))
       }
       
       return []
@@ -139,13 +133,13 @@ class TestsApiService {
   
   async getTestByCode(pruebaCode: string): Promise<TestDetails> {
     try {
-      const response = await apiClient.get(`${this.endpoint}/${pruebaCode}/`)
+      const response = await apiClient.get(`${this.endpoint}/${encodeURIComponent(pruebaCode)}`)
       
       if (!response) throw new Error('Respuesta vacía del servidor')
       
       const data = response
       
-      if (data && (data.prueba_code || data.prueba_name)) {
+      if (data && (data.test_code || data.name || data.prueba_code || data.prueba_name)) {
         return this.transformTestData(data)
       }
       
@@ -162,21 +156,21 @@ class TestsApiService {
   
   async searchTests(query: string, limit: number = 50): Promise<TestDetails[]> {
     try {
-      const response = await apiClient.get(`${this.endpoint}/?query=${encodeURIComponent(query)}&activo=true&limit=${limit}`)
+      const response = await apiClient.get(`${this.endpoint}?query=${encodeURIComponent(query)}&limit=${limit}`)
       
       if (!response) throw new Error('La respuesta del servidor está vacía')
       
       const data = response
       
-      if (Array.isArray(data)) return data
+      if (Array.isArray(data)) return data.map((p: any) => this.transformTestData(p)).filter(t => t.isActive)
       
       if (data.pruebas && Array.isArray(data.pruebas)) {
-        return data.pruebas.map((prueba: any) => this.transformTestData(prueba))
+        return data.pruebas.map((prueba: any) => this.transformTestData(prueba)).filter((t: TestDetails) => t.isActive)
       }
       
       const dataKeys = Object.keys(data)
       for (const key of dataKeys) {
-        if (Array.isArray(data[key])) return data[key]
+        if (Array.isArray(data[key])) return data[key].map((p: any) => this.transformTestData(p)).filter((t: TestDetails) => t.isActive)
       }
       
       return []

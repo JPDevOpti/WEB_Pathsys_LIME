@@ -1,34 +1,20 @@
 from fastapi import APIRouter
 from app.config.settings import settings
 from app.modules.auth.routes.auth_routes import auth_router
-from app.modules.pacientes.routes.paciente_routes import router as pacientes_router
-from app.modules.casos.routes.stats_routes import router as casos_stats_router
-from app.modules.pruebas.routes.prueba_routes import router as pruebas_router
-from app.modules.entidades.routes.entidad_routes import router as entidades_router
-from app.modules.patologos.routes.patologo_routes import router as patologos_router
-from app.modules.residentes.routes.residente_routes import router as residentes_router
-from app.modules.auxiliares.routes import auxiliares_router
-from app.modules.facturacion.routes import facturacion_router
-from app.modules.enfermedades.routes import router as enfermedad_router
-from app.modules.aprobacion.routes.caso_aprobacion_routes import router as aprobacion_router
-from app.modules.tickets.routes.ticket_routes import router as tickets_router
-from app.modules.dashboard.routes.dashboard_routes import router as dashboard_router
+from app.modules.patients.routes import router as patients_router
+from app.modules.entities.routes import router as entities_router
+from app.modules.tests.routes import router as tests_router
+from app.modules.cases import router as cases_router
+from app.modules.pathologists.routes import router as pathologists_router
 
 api_router = APIRouter()
 
-api_router.include_router(auth_router, prefix="/auth", tags=["autenticación"])
-api_router.include_router(pacientes_router, prefix="/pacientes", tags=["pacientes"])
-api_router.include_router(casos_stats_router, prefix="/casos", tags=["casos"])  # estadísticas de casos
-api_router.include_router(pruebas_router, prefix="/pruebas", tags=["pruebas"])
-api_router.include_router(entidades_router, prefix="/entidades", tags=["entidades"])
-api_router.include_router(patologos_router, prefix="/patologos", tags=["patologos"])
-api_router.include_router(residentes_router, prefix="/residentes", tags=["residentes"])
-api_router.include_router(auxiliares_router, prefix="/auxiliares", tags=["auxiliares"])
-api_router.include_router(facturacion_router, prefix="/facturacion", tags=["facturacion"])
-api_router.include_router(enfermedad_router, prefix="/enfermedades", tags=["enfermedades"])
-api_router.include_router(aprobacion_router, prefix="/aprobacion", tags=["aprobacion"])
-api_router.include_router(tickets_router, prefix="/tickets", tags=["tickets"])
-api_router.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
+api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
+api_router.include_router(patients_router, prefix="/patients", tags=["patients"])
+api_router.include_router(entities_router, prefix="/entities", tags=["entities"])
+api_router.include_router(tests_router, prefix="/tests", tags=["tests"])
+api_router.include_router(cases_router, prefix="/cases", tags=["cases"])
+api_router.include_router(pathologists_router, prefix="/pathologists", tags=["pathologists"])
 
 @api_router.get("/health")
 async def health_check():
@@ -46,23 +32,6 @@ async def api_info():
         "name": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "description": settings.DESCRIPTION,
-        "modules_implementados": [
-            "autenticación",
-            "casos", 
-            "pacientes",
-            "pruebas",
-            "entidades",
-            "patologos",
-            "residentes",
-            "auxiliares",
-            "facturacion",
-            "enfermedades",
-            "aprobación",
-            "tickets",
-            "dashboard"
-        ],
-        "modules_pendientes": [
-            "resultados",
-            "notificaciones"
-        ]
+        "modules_implementados": ["auth", "patients", "entities", "tests", "cases", "pathologists"],
+        "modules_pendientes": []
     }

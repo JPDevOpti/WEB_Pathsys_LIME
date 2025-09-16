@@ -11,16 +11,18 @@ export function usePatientVerification() {
   const transformApiPatientToFormData = (apiPatient: any): PatientData => {
     const tipoAtencionApi: string = apiPatient.tipo_atencion || ''
     const tipoAtencionForm = (() => {
-      const v = String(tipoAtencionApi).toLowerCase()
+      const v = String(tipoAtencionApi || '').toLowerCase()
       if (v.includes('ambulator')) return 'ambulatorio'
       if (v.includes('hospital')) return 'hospitalizado'
       return ''
     })()
     const entidadCodigo = apiPatient.entidad_info?.codigo || apiPatient.entidad_info?.id
+    const rawSexo = String(apiPatient?.sexo || apiPatient?.gender || '').toLowerCase()
+    const sexoForm: '' | 'masculino' | 'femenino' = rawSexo.startsWith('f') ? 'femenino' : rawSexo.startsWith('m') ? 'masculino' : ''
     return {
       pacienteCode: apiPatient.documento || apiPatient.paciente_code || apiPatient.cedula,
-      nombrePaciente: apiPatient.nombre,
-      sexo: apiPatient.sexo.toLowerCase(),
+      nombrePaciente: apiPatient?.nombre || '',
+      sexo: sexoForm,
       edad: apiPatient.edad.toString(),
       entidad: apiPatient.entidad_info?.nombre || 'Sin entidad',
       entidadCodigo,

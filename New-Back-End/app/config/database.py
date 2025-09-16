@@ -102,17 +102,25 @@ async def create_basic_indexes():
         await db.auxiliares.create_index("auxiliar_code", unique=True)
         await db.auxiliares.create_index("auxiliar_email", unique=True)
         
-        # Índices para pruebas
-        await db.pruebas.create_index("prueba_code", unique=True)
+        # Índices para pruebas (nuevo backend en inglés)
+        await db.tests.create_index("test_code", unique=True)
         
-        # Índices para casos
-        await db.casos.create_index("caso_code", unique=True)
-        await db.casos.create_index("paciente.paciente_code")
-        await db.casos.create_index("estado")
-        await db.casos.create_index("fecha_creacion")
+        # Índices para casos (nuevo backend en inglés)
+        await db.cases.create_index("case_code", unique=True)
+        await db.cases.create_index("patient_info.patient_code")
+        await db.cases.create_index("state")
+        await db.cases.create_index("created_at")
+        # Índice de counters de casos
+        await db.case_counters.create_index("year", unique=True)
         
-        # Índices para pacientes
-        await db.pacientes.create_index("paciente_code", unique=True)
+        # Índices para pacientes (nuevo backend en inglés)
+        await db.patients.create_index("patient_code", unique=True)
+        
+        # Índices para pathologists (nuevo backend en inglés)
+        await db.pathologists.create_index("pathologist_code", unique=True)
+        await db.pathologists.create_index("pathologist_email", unique=True)
+        await db.pathologists.create_index("medical_license", unique=True)
+        await db.pathologists.create_index("is_active")
         
         logger.info("Índices básicos creados correctamente")
         

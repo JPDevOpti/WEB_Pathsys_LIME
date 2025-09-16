@@ -41,27 +41,27 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div class="space-y-1">
                 <p class="text-gray-600 font-medium">Nombre</p>
-                <p class="text-gray-900 break-words font-semibold">{{ verifiedPatient.nombrePaciente }}</p>
+                <p class="text-gray-900 break-words font-semibold">{{ verifiedPatient.name }}</p>
               </div>
               <div class="space-y-1">
                 <p class="text-gray-600 font-medium">Código</p>
-                <p class="text-gray-900 font-mono font-semibold">{{ verifiedPatient.pacienteCode }}</p>
+                <p class="text-gray-900 font-mono font-semibold">{{ verifiedPatient.patientCode }}</p>
               </div>
               <div class="space-y-1">
                 <p class="text-gray-600 font-medium">Edad</p>
-                <p class="text-gray-900 font-semibold">{{ verifiedPatient.edad }} años</p>
+                <p class="text-gray-900 font-semibold">{{ verifiedPatient.age }} años</p>
               </div>
               <div class="space-y-1">
                 <p class="text-gray-600 font-medium">Sexo</p>
-                <p class="text-gray-900 font-semibold capitalize">{{ verifiedPatient.sexo }}</p>
+                <p class="text-gray-900 font-semibold capitalize">{{ verifiedPatient.gender }}</p>
               </div>
               <div class="space-y-1">
                 <p class="text-gray-600 font-medium">Tipo de Atención</p>
-                <p class="text-gray-900 font-semibold capitalize">{{ verifiedPatient.tipoAtencion }}</p>
+                <p class="text-gray-900 font-semibold capitalize">{{ verifiedPatient.careType }}</p>
               </div>
               <div class="space-y-1">
                 <p class="text-gray-600 font-medium">Entidad</p>
-                <p class="text-gray-900 break-words font-semibold">{{ verifiedPatient.entidad }}</p>
+                <p class="text-gray-900 break-words font-semibold">{{ verifiedPatient.entity }}</p>
               </div>
             </div>
           </div>
@@ -72,25 +72,25 @@
       <div v-if="patientVerified" class="space-y-6">
         <!-- Campos de entidad y tipo de atención -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <EntityList v-model="formData.entidadPaciente" label="Entidad del Paciente" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :error="validationState.hasAttemptedSubmit && !formData.entidadPaciente ? 'La entidad es obligatoria' : ''" />
-          <FormSelect v-model="formData.tipoAtencionPaciente" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="validationState.hasAttemptedSubmit && !formData.tipoAtencionPaciente ? 'Por favor seleccione el tipo de atención' : ''" />
+          <EntityList v-model="formData.patientEntity" label="Entidad del Paciente" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :error="validationState.hasAttemptedSubmit && !formData.patientEntity ? 'La entidad es obligatoria' : ''" />
+          <FormSelect v-model="formData.patientCareType" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="validationState.hasAttemptedSubmit && !formData.patientCareType ? 'Por favor seleccione el tipo de atención' : ''" />
         </div>
 
         <!-- Campos de fecha de ingreso y prioridad -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="formData.fechaIngreso" label="Fecha de Ingreso" type="date" :required="true" :errors="errors.fechaIngreso" :warnings="warnings.fechaIngreso" help-text="Fecha en que ingresa el caso al sistema" />
-          <FormSelect v-model="formData.prioridadCaso" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" :error="validationState.hasAttemptedSubmit && !formData.prioridadCaso ? 'La prioridad es obligatoria' : ''" help-text="Nivel de urgencia del caso" />
+          <FormInputField v-model="formData.entryDate" label="Fecha de Ingreso" type="date" :required="true" :errors="errors.entryDate" :warnings="warnings.entryDate" help-text="Fecha en que ingresa el caso al sistema" />
+          <FormSelect v-model="formData.casePriority" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" :error="validationState.hasAttemptedSubmit && !formData.casePriority ? 'La prioridad es obligatoria' : ''" help-text="Nivel de urgencia del caso" />
         </div>
 
         <!-- Campos de médico solicitante y servicio -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="formData.medicoSolicitante" label="Médico Solicitante" placeholder="Ejemplo: Alberto Perez" :required="true" :max-length="200" help-text="Medico solicitante del estudio" :errors="getMedicoErrors" :only-letters="true" />
-          <FormInputField v-model="formData.servicio" label="Servicio" placeholder="Ejemplo: Medicina Interna" :required="true" :max-length="100" help-text="Área de procedencia del caso" :errors="getServicioErrors" />
+          <FormInputField v-model="formData.requestingPhysician" label="Médico Solicitante" placeholder="Ejemplo: Alberto Perez" :required="true" :max-length="200" help-text="Medico solicitante del estudio" :errors="getMedicoErrors" :only-letters="true" />
+          <FormInputField v-model="formData.service" label="Servicio" placeholder="Ejemplo: Medicina Interna" :required="true" :max-length="100" help-text="Área de procedencia del caso" :errors="getServicioErrors" />
         </div>
 
         <!-- Campo de número de muestras -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="formData.numeroMuestras" label="Número de Muestras" type="number" :min="1" :max="10" :required="true" :errors="errors.numeroMuestras" :warnings="warnings.numeroMuestras" help-text="Cantidad de submuestras para este caso" @input="handleNumeroMuestrasChange" />
+          <FormInputField v-model="formData.numberOfSamples" label="Número de Muestras" type="number" :min="1" :max="10" :required="true" :errors="errors.numberOfSamples" :warnings="warnings.numberOfSamples" help-text="Cantidad de submuestras para este caso" @input="handleNumberOfSamplesChange" />
         </div>
 
         <!-- Sección de información de submuestras -->
@@ -101,12 +101,12 @@
           </h3>
           
           <div class="space-y-6">
-            <div v-for="(muestra, muestraIndex) in formData.muestras" :key="muestra.numero" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ muestra.numero }}</h4>
+            <div v-for="(sample, sampleIndex) in formData.samples" :key="sample.number" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ sample.number }}</h4>
               
               <!-- Selección de región del cuerpo -->
               <div class="mb-4">
-                <BodyRegionList v-model="muestra.regionCuerpo" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" :auto-load="true" :errors="getRegionErrors(muestraIndex)" help-text="Seleccione la región anatómica de donde proviene la muestra" />
+                <BodyRegionList v-model="sample.bodyRegion" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" :auto-load="true" :errors="getRegionErrors(sampleIndex)" help-text="Seleccione la región anatómica de donde proviene la muestra" />
               </div>
               
               <!-- Configuración de pruebas -->
@@ -114,20 +114,20 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label class="block text-sm font-medium text-gray-700">Pruebas a realizar</label>
                   <div class="self-end sm:self-auto">
-                    <AddButton text="Agregar Prueba" @click="addPruebaToMuestra(muestraIndex)" />
+                    <AddButton text="Agregar Prueba" @click="addTestToSample(sampleIndex)" />
                   </div>
                 </div>
                 
                 <div class="space-y-2">
-                  <div v-for="(prueba, pruebaIndex) in muestra.pruebas" :key="pruebaIndex" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
+                  <div v-for="(test, testIndex) in sample.tests" :key="testIndex" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
                     <div class="flex-1 min-w-0">
-                      <TestList v-model="prueba.code" :label="`Prueba #${pruebaIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${pruebaIndex + 1}...`" :required="true" :auto-load="true" :errors="getPruebaErrors(muestraIndex, pruebaIndex)" @test-selected="(test) => handleTestSelected(muestraIndex, pruebaIndex, test)" />
+                      <TestList v-model="test.code" :label="`Prueba #${testIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${testIndex + 1}...`" :required="true" :auto-load="true" :errors="getPruebaErrors(sampleIndex, testIndex)" @test-selected="(test) => handleTestSelected(sampleIndex, testIndex, test)" />
                     </div>
                     <div class="w-full sm:w-24">
-                      <FormInputField v-model.number="prueba.cantidad" label="Cantidad" type="number" :min="1" :max="10" placeholder="Cantidad" />
+                      <FormInputField v-model.number="test.quantity" label="Cantidad" type="number" :min="1" :max="10" placeholder="Cantidad" />
                     </div>
                     <div class="flex items-center justify-center sm:justify-start sm:w-10 sm:mt-6">
-                      <RemoveButton @click="removePruebaFromMuestra(muestraIndex, pruebaIndex)" title="Eliminar prueba" />
+                      <RemoveButton @click="removeTestFromSample(sampleIndex, testIndex)" title="Eliminar prueba" />
                     </div>
                   </div>
                 </div>
@@ -137,12 +137,12 @@
         </div>
 
         <!-- Campo de observaciones -->
-        <FormTextarea v-model="formData.observaciones" label="Observaciones del caso" placeholder="Observaciones adicionales sobre el caso o procedimiento..." :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional relevante para el procesamiento del caso" />
+        <FormTextarea v-model="formData.observations" label="Observaciones del caso" placeholder="Observaciones adicionales sobre el caso o procedimiento..." :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional relevante para el procesamiento del caso" />
 
-        <div v-if="errors.muestras.length > 0" class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div v-if="errors.samples.length > 0" class="bg-red-50 border border-red-200 rounded-lg p-4">
           <h4 class="text-sm font-semibold text-red-800 mb-2">Errores en las Submuestras:</h4>
           <ul class="list-disc list-inside space-y-1">
-            <li v-for="error in errors.muestras" :key="error" class="text-sm text-red-600">{{ error }}</li>
+            <li v-for="error in errors.samples" :key="error" class="text-sm text-red-600">{{ error }}</li>
           </ul>
         </div>
 
@@ -163,7 +163,7 @@
                 <div class="text-center pb-3 border-b border-gray-200 relative">
                   <div class="inline-block">
                     <div class="relative inline-block">
-                      <p class="font-mono font-bold text-2xl text-gray-900 mb-1">{{ createdCase.codigo }}</p>
+                      <p class="font-mono font-bold text-2xl text-gray-900 mb-1">{{ createdCase.code }}</p>
                       <button
                         @click="copyCaseCode"
                         class="absolute -right-10 top-1/2 transform -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200"
@@ -184,12 +184,12 @@
                   <div>
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Información del Paciente</h4>
                     <div class="space-y-2 text-sm">
-                      <div><span class="text-gray-500 font-medium">Nombre:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.nombre || verifiedPatient?.nombrePaciente }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Documento:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.paciente?.paciente_code || verifiedPatient?.pacienteCode || 'NO DISPONIBLE' }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Edad:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.edad || verifiedPatient?.edad }} años</p></div>
-                      <div><span class="text-gray-500 font-medium">Sexo:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.sexo || verifiedPatient?.sexo }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Entidad:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.entidad || verifiedPatient?.entidad }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Tipo de Atención:</span><p class="text-gray-900 font-semibold">{{ createdCase.paciente?.tipoAtencion || verifiedPatient?.tipoAtencion }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Nombre:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.name || verifiedPatient?.name }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Documento:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.patient?.patient_code || verifiedPatient?.patientCode || 'NO DISPONIBLE' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Edad:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.age || verifiedPatient?.age }} años</p></div>
+                      <div><span class="text-gray-500 font-medium">Sexo:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.gender || verifiedPatient?.gender }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Entidad:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.entity || verifiedPatient?.entity }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Tipo de Atención:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.careType || verifiedPatient?.careType }}</p></div>
                     </div>
                   </div>
                   
@@ -197,12 +197,12 @@
                   <div>
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Detalles del Caso</h4>
                     <div class="space-y-2 text-sm">
-                      <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ createdCase.estado || 'En proceso' }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Prioridad:</span><p class="text-gray-900 font-semibold">{{ createdCase.prioridad || formData.prioridadCaso || 'Normal' }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ createdCase.medicoSolicitante || formData.medicoSolicitante || 'No especificado' }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ createdCase.servicio || formData.servicio || 'No especificado' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ createdCase.state || 'En proceso' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Prioridad:</span><p class="text-gray-900 font-semibold">{{ createdCase.priority || formData.casePriority || 'Normal' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ createdCase.requestingPhysician || formData.requestingPhysician || 'No especificado' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ createdCase.service || formData.service || 'No especificado' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Número de Submuestras:</span><p class="text-gray-900 font-semibold">{{ getMuestrasForNotification().length }}</p></div>
-                      <div v-if="createdCase.observaciones || formData.observaciones"><span class="text-gray-500 font-medium">Observaciones:</span><p class="text-gray-900">{{ createdCase.observaciones || formData.observaciones }}</p></div>
+                      <div v-if="createdCase.observations || formData.observations"><span class="text-gray-500 font-medium">Observaciones:</span><p class="text-gray-900">{{ createdCase.observations || formData.observations }}</p></div>
                     </div>
                   </div>
                 </div>
@@ -211,14 +211,14 @@
                 <div>
                   <h4 class="font-semibold text-gray-800 mb-3 text-base">Submuestras Creadas</h4>
                   <div class="space-y-3">
-                    <div v-for="(muestra, index) in getMuestrasForNotification()" :key="index" class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <div v-for="(sample, index) in getMuestrasForNotification()" :key="index" class="border border-gray-200 rounded-lg p-3 bg-gray-50">
                       <div class="flex items-center justify-between mb-2">
                         <span class="font-medium text-gray-900 text-sm">Submuestra {{ index + 1 }}</span>
-                        <span class="text-sm text-gray-500">{{ (muestra.pruebas && muestra.pruebas.length) || 0 }} prueba{{ ((muestra.pruebas && muestra.pruebas.length) || 0) !== 1 ? 's' : '' }}</span>
+                        <span class="text-sm text-gray-500">{{ (sample.tests && sample.tests.length) || 0 }} prueba{{ ((sample.tests && sample.tests.length) || 0) !== 1 ? 's' : '' }}</span>
                       </div>
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                        <div><span class="text-gray-500 font-medium">Región:</span><p class="text-gray-900">{{ muestra.regionCuerpo || 'Sin especificar' }}</p></div>
-                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="muestra.pruebas && muestra.pruebas.length > 0">{{ muestra.pruebas.map((p: any) => `${p.code || p.nombre || 'Sin código'} (${p.cantidad || 1})`).join(', ') }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
+                        <div><span class="text-gray-500 font-medium">Región:</span><p class="text-gray-900">{{ sample.bodyRegion || 'Sin especificar' }}</p></div>
+                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="sample.tests && sample.tests.length > 0">{{ sample.tests.map((t: any) => `${t.code || t.name || 'Sin código'} (${t.quantity || 1})`).join(', ') }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
                       </div>
                     </div>
                   </div>
@@ -254,7 +254,7 @@ const createdCase = ref<CreatedCase | null>(null)
 const emit = defineEmits(['case-saved', 'patient-verified'])
 
 // Composables para manejo del formulario, verificación de pacientes, notificaciones y API
-const { formData, validationState, errors, warnings, validateForm, clearForm: clearCaseForm, handleNumeroMuestrasChange, addPruebaToMuestra, removePruebaFromMuestra } = useCaseForm()
+const { formData, validationState, errors, warnings, validateForm, clearForm: clearCaseForm, handleNumberOfSamplesChange, addTestToSample, removeTestFromSample } = useCaseForm()
 const { searchError, patientVerified, verifiedPatient, searchPatientByDocumento, useNewPatient, clearVerification } = usePatientVerification()
 const { notification, showNotification, closeNotification } = useNotifications()
 const { createCase, error: apiError, clearState } = useCaseAPI()
@@ -276,63 +276,63 @@ const prioridadOptions = [
 const validationErrors = computed(() => {
   const errorsList: string[] = []
   const fields = [
-    { value: formData.fechaIngreso, name: 'Fecha de ingreso' },
-    { value: formData.medicoSolicitante, name: 'Médico solicitante' },
-    { value: formData.servicio, name: 'Servicio' },
-    { value: formData.prioridadCaso, name: 'Prioridad del caso' },
-    { value: formData.numeroMuestras, name: 'Número de muestras' },
-    { value: formData.entidadPaciente, name: 'Entidad del paciente' },
-    { value: formData.tipoAtencionPaciente, name: 'Tipo de atención' }
+    { value: formData.entryDate, name: 'Fecha de ingreso' },
+    { value: formData.requestingPhysician, name: 'Médico solicitante' },
+    { value: formData.service, name: 'Servicio' },
+    { value: formData.casePriority, name: 'Prioridad del caso' },
+    { value: formData.numberOfSamples, name: 'Número de muestras' },
+    { value: formData.patientEntity, name: 'Entidad del paciente' },
+    { value: formData.patientCareType, name: 'Tipo de atención' }
   ]
   
   fields.forEach(field => !field.value && errorsList.push(field.name))
   
-  formData.muestras?.forEach((muestra, i) => {
-    if (!muestra.regionCuerpo) errorsList.push(`Submuestra ${i + 1}: Región del cuerpo`)
-    if (!muestra.pruebas?.length) errorsList.push(`Submuestra ${i + 1}: Al menos una prueba`)
-    muestra.pruebas?.forEach((prueba, j) => {
-      if (!prueba.code) errorsList.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Código de prueba`)
-      if (!prueba.cantidad || prueba.cantidad < 1) errorsList.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Cantidad`)
+  formData.samples?.forEach((sample, i) => {
+    if (!sample.bodyRegion) errorsList.push(`Submuestra ${i + 1}: Región del cuerpo`)
+    if (!sample.tests?.length) errorsList.push(`Submuestra ${i + 1}: Al menos una prueba`)
+    sample.tests?.forEach((test, j) => {
+      if (!test.code) errorsList.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Código de prueba`)
+      if (!test.quantity || test.quantity < 1) errorsList.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Cantidad`)
     })
   })
   
-  errors.muestras?.forEach(error => errorsList.push(`Submuestras: ${error}`))
+  errors.samples?.forEach(error => errorsList.push(`Submuestras: ${error}`))
   return errorsList
 })
 
 const getMedicoErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
-  if (errors.medicoSolicitante.length > 0) return errors.medicoSolicitante
-  if (!formData.medicoSolicitante?.trim()) return ['El médico solicitante es obligatorio']
+  if (errors.requestingPhysician.length > 0) return errors.requestingPhysician
+  if (!formData.requestingPhysician?.trim()) return ['El médico solicitante es obligatorio']
   return []
 })
 
 const getServicioErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
-  if (errors.servicio.length > 0) return errors.servicio
-  if (!formData.servicio?.trim()) return ['El servicio es obligatorio']
+  if (errors.service.length > 0) return errors.service
+  if (!formData.service?.trim()) return ['El servicio es obligatorio']
   return []
 })
 
-const getRegionErrors = (muestraIndex: number) => {
+const getRegionErrors = (sampleIndex: number) => {
   if (!validationState.hasAttemptedSubmit) return [] as string[]
-  const muestra = formData.muestras[muestraIndex]
-  if (!muestra || !muestra.regionCuerpo?.trim()) return ['La región del cuerpo es obligatoria']
+  const sample = formData.samples[sampleIndex]
+  if (!sample || !sample.bodyRegion?.trim()) return ['La región del cuerpo es obligatoria']
   return [] as string[]
 }
 
-const getPruebaErrors = (muestraIndex: number, pruebaIndex: number) => {
+const getPruebaErrors = (sampleIndex: number, testIndex: number) => {
   if (!validationState.hasAttemptedSubmit) return [] as string[]
-  const muestra = formData.muestras[muestraIndex]
-  if (!muestra) return ['Debe seleccionar una prueba']
-  const prueba = muestra.pruebas[pruebaIndex]
-  if (!prueba || !String(prueba.code || '').trim()) return ['El código de la prueba es obligatorio']
-  if (prueba.cantidad == null || Number(prueba.cantidad) < 1) return ['La cantidad debe ser al menos 1']
+  const sample = formData.samples[sampleIndex]
+  if (!sample) return ['Debe seleccionar una prueba']
+  const test = sample.tests[testIndex]
+  if (!test || !String(test.code || '').trim()) return ['El código de la prueba es obligatorio']
+  if (test.quantity == null || Number(test.quantity) < 1) return ['La cantidad debe ser al menos 1']
   return [] as string[]
 }
 
 const createdDateDisplay = computed(() => {
-  const value = createdCase.value?.fechaIngreso || formData.fechaIngreso
+  const value = createdCase.value?.entryDate || formData.entryDate
   if (!value) return ''
   const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(String(value))
   const date = new Date(isDateOnly ? `${value}T00:00:00` : String(value))
@@ -342,14 +342,14 @@ const createdDateDisplay = computed(() => {
 })
 
 const getMuestrasForNotification = () => {
-  const backendMuestras = createdCase.value?.muestras || []
-  const formMuestras = formData.muestras || []
-  return !backendMuestras.length ? formMuestras : backendMuestras.map((backendMuestra: any, index: number) => ({
-    ...backendMuestra,
-    regionCuerpo: backendMuestra.regionCuerpo || backendMuestra.region_cuerpo || formMuestras[index]?.regionCuerpo || 'Sin especificar',
-    pruebas: (backendMuestra.pruebas || []).map((prueba: any, pIndex: number) => ({
-      ...prueba,
-      cantidad: prueba.cantidad || formMuestras[index]?.pruebas?.[pIndex]?.cantidad || 1
+  const backendSamples = createdCase.value?.samples || []
+  const formSamples = formData.samples || []
+  return !backendSamples.length ? formSamples : backendSamples.map((backendSample: any, index: number) => ({
+    ...backendSample,
+    bodyRegion: backendSample.bodyRegion || backendSample.body_region || formSamples[index]?.bodyRegion || 'Sin especificar',
+    tests: (backendSample.tests || []).map((test: any, tIndex: number) => ({
+      ...test,
+      quantity: test.quantity || formSamples[index]?.tests?.[tIndex]?.quantity || 1
     }))
   }))
 }
@@ -359,13 +359,13 @@ const handlePacienteCodeInput = (value: string) => {
   pacienteCodeBusqueda.value = value
 }
 
-const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any) => {
-  if (test && muestraIndex >= 0 && muestraIndex < formData.muestras.length) {
-    const muestra = formData.muestras[muestraIndex]
-    if (pruebaIndex >= 0 && pruebaIndex < muestra.pruebas.length) {
+const handleTestSelected = (sampleIndex: number, testIndex: number, test: any) => {
+  if (test && sampleIndex >= 0 && sampleIndex < formData.samples.length) {
+    const sample = formData.samples[sampleIndex]
+    if (testIndex >= 0 && testIndex < sample.tests.length) {
       // Asignar correctamente el código y nombre de la prueba
-      muestra.pruebas[pruebaIndex].code = test.pruebaCode || test.code || ''
-      muestra.pruebas[pruebaIndex].nombre = test.pruebasName || test.nombre || test.label || ''
+      sample.tests[testIndex].code = test.pruebaCode || test.code || ''
+      sample.tests[testIndex].name = test.pruebasName || test.nombre || test.label || ''
     }
   }
 }
@@ -381,21 +381,21 @@ const searchPatient = async () => {
 }
 
 const updateFormDataWithPatient = (patientData: PatientData) => {
-  const tipo = String(patientData.tipoAtencion || '').toLowerCase()
+  const careType = String(patientData.careType || '').toLowerCase()
   Object.assign(formData, {
-    pacienteDocumento: patientData.pacienteCode,
-    entidadPaciente: patientData.entidadCodigo || '',
-    tipoAtencionPaciente: tipo.includes('ambulator') || tipo === 'ambulatorio' ? 'Ambulatorio' : tipo.includes('hospital') || tipo === 'hospitalizado' ? 'Hospitalizado' : ''
+    patientDocument: patientData.patientCode,
+    patientEntity: patientData.entityCode || '',
+    patientCareType: careType.includes('ambulator') || careType === 'ambulatorio' ? 'Ambulatorio' : careType.includes('hospital') || careType === 'hospitalizado' ? 'Hospitalizado' : ''
   })
 }
 
 const clearPatientFormData = () => {
   Object.assign(formData, {
-    pacienteDocumento: '',
-    entidadPaciente: '',
-    tipoAtencionPaciente: '',
-    prioridadCaso: 'Normal',
-    servicio: ''
+    patientDocument: '',
+    patientEntity: '',
+    patientCareType: '',
+    casePriority: 'Normal',
+    service: ''
   })
 }
 
@@ -408,7 +408,7 @@ const clearPatientVerification = () => {
 
 const handleNewPatient = (patientData: PatientData) => {
   useNewPatient(patientData)
-  pacienteCodeBusqueda.value = patientData.pacienteCode
+  pacienteCodeBusqueda.value = patientData.patientCode
   updateFormDataWithPatient(patientData)
   emit('patient-verified', patientData)
 }
@@ -427,8 +427,8 @@ watch(() => notification.visible, (newValue) => {
 })
 
 const copyCaseCode = async () => {
-  if (!createdCase.value?.codigo) return
-  const code = createdCase.value.codigo
+  if (!createdCase.value?.code) return
+  const code = createdCase.value.code
   const message = `El código ${code} se ha copiado al portapapeles.`
   
   try {

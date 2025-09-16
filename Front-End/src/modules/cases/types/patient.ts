@@ -1,24 +1,24 @@
 export interface PatientData {
-  pacienteCode: string
-  nombrePaciente: string
-  sexo: 'masculino' | 'femenino' | ''
-  edad: string
-  entidad: string
-  entidadCodigo?: string
-  tipoAtencion: 'ambulatorio' | 'hospitalizado' | ''
-  observaciones: string
-  codigo?: string
+  patientCode: string
+  name: string
+  gender: 'masculino' | 'femenino' | ''
+  age: string
+  entity: string
+  entityCode?: string
+  careType: 'ambulatorio' | 'hospitalizado' | ''
+  observations: string
+  code?: string
 }
 
 export interface PatientFormErrors {
-  pacienteCode: string[]
-  nombrePaciente: string[]
-  edad: string[]
+  patientCode: string[]
+  name: string[]
+  age: string[]
 }
 
 export interface PatientFormWarnings {
-  pacienteCode: string[]
-  edad: string[]
+  patientCode: string[]
+  age: string[]
 }
 
 export interface ValidationState {
