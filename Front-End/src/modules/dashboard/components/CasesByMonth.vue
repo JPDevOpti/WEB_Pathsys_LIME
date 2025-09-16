@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, onActivated, computed, watch, nextTick } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
 import { Card } from '@/shared/components/layout'
 import OptimizedLoader from '@/shared/components/ui/OptimizedLoader.vue'
@@ -60,7 +60,6 @@ const { casosPorMes, loadingCasosPorMes: isLoading, cargarCasosPorMes, totalCaso
 const chartReady = ref(false)
 const chartKey = ref(0)
 const loadingMessage = ref('Cargando estadísticas...')
-const lastLoadTime = ref(0)
 const localError = ref<string | null>(null)
 
 const esPatologo = computed(() => authStore.user?.rol === 'patologo' && authStore.userRole !== 'administrador')
@@ -84,16 +83,19 @@ const chartOptions = ref({
   tooltip: { x: { show: false }, y: { formatter: (val: any) => val.toString() } }
 })
 
-const cargarEstadisticas = async (forceRefresh = false) => {
-  const now = Date.now()
-  if (now - lastLoadTime.value < 500 && !forceRefresh) return
-  lastLoadTime.value = now
-
+const cargarEstadisticas = async () => {
   try {
     localError.value = null
     loadingMessage.value = esPatologo.value ? 'Cargando casos asignados...' : 'Cargando casos del laboratorio...'
     chartReady.value = false
     await cargarCasosPorMes(anioActual.value, esPatologo.value)
+    // Log de depuración: datos crudos desde el backend y serie calculada
+    try {
+      // eslint-disable-next-line no-console
+      console.log('[Dashboard][CasesByMonth] casosPorMes:', JSON.stringify(casosPorMes.value))
+      // eslint-disable-next-line no-console
+      console.log('[Dashboard][CasesByMonth] series:', JSON.stringify(series.value))
+    } catch {}
     await nextTick()
     chartReady.value = true
     chartKey.value++
@@ -103,8 +105,20 @@ const cargarEstadisticas = async (forceRefresh = false) => {
   }
 }
 
-watch(esPatologo, () => cargarEstadisticas(true), { immediate: false })
-onMounted(() => cargarEstadisticas())
+watch(esPatologo, () => cargarEstadisticas(), { immediate: true })
+onMounted(() => {
+  cargarEstadisticas()
+  const refresh = () => cargarEstadisticas()
+  window.addEventListener('case-created', refresh)
+  window.addEventListener('patient-created', refresh)
+  window.addEventListener('focus', refresh)
+  onUnmounted(() => {
+    window.removeEventListener('case-created', refresh)
+    window.removeEventListener('patient-created', refresh)
+    window.removeEventListener('focus', refresh)
+  })
+})
+onActivated(() => cargarEstadisticas())
 </script>
 
 <style scoped>

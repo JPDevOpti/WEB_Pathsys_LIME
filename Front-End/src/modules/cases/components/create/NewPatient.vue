@@ -179,6 +179,8 @@ const handleSaveClick = async () => {
       createdPatient.value = result.patient
       showNotification('success', '¡Paciente Registrado Exitosamente!', '', 15000)
       emit('patient-saved', patientData)
+      // Notificar al dashboard para refrescar métricas
+      try { window.dispatchEvent(new CustomEvent('patient-created')) } catch {}
       clearForm()
       selectedEntity.value = null
       entityListKey.value++

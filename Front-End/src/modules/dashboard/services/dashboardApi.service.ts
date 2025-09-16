@@ -14,7 +14,7 @@ class DashboardApiService {
 
 
   async getMetricasDashboard(): Promise<DashboardMetrics> {
-    return this._getMetricas(`${this.baseUrl.CASES}/estadisticas/mes-actual`)
+    return this._getMetricas(`${this.baseUrl.CASES}/estadisticas/mes-actual`, { no_cache: true })
   }
 
   async getMetricasPatologo(): Promise<DashboardMetrics> {
@@ -22,7 +22,7 @@ class DashboardApiService {
       const { useAuthStore } = await import('@/stores/auth.store')
       const authStore = useAuthStore()
       const code = (authStore.user as any)?.patologo_code || ''
-      return this._getMetricas(`${this.baseUrl.CASES}/estadisticas/mes-actual/patologo`, { patologo_codigo: code })
+      return this._getMetricas(`${this.baseUrl.CASES}/estadisticas/mes-actual/patologo`, { patologo_codigo: code, no_cache: true })
     } catch {
       return this.getMetricasDashboard()
     }
@@ -30,7 +30,7 @@ class DashboardApiService {
 
   private async _getMetricas(url: string, params?: any): Promise<DashboardMetrics> {
     try {
-      const response = await apiClient.get<any>(url, params ? { params } : undefined)
+      const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
       const data = response?.data ?? response
       return {
         pacientes: {
@@ -50,7 +50,7 @@ class DashboardApiService {
   }
 
   async getCasosPorMes(año?: number): Promise<CasosPorMesResponse> {
-    return this._getCasosPorMes(`${this.baseUrl.CASES}/estadisticas/por-mes/${año || new Date().getFullYear()}`)
+    return this._getCasosPorMes(`${this.baseUrl.CASES}/estadisticas/por-mes/${año || new Date().getFullYear()}`, { no_cache: true })
   }
 
   async getCasosPorMesPatologo(año?: number): Promise<CasosPorMesResponse> {
@@ -58,7 +58,7 @@ class DashboardApiService {
       const { useAuthStore } = await import('@/stores/auth.store')
       const authStore = useAuthStore()
       const code = (authStore.user as any)?.patologo_code || ''
-      return this._getCasosPorMes(`${this.baseUrl.CASES}/estadisticas/por-mes/patologo/${año || new Date().getFullYear()}`, { patologo_codigo: code })
+      return this._getCasosPorMes(`${this.baseUrl.CASES}/estadisticas/por-mes/patologo/${año || new Date().getFullYear()}`, { patologo_codigo: code, no_cache: true })
     } catch {
       return this.getCasosPorMes(año)
     }
@@ -71,7 +71,7 @@ class DashboardApiService {
     try {
       if (añoActual < 2020 || añoActual > 2030) return defaultResponse
 
-      const response = await apiClient.get<any>(url, params ? { params } : undefined)
+      const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
       const data = response?.data ?? response
       
       if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) return defaultResponse
@@ -92,7 +92,7 @@ class DashboardApiService {
 
   private async _getUrgentCases(url: string, params: any): Promise<CasoUrgente[]> {
     try {
-      const response = await apiClient.get<any>(url, { params })
+      const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
       const data = response?.data ?? response
       return this.transformarCasosUrgentesOptimizados(data.casos || [])
     } catch {
@@ -124,7 +124,7 @@ class DashboardApiService {
     }
 
     try {
-      const response = await apiClient.get<any>(url, params ? { params } : undefined)
+      const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
       const data = response?.data ?? response
       
       return {

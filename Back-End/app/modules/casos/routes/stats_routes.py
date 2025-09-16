@@ -23,11 +23,12 @@ def get_opportunity_stats_service(database: AsyncIOMotorDatabase = Depends(get_d
 @router.get("/estadisticas/por-mes/{year}", response_model=Dict[str, Any])
 async def obtener_casos_por_mes_estadisticas(
     year: int,
+    no_cache: bool | None = Query(False, description="Si es true, omite caché y recalcula"),
     service = Depends(get_monthly_stats_service)
 ):
     if year < 2020 or year > 2030:
         raise HTTPException(status_code=400, detail="El año debe estar entre 2020 y 2030")
-    return await service.casos_por_mes(year)
+    return await service.casos_por_mes(year, bool(no_cache))
 
 
 @router.get("/estadisticas/por-mes/patologo/{year}", response_model=Dict[str, Any])
@@ -35,6 +36,7 @@ async def obtener_casos_por_mes_patologo_estadisticas(
     year: int,
     patologo_codigo: str | None = Query(None, description="Código del patólogo (alias: patologo_code)"),
     patologo_code: str | None = Query(None, description="Código del patólogo (alternativo)"),
+    no_cache: bool | None = Query(False, description="Si es true, omite caché y recalcula"),
     service = Depends(get_monthly_stats_service)
 ):
     if year < 2020 or year > 2030:
@@ -42,26 +44,28 @@ async def obtener_casos_por_mes_patologo_estadisticas(
     code = patologo_codigo or patologo_code
     if not code:
         raise HTTPException(status_code=400, detail="Debe proporcionar patologo_codigo")
-    return await service.casos_por_mes_patologo(year, code)
+    return await service.casos_por_mes_patologo(year, code, bool(no_cache))
 
 
 @router.get("/estadisticas/mes-actual", response_model=DashboardMetricsResponse)
 async def obtener_mes_actual_estadisticas(
+    no_cache: bool | None = Query(False, description="Si es true, omite caché y recalcula"),
     service = Depends(get_monthly_stats_service)
 ):
-    return await service.mes_actual()
+    return await service.mes_actual(bool(no_cache))
 
 
 @router.get("/estadisticas/mes-actual/patologo", response_model=DashboardMetricsResponse)
 async def obtener_mes_actual_patologo_estadisticas(
     patologo_codigo: str | None = Query(None, description="Código del patólogo (alias: patologo_code)"),
     patologo_code: str | None = Query(None, description="Código del patólogo (alternativo)"),
+    no_cache: bool | None = Query(False, description="Si es true, omite caché y recalcula"),
     service = Depends(get_monthly_stats_service)
 ):
     code = patologo_codigo or patologo_code
     if not code:
         raise HTTPException(status_code=400, detail="Debe proporcionar patologo_codigo")
-    return await service.mes_actual_por_patologo(code)
+    return await service.mes_actual_por_patologo(code, bool(no_cache))
 
 
 @router.get("/estadisticas/oportunidad/mes-anterior", response_model=OpportunityStatsResponse)

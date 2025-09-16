@@ -474,6 +474,7 @@ const handleSaveClick = async () => {
       createdCase.value = result.case
       showNotification('success', '¡Caso Creado Exitosamente!', '', 0)
       emit('case-saved', result.case)
+      try { window.dispatchEvent(new CustomEvent('case-created')) } catch {}
       clearForm()
     } else {
       throw new Error(result.message || 'Error desconocido al crear el caso')

@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { MuestraIcon } from '@/assets/icons'
-import { onMounted, computed, watch } from 'vue'
+import { onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { Card } from '@/shared/components/layout'
 import { formatearNumero, obtenerClasePorcentaje } from '@/shared'
 import { useDashboard } from '../composables/useDashboard'
@@ -113,7 +113,20 @@ const cargarEstadisticas = async () => {
 }
 
 watch(() => authStore.user, (newUser) => { if (newUser) cargarEstadisticas() }, { immediate: true })
-onMounted(() => cargarEstadisticas())
+// Refresh helpers
+const handleCaseCreated = () => cargarEstadisticas()
+const handlePatientCreated = () => cargarEstadisticas()
+
+onMounted(() => {
+  cargarEstadisticas()
+  window.addEventListener('case-created', handleCaseCreated as EventListener)
+  window.addEventListener('patient-created', handlePatientCreated as EventListener)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('case-created', handleCaseCreated as EventListener)
+  window.removeEventListener('patient-created', handlePatientCreated as EventListener)
+})
 </script>
 
 <style scoped>
