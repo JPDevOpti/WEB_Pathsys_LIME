@@ -65,9 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      if (token.value) {
-        await authApiService.logout(token.value)
-      }
+      // No hay logout en backend nuevo; solo limpiar cliente
     } catch (err) {
       // Error al cerrar sesión
     } finally {
@@ -112,8 +110,8 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const result = await authApiService.verifyToken(token.value)
       if (result.valid) {
-        // Solo verificar validez, NO sobrescribir el usuario completo
-        // El usuario guardado en localStorage tiene más información completa
+        // No sobrescribir si ya hay usuario con info
+        if (!user.value) user.value = result.user || null
         return true
       } else {
         // Token inválido, limpiar estado sin llamar logout para evitar bucles

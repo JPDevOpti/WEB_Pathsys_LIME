@@ -35,7 +35,22 @@ export class AuthApiService {
         throw new Error(errorData.detail || 'Error al iniciar sesión')
       }
 
-      return await response.json()
+      const data = await response.json()
+      const backendToken = data.token || {}
+      const backendUser = data.user || {}
+      const mappedUser: User = {
+        id: backendUser.id,
+        email: backendUser.email,
+        rol: backendUser.rol,
+        activo: backendUser.is_active ?? true,
+        nombre: backendUser.nombre
+      }
+      return {
+        access_token: backendToken.access_token,
+        token_type: backendToken.token_type || 'bearer',
+        expires_in: backendToken.expires_in || 0,
+        user: mappedUser
+      }
     } catch (error) {
       if (error instanceof Error) {
         throw error
@@ -62,7 +77,15 @@ export class AuthApiService {
         throw new Error(errorData.detail || 'Error al obtener información del usuario')
       }
 
-      return await response.json()
+      const data = await response.json()
+      const mapped: User = {
+        id: data.id,
+        email: data.email,
+        rol: data.rol,
+        activo: data.is_active ?? true,
+        nombre: data.nombre
+      }
+      return mapped
     } catch (error) {
       if (error instanceof Error) {
         throw error
@@ -76,7 +99,8 @@ export class AuthApiService {
    */
   async verifyToken(token: string): Promise<{ valid: boolean; user?: User }> {
     try {
-      const response = await fetch(`${this.baseUrl}/auth/verify`, {
+      // No hay endpoint /auth/verify en el back nuevo; usamos /auth/me
+      const response = await fetch(`${this.baseUrl}/auth/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -94,19 +118,14 @@ export class AuthApiService {
       }
 
       const data = await response.json()
-      
-      // Si el token es válido, construir el objeto user
-      if (data.valid) {
-        const user: User = {
-          id: data.user_id,
-          email: data.email,
-          rol: data.roles?.[0] || 'paciente', // Tomar el primer rol o por defecto 'paciente'
-          activo: true
-        }
-        return { valid: true, user }
+      const user: User = {
+        id: data.id,
+        email: data.email,
+        rol: data.rol,
+        activo: data.is_active ?? true,
+        nombre: data.nombre
       }
-      
-      return { valid: false }
+      return { valid: true, user }
     } catch (error) {
       // En caso de error de red o servidor, no invalidar el token automáticamente
       console.error('Error verificando token:', error)
@@ -146,18 +165,8 @@ export class AuthApiService {
    */
   async logout(token: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Error al cerrar sesión')
-      }
+      // No hay endpoint de logout en el back nuevo; limpiar en cliente
+      return
     } catch (error) {
       if (error instanceof Error) {
         throw error
