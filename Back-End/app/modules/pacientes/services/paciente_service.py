@@ -43,7 +43,12 @@ class PacienteService:
     async def change_patient_code(self, paciente_id: str, new_code: str) -> PacienteResponse:
         if not new_code or len(new_code.strip()) < 6 or len(new_code.strip()) > 12:
             raise BadRequestError("El código del paciente debe tener entre 6 y 12 caracteres")
-        casos_collection = self.repository.db.casos if hasattr(self.repository.db, 'casos') else None
+        # Obtener la colección de casos desde la misma conexión del repositorio
+        casos_collection = None
+        try:
+            casos_collection = self.repository.collection.database.casos
+        except Exception:
+            casos_collection = None
         paciente_data = await self.repository.change_code(paciente_id, new_code.strip(), casos_collection)
         return PacienteResponse(**paciente_data)
 

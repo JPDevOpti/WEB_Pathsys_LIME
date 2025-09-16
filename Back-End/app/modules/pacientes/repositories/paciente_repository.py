@@ -57,7 +57,7 @@ class PacienteRepository:
             {"paciente_code": old_code},
             {"$set": {"paciente_code": new_code, "fecha_actualizacion": datetime.now(timezone.utc)}}
         )
-        if casos_collection:
+        if casos_collection is not None:
             await casos_collection.update_many(
                 {"paciente.paciente_code": old_code},
                 {"$set": {"paciente.paciente_code": new_code}}

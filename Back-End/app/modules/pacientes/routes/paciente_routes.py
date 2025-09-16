@@ -92,6 +92,15 @@ async def get_total_count(service: PacienteService = Depends(get_service)):
 
 
 
+@router.get("/documento/{documento}", response_model=PacienteResponse)
+async def get_paciente_by_documento(documento: str, service: PacienteService = Depends(get_service)):
+    try:
+        return await service.get_paciente_by_id(documento)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
 @router.get("/{paciente_id}", response_model=PacienteResponse)
 async def get_paciente(paciente_id: str, service: PacienteService = Depends(get_service)):
     try:

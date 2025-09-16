@@ -9,13 +9,13 @@
       <!-- Sección de verificación del paciente -->
       <div class="bg-gray-50 rounded-lg p-3 sm:p-4 lg:p-6 border border-gray-200">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-          <UserCircleIcon class="w-4 h-4 mr-2 text-blue-600" />
+          <SearchIcon class="w-4 h-4 mr-2 text-gray-500" />
         Buscar paciente
         </h3>
         
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
           <div class="flex-1">
-            <FormInputField v-model="pacienteCodeBusqueda" placeholder="Ingrese código del paciente" :required="true" :max-length="12" type="number" inputmode="numeric" :disabled="patientVerified" @input="handlePacienteCodeInput" />
+            <FormInputField v-model="pacienteCodeBusqueda" placeholder="Ingrese código del paciente" :required="true" :max-length="12" inputmode="numeric" :only-numbers="true" :disabled="patientVerified" @input="handlePacienteCodeInput" />
           </div>
           
           <div class="flex gap-2 sm:gap-3">
@@ -84,8 +84,8 @@
 
         <!-- Campos de médico solicitante y servicio -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="formData.medicoSolicitante" label="Médico Solicitante" placeholder="Ejemplo: Alberto Perez" :required="true" :max-length="200" help-text="Medico solicitante del estudio" :error="validationState.hasAttemptedSubmit && !formData.medicoSolicitante ? 'El médico solicitante es obligatorio' : ''" />
-          <FormInputField v-model="formData.servicio" label="Servicio" placeholder="Ejemplo: Medicina Interna" :required="true" :max-length="100" help-text="Área de procedencia del caso" :error="validationState.hasAttemptedSubmit && formData.medicoSolicitante && !formData.servicio ? 'El servicio es obligatorio cuando se especifica un médico' : ''" />
+          <FormInputField v-model="formData.medicoSolicitante" label="Médico Solicitante" placeholder="Ejemplo: Alberto Perez" :required="true" :max-length="200" help-text="Medico solicitante del estudio" :errors="getMedicoErrors" :only-letters="true" />
+          <FormInputField v-model="formData.servicio" label="Servicio" placeholder="Ejemplo: Medicina Interna" :required="true" :max-length="100" help-text="Área de procedencia del caso" :errors="getServicioErrors" />
         </div>
 
         <!-- Campo de número de muestras -->
@@ -106,7 +106,7 @@
               
               <!-- Selección de región del cuerpo -->
               <div class="mb-4">
-                <BodyRegionList v-model="muestra.regionCuerpo" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" :auto-load="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
+                <BodyRegionList v-model="muestra.regionCuerpo" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" :auto-load="true" :errors="getRegionErrors(muestraIndex)" help-text="Seleccione la región anatómica de donde proviene la muestra" />
               </div>
               
               <!-- Configuración de pruebas -->
@@ -121,7 +121,7 @@
                 <div class="space-y-2">
                   <div v-for="(prueba, pruebaIndex) in muestra.pruebas" :key="pruebaIndex" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
                     <div class="flex-1 min-w-0">
-                      <TestList v-model="prueba.code" :label="`Prueba #${pruebaIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${pruebaIndex + 1}...`" :required="true" :auto-load="true" @test-selected="(test) => handleTestSelected(muestraIndex, pruebaIndex, test)" />
+                      <TestList v-model="prueba.code" :label="`Prueba #${pruebaIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${pruebaIndex + 1}...`" :required="true" :auto-load="true" :errors="getPruebaErrors(muestraIndex, pruebaIndex)" @test-selected="(test) => handleTestSelected(muestraIndex, pruebaIndex, test)" />
                     </div>
                     <div class="w-full sm:w-24">
                       <FormInputField v-model.number="prueba.cantidad" label="Cantidad" type="number" :min="1" :max="10" placeholder="Cantidad" />
@@ -148,25 +148,10 @@
 
         <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
           <ClearButton @click="clearForm" />
-          <SaveButton text="Guardar Caso" @click="handleSaveClick" :disabled="!isFormValid" />
+          <SaveButton text="Guardar Caso" @click="handleSaveClick" />
         </div>
 
-        <div v-if="patientVerified && !isFormValid" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div class="flex items-start">
-            <svg class="w-5 h-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <div>
-              <h4 class="text-sm font-semibold text-yellow-800 mb-2">Campos requeridos faltantes</h4>
-              <p class="text-sm text-yellow-700 mb-2">Para guardar el caso, debe completar los siguientes campos:</p>
-              <ul class="list-disc list-inside space-y-1 text-sm text-yellow-700">
-                <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <ValidationAlert :visible="validationState.showValidationError" :errors="validationErrors" />
+        <ValidationAlert :visible="validationState.showValidationError" :errors="validationErrors" @close="validationState.showValidationError = false" />
       </div>
 
       <div ref="notificationContainer">
@@ -259,7 +244,7 @@ import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/fo
 import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList, TestList, BodyRegionList } from '@/shared/components/List'
-import { DocsIcon, UserCircleIcon, TestIcon } from '@/assets/icons'
+import { DocsIcon, TestIcon, SearchIcon } from '@/assets/icons'
 
 
 
@@ -269,7 +254,7 @@ const createdCase = ref<CreatedCase | null>(null)
 const emit = defineEmits(['case-saved', 'patient-verified'])
 
 // Composables para manejo del formulario, verificación de pacientes, notificaciones y API
-const { formData, validationState, errors, warnings, isFormValid, validateForm, clearForm: clearCaseForm, handleNumeroMuestrasChange, addPruebaToMuestra, removePruebaFromMuestra } = useCaseForm()
+const { formData, validationState, errors, warnings, validateForm, clearForm: clearCaseForm, handleNumeroMuestrasChange, addPruebaToMuestra, removePruebaFromMuestra } = useCaseForm()
 const { searchError, patientVerified, verifiedPatient, searchPatientByDocumento, useNewPatient, clearVerification } = usePatientVerification()
 const { notification, showNotification, closeNotification } = useNotifications()
 const { createCase, error: apiError, clearState } = useCaseAPI()
@@ -315,6 +300,37 @@ const validationErrors = computed(() => {
   return errorsList
 })
 
+const getMedicoErrors = computed(() => {
+  if (!validationState.hasAttemptedSubmit) return []
+  if (errors.medicoSolicitante.length > 0) return errors.medicoSolicitante
+  if (!formData.medicoSolicitante?.trim()) return ['El médico solicitante es obligatorio']
+  return []
+})
+
+const getServicioErrors = computed(() => {
+  if (!validationState.hasAttemptedSubmit) return []
+  if (errors.servicio.length > 0) return errors.servicio
+  if (!formData.servicio?.trim()) return ['El servicio es obligatorio']
+  return []
+})
+
+const getRegionErrors = (muestraIndex: number) => {
+  if (!validationState.hasAttemptedSubmit) return [] as string[]
+  const muestra = formData.muestras[muestraIndex]
+  if (!muestra || !muestra.regionCuerpo?.trim()) return ['La región del cuerpo es obligatoria']
+  return [] as string[]
+}
+
+const getPruebaErrors = (muestraIndex: number, pruebaIndex: number) => {
+  if (!validationState.hasAttemptedSubmit) return [] as string[]
+  const muestra = formData.muestras[muestraIndex]
+  if (!muestra) return ['Debe seleccionar una prueba']
+  const prueba = muestra.pruebas[pruebaIndex]
+  if (!prueba || !String(prueba.code || '').trim()) return ['El código de la prueba es obligatorio']
+  if (prueba.cantidad == null || Number(prueba.cantidad) < 1) return ['La cantidad debe ser al menos 1']
+  return [] as string[]
+}
+
 const createdDateDisplay = computed(() => {
   const value = createdCase.value?.fechaIngreso || formData.fechaIngreso
   if (!value) return ''
@@ -340,9 +356,7 @@ const getMuestrasForNotification = () => {
 
 // Handlers de eventos
 const handlePacienteCodeInput = (value: string) => {
-  // Solo permitir números y limitar a 12 dígitos
-  const numericValue = value.replace(/\D/g, '').substring(0, 12)
-  pacienteCodeBusqueda.value = numericValue
+  pacienteCodeBusqueda.value = value
 }
 
 const handleTestSelected = (muestraIndex: number, pruebaIndex: number, test: any) => {
@@ -437,8 +451,17 @@ const clearForm = () => {
 }
 
 const handleSaveClick = async () => {
-  if (!patientVerified.value || !verifiedPatient.value || !validateForm()) {
+  // Validar formulario
+  const isValid = validateForm()
+  if (!isValid) { 
     validationState.showValidationError = true
+    // Solo mostrar ValidationAlert; no disparar notificación para evitar duplicados
+    return 
+  }
+  
+  // Verificar que hay paciente verificado
+  if (!patientVerified.value || !verifiedPatient.value) {
+    showNotification('error', 'Paciente Requerido', 'Debe buscar y verificar un paciente antes de crear el caso.', 5000)
     return
   }
 

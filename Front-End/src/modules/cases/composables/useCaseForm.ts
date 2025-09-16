@@ -167,9 +167,14 @@ export function useCaseForm() {
         errors.muestras.push(`Muestra ${index + 1}: Debe tener al menos una prueba`)
         hasErrors = true
       } else {
-        const pruebasValidas = muestra.pruebas.filter(prueba => prueba.code.trim() !== '')
-        if (pruebasValidas.length === 0) {
-          errors.muestras.push(`Muestra ${index + 1}: Debe especificar al menos una prueba`)
+        // Nuevo requisito: todas las pruebas deben tener código
+        const pruebasSinCodigo = muestra.pruebas
+          .map((prueba, pIndex) => ({ prueba, pIndex }))
+          .filter(x => x.prueba.code.trim() === '')
+        if (pruebasSinCodigo.length > 0) {
+          pruebasSinCodigo.forEach(x => {
+            errors.muestras.push(`Muestra ${index + 1}, Prueba ${x.pIndex + 1}: El código de la prueba es obligatorio`)
+          })
           hasErrors = true
         }
       }

@@ -18,7 +18,7 @@
           :disabled="disabled"
           :class="[
             'w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white appearance-none',
-            errorString ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300',
+            errorString ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : (selectedEntity ? 'border-green-500' : 'border-gray-300'),
             disabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'text-gray-900'
           ]"
           @focus="handleFocus"

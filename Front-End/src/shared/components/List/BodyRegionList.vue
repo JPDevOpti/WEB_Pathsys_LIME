@@ -18,7 +18,7 @@
           :disabled="disabled"
           :class="[
             'w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors',
-            errorString ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300',
+            errorString ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : (hasValue ? 'border-green-500' : 'border-gray-300'),
             disabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
           ]"
           @focus="handleFocus"
@@ -597,6 +597,10 @@ const availableOptions = computed<BodyRegion[]>(() => {
 // Computed
 const errorString = computed(() => {
   return Array.isArray(props.errors) ? props.errors.join(', ') : ''
+})
+
+const hasValue = computed(() => {
+  return !!(selectedRegion.value && String(selectedRegion.value).trim())
 })
 
 // Filtrar opciones basado en la búsqueda

@@ -13,7 +13,7 @@
         <input ref="inputRef" :value="displayText" type="text" :placeholder="placeholder"
           :disabled="disabled || isPatologoUser" :class="[
             'w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white appearance-none',
-            errorString ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300',
+            errorString ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : (hasValue ? 'border-green-500' : 'border-gray-300'),
             (disabled || isPatologoUser) ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'text-gray-900'
           ]" @focus="handleFocus" @blur="handleBlur" @input="handleInput" @keydown="handleKeyDown"
           autocomplete="off" />
@@ -164,6 +164,10 @@ const selectedPathologist = ref(props.modelValue)
 // Computed
 const errorString = computed(() => {
   return Array.isArray(props.errors) ? props.errors.join(', ') : ''
+})
+
+const hasValue = computed(() => {
+  return !!(selectedPathologist.value && String(selectedPathologist.value).trim())
 })
 
 // Convertir patólogos a opciones del select

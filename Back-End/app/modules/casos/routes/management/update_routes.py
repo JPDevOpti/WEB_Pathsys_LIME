@@ -9,7 +9,7 @@ from app.modules.casos.schemas.management.update import (
 )
 from app.core.exceptions import NotFoundError, BadRequestError
 
-router = APIRouter(prefix="/casos", tags=["Gestión de Casos - Actualización"])
+router = APIRouter(tags=["Gestión de Casos - Actualización"])
 
 
 def get_update_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> UpdateCaseRepository:

@@ -120,6 +120,10 @@
                   <p class="text-gray-600 font-medium">Entidad</p>
                   <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.paciente?.entidad_info?.nombre || foundCaseInfo.entidad_info?.nombre || 'N/A' }}</p>
                 </div>
+                <div class="space-y-1">
+                  <p class="text-gray-600 font-medium">Prioridad</p>
+                  <p class="text-gray-900 font-semibold">{{ foundCaseInfo.prioridad || 'N/A' }}</p>
+                </div>
                 <div class="space-y-1 sm:col-span-2">
                   <p class="text-gray-600 font-medium">Estado del Caso</p>
                   <p class="text-gray-900 font-semibold">{{ foundCaseInfo.estado || 'N/A' }}</p>
@@ -405,7 +409,7 @@ const estadoOptions = [
 // ============================================================================
 
 const isFormValid = computed(() => {
-  return (
+  const baseOk = (
     form.fechaIngreso.trim() !== '' &&
     form.medicoSolicitante.trim() !== '' &&
     form.servicio.trim() !== '' &&
@@ -415,6 +419,12 @@ const isFormValid = computed(() => {
     form.estado !== '' &&
     form.numeroMuestras !== ''
   )
+  const muestrasOk = form.muestras.length > 0 && form.muestras.every(m => {
+    if (!String(m.regionCuerpo || '').trim()) return false
+    if (!m.pruebas || m.pruebas.length === 0) return false
+    return m.pruebas.every(p => String(p.code || '').trim() !== '' && (p.cantidad ?? 0) >= 1)
+  })
+  return baseOk && muestrasOk
 })
 
 // Computed para verificar si el caso está completado
