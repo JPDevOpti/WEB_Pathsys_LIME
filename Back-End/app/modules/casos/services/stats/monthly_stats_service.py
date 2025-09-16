@@ -12,30 +12,35 @@ class MonthlyStatsService:
         self.cache = cache_service
         self.repo = MonthlyStatsRepository(database)
 
-    async def casos_por_mes(self, year: int) -> Dict[str, Any]:
+    async def casos_por_mes(self, year: int, no_cache: bool = False) -> Dict[str, Any]:
         key = f"casos_por_mes:{year}"
-        cached = await self.cache.get(key)
-        if cached is not None:
-            return cached
+        if not no_cache:
+            cached = await self.cache.get(key)
+            if cached is not None:
+                return cached
         data = await self.repo.get_casos_por_mes(year)
-        await self.cache.set(key, data, 600)
+        if not no_cache:
+            await self.cache.set(key, data, 600)
         return data
 
-    async def casos_por_mes_patologo(self, year: int, patologo_codigo: str) -> Dict[str, Any]:
+    async def casos_por_mes_patologo(self, year: int, patologo_codigo: str, no_cache: bool = False) -> Dict[str, Any]:
         key = f"casos_por_mes_patologo:{year}:{patologo_codigo}"
-        cached = await self.cache.get(key)
-        if cached is not None:
-            return cached
+        if not no_cache:
+            cached = await self.cache.get(key)
+            if cached is not None:
+                return cached
         data = await self.repo.get_casos_por_mes_patologo(year, patologo_codigo)
-        await self.cache.set(key, data, 600)
+        if not no_cache:
+            await self.cache.set(key, data, 600)
         return data
 
-    async def mes_actual(self) -> Dict[str, Dict[str, int | float]]:
+    async def mes_actual(self, no_cache: bool = False) -> Dict[str, Dict[str, int | float]]:
         """Resumen mensual (mes actual vs anterior) para pacientes y casos."""
         key = "mes_actual:general"
-        cached = await self.cache.get(key)
-        if cached is not None:
-            return cached
+        if not no_cache:
+            cached = await self.cache.get(key)
+            if cached is not None:
+                return cached
         base = await self.repo.get_mes_actual()
         out = {
             "pacientes": {
@@ -51,14 +56,16 @@ class MonthlyStatsService:
                 "cambio_porcentual": self._pct(base["casos"]["mes_anterior"], base["casos"].get("mes_anterior_anterior", 0)),
             }
         }
-        await self.cache.set(key, out, 300)
+        if not no_cache:
+            await self.cache.set(key, out, 300)
         return out
 
-    async def mes_actual_por_patologo(self, patologo_codigo: str) -> Dict[str, Dict[str, int | float]]:
+    async def mes_actual_por_patologo(self, patologo_codigo: str, no_cache: bool = False) -> Dict[str, Dict[str, int | float]]:
         key = f"mes_actual:patologo:{patologo_codigo}"
-        cached = await self.cache.get(key)
-        if cached is not None:
-            return cached
+        if not no_cache:
+            cached = await self.cache.get(key)
+            if cached is not None:
+                return cached
         base = await self.repo.get_mes_actual_patologo(patologo_codigo)
         out = {
             "pacientes": {
@@ -74,7 +81,8 @@ class MonthlyStatsService:
                 "cambio_porcentual": self._pct(base["casos"]["mes_anterior"], base["casos"].get("mes_anterior_anterior", 0)),
             }
         }
-        await self.cache.set(key, out, 300)
+        if not no_cache:
+            await self.cache.set(key, out, 300)
         return out
 
     def _pct(self, actual: int, anterior: int) -> float:
