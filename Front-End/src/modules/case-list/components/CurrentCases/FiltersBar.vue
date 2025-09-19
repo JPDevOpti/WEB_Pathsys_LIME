@@ -78,7 +78,7 @@
           </template>
           Actualizar
         </BaseButton>
-        <SearchButton text="Buscar" size="sm" :disabled="isLoading" @click="() => { emit('update:modelValue', { ...local }); emit('search', { ...local }) }" />
+        <SearchButton text="Buscar" size="sm" :disabled="isLoading" @click="search" />
       </div>
     </template>
   </ComponentCard>
@@ -209,6 +209,11 @@ function onPathologistSelected(p: any | null) {
 
 function onEntitySelected(e: any | null) {
   local.selectedEntity = e?.nombre || ''
+}
+
+function search() {
+  // Solo emitir la búsqueda sin limpiar los filtros
+  emit('search', { ...local })
 }
 
 

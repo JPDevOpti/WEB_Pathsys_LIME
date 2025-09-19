@@ -13,6 +13,15 @@ class CaseRepository:
         await self.collection.create_index("patient_info.patient_code")
         await self.collection.create_index("state")
         await self.collection.create_index("created_at")
+        await self.collection.create_index("assigned_pathologist.name")
+        await self.collection.create_index("patient_info.entity_info.name")
+        await self.collection.create_index("samples.tests.id")
+        # Índice compuesto para búsquedas comunes
+        await self.collection.create_index([
+            ("created_at", -1),
+            ("state", 1),
+            ("assigned_pathologist.name", 1)
+        ])
 
     async def get_by_case_code(self, case_code: str) -> Optional[Dict[str, Any]]:
         return await self.collection.find_one({"case_code": case_code})

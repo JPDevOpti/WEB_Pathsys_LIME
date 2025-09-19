@@ -203,7 +203,7 @@ import { computed, ref } from 'vue'
 import type { Case } from '../../types/case.types'
 import { BaseButton } from '@/shared/components'
 import { useSidebar } from '@/shared/composables/SidebarControl'
-import casesApiService from '@/modules/cases/services/casesApi.service'
+import { casesApiService } from '@/modules/cases/services'
 
 interface Props {
   modelValue: boolean
@@ -384,7 +384,8 @@ function emitConfirm() {
       entregadoA.value = ''
       entregadoAError.value = ''
     })
-    .catch(() => {
+    .catch((error) => {
+      console.error('Error al completar casos:', error)
       // En caso de error simplemente mantenemos abierto? podría mejorarse con estado de error
       // Aquí se podría emitir un evento 'error' si se define posteriormente.
     })

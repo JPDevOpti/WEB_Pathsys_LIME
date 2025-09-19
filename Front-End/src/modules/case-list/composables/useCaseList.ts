@@ -65,14 +65,25 @@ export function useCaseList() {
       }
 
       // Construir parámetros de servidor para paginado y filtros
-      const serverParams: Record<string, any> = { skip: 0, limit: 100, sort_field: 'caso_code', sort_direction: -1 }
-      if (filters.value.searchQuery) serverParams.query = filters.value.searchQuery
-      if (filters.value.searchPathologist) serverParams.patologo_nombre = filters.value.searchPathologist
-      if (filters.value.selectedEntity) serverParams.entidad_nombre = filters.value.selectedEntity
-      if (filters.value.selectedStatus) serverParams.estado = filters.value.selectedStatus
-      if (filters.value.selectedTest) serverParams.prueba = filters.value.selectedTest
-      if (filters.value.dateFrom) serverParams.fecha_ingreso_desde = ddmmyyyyToISO(filters.value.dateFrom)
-      if (filters.value.dateTo) serverParams.fecha_ingreso_hasta = ddmmyyyyToISO(filters.value.dateTo)
+      const serverParams: Record<string, any> = { skip: 0 }
+      
+      // Si es una búsqueda completa (fullSearch), cargar todos los casos
+      // Si es carga inicial, limitar a 100 casos
+      if (fullSearch) {
+        // Búsqueda con filtros: cargar todos los casos que coincidan (máximo 100,000 según backend)
+        serverParams.limit = 100000
+      } else {
+        // Carga inicial: solo 100 casos
+        serverParams.limit = 100
+      }
+      
+      if (filters.value.searchQuery) serverParams.search = filters.value.searchQuery
+      if (filters.value.searchPathologist) serverParams.pathologist = filters.value.searchPathologist
+      if (filters.value.selectedEntity) serverParams.entity = filters.value.selectedEntity
+      if (filters.value.selectedStatus) serverParams.state = filters.value.selectedStatus
+      if (filters.value.selectedTest) serverParams.test = filters.value.selectedTest
+      if (filters.value.dateFrom) serverParams.date_from = ddmmyyyyToISO(filters.value.dateFrom)
+      if (filters.value.dateTo) serverParams.date_to = ddmmyyyyToISO(filters.value.dateTo)
 
       const data: BackendCase[] = fullSearch ? await searchCases(serverParams) : await listCases(serverParams)
       cases.value = data.map((bk) => transformBackendCase(bk, testsCatalog))
@@ -92,24 +103,31 @@ export function useCaseList() {
       return ''
     }
     
-    const id = typeof bk._id === 'string' ? bk._id : 
-               (bk._id as any)?.$oid || 
+    // Manejar tanto el nuevo formato como el legacy
+    const id = bk.id || 
+               (typeof bk._id === 'string' ? bk._id : (bk._id as any)?.$oid) || 
+               bk.case_code || 
                bk.caso_code || 
                `case-${Math.random().toString(36).substr(2, 9)}`
-    const receivedAt = getDate(bk.fecha_creacion)
-    const deliveredAt = getDate(bk.fecha_entrega)  // Fecha de entrega real
-    const signedAt = getDate(bk.fecha_firma)       // Fecha de firma específica
+    
+    const receivedAt = getDate(bk.created_at || bk.fecha_creacion)
+    const deliveredAt = getDate(bk.updated_at || bk.fecha_entrega)
+    const signedAt = getDate(bk.fecha_firma)
 
     // aplanar pruebas como "code - name" expandidas por cantidad
     const flatTests: string[] = []
     const subsamples: Case['subsamples'] = []
-    if (Array.isArray(bk.muestras)) {
-      bk.muestras.forEach((m) => {
+    
+    // Manejar tanto el nuevo formato (samples) como el legacy (muestras)
+    const samples = bk.samples || bk.muestras || []
+    if (Array.isArray(samples)) {
+      samples.forEach((m: any) => {
         const items: { id: string; name: string; quantity: number }[] = []
-        m.pruebas?.forEach((p) => {
+        const tests = m.tests || m.pruebas || []
+        tests.forEach((p: any) => {
           const code = p.id || ''
-          const name = p.nombre || testsCatalog.get(code) || ''
-          const cantidad = p.cantidad || 1
+          const name = p.name || p.nombre || testsCatalog.get(code) || ''
+          const cantidad = p.quantity || p.cantidad || 1
           
           // Expandir según cantidad para flatTests (para el agrupamiento en tabla)
           if (code) {
@@ -122,7 +140,10 @@ export function useCaseList() {
           // Para subsamples mantener la estructura con cantidad
           items.push({ id: code, name: name || code, quantity: cantidad })
         })
-        subsamples.push({ bodyRegion: m.region_cuerpo || '', tests: items })
+        subsamples.push({ 
+          bodyRegion: m.body_region || m.region_cuerpo || '', 
+          tests: items 
+        })
       })
     }
 
@@ -136,45 +157,55 @@ export function useCaseList() {
       return s || 'En proceso'
     }
 
-    const finalStatus = mapStatus(bk.estado)
+    // Manejar tanto el nuevo formato como el legacy para el estado
+    const finalStatus = mapStatus(bk.state || bk.estado)
     const finalDeliveredAt = finalStatus === 'Por entregar' ? '' : deliveredAt
 
+    // Manejar información del paciente tanto del nuevo formato como del legacy
+    const patientInfo = bk.patient_info || bk.paciente
+    const caseCode = bk.case_code || bk.caso_code || id
+    const sampleType = samples[0]?.body_region || samples[0]?.region_cuerpo || (patientInfo?.care_type || patientInfo?.tipo_atencion || '')
+    
     return {
       id,
-      caseCode: bk.caso_code || id,
-      sampleType: bk.muestras?.[0]?.region_cuerpo || (bk.paciente?.tipo_atencion || ''),
+      caseCode,
+      sampleType,
       patient: {
-        // El backend actual usa paciente_code como identificador principal del paciente
-        id: bk.paciente?.paciente_code || '',
-        // Mostrar el código del paciente (antes cedula) en la columna de documento
-        dni: bk.paciente?.paciente_code || bk.paciente?.cedula || '',
-        fullName: bk.paciente?.nombre || '',
-        sex: bk.paciente?.sexo || '',
-        age: Number(bk.paciente?.edad || 0),
-        entity: bk.paciente?.entidad_info?.nombre || '',
-        attentionType: bk.paciente?.tipo_atencion || '',
-        notes: bk.paciente?.observaciones || '',
-        createdAt: getDate(bk.fecha_creacion),
-        updatedAt: getDate(bk.fecha_actualizacion),
+        // Manejar tanto el nuevo formato como el legacy
+        id: patientInfo?.patient_code || patientInfo?.paciente_code || '',
+        dni: patientInfo?.patient_code || patientInfo?.paciente_code || patientInfo?.cedula || '',
+        fullName: patientInfo?.name || patientInfo?.nombre || '',
+        sex: patientInfo?.gender || patientInfo?.sexo || '',
+        age: Number(patientInfo?.age || patientInfo?.edad || 0),
+        entity: patientInfo?.entity_info?.name || patientInfo?.entidad_info?.nombre || '',
+        attentionType: patientInfo?.care_type || patientInfo?.tipo_atencion || '',
+        notes: patientInfo?.observations || patientInfo?.observaciones || '',
+        createdAt: getDate(bk.created_at || bk.fecha_creacion),
+        updatedAt: getDate(bk.updated_at || bk.fecha_actualizacion),
       },
-      entity: bk.paciente?.entidad_info?.nombre || '',
-      requester: typeof bk.medico_solicitante === 'string' ? bk.medico_solicitante : (bk.medico_solicitante?.nombre || ''),
+      entity: patientInfo?.entity_info?.name || patientInfo?.entidad_info?.nombre || '',
+      requester: bk.requesting_physician || 
+                (typeof bk.medico_solicitante === 'string' ? bk.medico_solicitante : (bk.medico_solicitante?.nombre || '')),
       status: finalStatus,
       receivedAt,
       deliveredAt: finalDeliveredAt,
       signedAt,  // Nueva: fecha de firma específica
       tests: flatTests,
-      pathologist: bk.patologo_asignado?.nombre || '',
-      patologo_asignado: bk.patologo_asignado ? {
+      pathologist: bk.assigned_pathologist?.name || bk.patologo_asignado?.nombre || '',
+      patologo_asignado: bk.assigned_pathologist ? {
+        codigo: bk.assigned_pathologist.id || '',
+        nombre: bk.assigned_pathologist.name || '',
+        firma: undefined // El nuevo backend no incluye firma en este campo
+      } : (bk.patologo_asignado ? {
         codigo: bk.patologo_asignado.codigo || '',
         nombre: bk.patologo_asignado.nombre || '',
         firma: bk.patologo_asignado.firma
-      } : undefined,
-      notes: bk.observaciones_generales || '',
-      servicio: bk.servicio || '',
+      } : undefined),
+      notes: bk.observations || bk.observaciones_generales || '',
+      servicio: bk.service || bk.servicio || '',
       // Incorporar prioridad (campo nuevo en backend). Mantenemos compatibilidad aunque el tipo Case aún no lo tenga.
       // @ts-ignore
-      priority: (bk as any).prioridad || (bk as any).prioridad_caso || 'Normal',
+      priority: bk.priority || (bk as any).prioridad || (bk as any).prioridad_caso || 'Normal',
       // Campo oportunidad para días hábiles al completar
       oportunidad: (bk as any).oportunidad || undefined,
       // Campo entregado_a para registro de entrega

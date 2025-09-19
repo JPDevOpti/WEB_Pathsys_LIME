@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from typing import Optional, List
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.config.database import get_database
 from app.modules.cases.schemas.case import CaseCreate, CaseUpdate, CaseResponse
@@ -43,6 +44,37 @@ async def delete_case(case_code: str, service: CaseService = Depends(get_service
         return await service.delete_case(case_code)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/", response_model=List[CaseResponse])
+async def list_cases(
+    skip: int = Query(0, ge=0, description="Número de casos a omitir"),
+    limit: int = Query(100, ge=1, le=100000, description="Número máximo de casos a retornar"),
+    search: Optional[str] = Query(None, description="Búsqueda general por nombre, documento o código de caso"),
+    pathologist: Optional[str] = Query(None, description="Filtrar por patólogo asignado"),
+    entity: Optional[str] = Query(None, description="Filtrar por entidad"),
+    state: Optional[str] = Query(None, description="Filtrar por estado del caso"),
+    test: Optional[str] = Query(None, description="Filtrar por prueba específica"),
+    date_from: Optional[str] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
+    service: CaseService = Depends(get_service)
+):
+    try:
+        return await service.list_cases(
+            skip=skip,
+            limit=limit,
+            search=search,
+            pathologist=pathologist,
+            entity=entity,
+            state=state,
+            test=test,
+            date_from=date_from,
+            date_to=date_to
+        )
+    except BadRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

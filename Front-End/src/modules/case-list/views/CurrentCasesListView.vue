@@ -112,7 +112,12 @@ const hasActiveFilters = computed(() => {
 })
 
 function reload() { loadCases(false) }
-function searchFullWith(_f:any) { loadCases(true) }
+function searchFullWith(f: any) { 
+  // Actualizar los filtros con los valores de búsqueda
+  Object.assign(filters.value, f)
+  // Cargar casos con búsqueda completa
+  loadCases(true) 
+}
 function exportExcel() { exportCasesToExcel(filteredCases.value) }
 function performCase(_c: any) { /* navegación se integrará luego */ }
 function editCase(c: any) {
