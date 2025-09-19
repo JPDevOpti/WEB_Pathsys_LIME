@@ -41,9 +41,10 @@ export class AuthApiService {
       const mappedUser: User = {
         id: backendUser.id,
         email: backendUser.email,
-        rol: backendUser.rol,
-        activo: backendUser.is_active ?? true,
-        nombre: backendUser.nombre
+        role: backendUser.role,
+        is_active: backendUser.is_active ?? true,
+        name: backendUser.name,
+        administrator_code: backendUser.administrator_code
       }
       return {
         access_token: backendToken.access_token,
@@ -81,9 +82,10 @@ export class AuthApiService {
       const mapped: User = {
         id: data.id,
         email: data.email,
-        rol: data.rol,
-        activo: data.is_active ?? true,
-        nombre: data.nombre
+        role: data.role,
+        is_active: data.is_active ?? true,
+        name: data.name,
+        administrator_code: data.administrator_code
       }
       return mapped
     } catch (error) {
@@ -121,9 +123,10 @@ export class AuthApiService {
       const user: User = {
         id: data.id,
         email: data.email,
-        rol: data.rol,
-        activo: data.is_active ?? true,
-        nombre: data.nombre
+        role: data.role,
+        is_active: data.is_active ?? true,
+        name: data.name,
+        administrator_code: data.administrator_code
       }
       return { valid: true, user }
     } catch (error) {

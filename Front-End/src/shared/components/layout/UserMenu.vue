@@ -75,15 +75,17 @@ import { UserCircleIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, DoctorIcon, 
 import { RouterLink, useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { useRoleTranslation } from '@/shared/composables/useRoleTranslation'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const { translateRole } = useRoleTranslation()
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLDivElement | null>(null)
 
 // Computed properties para datos del usuario
 const userName = computed(() => {
-  return authStore.user?.nombre || authStore.user?.email?.split('@')[0] || 'Usuario'
+  return authStore.user?.name || authStore.user?.email?.split('@')[0] || 'Usuario'
 })
 
 const userEmail = computed(() => {
@@ -91,35 +93,19 @@ const userEmail = computed(() => {
 })
 
 const userRole = computed(() => {
-  const r = (
-    (authStore.user as any)?.rol ??
-    (authStore.user as any)?.roles?.[0] ??
-    (authStore.user as any)?.role ??
-    ''
-  ).toString().trim().toLowerCase()
-
-  const roleMap: Record<string, string> = {
-    administrador: 'Administrador',
-    admin: 'Administrador',
-    patologo: 'Patólogo',
-    auxiliar: 'Auxiliar',
-    residente: 'Residente',
-    facturacion: 'Usuario de Facturación',
-    paciente: 'Paciente'
-  }
-  if (!r) return 'Sin rol'
-  return roleMap[r] || (r.charAt(0).toUpperCase() + r.slice(1))
+  const role = authStore.user?.role || ''
+  return translateRole(role) || 'Sin rol'
 })
 
 // Icono por rol para coherencia con el perfil
 
 const getRoleIcon = () => {
-  const raw = (authStore.user?.rol || '').toString().trim().toLowerCase()
+  const raw = (authStore.user?.role || '').toString().trim().toLowerCase()
   if (raw.includes('admin')) return SettingsIcon
-  if (raw.includes('patolog')) return DoctorIcon
+  if (raw.includes('pathologist')) return DoctorIcon
   if (raw.includes('resident')) return ResidenteIcon
-  if (raw.includes('auxiliar')) return AuxiliarIcon
-  if (raw.includes('facturacion') || raw.includes('user')) return DolarIcon
+  if (raw.includes('auxiliary')) return AuxiliarIcon
+  if (raw.includes('billing') || raw.includes('user')) return DolarIcon
   return UserCircleIcon
 }
 

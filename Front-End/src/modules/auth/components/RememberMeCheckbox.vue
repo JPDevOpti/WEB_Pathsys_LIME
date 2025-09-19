@@ -1,7 +1,7 @@
 <template>
   <FormCheckbox
     v-model="rememberMeValue"
-    label="Mantener sesión iniciada"
+    label="Keep me signed in"
   />
 </template>
 

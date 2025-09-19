@@ -17,17 +17,14 @@ export const useAuthStore = defineStore('auth', () => {
   // Getters
   const isAuthenticated = computed(() => !!token.value && !!user.value)
   const userRole = computed(() => {
-    if (!user.value?.roles || !Array.isArray(user.value.roles) || user.value.roles.length === 0) {
-      return null;
-    }
-    return user.value.roles[0]; // Tomar el primer rol del array
+    return user.value?.role || null
   })
-  const isAdministrador = computed(() => userRole.value === 'administrador')
-  const isAuxiliar = computed(() => userRole.value === 'auxiliar')
-  const isPatologo = computed(() => userRole.value === 'patologo')
-  const isResidente = computed(() => userRole.value === 'residente')
-  const isPaciente = computed(() => userRole.value === 'paciente')
-  const isFacturacion = computed(() => userRole.value === 'facturacion' || userRole.value === 'user')
+  const isAdministrator = computed(() => userRole.value === 'administrator')
+  const isAuxiliary = computed(() => userRole.value === 'auxiliary')
+  const isPathologist = computed(() => userRole.value === 'pathologist')
+  const isResident = computed(() => userRole.value === 'resident')
+  const isPatient = computed(() => userRole.value === 'patient')
+  const isBilling = computed(() => userRole.value === 'billing')
 
   // Acciones
   const login = async (credentials: LoginRequest): Promise<boolean> => {
@@ -53,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (err) {
       const authError = err as AuthError
-      error.value = authError.message || 'Error al iniciar sesión'
+      error.value = authError.message || 'Error signing in'
       return false
     } finally {
       isLoading.value = false
@@ -187,12 +184,12 @@ export const useAuthStore = defineStore('auth', () => {
     // Getters
     isAuthenticated,
     userRole,
-    isAdministrador,
-    isAuxiliar,
-    isPatologo,
-    isResidente,
-    isPaciente,
-    isFacturacion,
+    isAdministrator,
+    isAuxiliary,
+    isPathologist,
+    isResident,
+    isPatient,
+    isBilling,
     
     // Acciones
     login,

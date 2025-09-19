@@ -19,21 +19,21 @@ class AuthService:
     async def login(self, email: EmailStr, password: str) -> Dict[str, Any]:
         user = await self.repo.get_user_by_email(email)
         if not user:
-            raise ValueError("Credenciales inválidas")
+            raise ValueError("Invalid credentials")
 
         if not verify_password(password, user.get("password_hash", "")):
-            raise ValueError("Credenciales inválidas")
+            raise ValueError("Invalid credentials")
 
         expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         token = create_access_token(subject=user["_id"], expires_delta=expires_delta)
 
         public_user = {
             "id": user.get("_id"),
-            "nombre": user.get("nombre"),
+            "name": user.get("name"),
             "email": user.get("email"),
-            "rol": user.get("rol"),
+            "role": user.get("role"),
             "is_active": user.get("is_active", True),
-            "administrador_code": user.get("administrador_code"),
+            "administrator_code": user.get("administrator_code"),
         }
 
         return {
@@ -48,14 +48,14 @@ class AuthService:
     async def get_user_public_by_id(self, user_id: str) -> Dict[str, Any]:
         user = await self.repo.get_user_by_id(user_id)
         if not user:
-            raise ValueError("Usuario no encontrado o inactivo")
+            raise ValueError("User not found or inactive")
         return {
             "id": user.get("_id"),
-            "nombre": user.get("nombre"),
+            "name": user.get("name"),
             "email": user.get("email"),
-            "rol": user.get("rol"),
+            "role": user.get("role"),
             "is_active": user.get("is_active", True),
-            "administrador_code": user.get("administrador_code"),
+            "administrator_code": user.get("administrator_code"),
         }
 
 

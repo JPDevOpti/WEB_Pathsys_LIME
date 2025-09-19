@@ -18,13 +18,13 @@ async def login(payload: LoginRequest):
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
     except Exception:
-        raise HTTPException(status_code=500, detail="Error interno de autenticación")
+        raise HTTPException(status_code=500, detail="Internal authentication error")
 
 
 async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
     subject = verify_token(token)
     if subject is None:
-        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
     return subject
 
 
@@ -37,6 +37,6 @@ async def me(user_id: str = Depends(get_current_user_id)):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception:
-        raise HTTPException(status_code=500, detail="Error interno")
+        raise HTTPException(status_code=500, detail="Internal error")
 
 

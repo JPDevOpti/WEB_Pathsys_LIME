@@ -2,35 +2,35 @@ import { computed } from 'vue'
 
 export function useAuthValidation() {
   /**
-   * Valida si el email tiene un formato válido
+   * Validates if the email has a valid format
    */
   const isValidEmail = (email: string): boolean => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   }
 
   /**
-   * Valida si la contraseña cumple con los requisitos mínimos
+   * Validates if the password meets minimum requirements
    */
   const isValidPassword = (password: string): boolean => {
     return password.length >= 6
   }
 
   /**
-   * Valida el formulario completo de login
+   * Validates the complete login form
    */
   const validateLoginForm = (email: string, password: string) => {
     const errors: string[] = []
 
     if (!email) {
-      errors.push('El correo electrónico es requerido')
+      errors.push('Email is required')
     } else if (!isValidEmail(email)) {
-      errors.push('Por favor ingresa un correo electrónico válido')
+      errors.push('Please enter a valid email address')
     }
 
     if (!password) {
-      errors.push('La contraseña es requerida')
+      errors.push('Password is required')
     } else if (!isValidPassword(password)) {
-      errors.push('La contraseña debe tener al menos 6 caracteres')
+      errors.push('Password must have at least 6 characters')
     }
 
     return {
@@ -40,17 +40,17 @@ export function useAuthValidation() {
   }
 
   /**
-   * Obtiene el mensaje de error para un campo específico
+   * Gets the error message for a specific field
    */
   const getFieldError = (field: string, value: string): string => {
     switch (field) {
       case 'email':
-        if (!value) return 'El correo electrónico es requerido'
-        if (!isValidEmail(value)) return 'Por favor ingresa un correo electrónico válido'
+        if (!value) return 'Email is required'
+        if (!isValidEmail(value)) return 'Please enter a valid email address'
         break
       case 'password':
-        if (!value) return 'La contraseña es requerida'
-        if (!isValidPassword(value)) return 'La contraseña debe tener al menos 6 caracteres'
+        if (!value) return 'Password is required'
+        if (!isValidPassword(value)) return 'Password must have at least 6 characters'
         break
     }
     return ''

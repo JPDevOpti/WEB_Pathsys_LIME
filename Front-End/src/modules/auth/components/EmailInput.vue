@@ -4,7 +4,7 @@
       for="email"
       class="mb-1.5 block text-sm font-semibold text-gray-700"
     >
-      Correo Electrónico<span class="text-error-500">*</span>
+      Email Address<span class="text-error-500">*</span>
     </label>
     <div class="relative">
       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-500 transition-colors duration-300">
@@ -59,7 +59,7 @@ const emailValue = computed({
 const emailError = computed(() => {
   if (!emailValue.value) return ''
   if (!isValidEmail(emailValue.value)) {
-    return 'Por favor ingresa un correo electrónico válido'
+    return 'Please enter a valid email address'
   }
   return ''
 })

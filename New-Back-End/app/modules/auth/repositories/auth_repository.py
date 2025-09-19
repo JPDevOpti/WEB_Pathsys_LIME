@@ -7,7 +7,7 @@ from bson import ObjectId
 class AuthRepository:
     def __init__(self, db: AsyncIOMotorDatabase) -> None:
         self.db = db
-        self.collection = db.get_collection("usuarios")
+        self.collection = db.get_collection("users")
 
     async def get_user_by_email(self, email: EmailStr) -> Optional[Dict[str, Any]]:
         doc = await self.collection.find_one({"email": email, "is_active": True})

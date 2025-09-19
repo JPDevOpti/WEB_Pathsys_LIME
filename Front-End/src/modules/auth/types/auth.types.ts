@@ -17,16 +17,17 @@ export interface LoginResponse {
 export interface User {
   id: string
   email: string
-  rol: string
-  activo: boolean
-  nombre?: string
-  ultimo_acceso?: string
+  role: string
+  is_active: boolean
+  name?: string
+  administrator_code?: string
+  last_access?: string
 }
 
 export interface TokenPayload {
   user_id: string
   email: string
-  rol: string
+  role: string
   exp: number
   iat: number
 }
@@ -50,4 +51,4 @@ export interface AuthError {
   code?: string
 }
 
-export type RolEnum = 'admin' | 'patologo' | 'residente' | 'recepcionista' | 'auxiliar' | 'facturacion'
+export type RoleEnum = 'administrator' | 'pathologist' | 'resident' | 'receptionist' | 'auxiliary' | 'billing'

@@ -40,10 +40,10 @@
           <h1
             class="mb-2 font-extrabold text-gray-800 text-3xl sm:text-4xl tracking-tight drop-shadow-sm"
           >
-            Iniciar Sesión
+            Sign In
           </h1>
           <p class="text-base text-gray-500 font-normal">
-            ¡Ingresa tu correo electrónico y contraseña para iniciar sesión!
+            Enter your email and password to sign in!
           </p>
         </div>
 
@@ -70,8 +70,8 @@
             <div class="pt-2">
               <FormButton
                 type="submit"
-                text="Iniciar Sesión"
-                loading-text="Iniciando sesión..."
+                text="Sign In"
+                loading-text="Signing in..."
                 :loading="isLoading"
                 :disabled="!isFormValid"
                 icon="ArrowRightIcon"

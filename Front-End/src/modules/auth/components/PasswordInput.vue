@@ -4,7 +4,7 @@
       for="password"
       class="mb-1.5 block text-sm font-semibold text-gray-700"
     >
-      Contraseña<span class="text-error-500">*</span>
+      Password<span class="text-error-500">*</span>
     </label>
     <div class="relative">
       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-500 transition-colors duration-300">
@@ -16,7 +16,7 @@
         v-model="passwordValue"
         :type="showPassword ? 'text' : 'password'"
         id="password"
-        placeholder="Ingresa tu contraseña"
+        placeholder="Enter your password"
         class="h-12 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-10 pr-11 text-base text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-200/40 transition-all duration-300 outline-none"
         :class="{'border-success-500': passwordValue && passwordValue.length >= 6}"
       />

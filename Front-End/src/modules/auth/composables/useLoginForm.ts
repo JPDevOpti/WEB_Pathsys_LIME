@@ -5,7 +5,7 @@ import type { LoginRequest } from '../types/auth.types'
 
 export function useLoginForm() {
   const authStore = useAuthStore()
-  const { validateLoginForm, isValidEmail, isValidPassword } = useAuthValidation()
+  const { isValidEmail, isValidPassword } = useAuthValidation()
 
   const email = ref('')
   const password = ref('')
@@ -16,7 +16,7 @@ export function useLoginForm() {
   const emailError = computed(() => {
     if (!email.value) return ''
     if (!isValidEmail(email.value)) {
-      return 'Por favor ingresa un correo electrónico válido'
+      return 'Please enter a valid email address'
     }
     return ''
   })
@@ -24,7 +24,7 @@ export function useLoginForm() {
   const passwordError = computed(() => {
     if (!password.value) return ''
     if (!isValidPassword(password.value)) {
-      return 'La contraseña debe tener al menos 6 caracteres'
+      return 'Password must have at least 6 characters'
     }
     return ''
   })
@@ -38,7 +38,7 @@ export function useLoginForm() {
 
   const handleSubmit = async (): Promise<boolean> => {
     if (!isFormValid.value) {
-      error.value = 'Por favor completa todos los campos correctamente'
+      error.value = 'Please complete all fields correctly'
       return false
     }
 
@@ -58,11 +58,11 @@ export function useLoginForm() {
         resetForm()
         return true
       } else {
-        error.value = authStore.error || 'Error al iniciar sesión'
+        error.value = authStore.error || 'Error signing in'
         return false
       }
     } catch (err) {
-      error.value = 'Error de conexión. Verifica tu conexión a internet.'
+      error.value = 'Connection error. Check your internet connection.'
       return false
     } finally {
       isLoading.value = false
