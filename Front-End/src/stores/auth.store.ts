@@ -150,9 +150,9 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = savedToken
         user.value = JSON.parse(savedUser)
         
-
-        
         // Debug del estado completo
+        console.log('AuthStore - Initialized user:', user.value)
+        console.log('AuthStore - User role:', user.value?.role)
         debugUserState()
 
         // NO ejecutar verificación inmediatamente para preservar los datos del usuario

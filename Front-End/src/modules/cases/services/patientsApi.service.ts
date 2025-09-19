@@ -28,19 +28,17 @@ interface PatientResponse {
 
 export class PatientsApiService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.PATIENTS
+
   async getPatientByDocumento(documento: string): Promise<PatientResponse | null> {
     try {
       const response = await apiClient.get<any>(`${this.endpoint}/${documento}`)
-      // Verificar si los datos ya vienen en español o necesitan transformación
-      if (response.nombre || response.cedula || response.sexo) {
-        // Ya vienen en español, devolver directamente
-        return response
-      } else {
-        // Vienen en inglés, transformar a español
-        return this.transformToSpanishResponse(response)
-      }
+      return response.nombre || response.cedula || response.sexo 
+        ? response 
+        : this.transformToSpanishResponse(response)
     } catch (error: any) {
-      if (error.response?.status === 404) return null
+      if (error.response?.status === 404) {
+        throw new Error(`No se encontró un paciente con el código ${documento}`)
+      }
       throw new Error(`Error al buscar paciente: ${error.message}`)
     }
   }
@@ -51,46 +49,19 @@ export class PatientsApiService {
       const response = await apiClient.post<any>(this.endpoint, patientRequest)
       return this.transformToSpanishResponse(response)
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        let errorMessage = 'Error de validación: '
-        if (Array.isArray(error.response.data.detail)) {
-          errorMessage += error.response.data.detail.map((err: any) => {
-            if (typeof err === 'object' && err !== null) {
-              return err.msg || err.loc?.join('.') || JSON.stringify(err)
-            }
-            return String(err)
-          }).join(', ')
-        } else {
-          errorMessage += JSON.stringify(error.response.data.detail)
-        }
-        throw new Error(errorMessage)
-      } else if (error.response?.data?.message) {
-        const message = String(error.response.data.message)
-        if (message.toLowerCase().includes('duplicad') || message.toLowerCase().includes('ya existe') || message.toLowerCase().includes('repetid')) {
-          throw new Error('Ya existe un paciente con este documento de identidad')
-        }
-        throw new Error(message)
-      } else if (error.response?.status === 409) {
-        throw new Error('Ya existe un paciente con este documento de identidad')
-      } else if (error.response?.status === 400) {
-        throw new Error('Datos del paciente inválidos')
-      } else if (error.response?.status === 422) {
-        throw new Error('Error de validación en los datos del paciente')
-      } else if (error.response?.status === 500) {
-        const errorText = error.message || 'Error interno del servidor'
-        if (errorText.toLowerCase().includes('duplicad') || errorText.toLowerCase().includes('ya existe') || errorText.toLowerCase().includes('repetid')) {
-          throw new Error('Ya existe un paciente con este documento de identidad')
-        }
-        throw new Error('Error interno del servidor al registrar el paciente')
-      } else {
-        throw new Error(error.message || 'Error interno del servidor al registrar el paciente')
-      }
+      throw this.handleApiError(error, 'registrar el paciente')
     }
   }
 
   async getPatientByCedula(cedula: string): Promise<PatientResponse | null> {
-    // Mantener por compatibilidad en otros lugares por ahora si existiera
-    return this.getPatientByDocumento(cedula)
+    try {
+      return await this.getPatientByDocumento(cedula)
+    } catch (error: any) {
+      if (error.message?.includes('No se encontró un paciente con el código')) {
+        throw new Error(`No se encontró un paciente con el código ${cedula}`)
+      }
+      throw error
+    }
   }
 
   async updatePatient(cedula: string, patientData: any): Promise<PatientResponse> {
@@ -99,50 +70,18 @@ export class PatientsApiService {
       const response = await apiClient.put<PatientResponse>(`${this.endpoint}/${cedula}`, patientRequest)
       return response
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        let errorMessage = 'Error de validación: '
-        if (Array.isArray(error.response.data.detail)) {
-          errorMessage += error.response.data.detail.map((err: any) => {
-            if (typeof err === 'object' && err !== null) {
-              return err.msg || err.loc?.join('.') || JSON.stringify(err)
-            }
-            return String(err)
-          }).join(', ')
-        } else {
-          errorMessage += JSON.stringify(error.response.data.detail)
-        }
-        throw new Error(errorMessage)
-      } else if (error.response?.data?.message) {
-        throw new Error(error.response.data.message)
-      } else {
-        throw new Error(error.message || `Error al actualizar el paciente con cédula ${cedula}`)
-      }
+      throw this.handleApiError(error, `actualizar el paciente con cédula ${cedula}`)
     }
   }
 
   async changePatientCode(currentCedula: string, newCode: string): Promise<PatientResponse> {
     try {
-      const response = await apiClient.put<PatientResponse>(`${this.endpoint}/${currentCedula}/change-code?new_code=${encodeURIComponent(newCode)}`)
+      const response = await apiClient.put<PatientResponse>(
+        `${this.endpoint}/${currentCedula}/change-code?new_code=${encodeURIComponent(newCode)}`
+      )
       return response
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        let errorMessage = 'Error al cambiar código: '
-        if (Array.isArray(error.response.data.detail)) {
-          errorMessage += error.response.data.detail.map((err: any) => {
-            if (typeof err === 'object' && err !== null) {
-              return err.msg || err.loc?.join('.') || JSON.stringify(err)
-            }
-            return String(err)
-          }).join(', ')
-        } else {
-          errorMessage += JSON.stringify(error.response.data.detail)
-        }
-        throw new Error(errorMessage)
-      } else if (error.response?.data?.message) {
-        throw new Error(error.response.data.message)
-      } else {
-        throw new Error(error.message || `Error al cambiar el código del paciente ${currentCedula}`)
-      }
+      throw this.handleApiError(error, `cambiar el código del paciente ${currentCedula}`, 'Error al cambiar código: ')
     }
   }
 
@@ -150,45 +89,62 @@ export class PatientsApiService {
     try {
       const patient = await this.getPatientByCedula(cedula)
       return patient !== null
-    } catch (error) {
+    } catch {
       return false
     }
   }
 
   validatePatientData(patientData: PatientData): { isValid: boolean; errors: string[] } {
     const errors: string[] = []
+    const validations = [
+      { 
+        condition: !patientData.patientCode || patientData.patientCode.length < 6 || patientData.patientCode.length > 10,
+        message: 'La cédula debe tener entre 6 y 10 dígitos'
+      },
+      {
+        condition: !patientData.name || patientData.name.length < 2,
+        message: 'El nombre debe tener al menos 2 caracteres'
+      },
+      {
+        condition: !parseInt(patientData.age) || parseInt(patientData.age) < 0 || parseInt(patientData.age) > 150,
+        message: 'La edad debe ser un número válido entre 0 y 150'
+      },
+      { condition: !patientData.gender, message: 'Debe seleccionar el sexo del paciente' },
+      { condition: !patientData.entity, message: 'Debe seleccionar una entidad de salud' },
+      { condition: !patientData.careType, message: 'Debe seleccionar el tipo de atención' }
+    ]
 
-    if (!patientData.patientCode || patientData.patientCode.length < 6 || patientData.patientCode.length > 10) {
-      errors.push('La cédula debe tener entre 6 y 10 dígitos')
-    }
-
-    if (!patientData.name || patientData.name.length < 2) {
-      errors.push('El nombre debe tener al menos 2 caracteres')
-    }
-
-    const edad = parseInt(patientData.age)
-    if (!edad || edad < 0 || edad > 150) {
-      errors.push('La edad debe ser un número válido entre 0 y 150')
-    }
-
-    if (!patientData.gender) errors.push('Debe seleccionar el sexo del paciente')
-    if (!patientData.entity) errors.push('Debe seleccionar una entidad de salud')
-    if (!patientData.careType) errors.push('Debe seleccionar el tipo de atención')
-
+    validations.forEach(({ condition, message }) => condition && errors.push(message))
     return { isValid: errors.length === 0, errors }
   }
 
   private buildPatientRequest(patientData: PatientData): CreatePatientRequest {
-    const entidadNombre = (patientData.entity || '').toString().trim() || 'UNKNOWN'
-    const entidadCodigo = (patientData.entityCode || entidadNombre || 'UNKNOWN').toString().trim()
+    const requiredFields = [
+      { field: patientData.patientCode, name: 'código del paciente' },
+      { field: patientData.name, name: 'nombre del paciente' },
+      { field: patientData.gender, name: 'sexo del paciente' },
+      { field: patientData.age, name: 'edad del paciente' },
+      { field: patientData.careType, name: 'tipo de atención' },
+      { field: patientData.entity, name: 'entidad' }
+    ]
+
+    requiredFields.forEach(({ field, name }) => {
+      if (!field || !String(field).trim()) {
+        throw new Error(`El ${name} es requerido`)
+      }
+    })
+    
+    const entidadNombre = String(patientData.entity).trim()
+    const entidadCodigo = String(patientData.entityCode || entidadNombre || 'UNKNOWN').trim()
+    
     return {
-      patient_code: String(patientData.patientCode || '').trim(),
-      name: String(patientData.name || '').trim(),
-      age: parseInt(String(patientData.age || '0'), 10),
-      gender: String(patientData.gender || '').trim() === 'masculino' ? 'Male' : 'Female',
+      patient_code: String(patientData.patientCode).trim(),
+      name: String(patientData.name).trim(),
+      age: parseInt(String(patientData.age)),
+      gender: patientData.gender === 'masculino' ? 'Masculino' : 'Femenino',
       entity_info: { id: entidadCodigo, name: entidadNombre },
-      care_type: String(patientData.careType || '').trim() === 'ambulatorio' ? 'Outpatient' : 'Inpatient',
-      observations: patientData.observations?.toString().trim() || undefined
+      care_type: patientData.careType === 'ambulatorio' ? 'Ambulatorio' : 'Hospitalizado',
+      observations: patientData.observations?.trim() || undefined
     }
   }
 
@@ -208,6 +164,44 @@ export class PatientsApiService {
     }
   }
 
+  private handleApiError(error: any, context: string, customPrefix: string = 'Error de validación: '): Error {
+    const isDuplicateError = (message: string) => 
+      ['duplicad', 'ya existe', 'repetid'].some(keyword => message.toLowerCase().includes(keyword))
+
+    if (error.response?.data?.detail) {
+      const detail = error.response.data.detail
+      const errorMessage = Array.isArray(detail)
+        ? detail.map(err => 
+            typeof err === 'object' && err !== null
+              ? err.msg || err.loc?.join('.') || JSON.stringify(err)
+              : String(err)
+          ).join(', ')
+        : JSON.stringify(detail)
+      
+      return new Error(customPrefix + errorMessage)
+    }
+
+    if (error.response?.data?.message) {
+      const message = String(error.response.data.message)
+      return new Error(isDuplicateError(message) 
+        ? 'Ya existe un paciente con este documento de identidad'
+        : message)
+    }
+
+    const statusMessages = {
+      400: 'Datos del paciente inválidos',
+      409: 'Ya existe un paciente con este documento de identidad',
+      422: 'Error de validación en los datos del paciente',
+      500: 'Error interno del servidor al registrar el paciente'
+    }
+
+    const statusMessage = statusMessages[error.response?.status as keyof typeof statusMessages]
+    if (statusMessage) {
+      return new Error(statusMessage)
+    }
+
+    return new Error(error.message || `Error al ${context}`)
+  }
 }
 
 export const patientsApiService = new PatientsApiService()

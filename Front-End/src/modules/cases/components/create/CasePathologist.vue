@@ -80,40 +80,40 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
             <div>
               <span class="font-medium text-green-700">Código:</span>
-              <p class="text-green-800 font-mono">{{ (casoInfo as any).caso_code }}</p>
+              <p class="text-green-800 font-mono">{{ casoInfo.case_code || (casoInfo as any).caso_code || 'N/A' }}</p>
             </div>
             <div>
               <span class="font-medium text-green-700">Estado:</span>
-              <p class="text-green-800">{{ casoInfo.estado }}</p>
+              <p class="text-green-800">{{ estadoDisplay }}</p>
             </div>
             <div>
               <span class="font-medium text-green-700">Paciente:</span>
-              <p class="text-green-800 break-words">{{ casoInfo.paciente.nombre }}</p>
+              <p class="text-green-800 break-words">{{ casoInfo.patient_info?.name || 'N/A' }}</p>
             </div>
             <div>
-              <span class="font-medium text-green-700">Cédula:</span>
-              <p class="text-green-800 font-mono">{{ casoInfo.paciente.paciente_code }}</p>
+              <span class="font-medium text-green-700">Documento:</span>
+              <p class="text-green-800 font-mono">{{ casoInfo.patient_info?.patient_code || 'N/A' }}</p>
             </div>
             <div>
               <span class="font-medium text-green-700">Entidad:</span>
-              <p class="text-green-800 break-words">{{ casoInfo.paciente.entidad_info?.nombre || 'N/A' }}</p>
+              <p class="text-green-800 break-words">{{ ((casoInfo as any).patient_info?.entity_info?.name) || ((casoInfo as any).patient_info?.entity_info?.nombre) || 'N/A' }}</p>
             </div>
             <div>
               <span class="font-medium text-green-700">Patólogo Actual:</span>
-              <p class="text-green-800 break-words">{{ casoInfo.patologo_asignado?.nombre || 'Sin asignar' }}</p>
+              <p class="text-green-800 break-words">{{ patologoActualDisplay }}</p>
             </div>
           </div>
           
           <!-- Lista de muestras -->
-          <div v-if="casoInfo.muestras?.length > 0" class="mt-3">
+          <div v-if="casoInfo.samples?.length > 0" class="mt-3">
             <span class="font-medium text-green-700 text-sm">Muestras:</span>
             <div class="flex flex-wrap gap-2 mt-1">
               <span
-                v-for="muestra in casoInfo.muestras"
-                :key="muestra.region_cuerpo"
+                v-for="muestra in casoInfo.samples"
+                :key="muestra.body_region || muestra.region_cuerpo"
                 class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-md"
               >
-                {{ muestra.region_cuerpo }}
+                {{ muestra.body_region || muestra.region_cuerpo || 'Muestra' }}
               </span>
             </div>
           </div>
@@ -258,9 +258,37 @@ const isFormValid = computed(() => {
  * Verifica si el caso está en estado completado
  */
 const isCaseCompleted = computed(() => {
-  if (!casoInfo.value?.estado) return false
-  const estado = casoInfo.value.estado
-  return estado.toLowerCase() === 'completado'
+  if (!casoInfo.value?.state && !casoInfo.value?.estado) return false
+  const estado = casoInfo.value.state || casoInfo.value.estado
+  return estado.toLowerCase() === 'completado' || estado.toLowerCase() === 'completed'
+})
+
+/**
+ * Estado mostrado en español independientemente del valor del backend
+ */
+const estadoDisplay = computed(() => {
+  const raw = String((casoInfo.value as any)?.state || (casoInfo.value as any)?.estado || '').toLowerCase()
+  const map: Record<string, string> = {
+    'in process': 'En proceso',
+    'in_process': 'En proceso',
+    'processing': 'En proceso',
+    'pending': 'Pendiente',
+    'completed': 'Completado',
+    'finished': 'Completado',
+    'cancelled': 'Cancelado',
+    'canceled': 'Cancelado'
+  }
+  if (!raw) return 'N/A'
+  return map[raw] || (casoInfo.value as any)?.estado || 'En proceso'
+})
+
+/**
+ * Nombre del patólogo actual mostrado en español, seguro con tipos del backend
+ */
+const patologoActualDisplay = computed(() => {
+  const assigned = (casoInfo.value as any)?.assigned_pathologist?.name
+  const legacy = (casoInfo.value as any)?.patologo_asignado?.nombre
+  return assigned || legacy || 'Sin asignar'
 })
 
 /**
@@ -304,7 +332,7 @@ const getButtonText = computed(() => {
   if (isCaseCompleted.value) {
     return 'No se puede asignar'
   }
-  return casoInfo.value?.patologo_asignado ? 'Reasignar Patólogo' : 'Asignar Patólogo'
+  return (casoInfo.value as any)?.assigned_pathologist ? 'Reasignar Patólogo' : 'Asignar Patólogo'
 })
 
 // ============================================================================
@@ -402,6 +430,11 @@ const buscarCaso = async () => {
     casoEncontrado.value = true
     casoInfo.value = casoResponse
     
+    // Debug: mostrar estructura de datos del caso
+    console.log('Caso encontrado - Estructura completa:', casoResponse)
+    console.log('Caso encontrado - Paciente:', casoResponse.patient_info)
+    console.log('Caso encontrado - Muestras:', casoResponse.samples)
+    
     
     
   } catch (error: any) {
@@ -456,15 +489,15 @@ const asignarPatologo = async () => {
   isLoadingAssignment.value = true
 
   try {
-    // Usar el código correcto del caso (backend devuelve caso_code)
-    const codigoCaso = (casoInfo.value as any).caso_code
+    // Usar el código correcto del caso (backend devuelve case_code)
+    const codigoCaso = casoInfo.value.case_code || (casoInfo.value as any).caso_code
     
     if (!codigoCaso) {
       throw new Error(`Código del caso no disponible. Estructura: ${JSON.stringify(casoInfo.value)}`)
     }
     
     // Verificar si ya hay un patólogo asignado
-    const tienePatologo = casoInfo.value?.patologo_asignado?.codigo
+    const tienePatologo = (casoInfo.value as any)?.assigned_pathologist?.id
     
     let result: any
     
@@ -503,19 +536,21 @@ const asignarPatologo = async () => {
  */
 const handleAsignacionExitosa = async (result: any) => {
   // Actualizar información del caso con el patólogo asignado (preferir código del patólogo)
-  if (result.assignment?.pathologist && casoInfo.value) {
-    const p = result.assignment.pathologist
+  if (result.assignment?.pathologist) {
+    const p = result.assignment.pathologist as any
     const codigo = p.patologo_code || p.codigo || p.code || p.documento || formData.patologoId
     const nombre = p.patologo_name || p.nombre || p.name || (selectedPathologist.value as any)?.nombre || ''
-    ;(casoInfo.value as any).patologo_asignado = { codigo, nombre }
+    const ci: any = casoInfo.value
+    if (!ci) return
+    ci.assigned_pathologist = { id: codigo, name: nombre }
   }
   
-  // Obtener el código correcto del caso (backend devuelve caso_code)
-  const codigoCaso = (casoInfo.value as any).caso_code
+  // Obtener el código correcto del caso (backend devuelve case_code)
+  const codigoCaso = casoInfo.value?.case_code || (casoInfo.value as any)?.caso_code
   
   // Determinar si es asignación o reasignación basándose en si ya había un patólogo
-  const teniaPatologoAnterior = casoInfo.value?.patologo_asignado && 
-    casoInfo.value.patologo_asignado.codigo !== formData.patologoId
+  const teniaPatologoAnterior = (casoInfo.value as any)?.assigned_pathologist && 
+    (casoInfo.value as any).assigned_pathologist.id !== formData.patologoId
   const accion = teniaPatologoAnterior ? 'reasignado' : 'asignado'
   
   // Mostrar notificación de éxito

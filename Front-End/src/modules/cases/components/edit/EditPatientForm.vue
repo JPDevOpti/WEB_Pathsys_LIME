@@ -83,7 +83,7 @@
                   </div>
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Sexo:</span>
-                    <span class="text-gray-800 font-semibold">{{ updatedPatient.gender === 'Male' ? 'Masculino' : updatedPatient.gender === 'Female' ? 'Femenino' : updatedPatient.sexo || 'N/A' }}</span>
+                    <span class="text-gray-800 font-semibold">{{ updatedPatient.gender || updatedPatient.sexo || 'N/A' }}</span>
                   </div>
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Entidad:</span>
@@ -91,7 +91,7 @@
                   </div>
                   <div class="flex justify-between py-2">
                     <span class="text-gray-500 font-medium">Tipo de Atención:</span>
-                    <span class="text-gray-800 font-semibold">{{ updatedPatient.care_type === 'Outpatient' ? 'Ambulatorio' : updatedPatient.care_type === 'Inpatient' ? 'Hospitalizado' : updatedPatient.tipo_atencion || 'N/A' }}</span>
+                    <span class="text-gray-800 font-semibold">{{ updatedPatient.care_type || updatedPatient.tipo_atencion || 'N/A' }}</span>
                   </div>
                 </div>
               </div>
@@ -250,9 +250,9 @@ const onSubmit = async () => {
       const patientUpdateData = {
         name: form.name.trim(),
         age: parseInt(form.age),
-        gender: form.gender === 'masculino' ? 'Male' : form.gender === 'femenino' ? 'Female' : form.gender,
+        gender: form.gender === 'masculino' ? 'Masculino' : form.gender === 'femenino' ? 'Femenino' : form.gender,
         entity_info: { id: form.entityCode || '', name: form.entity.trim() },
-        care_type: form.careType === 'ambulatorio' ? 'Outpatient' : form.careType === 'hospitalizado' ? 'Inpatient' : form.careType,
+        care_type: form.careType === 'ambulatorio' ? 'Ambulatorio' : form.careType === 'hospitalizado' ? 'Hospitalizado' : form.careType,
         observations: form.observations.trim() || null
       }
       

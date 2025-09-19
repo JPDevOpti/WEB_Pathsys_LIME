@@ -163,6 +163,10 @@ const handleSaveClick = async () => {
   clearState()
 
   try {
+    console.log('=== DEBUG: NewPatient.vue ===')
+    console.log('formData:', JSON.stringify(formData, null, 2))
+    console.log('selectedEntity.value:', selectedEntity.value)
+    
     const patientData: PatientData = {
       patientCode: formData.patientCode,
       name: formData.name,
@@ -173,6 +177,9 @@ const handleSaveClick = async () => {
       careType: formData.careType,
       observations: formData.observations
     }
+    
+    console.log('patientData construido:', JSON.stringify(patientData, null, 2))
+    console.log('=== FIN DEBUG ===')
     
     const result = await createPatient(patientData)
     if (result.success && result.patient) {

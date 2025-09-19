@@ -85,12 +85,12 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
   "patient_code": "12345678",
   "name": "John Carlos Perez",
   "age": 35,
-  "gender": "Male",
+  "gender": "Masculino",
   "entity_info": {
     "id": "ent_001",
     "name": "EPS Sanitas"
   },
-  "care_type": "Outpatient",
+  "care_type": "Ambulatorio",
   "observations": "Patient with hypertension history"
 }
 ```
@@ -101,12 +101,12 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
   "patient_code": "87654321",
   "name": "Maria Gonzalez",
   "age": 28,
-  "gender": "Female",
+  "gender": "Femenino",
   "entity_info": {
     "id": "ent_002",
     "name": "Sura"
   },
-  "care_type": "Inpatient"
+  "care_type": "Hospitalizado"
 }
 ```
 
@@ -117,12 +117,12 @@ Response (201):
   "patient_code": "12345678",
   "name": "John Carlos Perez",
   "age": 35,
-  "gender": "Male",
+  "gender": "Masculino",
   "entity_info": {
     "id": "ent_001",
     "name": "EPS Sanitas"
   },
-  "care_type": "Outpatient",
+  "care_type": "Ambulatorio",
   "observations": "Patient with hypertension history",
   "created_at": "2024-01-15T10:30:00.000Z",
   "updated_at": "2024-01-15T10:30:00.000Z"
@@ -138,7 +138,7 @@ Response (201):
 URL with parameters:
 - `http://localhost:8000/api/v1/patients/` (all patients)
 - `http://localhost:8000/api/v1/patients/?skip=0&limit=10` (pagination)
-- `http://localhost:8000/api/v1/patients/?gender=Male&limit=20` (only males)
+- `http://localhost:8000/api/v1/patients/?gender=Masculino&limit=20` (only males)
 - `http://localhost:8000/api/v1/patients/?entity=Sanitas` (by entity)
 
 Query parameters:
@@ -146,8 +146,8 @@ Query parameters:
 - `limit`: Maximum records (default: 100, max: 1000)
 - `search`: Search by name or code
 - `entity`: Filter by entity name
-- `gender`: Filter by gender (Male, Female)
-- `care_type`: Filter by type (Outpatient, Inpatient)
+- `gender`: Filter by gender (Masculino, Femenino)
+- `care_type`: Filter by type (Ambulatorio, Hospitalizado)
 
 Response (200):
 ```json
@@ -157,12 +157,12 @@ Response (200):
     "patient_code": "12345678",
     "name": "John Carlos Perez",
     "age": 35,
-    "gender": "Male",
+    "gender": "Masculino",
     "entity_info": {
       "id": "ent_001",
       "name": "EPS Sanitas"
     },
-    "care_type": "Outpatient",
+    "care_type": "Ambulatorio",
     "observations": "Patient with hypertension history",
     "created_at": "2024-01-15T10:30:00.000Z",
     "updated_at": "2024-01-15T10:30:00.000Z"
@@ -182,7 +182,7 @@ Response (200):
 - `age_min`: Minimum age (0-150)
 - `age_max`: Maximum age (0-150)
 - `entity`: Filter by health entity
-- `gender`: Filter by gender (Male, Female)
+- `gender`: Filter by gender (Masculino, Femenino)
 - `care_type`: Filter by care type
 - `date_from`: Creation date from (format: YYYY-MM-DD)
 - `date_to`: Creation date to (format: YYYY-MM-DD)
@@ -192,7 +192,7 @@ Response (200):
 **Usage examples**:
 ```bash
 # Search male patients between 30 and 50 years old
-GET /api/v1/patients/search/advanced?gender=Male&age_min=30&age_max=50
+GET /api/v1/patients/search/advanced?gender=Masculino&age_min=30&age_max=50
 
 # Search patients from a specific entity
 GET /api/v1/patients/search/advanced?entity=Sanitas&limit=50
@@ -210,12 +210,12 @@ Response (200):
       "patient_code": "12345678",
       "name": "John Carlos Perez",
       "age": 35,
-      "gender": "Male",
+      "gender": "Masculino",
       "entity_info": {
         "id": "ent_001",
         "name": "EPS Sanitas"
       },
-      "care_type": "Outpatient",
+      "care_type": "Ambulatorio",
       "observations": "Patient with hypertension history",
       "created_at": "2024-01-15T10:30:00.000Z",
       "updated_at": "2024-01-15T10:30:00.000Z"
@@ -262,12 +262,12 @@ URL examples:
 {
   "name": "John Carlos Perez Rodriguez",
   "age": 36,
-  "gender": "Male",
+  "gender": "Masculino",
   "entity_info": {
     "id": "ent_003",
     "name": "Nueva EPS"
   },
-  "care_type": "Inpatient",
+  "care_type": "Hospitalizado",
   "observations": "Patient with controlled hypertension and type 2 diabetes"
 }
 ```
@@ -279,12 +279,12 @@ Response (200):
   "patient_code": "12345678",
   "name": "John Carlos Perez Rodriguez",
   "age": 36,
-  "gender": "Male",
+  "gender": "Masculino",
   "entity_info": {
     "id": "ent_003",
     "name": "Nueva EPS"
   },
-  "care_type": "Inpatient",
+  "care_type": "Hospitalizado",
   "observations": "Patient with controlled hypertension and type 2 diabetes",
   "created_at": "2024-01-15T10:30:00.000Z",
   "updated_at": "2024-01-15T11:15:00.000Z"
@@ -340,14 +340,14 @@ Response (200):
 ## Enumeration Values
 
 #### Patient Gender
-- `Male` - Male patient
-- `Female` - Female patient
+- `Masculino` - Male patient
+- `Femenino` - Female patient
 
 ⚠️ **IMPORTANT**: Values must be sent exactly as shown (with initial capital).
 
 #### Care Type
-- `Outpatient` - Outpatient care
-- `Inpatient` - Inpatient care
+- `Ambulatorio` - Outpatient care
+- `Hospitalizado` - Inpatient care
 
 ⚠️ **IMPORTANT**: Values must be sent exactly as shown (with initial capital).
 
@@ -357,16 +357,16 @@ Response (200):
 - **patient_code**: Required, 6-12 digits, unique in system
 - **name**: Required, 2-200 characters
 - **age**: Required, 0-150 years
-- **gender**: Required, "Male" or "Female"
+- **gender**: Required, "Masculino" or "Femenino"
 - **entity_info**: Required (complete object)
-- **care_type**: Required, "Outpatient" or "Inpatient"
+- **care_type**: Required, "Ambulatorio" or "Hospitalizado"
 
 #### Specific Validations
 1. **patient_code**: Automatically cleaned (numbers only), must be unique, 6-12 digits
 2. **name**: Automatically capitalized, letters, spaces and accents only
 3. **age**: Integer between 0 and 150
-4. **gender**: Valid values: "Male", "Female"
-5. **care_type**: Valid values: "Outpatient", "Inpatient"
+4. **gender**: Valid values: "Masculino", "Femenino"
+5. **care_type**: Valid values: "Ambulatorio", "Hospitalizado"
 6. **entity_info.id**: Required when entity_info is provided
 7. **entity_info.name**: Required when entity_info is provided
 8. **observations**: Optional, maximum 500 characters

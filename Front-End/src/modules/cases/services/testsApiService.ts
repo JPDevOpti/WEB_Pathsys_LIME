@@ -26,7 +26,9 @@ class TestsApiService {
       if (params.skip !== undefined) searchParams.append('skip', params.skip.toString())
       if (params.limit !== undefined) searchParams.append('limit', params.limit.toString())
       
-      const url = searchParams.toString() ? `${this.endpoint}?${searchParams.toString()}` : this.endpoint
+      // Asegurar que el endpoint tenga barra al final para evitar redirects
+      const endpoint = this.endpoint.endsWith('/') ? this.endpoint : `${this.endpoint}/`
+      const url = searchParams.toString() ? `${endpoint}?${searchParams.toString()}` : endpoint
       const response = await apiClient.get(url)
       
       if (!response) throw new Error('Respuesta vacía del servidor')
@@ -54,11 +56,12 @@ class TestsApiService {
       const dataKeys = Object.keys(data)
       for (const key of dataKeys) {
         if (Array.isArray(data[key])) {
+          const pruebas = data[key].map((p: any) => this.transformTestData(p))
           return {
-            pruebas: data[key],
-            total: data[key].length,
+            pruebas,
+            total: pruebas.length,
             skip: 0,
-            limit: data[key].length,
+            limit: pruebas.length,
             has_next: false,
             has_prev: false
           }
@@ -81,7 +84,9 @@ class TestsApiService {
   
   async getAllActiveTests(): Promise<TestDetails[]> {
     try {
-      const response = await apiClient.get(`${this.endpoint}?limit=1000`)
+      // Asegurar que el endpoint tenga barra al final para evitar redirects
+      const endpoint = this.endpoint.endsWith('/') ? this.endpoint : `${this.endpoint}/`
+      const response = await apiClient.get(`${endpoint}?limit=100`)
       
       if (!response) throw new Error('Respuesta vacía del servidor')
       
@@ -156,7 +161,9 @@ class TestsApiService {
   
   async searchTests(query: string, limit: number = 50): Promise<TestDetails[]> {
     try {
-      const response = await apiClient.get(`${this.endpoint}?query=${encodeURIComponent(query)}&limit=${limit}`)
+      // Asegurar que el endpoint tenga barra al final para evitar redirects
+      const endpoint = this.endpoint.endsWith('/') ? this.endpoint : `${this.endpoint}/`
+      const response = await apiClient.get(`${endpoint}?query=${encodeURIComponent(query)}&limit=${limit}`)
       
       if (!response) throw new Error('La respuesta del servidor está vacía')
       

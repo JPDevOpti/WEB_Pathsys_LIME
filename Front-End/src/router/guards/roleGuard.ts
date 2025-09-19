@@ -20,6 +20,11 @@ export function roleGuard(
 
   const userRole = authStore.userRole
   
+  // Debug: mostrar información del usuario y rol
+  console.log('RoleGuard - User:', authStore.user)
+  console.log('RoleGuard - UserRole:', userRole)
+  console.log('RoleGuard - Navigating to:', to.path)
+  
   // SIEMPRE permitir acceso al dashboard para evitar bucles infinitos
   if (to.path === '/dashboard') {
     next()
@@ -34,14 +39,14 @@ export function roleGuard(
   
   // Definir las rutas permitidas para cada rol
   const roleRoutes: Record<string, string[]> = {
-    patologo: [
+    pathologist: [
       '/dashboard',
       '/cases',
       '/results',
       '/profile',
       '/support'
     ],
-    auxiliar: [
+    auxiliary: [
       '/dashboard',
       '/cases',
       '/results',
@@ -50,7 +55,7 @@ export function roleGuard(
       '/statistics',
       '/support'
     ],
-    residente: [
+    resident: [
       '/dashboard',
       '/cases',
       '/results',
@@ -58,7 +63,7 @@ export function roleGuard(
       '/reports',
       '/support'
     ],
-    facturacion: [
+    billing: [
       '/dashboard',
       '/cases/current',
       '/statistics',
@@ -72,13 +77,24 @@ export function roleGuard(
       '/profile',
       '/support'
     ],
-    administrador: [
+    administrator: [
       '/dashboard',
       '/cases',
       '/results',
       '/profile',
       '/reports',
       '/statistics',
+      '/support'
+    ],
+    patient: [
+      '/dashboard',
+      '/profile',
+      '/support'
+    ],
+    receptionist: [
+      '/dashboard',
+      '/cases/current',
+      '/profile',
       '/support'
     ]
   }

@@ -44,7 +44,7 @@
                 <p class="text-gray-900 break-words font-semibold">{{ verifiedPatient.name }}</p>
               </div>
               <div class="space-y-1">
-                <p class="text-gray-600 font-medium">Código</p>
+                <p class="text-gray-600 font-medium">Documento</p>
                 <p class="text-gray-900 font-mono font-semibold">{{ verifiedPatient.patientCode }}</p>
               </div>
               <div class="space-y-1">
@@ -90,7 +90,7 @@
 
         <!-- Campo de número de muestras -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <FormInputField v-model="formData.numberOfSamples" label="Número de Muestras" type="number" :min="1" :max="10" :required="true" :errors="errors.numberOfSamples" :warnings="warnings.numberOfSamples" help-text="Cantidad de submuestras para este caso" @input="handleNumberOfSamplesChange" />
+          <FormInputField v-model="formData.numberOfSamples" label="Número de Muestras" type="number" :min="1" :required="true" :errors="errors.numberOfSamples" :warnings="warnings.numberOfSamples" help-text="Cantidad de submuestras para este caso" @input="handleNumberOfSamplesChange" />
         </div>
 
         <!-- Sección de información de submuestras -->
@@ -124,7 +124,7 @@
                       <TestList v-model="test.code" :label="`Prueba #${testIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${testIndex + 1}...`" :required="true" :auto-load="true" :errors="getPruebaErrors(sampleIndex, testIndex)" @test-selected="(test) => handleTestSelected(sampleIndex, testIndex, test)" />
                     </div>
                     <div class="w-full sm:w-24">
-                      <FormInputField v-model.number="test.quantity" label="Cantidad" type="number" :min="1" :max="10" placeholder="Cantidad" />
+                      <FormInputField v-model.number="test.quantity" label="Cantidad" type="number" :min="1" placeholder="Cantidad" />
                     </div>
                     <div class="flex items-center justify-center sm:justify-start sm:w-10 sm:mt-6">
                       <RemoveButton @click="removeTestFromSample(sampleIndex, testIndex)" title="Eliminar prueba" />
@@ -187,9 +187,9 @@
                       <div><span class="text-gray-500 font-medium">Nombre:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.name || verifiedPatient?.name }}</p></div>
                       <div><span class="text-gray-500 font-medium">Documento:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.patient?.patient_code || verifiedPatient?.patientCode || 'NO DISPONIBLE' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Edad:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.age || verifiedPatient?.age }} años</p></div>
-                      <div><span class="text-gray-500 font-medium">Sexo:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.gender || verifiedPatient?.gender }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Sexo:</span><p class="text-gray-900 font-semibold">{{ genderDisplay }}</p></div>
                       <div><span class="text-gray-500 font-medium">Entidad:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.entity || verifiedPatient?.entity }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Tipo de Atención:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.careType || verifiedPatient?.careType }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Tipo de Atención:</span><p class="text-gray-900 font-semibold">{{ careTypeDisplay }}</p></div>
                     </div>
                   </div>
                   
@@ -197,8 +197,8 @@
                   <div>
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Detalles del Caso</h4>
                     <div class="space-y-2 text-sm">
-                      <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ createdCase.state || 'En proceso' }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Prioridad:</span><p class="text-gray-900 font-semibold">{{ createdCase.priority || formData.casePriority || 'Normal' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ stateDisplay }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Prioridad:</span><p class="text-gray-900 font-semibold">{{ priorityDisplay }}</p></div>
                       <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ createdCase.requestingPhysician || formData.requestingPhysician || 'No especificado' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ createdCase.service || formData.service || 'No especificado' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Número de Submuestras:</span><p class="text-gray-900 font-semibold">{{ getMuestrasForNotification().length }}</p></div>
@@ -218,7 +218,7 @@
                       </div>
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                         <div><span class="text-gray-500 font-medium">Región:</span><p class="text-gray-900">{{ sample.bodyRegion || 'Sin especificar' }}</p></div>
-                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="sample.tests && sample.tests.length > 0">{{ sample.tests.map((t: any) => `${t.code || t.name || 'Sin código'} (${t.quantity || 1})`).join(', ') }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
+                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="sample.tests && sample.tests.length > 0">{{ sample.tests.map((t: any) => `${t.name || t.code || 'Sin código'} (${t.quantity || 1})`).join(', ') }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
                       </div>
                     </div>
                   </div>
@@ -389,6 +389,65 @@ const updateFormDataWithPatient = (patientData: PatientData) => {
   })
 }
 
+// Traducciones para mostrar valores del backend en español
+function translateCaseState(value: any): string {
+  const raw = String(value || '').toLowerCase()
+  const map: Record<string, string> = {
+    'in process': 'En proceso',
+    'in_process': 'En proceso',
+    'processing': 'En proceso',
+    'to sign': 'Para firma',
+    'to deliver': 'Para entregar',
+    'completed': 'Completado',
+    'finished': 'Completado',
+    'cancelled': 'Cancelado',
+    'canceled': 'Cancelado',
+    'pending': 'Pendiente'
+  }
+  return map[raw] || 'En proceso'
+}
+
+function translateCasePriority(value: any): string {
+  const raw = String(value || '').toLowerCase()
+  const map: Record<string, string> = {
+    'normal': 'Normal',
+    'priority': 'Prioritario',
+    'prioritario': 'Prioritario'
+  }
+  return map[raw] || 'Normal'
+}
+
+function translateGender(value: any): string {
+  const raw = String(value || '').toLowerCase()
+  const map: Record<string, string> = {
+    'male': 'Masculino',
+    'masculino': 'Masculino',
+    'm': 'Masculino',
+    'female': 'Femenino',
+    'femenino': 'Femenino',
+    'f': 'Femenino'
+  }
+  return map[raw] || (String(value || ''))
+}
+
+function translateCareType(value: any): string {
+  const raw = String(value || '').toLowerCase()
+  const map: Record<string, string> = {
+    'ambulatory': 'Ambulatorio',
+    'ambulatorio': 'Ambulatorio',
+    'hospitalized': 'Hospitalizado',
+    'hospitalizado': 'Hospitalizado'
+  }
+  return map[raw] || (String(value || ''))
+}
+
+// Displays derivados usando traducciones para el template
+const stateDisplay = computed(() => translateCaseState((createdCase.value?.state as any) || 'In process'))
+const priorityDisplay = computed(() => translateCasePriority((createdCase.value?.priority as any) || (formData.casePriority as any) || 'Normal'))
+const genderDisplay = computed(() => translateGender((createdCase.value?.patient?.gender as any) || (verifiedPatient.value?.gender as any)))
+const careTypeDisplay = computed(() => translateCareType((createdCase.value?.patient?.careType as any) || (verifiedPatient.value?.careType as any)))
+
+
 const clearPatientFormData = () => {
   Object.assign(formData, {
     patientDocument: '',
@@ -484,6 +543,6 @@ const handleSaveClick = async () => {
   }
 }
 
-// Exposición de funciones para uso externo
-defineExpose({ handleNewPatient })
+// Exposición de funciones y displays para uso externo (para tipado del template)
+defineExpose({ handleNewPatient, stateDisplay, priorityDisplay, genderDisplay, careTypeDisplay })
 </script>

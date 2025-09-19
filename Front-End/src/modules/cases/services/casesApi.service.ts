@@ -2,7 +2,7 @@ import { apiClient } from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 import type {
   CaseModel, CaseListResponse, CaseSearchResponse, CaseStatisticsResponse,
-  CreateCaseRequest, CreateCaseResponse, UpdateCaseRequest, UpdateCaseResponse,
+  CreateCaseResponse, UpdateCaseResponse,
   DeleteCaseResponse, CaseSearchParams, CaseListParams
 } from '../types'
 
@@ -130,10 +130,10 @@ export class CasesApiService {
   async assignPathologist(caseCode: string, pathologistData: { codigo: string; nombre: string }): Promise<UpdateCaseResponse> {
     try {
       // Usar el nuevo endpoint de actualización para asignar patólogo
-      const updateData: UpdateCaseRequest = {
-        patologo_asignado: {
-          codigo: pathologistData.codigo,
-          nombre: pathologistData.nombre
+      const updateData: any = {
+        assigned_pathologist: {
+          id: pathologistData.codigo,
+          name: pathologistData.nombre
         }
       }
       return await this.updateCase(caseCode, updateData)
@@ -145,9 +145,7 @@ export class CasesApiService {
   async unassignPathologist(caseCode: string): Promise<UpdateCaseResponse> {
     try {
       // Usar el nuevo endpoint de actualización para desasignar patólogo
-      const updateData: UpdateCaseRequest = {
-        patologo_asignado: undefined
-      }
+      const updateData: any = { assigned_pathologist: null }
       return await this.updateCase(caseCode, updateData)
     } catch (error: any) {
       throw new Error(error.message || `Error al desasignar patólogo del caso ${caseCode}`)

@@ -8,12 +8,12 @@ class EntityInfo(BaseModel):
     name: str = Field(...)
 
 class Gender(str, Enum):
-    MALE = "Male"
-    FEMALE = "Female"
+    MASCULINO = "Masculino"
+    FEMENINO = "Femenino"
 
 class CareType(str, Enum):
-    OUTPATIENT = "Outpatient"
-    INPATIENT = "Inpatient"
+    AMBULATORIO = "Ambulatorio"
+    HOSPITALIZADO = "Hospitalizado"
 
 class PatientBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=200)

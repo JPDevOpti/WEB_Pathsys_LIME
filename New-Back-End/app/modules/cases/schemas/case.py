@@ -21,7 +21,7 @@ class PatientInfo(BaseModel):
 class SampleTest(BaseModel):
     id: str = Field(..., max_length=50)
     name: str = Field(..., max_length=200)
-    quantity: int = Field(default=1, ge=1, le=10)
+    quantity: int = Field(default=1, ge=1)
 
 
 class SampleInfo(BaseModel):
@@ -29,16 +29,21 @@ class SampleInfo(BaseModel):
     tests: List[SampleTest] = Field(default_factory=list)
 
 
+class AssignedPathologist(BaseModel):
+    id: str = Field(..., max_length=50)
+    name: str = Field(..., max_length=200)
+
+
 class CasePriority(str):
     NORMAL = "Normal"
-    PRIORITY = "Priority"
+    PRIORITARIO = "Prioritario"
 
 
 class CaseState(str):
-    IN_PROCESS = "In process"
-    TO_SIGN = "To sign"
-    TO_DELIVER = "To deliver"
-    COMPLETED = "Completed"
+    EN_PROCESO = "En proceso"
+    POR_FIRMAR = "Por firmar"
+    POR_ENTREGAR = "Por entregar"
+    COMPLETADO = "Completado"
 
 
 class CaseCreate(BaseModel):
@@ -46,7 +51,7 @@ class CaseCreate(BaseModel):
     requesting_physician: Optional[str] = Field(None, max_length=200)
     service: Optional[str] = Field(None, max_length=100)
     samples: Optional[List[SampleInfo]] = Field(default_factory=list)
-    state: str = Field(default=CaseState.IN_PROCESS)
+    state: str = Field(default=CaseState.EN_PROCESO)
     priority: str = Field(default=CasePriority.NORMAL)
     observations: Optional[str] = Field(None, max_length=1000)
 
@@ -59,6 +64,7 @@ class CaseUpdate(BaseModel):
     state: Optional[str] = None
     priority: Optional[str] = None
     observations: Optional[str] = Field(None, max_length=1000)
+    assigned_pathologist: Optional[AssignedPathologist] = None
 
 
 class CaseResponse(BaseModel):
@@ -73,6 +79,7 @@ class CaseResponse(BaseModel):
     observations: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    assigned_pathologist: Optional[AssignedPathologist] = None
 
     class Config:
         from_attributes = True

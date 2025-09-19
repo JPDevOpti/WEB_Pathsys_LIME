@@ -47,7 +47,7 @@ export function usePathologistAPI() {
       if (!selectedPathologist) throw new Error('Patólogo no encontrado en la lista local')
       
       const pathologistApiData = buildPathologistApiData(selectedPathologist)
-      await casesApi.assignPathologist(caseId, pathologistApiData)
+      const response = await casesApi.assignPathologist(caseId, pathologistApiData)
       
       return {
         success: true,
@@ -55,7 +55,11 @@ export function usePathologistAPI() {
         assignment: {
           isAssigned: true,
           assignedDate: assignmentData.fechaAsignacion,
-          pathologist: selectedPathologist
+          pathologist: {
+            // Normalizar para UI
+            patologo_code: selectedPathologist.patologo_code || selectedPathologist.id,
+            patologo_name: selectedPathologist.patologo_name || selectedPathologist.nombre || (response as any)?.assigned_pathologist?.name || ''
+          }
         }
       }
     } catch (err: any) {

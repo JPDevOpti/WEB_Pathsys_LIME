@@ -84,6 +84,7 @@ export interface CaseModel {
   updated_at: string
   observations?: string
   patologo_asignado?: PathologistInfo
+  assigned_pathologist?: PathologistInfo
   entidad_info?: EntityInfo
   resultado?: CaseResult
   creado_por?: string

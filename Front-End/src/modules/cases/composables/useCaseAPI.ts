@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { casesApiService, patientsApiService, entitiesApiService } from '../services'
-import type { CaseFormData, CaseCreationResult, CreateCaseRequest, CreatedCase } from '../types'
+import { casesApiService, entitiesApiService } from '../services'
+import type { CaseFormData, CaseCreationResult, CreatedCase } from '../types'
 
 export function useCaseAPI() {
   const isLoading = ref(false)
@@ -40,6 +40,7 @@ export function useCaseAPI() {
     const entityName = formData.patientEntity 
       ? await getEntityNameByCode(formData.patientEntity)
       : (verifiedPatient?.entity || 'Entidad no especificada')
+    
     return {
       patient_info: {
         patient_code: verifiedPatient?.patientCode || verifiedPatient?.codigo || '',
@@ -57,9 +58,13 @@ export function useCaseAPI() {
       service: formData?.service || undefined,
       samples: (formData?.samples || []).map(s => ({
         body_region: s?.bodyRegion || '',
-        tests: (s?.tests || []).map(t => ({ id: t?.code || '', name: t?.name || t?.code || '', quantity: t?.quantity || 1 }))
+        tests: (s?.tests || []).map(t => ({ 
+          id: t?.code || '', 
+          name: t?.name || t?.code || '', 
+          quantity: t?.quantity || 1 
+        }))
       })),
-      state: 'In process',
+      state: 'En proceso',
       priority: formData?.casePriority || 'Normal',
       observations: formData?.observations || undefined
     }
@@ -67,6 +72,18 @@ export function useCaseAPI() {
 
   const buildCreatedCase = (apiResponse: any, verifiedPatient: any, caseData: CaseFormData): CreatedCase => {
     const codigoCaso = apiResponse.case_code || apiResponse.caso_code || apiResponse.code || apiResponse.codigo
+    const stateRaw = String(apiResponse.state || '').toLowerCase()
+    const stateMap: Record<string, string> = {
+      'in process': 'En proceso',
+      'in_process': 'En proceso',
+      'processing': 'En proceso',
+      'pending': 'Pendiente',
+      'completed': 'Completado',
+      'finished': 'Completado',
+      'cancelled': 'Cancelado',
+      'canceled': 'Cancelado'
+    }
+    const stateEs = stateMap[stateRaw] || apiResponse.state || 'En proceso'
     
     return {
       id: apiResponse._id || apiResponse.id || codigoCaso,
@@ -83,10 +100,10 @@ export function useCaseAPI() {
       entryDate: caseData.entryDate,
       requestingPhysician: apiResponse.requesting_physician || caseData.requestingPhysician,
       service: caseData.service,
-      priority: apiResponse.priority || caseData.casePriority || 'Normal',
+        priority: apiResponse.priority || caseData.casePriority || 'Normal',
       samples: caseData.samples,
       observations: apiResponse.observations || caseData.observations || '',
-      state: apiResponse.state || 'En proceso',
+        state: stateEs,
       creationDate: apiResponse.created_at || new Date().toISOString()
     }
   }
@@ -99,26 +116,13 @@ export function useCaseAPI() {
       if (!verifiedPatient) throw new Error('Información del paciente verificado requerida')
 
       const apiRequest = await transformCaseFormToApiRequest(caseData, verifiedPatient)
-      const apiResponse = await casesApiService.createCase(apiRequest)
       
-      try {
-        const entidadNombre = caseData.patientEntity && caseData.patientEntity !== verifiedPatient.entityCode
-          ? await getEntityNameByCode(caseData.patientEntity)
-          : verifiedPatient.entity
-        
-        await patientsApiService.updatePatient(verifiedPatient.patientCode, {
-          name: verifiedPatient.name,
-          age: parseInt(verifiedPatient.age),
-          gender: normalizeSexo(verifiedPatient.gender),
-          entity_info: {
-            id: caseData.patientEntity || verifiedPatient.entityCode || 'ent_default',
-            name: entidadNombre
-          },
-          care_type: normalizeTipoAtencion(caseData.patientCareType || verifiedPatient.careType),
-          observations: verifiedPatient.observations || undefined
-        })
-      } catch {
-      }
+      // Debug: mostrar la estructura que se envía al backend
+      console.log('Enviando al backend - Estructura completa:', apiRequest)
+      console.log('Enviando al backend - Patient info:', apiRequest.patient_info)
+      console.log('Enviando al backend - Samples:', apiRequest.samples)
+      
+      const apiResponse = await casesApiService.createCase(apiRequest)
       
       if (apiResponse?.case_code) {
         return {
