@@ -61,6 +61,7 @@ class ResultService:
             observations=doc.get("observations"),
             created_at=doc.get("created_at"),
             updated_at=doc.get("updated_at"),
+            signed_at=doc.get("signed_at"),
             assigned_pathologist=doc.get("assigned_pathologist"),
             result=doc.get("result"),
         )

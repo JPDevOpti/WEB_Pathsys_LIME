@@ -96,6 +96,7 @@ export interface CaseDetails {
   state: string
   created_at: string
   updated_at: string
+  signed_at?: string
   observations?: string
   active?: boolean
   assigned_pathologist?: CasePatologoAsignado
@@ -107,6 +108,14 @@ export interface CaseDetails {
     macro_result?: string
     micro_result?: string
     observations?: string | null
+    cie10_diagnosis?: {
+      code: string
+      name: string
+    }
+    cieo_diagnosis?: {
+      code: string
+      name: string
+    }
   }
 }
 

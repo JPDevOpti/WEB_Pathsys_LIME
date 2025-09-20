@@ -6,14 +6,16 @@ from app.modules.cases.schemas.case import CaseCreate, CaseUpdate, CaseResponse
 from app.modules.cases.services.case_service import CaseService
 from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 
-# Importar las rutas de resultado
+# Importar las rutas de resultado y firma
 from .result_routes import router as result_router
+from .sign_routes import router as sign_router
 
 
 router = APIRouter()
 
-# Incluir las rutas de resultado
+# Incluir las rutas de resultado y firma
 router.include_router(result_router)
+router.include_router(sign_router)
 
 
 def get_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> CaseService:

@@ -4,24 +4,24 @@
       <ComponentCard 
         :class="[
           'flex flex-col',
-          casoEncontrado ? 'lg:col-span-2 min-h-[640px]' : 'lg:col-span-2 min-h-[160px]'
+          caseFound ? 'lg:col-span-2 min-h-[640px]' : 'lg:col-span-2 min-h-[160px]'
         ]" 
         :dense="false"
       >
         <div class="flex items-center justify-between mb-2">
           <div>
             <h2 class="text-lg font-semibold">
-              {{ casoEncontrado ? 'Firmar Resultados' : 'Buscar caso para firmar resultados' }}
+              {{ caseFound ? 'Firmar Resultados' : 'Buscar caso para firmar resultados' }}
             </h2>
-            <p v-if="!casoEncontrado" class="text-sm text-gray-500 mt-1">
+            <p v-if="!caseFound" class="text-sm text-gray-500 mt-1">
               Ingresa el código del caso para acceder a la firma de resultados
             </p>
           </div>
-          <div v-if="caseDetails?.caso_code" class="text-sm text-gray-500">
-            <span class="font-medium">Caso:</span> {{ caseDetails.caso_code }}
+          <div v-if="caseDetails?.case_code" class="text-sm text-gray-500">
+            <span class="font-medium">Caso:</span> {{ caseDetails.case_code }}
             <span class="mx-2">-</span>
-            <span v-if="caseDetails.patologo_asignado?.nombre" class="text-blue-600">
-              {{ caseDetails.patologo_asignado.nombre }}
+            <span v-if="caseDetails.assigned_pathologist?.name" class="text-blue-600">
+              {{ caseDetails.assigned_pathologist.name }}
             </span>
             <span v-else class="text-orange-600 italic">
               Sin patólogo asignado
@@ -56,17 +56,17 @@
 
           <div class="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center">
             <div class="flex-1">
-              <FormInputField id="codigo-caso" :model-value="codigoCaso" @update:model-value="handleCodigoChange"
+              <FormInputField id="codigo-caso" :model-value="caseCode" @update:model-value="handleCaseCodeChange"
                 type="text" placeholder="Ejemplo: 2025-00001" maxlength="10" autocomplete="off" :disabled="isLoadingSearch"
-                @keydown.enter.prevent="buscarCaso" @keydown="keydownHandler" @paste="handlePaste" class="flex-1" />
+                @keydown.enter.prevent="searchCase" @keydown="keydownHandler" @paste="handlePaste" class="flex-1" />
 
             </div>
 
             <div class="flex gap-2 md:gap-3 md:mt-0 mt-2">
-              <SearchButton v-if="!casoEncontrado" text="Buscar" loading-text="Buscando..." :loading="isLoadingSearch"
-                @click="buscarCaso" size="md" variant="primary" />
+              <SearchButton v-if="!caseFound" text="Buscar" loading-text="Buscando..." :loading="isLoadingSearch"
+                @click="searchCase" size="md" variant="primary" />
 
-              <ClearButton v-if="casoEncontrado" text="Limpiar" @click="limpiarBusqueda" />
+              <ClearButton v-if="caseFound" text="Limpiar" @click="clearSearch" />
             </div>
           </div>
 
@@ -83,7 +83,7 @@
 
         </div>
 
-        <div v-if="casoEncontrado" class="flex-1 flex flex-col min-h-0 mt-0">
+        <div v-if="caseFound" class="flex-1 flex flex-col min-h-0 mt-0">
           <ResultEditor class="flex-1 min-h-0" :model-value="sections[activeSection]"
             @update:model-value="updateSectionContent" :active-section="activeSection"
             @update:activeSection="activeSection = $event" :sections="sections" />
@@ -110,7 +110,7 @@
           <ComplementaryTestsSection
             :initial-needs-tests="needsComplementaryTests"
             :initial-details="complementaryTestsDetails"
-            :caso-original="caseDetails?.caso_code || codigoCaso"
+            :caso-original="caseDetails?.case_code || caseCode"
             @needs-tests-change="handleNeedsTestsChange"
             @details-change="handleDetailsChange"
             @create-approval-request="handleCreateApprovalRequest"
@@ -121,7 +121,7 @@
             :errors="validationMessage ? [validationMessage] : []" />
           <ErrorMessage v-if="errorMessage" class="mt-2" :message="errorMessage" />
 
-          <div v-if="caseDetails?.caso_code && !caseDetails.patologo_asignado?.nombre && authStore.user?.rol === 'patologo'"
+          <div v-if="caseDetails?.case_code && !caseDetails.assigned_pathologist?.name && authStore.user?.role === 'patologo'"
             class="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <div class="flex items-center">
               <WarningIcon class="w-5 h-5 text-orange-500 mr-2 flex-shrink-0" />
@@ -133,7 +133,7 @@
             </div>
           </div>
 
-          <div v-if="caseDetails?.caso_code && !caseDetails.patologo_asignado?.nombre && authStore.user?.rol === 'administrador'"
+          <div v-if="caseDetails?.case_code && !caseDetails.assigned_pathologist?.name && (authStore.user?.role === 'administrator' || authStore.user?.role === 'administrador')"
             class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div class="flex items-center">
               <svg class="w-5 h-5 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,15 +146,15 @@
             </div>
           </div>
 
-          <div v-if="caseDetails?.caso_code && caseDetails.patologo_asignado?.nombre && !canUserSign"
+          <div v-if="caseDetails?.case_code && caseDetails.assigned_pathologist?.name && !canUserSign"
             class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
             <div class="flex items-center">
               <ErrorIcon class="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
               <div>
                 <p class="text-sm font-medium text-red-800">No autorizado para firmar</p>
                 <p class="text-sm text-red-700">
-                  <template v-if="authStore.user?.rol === 'patologo'">
-                    Este caso está asignado a <strong>{{ caseDetails.patologo_asignado.nombre }}</strong>. 
+                  <template v-if="authStore.user?.role === 'patologo'">
+                    Este caso está asignado a <strong>{{ caseDetails.assigned_pathologist.name }}</strong>. 
                     Solo el patólogo asignado o un administrador pueden firmar este resultado.
                   </template>
                   <template v-else>
@@ -166,7 +166,7 @@
           </div>
 
           <!-- Advertencia para casos completados -->
-          <div v-if="caseDetails?.caso_code && !canSignByStatus && !hasBeenSigned"
+          <div v-if="caseDetails?.case_code && !canSignByStatus && !hasBeenSigned"
             class="mt-3 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
             <div class="flex items-center">
               <svg class="w-5 h-5 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,14 +178,14 @@
                   Este caso ya ha sido completado y firmado. No se puede firmar nuevamente.
                 </p>
                 <p class="text-xs text-red-600 mt-2">
-                  Estado actual: <span class="font-semibold">{{ caseDetails?.estado }}</span>
+                  Estado actual: <span class="font-semibold">{{ caseDetails?.state }}</span>
                 </p>
               </div>
             </div>
           </div>
 
           <div class="mt-3 flex flex-wrap items-center gap-3 justify-end">
-            <ClearButton :disabled="loading" @click="limpiarBusqueda" />
+            <ClearButton :disabled="loading" @click="clearSearch" />
             <!-- Botón de previsualización temporalmente deshabilitado -->
             <button
               :disabled="loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature"
@@ -205,11 +205,11 @@
           :message="notification.message"
           :inline="true"
           :auto-close="false"
-          :case-code="savedCaseCode || caseDetails?.caso_code || props.sampleId"
+          :case-code="savedCaseCode || caseDetails?.case_code || props.sampleId"
           :saved-content="savedContent"
           :diagnoses="{
-            cie10: (hasDisease && primaryDisease) ? { codigo: primaryDisease.codigo, nombre: primaryDisease.nombre } : undefined,
-            cieo: (hasDiseaseCIEO && primaryDiseaseCIEO) ? { codigo: primaryDiseaseCIEO.codigo, nombre: primaryDiseaseCIEO.nombre } : undefined
+            cie10: (hasDisease && primaryDisease) ? { codigo: primaryDisease.code, nombre: primaryDisease.name } : undefined,
+            cieo: (hasDiseaseCIEO && primaryDiseaseCIEO) ? { codigo: primaryDiseaseCIEO.code, nombre: primaryDiseaseCIEO.name } : undefined
           }"
           :complementary-tests="requestedComplementaryTests"
           :complementary-tests-reason="requestedComplementaryTestsReason"
@@ -245,7 +245,6 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { ComponentCard } from '@/shared/components'
 import { ErrorMessage, ValidationAlert } from '@/shared/components/feedback'
 import { FormInputField } from '@/shared/components/forms'
@@ -269,7 +268,7 @@ import { useNotifications } from '@/modules/cases/composables/useNotifications'
 import { profileApiService } from '@/modules/profile/services/profileApiService'
 import type { Disease } from '@/shared/services/disease.service'
 import ResultsActionNotification from '../Shared/ResultsActionNotification.vue'
-import resultsApiService from '../../services/resultsApiService'
+import signApiService from '../../services/signApiService'
 import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
 import type { PruebaComplementaria } from '@/modules/results/services/casoAprobacion.service'
 
@@ -283,18 +282,17 @@ const { loading, patient, caseDetails, activeSection, errorMessage, validationMe
 const { isPatologo } = usePermissions()
 const authStore = useAuthStore()
 const { notification, showSuccess, showError, closeNotification } = useNotifications()
-const { primaryDisease, hasDisease, setPrimaryDisease, clearDiagnosis, formatDiagnosisForReport, getDiagnosisData, validateDiagnosis } = useDiseaseDiagnosis()
-const router = useRouter()
+const { primaryDisease, hasDisease, setPrimaryDisease, clearDiagnosis, validateDiagnosis } = useDiseaseDiagnosis()
 
-const handleClearSearch = () => limpiarBusqueda()
+const handleClearSearch = () => clearSearch()
 onMounted(() => {
   initialize()
-  if (props.autoSearch && props.sampleId) ejecutarBusquedaAutomatica()
+  if (props.autoSearch && props.sampleId) executeAutomaticSearch()
   window.addEventListener('clear-search', handleClearSearch)
   // Refrescar firma del patólogo desde backend si no está en memoria
   try {
     const email = authStore.user?.email
-    if (authStore.user?.rol === 'patologo' && email) {
+    if (authStore.user?.role === 'patologo' && email) {
       const current = (authStore.user as any).firma || (authStore.user as any).firma_url || (authStore.user as any).signatureUrl || (authStore.user as any).firmaDigital
       if (!current) {
         profileApiService.getByRoleAndEmail('patologo', email).then((pb: any) => {
@@ -314,10 +312,10 @@ onMounted(() => {
 })
 onUnmounted(() => window.removeEventListener('clear-search', handleClearSearch))
 
-const ejecutarBusquedaAutomatica = async () => {
+const executeAutomaticSearch = async () => {
   if (!props.sampleId) return
-  codigoCaso.value = props.sampleId
-  await buscarCaso()
+  caseCode.value = props.sampleId
+  await searchCase()
 }
 
 const signing = ref(false)
@@ -344,8 +342,8 @@ const setSavedFromSections = () => {
 
 // Verifica si el usuario actual es el patólogo asignado al caso
 const isAssignedPathologist = computed(() => {
-  if (!caseDetails.value?.patologo_asignado?.nombre || !authStore.user) return false
-  const assignedPathologist = caseDetails.value.patologo_asignado.nombre
+  if (!caseDetails.value?.assigned_pathologist?.name || !authStore.user) return false
+  const assignedPathologist = caseDetails.value.assigned_pathologist.name
   const currentUser = getCurrentUserName()
   return assignedPathologist === currentUser
 })
@@ -353,15 +351,15 @@ const isAssignedPathologist = computed(() => {
 // Reglas de autorización: administradores pueden firmar cualquier caso, patólogos solo sus casos asignados
 const canUserSign = computed(() => {
   if (!authStore.user) return false
-  if (authStore.user.rol === 'administrador') return true
-  if (authStore.user.rol === 'patologo') return isAssignedPathologist.value
+  if (authStore.user.role === 'administrator' || authStore.user.role === 'administrador') return true
+  if (authStore.user.role === 'patologo') return isAssignedPathologist.value
   return false
 })
 
 // Patólogo sin firma digital configurada
 const isPathologistWithoutSignature = computed(() => {
   if (!authStore.user) return false
-  if (authStore.user.rol !== 'patologo') return false
+  if (authStore.user.role !== 'patologo') return false
   let firma = (authStore.user as any).firma || (authStore.user as any).firma_url || (authStore.user as any).signatureUrl || (authStore.user as any).firmaDigital
   if (!firma) {
     try { firma = localStorage.getItem('signature_url') || firma } catch {}
@@ -372,8 +370,8 @@ const isPathologistWithoutSignature = computed(() => {
 
 // Solo los patólogos requieren que el caso tenga un patólogo asignado
 const needsAssignedPathologist = computed(() => {
-  if (!authStore.user || !caseDetails.value?.caso_code) return false
-  if (authStore.user.rol === 'patologo') return !caseDetails.value.patologo_asignado?.nombre
+  if (!authStore.user || !caseDetails.value?.case_code) return false
+  if (authStore.user.role === 'patologo') return !caseDetails.value.assigned_pathologist?.name
   return false
 })
 
@@ -385,14 +383,14 @@ const normalizeStatus = (status: string): string => {
 
 // Solo se puede firmar si el caso NO está en estado COMPLETADO
 const canSignByStatus = computed(() => {
-  if (!caseDetails.value?.estado) return false
-  const normalizedStatus = normalizeStatus(caseDetails.value.estado)
+  if (!caseDetails.value?.state) return false
+  const normalizedStatus = normalizeStatus(caseDetails.value.state)
   return normalizedStatus !== 'COMPLETADO'
 })
 
 const invalidStatusMessage = computed(() => {
-  if (!caseDetails.value?.estado) return ''
-  const estado = caseDetails.value.estado
+  if (!caseDetails.value?.state) return ''
+  const estado = caseDetails.value.state
   const normalizedStatus = normalizeStatus(estado)
   if (normalizedStatus === 'COMPLETADO') {
     return 'Este caso ya ha sido completado y firmado. No se puede firmar nuevamente.'
@@ -400,9 +398,9 @@ const invalidStatusMessage = computed(() => {
   return `El estado "${estado}" no permite la firma del caso.`
 })
 
-const codigoCaso = ref('')
+const caseCode = ref('')
 const isLoadingSearch = ref(false)
-const casoEncontrado = ref(false)
+const caseFound = ref(false)
 const searchError = ref('')
 const selectedPreviousCase = ref<any>(null)
 
@@ -411,7 +409,7 @@ const selectedPreviousCase = ref<any>(null)
 const getCurrentUserName = (): string | null => {
   if (!authStore.user) return null
   let userName = (authStore.user as any).username ||
-    authStore.user.nombre ||
+    authStore.user.name ||
     (authStore.user as any).nombres ||
     (authStore.user as any).nombre_completo ||
     (authStore.user as any).full_name ||
@@ -430,15 +428,16 @@ const getCurrentUserName = (): string | null => {
 }
 
 const getAssignedPathologistName = (caseData: any): string | null => {
-  if (!caseData?.patologo_asignado) return null
-  const pathologistName = caseData.patologo_asignado.nombre ||
-    caseData.patologo_asignado.nombres ||
-    caseData.patologo_asignado.nombre_completo ||
+  if (!caseData?.assigned_pathologist) return null
+  const pathologistName = caseData.assigned_pathologist.name ||
+    caseData.assigned_pathologist.nombre ||
+    caseData.assigned_pathologist.nombres ||
+    caseData.assigned_pathologist.nombre_completo ||
     null
   return pathologistName
 }
 
-const handleCodigoChange = (value: string) => {
+const handleCaseCodeChange = (value: string) => {
   value = value.replace(/[^\d-]/g, '')
   value = value.slice(0, 10)
   if (value.length >= 4 && !value.includes('-')) {
@@ -456,7 +455,7 @@ const handleCodigoChange = (value: string) => {
       value = digits
     }
   }
-  codigoCaso.value = value
+  caseCode.value = value
 }
 
 /**
@@ -520,22 +519,34 @@ const handlePaste = (event: ClipboardEvent) => {
       }
     }
     
-    codigoCaso.value = formattedText
+    caseCode.value = formattedText
   }
 }
 
-const buscarCaso = async () => {
-  if (!codigoCaso.value.trim()) {
+const searchCase = async () => {
+  if (!caseCode.value.trim()) {
     searchError.value = 'Por favor, ingrese un código de caso';
     return
   }
 
   isLoadingSearch.value = true
   searchError.value = ''
-  casoEncontrado.value = false
+  caseFound.value = false
 
   try {
-    const data = await casesApiService.getCaseByCode(codigoCaso.value.trim())
+    const data = await casesApiService.getCaseByCode(caseCode.value.trim())
+    
+    // Validar si el caso puede ser firmado usando el nuevo endpoint
+    try {
+      const validation = await signApiService.validateCaseForSigning(caseCode.value.trim())
+      if (!validation.can_sign) {
+        throw new Error(validation.message)
+      }
+    } catch (validationError: any) {
+      // Si la validación falla, mostrar el mensaje específico
+      throw new Error(validationError.message || 'El caso no puede ser firmado')
+    }
+    
     // Validación de permisos específica para patólogos
     if (isPatologo.value && authStore.user) {
       const nombrePatologoAsignado = getAssignedPathologistName(data)
@@ -550,12 +561,13 @@ const buscarCaso = async () => {
         throw new Error('No tienes permisos para acceder a este caso. Solo puedes acceder a casos donde estés asignado como patólogo.')
       }
     }
-    casoEncontrado.value = true
-    await loadCaseByCode(codigoCaso.value.trim())
+    
+    caseFound.value = true
+    await loadCaseByCode(caseCode.value.trim())
     await loadExistingDiagnosis(data)
     await hydrateAssignedSignature(data)
   } catch (error: any) {
-    casoEncontrado.value = false
+    caseFound.value = false
     searchError.value = error.message || 'Error al buscar el caso'
   } finally {
     isLoadingSearch.value = false
@@ -564,20 +576,13 @@ const buscarCaso = async () => {
 // Hidratar firma del patólogo asignado - usar la que ya viene del backend
 const hydrateAssignedSignature = async (caseData: any) => {
   try {
-    console.log('SignResults - DEBUG caso completo:', caseData)
-    console.log('SignResults - DEBUG patologo_asignado:', caseData?.patologo_asignado)
-    console.log('SignResults - DEBUG firma en caso:', caseData?.patologo_asignado?.firma ? 'SÍ' : 'NO')
-    
     // La firma ya debería estar en el caso que viene del backend
-    const assigned: any = caseData?.patologo_asignado as any
+    const assigned: any = caseData?.assigned_pathologist as any
     if (assigned?.firma) {
-      console.log('SignResults - FIRMA ENCONTRADA EN EL CASO')
       // Asegurar que la firma se propague a caseDetails
-      if (caseDetails.value?.patologo_asignado) {
-        (caseDetails.value.patologo_asignado as any).firma = assigned.firma
+      if (caseDetails.value?.assigned_pathologist) {
+        (caseDetails.value.assigned_pathologist as any).firma = assigned.firma
       }
-    } else {
-      console.log('SignResults - NO HAY FIRMA EN EL CASO')
     }
   } catch (error) {
     console.warn('SignResults - error en hydrateAssignedSignature:', error)
@@ -586,25 +591,58 @@ const hydrateAssignedSignature = async (caseData: any) => {
 
 // Carga diagnósticos existentes del caso (CIE-10 y CIE-O) si ya están firmados
 const loadExistingDiagnosis = async (caseData: any) => {
-  if (caseData.resultado) {
-    const resultado = caseData.resultado as any
+  if (caseData.result) {
+    const resultado = caseData.result as any
     
-    if (resultado.diagnostico_cie10) {
-      const diseaseData = { code: resultado.diagnostico_cie10.codigo, name: resultado.diagnostico_cie10.nombre, table: 'CIE-10', is_active: true }
+    // Cargar diagnóstico CIE-10 (formato nuevo)
+    if (resultado.cie10_diagnosis) {
+      const diseaseData = { 
+        code: resultado.cie10_diagnosis.code, 
+        name: resultado.cie10_diagnosis.name, 
+        table: 'CIE-10', 
+        is_active: true 
+      }
+      setPrimaryDisease(diseaseData)
+    }
+    // Compatibilidad con formato legacy
+    else if (resultado.diagnostico_cie10) {
+      const diseaseData = { 
+        code: resultado.diagnostico_cie10.codigo, 
+        name: resultado.diagnostico_cie10.nombre, 
+        table: 'CIE-10', 
+        is_active: true 
+      }
       setPrimaryDisease(diseaseData)
     }
     
-    if (resultado.diagnostico_cieo) {
-      const diseaseDataCIEO = { code: resultado.diagnostico_cieo.codigo, name: resultado.diagnostico_cieo.nombre, table: 'CIE-O', is_active: true }
+    // Cargar diagnóstico CIE-O (formato nuevo)
+    if (resultado.cieo_diagnosis) {
+      const diseaseDataCIEO = { 
+        code: resultado.cieo_diagnosis.code, 
+        name: resultado.cieo_diagnosis.name, 
+        table: 'CIE-O', 
+        is_active: true 
+      }
+      setPrimaryDiseaseCIEO(diseaseDataCIEO)
+      showCIEODiagnosis.value = true
+    }
+    // Compatibilidad con formato legacy
+    else if (resultado.diagnostico_cieo) {
+      const diseaseDataCIEO = { 
+        code: resultado.diagnostico_cieo.codigo, 
+        name: resultado.diagnostico_cieo.nombre, 
+        table: 'CIE-O', 
+        is_active: true 
+      }
       setPrimaryDiseaseCIEO(diseaseDataCIEO)
       showCIEODiagnosis.value = true
     }
   }
 }
 
-const limpiarBusqueda = () => {
-  codigoCaso.value = ''
-  casoEncontrado.value = false
+const clearSearch = () => {
+  caseCode.value = ''
+  caseFound.value = false
   searchError.value = ''
   hasBeenSigned.value = false
   resetEditorAndDiagnosis()
@@ -623,22 +661,6 @@ const resetEditorAndDiagnosis = () => {
 }
 
 
-function goToPreview() {
-  const payload = {
-    sampleId: caseDetails?.value?.caso_code || props.sampleId,
-    patient: patient?.value || null,
-    caseDetails: caseDetails?.value || null,
-    sections: sections?.value || null,
-    diagnosis: {
-      cie10: getDiagnosisData(),
-      cieo: hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? { codigo: primaryDiseaseCIEO.value.code, nombre: primaryDiseaseCIEO.value.name } : undefined,
-      formatted: formatDiagnosisForReport()
-    },
-    generatedAt: new Date().toISOString()
-  }
-  // Función de previsualización temporalmente deshabilitada
-  console.log('Previsualización temporalmente deshabilitada')
-}
 
 async function handleSign() {
   try {
@@ -656,40 +678,45 @@ async function handleSign() {
       showError('Estado no válido', invalidStatusMessage.value, 0)
       return
     }
-    let patologoCodigo = caseDetails?.value?.patologo_asignado?.codigo
-    if (!patologoCodigo && authStore.user?.rol === 'administrador') {
-      patologoCodigo = authStore.user.id || 'admin'
-    }
-    if (!patologoCodigo) {
-      showError('Error al firmar', 'No se pudo identificar el patólogo para firmar el caso.', 0)
+    
+    const casoCode = caseDetails?.value?.case_code || props.sampleId
+    if (!casoCode) {
+      showError('Error al firmar', 'No se pudo obtener el código del caso.', 0)
       return
     }
-    const casoCode = caseDetails?.value?.caso_code || props.sampleId
-    const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
-      codigo: primaryDisease.value.code,
-      nombre: primaryDisease.value.name
+    
+    // Preparar diagnósticos CIE-10 y CIE-O
+    const cie10Diagnosis = hasDisease.value && primaryDisease.value ? {
+      code: primaryDisease.value.code,
+      name: primaryDisease.value.name
     } : undefined
-    const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
-      codigo: primaryDiseaseCIEO.value.code,
-      nombre: primaryDiseaseCIEO.value.name
+    
+    const cieoDiagnosis = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
+      code: primaryDiseaseCIEO.value.code,
+      name: primaryDiseaseCIEO.value.name
     } : undefined
+    
+    // Preparar datos para el nuevo endpoint
     const requestData = {
-      metodo: sections.value?.method || [],
-      resultado_macro: sections.value?.macro || '',
-      resultado_micro: sections.value?.micro || '',
-      diagnostico: sections.value?.diagnosis || '',
-      observaciones: '',
-      diagnostico_cie10: diagnosticoCie10,
-      diagnostico_cieo: diagnosticoCIEO
+      method: sections.value?.method || [],
+      macro_result: sections.value?.macro || '',
+      micro_result: sections.value?.micro || '',
+      diagnosis: sections.value?.diagnosis || '',
+      observations: '',
+      cie10_diagnosis: cie10Diagnosis,
+      cieo_diagnosis: cieoDiagnosis
     }
-    const response = await resultsApiService.firmarResultado(casoCode, requestData, patologoCodigo)
-    console.log('Respuesta del backend al firmar:', response)
+    
+    // Usar el nuevo endpoint de firma
+    const response = await signApiService.signCase(casoCode, requestData)
+    
     if (response) {
+      // Actualizar el estado del caso
       if (caseDetails.value) {
-        if (response.estado) caseDetails.value.estado = response.estado
-        if (response.fecha_firma) caseDetails.value.fecha_firma = response.fecha_firma
-        console.log('CaseDetails actualizado:', caseDetails.value)
+        caseDetails.value.state = response.state
+        ;(caseDetails.value as any).signed_at = response.signed_at
       }
+      
       setSavedFromSections()
       savedCaseCode.value = casoCode
       showSuccess('¡Resultado firmado!', `El caso ${casoCode} ha sido firmado y está listo para entregar.`, 0)
@@ -700,7 +727,7 @@ async function handleSign() {
       showError('Error al firmar', 'El servidor no devolvió una respuesta válida.', 0)
     }
   } catch (error: any) {
-    showError('Error al firmar', error.response?.data?.message || error.message || 'No se pudo firmar el resultado.', 0)
+    showError('Error al firmar', error.message || 'No se pudo firmar el resultado.', 0)
   } finally {
     signing.value = false
   }
@@ -734,14 +761,14 @@ function clearFormAfterSign() {
 const handleCaseClick = async (caseItem: any) => {
   try {
     // Obtener el código del caso correctamente
-    const caseCode = caseItem.caso_code || caseItem.CasoCode || caseItem.id
-    if (!caseCode) {
+    const caseCodeValue = caseItem.case_code || caseItem.caso_code || caseItem.CasoCode || caseItem.id
+    if (!caseCodeValue) {
       console.error('No se encontró código de caso en:', caseItem)
       return
     }
     
     // Cargar el caso completo desde la base de datos
-    const fullCase = await casesApiService.getCaseByCode(caseCode)
+    const fullCase = await casesApiService.getCaseByCode(caseCodeValue)
     selectedPreviousCase.value = fullCase
   } catch (error) {
     console.error('Error al cargar caso completo:', error)
@@ -817,49 +844,42 @@ const handleSignWithChanges = async (data: { details: string; tests: PruebaCompl
       return
     }
     
-    // Obtener código del patólogo
-    let patologoCodigo = caseDetails?.value?.patologo_asignado?.codigo
-    if (!patologoCodigo && authStore.user?.rol === 'administrador') {
-      patologoCodigo = authStore.user.id || 'admin'
-    }
-    if (!patologoCodigo) {
-      showError('Error al firmar', 'No se pudo identificar el patólogo para firmar el caso.', 0)
+    const casoCode = caseDetails?.value?.case_code || props.sampleId
+    if (!casoCode) {
+      showError('Error al firmar', 'No se pudo obtener el código del caso.', 0)
       return
     }
     
-    const casoCode = caseDetails?.value?.caso_code || props.sampleId
-    
-    // Preparar diagnósticos CIE-10 y CIE-O (igual que en handleSign normal)
-    const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
-      codigo: primaryDisease.value.code,
-      nombre: primaryDisease.value.name
-    } : undefined
-    const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
-      codigo: primaryDiseaseCIEO.value.code,
-      nombre: primaryDiseaseCIEO.value.name
+    // Preparar diagnósticos CIE-10 y CIE-O
+    const cie10Diagnosis = hasDisease.value && primaryDisease.value ? {
+      code: primaryDisease.value.code,
+      name: primaryDisease.value.name
     } : undefined
     
-    // Preparar datos para firmar (incluyendo diagnósticos CIE-10/CIEO)
+    const cieoDiagnosis = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
+      code: primaryDiseaseCIEO.value.code,
+      name: primaryDiseaseCIEO.value.name
+    } : undefined
+    
+    // Preparar datos para el nuevo endpoint (incluyendo observaciones de pruebas complementarias)
     const requestData = {
-      metodo: sections.value?.method || [],
-      resultado_macro: sections.value?.macro || '',
-      resultado_micro: sections.value?.micro || '',
-      diagnostico: sections.value?.diagnosis || '',
-      observaciones: data.details, // Usar el motivo de las pruebas complementarias
-      diagnostico_cie10: diagnosticoCie10,
-      diagnostico_cieo: diagnosticoCIEO
+      method: sections.value?.method || [],
+      macro_result: sections.value?.macro || '',
+      micro_result: sections.value?.micro || '',
+      diagnosis: sections.value?.diagnosis || '',
+      observations: data.details, // Usar el motivo de las pruebas complementarias
+      cie10_diagnosis: cie10Diagnosis,
+      cieo_diagnosis: cieoDiagnosis
     }
     
-    // Firmar el caso
-    const response = await resultsApiService.firmarResultado(casoCode, requestData, patologoCodigo)
-    console.log('Respuesta del backend al firmar con pruebas complementarias:', response)
+    // Usar el nuevo endpoint de firma
+    const response = await signApiService.signCase(casoCode, requestData)
     
     if (response) {
       // Actualizar el estado del caso
       if (caseDetails.value) {
-        if (response.estado) caseDetails.value.estado = response.estado
-        if (response.fecha_firma) caseDetails.value.fecha_firma = response.fecha_firma
-        console.log('CaseDetails actualizado con fecha de firma:', caseDetails.value)
+        caseDetails.value.state = response.state
+        ;(caseDetails.value as any).signed_at = response.signed_at
       }
       
       // Guardar contenido para notificación
@@ -882,7 +902,7 @@ const handleSignWithChanges = async (data: { details: string; tests: PruebaCompl
       showError('Error al firmar', 'El servidor no devolvió una respuesta válida.', 0)
     }
   } catch (error: any) {
-    showError('Error al firmar con pruebas complementarias', error.response?.data?.message || error.message || 'No se pudo firmar el resultado.', 0)
+    showError('Error al firmar con pruebas complementarias', error.message || 'No se pudo firmar el resultado.', 0)
   } finally {
     signing.value = false
   }

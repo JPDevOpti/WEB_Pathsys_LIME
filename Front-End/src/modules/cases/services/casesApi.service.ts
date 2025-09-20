@@ -177,6 +177,15 @@ export class CasesApiService {
     }
   }
 
+  async updateCaseState(caseCode: string, state: string): Promise<UpdateCaseResponse> {
+    try {
+      const updateData = { state }
+      return await this.updateCase(caseCode, updateData)
+    } catch (error: any) {
+      throw new Error(error.message || `Error al actualizar estado del caso ${caseCode}`)
+    }
+  }
+
   /**
    * Marca múltiples casos como Completado aplicando cambios en sus muestras.
    * Usa el nuevo endpoint de actualización unificado.

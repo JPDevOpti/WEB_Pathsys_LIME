@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -73,6 +73,8 @@ class CaseResult(BaseModel):
     micro_result: Optional[str] = None
     diagnosis: Optional[str] = None
     observations: Optional[str] = None
+    cie10_diagnosis: Optional[Dict[str, str]] = None
+    cieo_diagnosis: Optional[Dict[str, str]] = None
     updated_at: Optional[datetime] = None
 
     class Config:
@@ -91,6 +93,7 @@ class CaseResponse(BaseModel):
     observations: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    signed_at: Optional[datetime] = None
     assigned_pathologist: Optional[AssignedPathologist] = None
     result: Optional[CaseResult] = None
 

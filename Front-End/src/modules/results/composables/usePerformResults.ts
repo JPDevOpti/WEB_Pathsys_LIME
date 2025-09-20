@@ -326,12 +326,12 @@ export function usePerformResults(sampleId: string) {
         diagnostico_cieo: diagnosticoCIEO
       }
       
-      console.log('Enviando datos de completion al nuevo backend:', requestData)
       
       // Guardar resultado en el nuevo backend
       await resultsApiService.updateCaseResult(sample.value.id, requestData)
-      // TODO: Llamar endpoint para cambiar estado a "Por firmar"
-      // await casesApiService.updateCaseStatus(sample.value.caso_id, 'Por firmar')
+      
+      // Cambiar estado del caso a "Por firmar"
+      await casesApiService.updateCaseState(sample.value.id, 'Por firmar')
       
       lastSavedAt.value = new Date().toISOString()
       
