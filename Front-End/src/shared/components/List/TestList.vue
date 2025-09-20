@@ -12,7 +12,7 @@
       <div class="relative">
         <input
           ref="inputRef"
-          v-model="searchQuery"
+          :value="displayText"
           type="text"
           :placeholder="placeholder"
           :disabled="disabled"
@@ -24,6 +24,7 @@
           @focus="handleFocus"
           @blur="handleBlur"
           @keydown="handleKeyDown"
+          @input="handleInput"
           autocomplete="off"
         />
         
@@ -130,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, nextTick } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import type { TestDetails, TestSelectOption } from '../../../modules/cases/types/test'
 import { useTestAPI } from '../../../modules/cases/composables/useTestAPI'
 
@@ -246,6 +247,11 @@ const displayText = computed(() => {
 })
 
 // Funciones del combobox
+const handleInput = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  searchQuery.value = target.value
+}
+
 const handleFocus = () => {
   isFocused.value = true
   searchQuery.value = ''
@@ -374,14 +380,7 @@ onMounted(async () => {
   }
 })
 
-// Sync display text
-watch([displayText, isFocused], () => {
-  if (!isFocused.value) {
-    nextTick(() => {
-      searchQuery.value = displayText.value
-    })
-  }
-})
+// Sync display text - ya no es necesario con el nuevo enfoque
 </script>
 
 <style scoped>

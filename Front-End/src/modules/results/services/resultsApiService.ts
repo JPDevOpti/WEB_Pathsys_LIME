@@ -2,6 +2,24 @@ import { apiClient } from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 import type { UpdateCaseResponse } from '@/modules/cases/types/api'
 
+// Nueva interfaz para el nuevo backend
+export interface UpdateResultRequest {
+  method?: string[]
+  macro_result?: string
+  micro_result?: string
+  diagnosis?: string
+  observations?: string
+  diagnostico_cie10?: {
+    codigo: string
+    nombre: string
+  }
+  diagnostico_cieo?: {
+    codigo: string
+    nombre: string
+  }
+}
+
+// Interfaz legacy para compatibilidad con el backend actual
 export interface UpsertResultadoRequest {
   metodo?: string[]
   resultado_macro?: string
@@ -20,7 +38,42 @@ export interface UpsertResultadoRequest {
 
 class ResultsApiService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.CASES
+  private readonly newBackendEndpoint = '/cases' // Nuevo endpoint del backend
 
+  // Nuevo método para el nuevo backend
+  async updateCaseResult(caseCode: string, data: UpdateResultRequest): Promise<any> {
+    try {
+      const endpoint = `${this.newBackendEndpoint}/${caseCode}/result`
+      const response = await apiClient.put(endpoint, data)
+      return response
+    } catch (error: any) {
+      throw new Error(`Error al actualizar resultado: ${error.message || error}`)
+    }
+  }
+
+  // Nuevo método para obtener resultado
+  async getCaseResult(caseCode: string): Promise<any> {
+    try {
+      const endpoint = `${this.newBackendEndpoint}/${caseCode}/result`
+      const response = await apiClient.get(endpoint)
+      return response
+    } catch (error: any) {
+      throw new Error(`Error al obtener resultado: ${error.message || error}`)
+    }
+  }
+
+  // Nuevo método para validar si se puede editar
+  async validateCaseForEditing(caseCode: string): Promise<any> {
+    try {
+      const endpoint = `${this.newBackendEndpoint}/${caseCode}/result/validation`
+      const response = await apiClient.get(endpoint)
+      return response
+    } catch (error: any) {
+      throw new Error(`Error al validar caso: ${error.message || error}`)
+    }
+  }
+
+  // Método legacy para compatibilidad
   async upsertResultado(casoCode: string, data: UpsertResultadoRequest): Promise<UpdateCaseResponse> {
     try {
       const endpoint = `${this.endpoint}/caso-code/${casoCode}/resultado`

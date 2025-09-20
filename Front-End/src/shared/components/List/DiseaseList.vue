@@ -76,7 +76,7 @@
       <div v-if="displayDisease" class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <h4 class="text-sm font-medium text-blue-900 mb-2">Diagnóstico CIE-10 Seleccionado</h4>
         <div class="text-xs text-blue-800">
-          <span class="font-medium">{{ displayDisease.codigo }}</span> - {{ displayDisease.nombre }}
+          <span class="font-medium">{{ displayDisease.code }}</span> - {{ displayDisease.name }}
         </div>
       </div>
 
@@ -84,7 +84,7 @@
       <div v-if="selectedDiseaseCIEO" class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <h4 class="text-sm font-medium text-blue-900 mb-2">Diagnóstico CIEO Seleccionado</h4>
         <div class="text-xs text-blue-800">
-          <span class="font-medium">{{ selectedDiseaseCIEO.codigo }}</span> - {{ selectedDiseaseCIEO.nombre }}
+          <span class="font-medium">{{ selectedDiseaseCIEO.code }}</span> - {{ selectedDiseaseCIEO.name }}
         </div>
       </div>
     </div>
@@ -110,13 +110,13 @@
             >
               <td class="px-3 py-2 text-sm">
                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                  {{ disease.codigo }}
+                  {{ disease.code }}
                 </span>
               </td>
-              <td class="px-3 py-2 text-sm text-gray-900">{{ disease.nombre }}</td>
+              <td class="px-3 py-2 text-sm text-gray-900">{{ disease.name }}</td>
               <td class="px-3 py-2 text-sm">
                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                  {{ disease.tabla }}
+                  {{ disease.table }}
                 </span>
               </td>
               <td class="px-3 py-2 text-sm">
@@ -184,11 +184,11 @@ import { FormCheckbox } from '../forms'
 // Types
 interface Disease {
   id?: string
-  tabla: string
-  codigo: string
-  nombre: string
-  descripcion?: string
-  isActive: boolean
+  table: string
+  code: string
+  name: string
+  description?: string
+  is_active: boolean
 }
 
 // Props
@@ -340,7 +340,7 @@ const handleSearchInputCIEO = () => {
 
 const selectDisease = (disease: Disease) => {
   // Determinar si es CIE-10 o CIEO basándose en la tabla
-  if (disease.tabla === 'CIEO') {
+  if (disease.table === 'CIEO') {
     selectedDiseaseCIEO.value = disease
     // Emitir evento para CIEO
     emit('cieo-disease-selected', disease)
@@ -373,45 +373,45 @@ const filterDiseasesFlexibly = (diseases: Disease[], query: string): Disease[] =
   const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 0)
   
   return diseases.filter(disease => {
-    const codigo = disease.codigo.toLowerCase()
-    const nombre = disease.nombre.toLowerCase()
+    const code = disease.code.toLowerCase()
+    const name = disease.name.toLowerCase()
     
     // Búsqueda exacta por código (máxima prioridad)
-    if (codigo === searchTerm) return true
+    if (code === searchTerm) return true
     
     // Búsqueda que empiece con el código
-    if (codigo.startsWith(searchTerm)) return true
+    if (code.startsWith(searchTerm)) return true
     
     // Búsqueda que contenga el código
-    if (codigo.includes(searchTerm)) return true
+    if (code.includes(searchTerm)) return true
     
     // Búsqueda exacta en el nombre
-    if (nombre === searchTerm) return true
+    if (name === searchTerm) return true
     
     // Búsqueda que empiece con el nombre
-    if (nombre.startsWith(searchTerm)) return true
+    if (name.startsWith(searchTerm)) return true
     
     // Búsqueda que contenga el nombre completo
-    if (nombre.includes(searchTerm)) return true
+    if (name.includes(searchTerm)) return true
     
     // Búsqueda por palabras individuales - todas las palabras deben estar en el nombre
     if (searchWords.length > 1) {
-      return searchWords.every(word => nombre.includes(word))
+      return searchWords.every(word => name.includes(word))
     }
     
     // Búsqueda por palabras individuales - al menos una palabra debe estar en el nombre
     if (searchWords.length === 1) {
       const word = searchWords[0]
-      const nombreWords = nombre.split(/\s+/)
-      return nombreWords.some(nombreWord => nombreWord.includes(word))
+      const nameWords = name.split(/\s+/)
+      return nameWords.some(nameWord => nameWord.includes(word))
     }
     
     return false
   }).sort((a, b) => {
-    const aCode = a.codigo.toLowerCase()
-    const bCode = b.codigo.toLowerCase()
-    const aNombre = a.nombre.toLowerCase()
-    const bNombre = b.nombre.toLowerCase()
+    const aCode = a.code.toLowerCase()
+    const bCode = b.code.toLowerCase()
+    const aName = a.name.toLowerCase()
+    const bName = b.name.toLowerCase()
     
     // Prioridad 1: Coincidencia exacta de código
     if (aCode === searchTerm && bCode !== searchTerm) return -1
@@ -422,15 +422,15 @@ const filterDiseasesFlexibly = (diseases: Disease[], query: string): Disease[] =
     if (bCode.startsWith(searchTerm) && !aCode.startsWith(searchTerm)) return 1
     
     // Prioridad 3: Nombre que empiece con el término
-    if (aNombre.startsWith(searchTerm) && !bNombre.startsWith(searchTerm)) return -1
-    if (bNombre.startsWith(searchTerm) && !aNombre.startsWith(searchTerm)) return 1
+    if (aName.startsWith(searchTerm) && !bName.startsWith(searchTerm)) return -1
+    if (bName.startsWith(searchTerm) && !aName.startsWith(searchTerm)) return 1
     
     // Prioridad 4: Nombre que contenga el término
-    if (aNombre.includes(searchTerm) && !bNombre.includes(searchTerm)) return -1
-    if (bNombre.includes(searchTerm) && !aNombre.includes(searchTerm)) return 1
+    if (aName.includes(searchTerm) && !bName.includes(searchTerm)) return -1
+    if (bName.includes(searchTerm) && !aName.includes(searchTerm)) return 1
     
     // Prioridad 5: Orden alfabético por nombre
-    return a.nombre.localeCompare(b.nombre)
+    return a.name.localeCompare(b.name)
   })
 }
 

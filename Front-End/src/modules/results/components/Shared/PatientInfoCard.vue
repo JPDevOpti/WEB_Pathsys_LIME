@@ -44,9 +44,9 @@
                 class="hover:bg-gray-50 cursor-pointer"
                 @click="$emit('caseClick', c)"
               >
-                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 font-medium">{{ c.caso_code }}</td>
-                <td class="px-3 py-2 text-xs text-gray-900">{{ c.estado }}</td>
-                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ new Date(c.fecha_ingreso).toLocaleDateString() }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900 font-medium">{{ c.case_code }}</td>
+                <td class="px-3 py-2 text-xs text-gray-900">{{ c.state }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ new Date(c.created_at).toLocaleDateString() }}</td>
               </tr>
             </tbody>
           </table>

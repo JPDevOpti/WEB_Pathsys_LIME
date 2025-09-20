@@ -151,8 +151,6 @@ const getEntidadError = computed(() => !form.entityCode ? 'La entidad es obligat
 
 
 const mapApiResponseToPatientData = (patient: any): PatientData => {
-  console.log('Mapeando paciente:', patient) // Debug log
-  
   // Mapear datos que vienen en español a valores internos en minúsculas
   return {
     patientCode: patient.cedula || patient.paciente_code || patient.patient_code || '',
@@ -196,8 +194,16 @@ const loadPatientData = async () => {
   isLoading.value = true
   try {
     const caseInfo = await casesApiService.getCaseByCode(props.caseCodeProp)
-    const pacienteCode = caseInfo?.paciente?.paciente_code
-    if (!pacienteCode) throw new Error('El caso no contiene código de paciente')
+    
+    // Intentar obtener el código del paciente de diferentes campos posibles
+    const pacienteCode = caseInfo?.patient_info?.patient_code || 
+                        caseInfo?.paciente?.paciente_code || 
+                        caseInfo?.paciente?.patient_code ||
+                        caseInfo?.patient_info?.paciente_code
+    
+    if (!pacienteCode) {
+      throw new Error('El caso no contiene código de paciente')
+    }
     
     const patient = await patientsApiService.getPatientByCedula(pacienteCode)
     if (!patient) throw new Error('Paciente no encontrado en la colección de pacientes')
@@ -318,11 +324,9 @@ const searchPatient = async () => {
 
   try {
     const patient = await patientsApiService.getPatientByCedula(searchPatientCedula.value)
-    console.log('Paciente encontrado:', patient) // Debug log
     
     if (patient) {
       const mappedPatientData = mapApiResponseToPatientData(patient)
-      console.log('Datos mapeados:', mappedPatientData) // Debug log
       
       patientFound.value = true
       
@@ -339,8 +343,6 @@ const searchPatient = async () => {
       originalData.value = { ...mappedPatientData }
       updateSelectedEntity(patient)
       searchPatientCedula.value = mappedPatientData.patientCode
-      
-      console.log('Formulario después de asignar:', form) // Debug log
     } else {
       searchError.value = `No se encontró un paciente con el código ${searchPatientCedula.value}`
       patientFound.value = false

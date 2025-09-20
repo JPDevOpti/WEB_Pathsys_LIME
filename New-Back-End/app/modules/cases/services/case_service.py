@@ -136,6 +136,7 @@ class CaseService:
             "created_at": doc.get("created_at"),
             "updated_at": doc.get("updated_at"),
             "assigned_pathologist": doc.get("assigned_pathologist"),
+            "result": doc.get("result"),
         }
         return CaseResponse(**doc_out)
 

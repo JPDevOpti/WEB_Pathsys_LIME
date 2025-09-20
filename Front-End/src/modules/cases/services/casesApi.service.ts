@@ -56,7 +56,7 @@ export class CasesApiService {
 
   async getCasesByPatient(cedula: string): Promise<CaseModel[]> {
     try {
-      const response = await apiClient.get<CaseModel[]>(`${this.endpoint}/paciente/${cedula}`)
+      const response = await apiClient.get<CaseModel[]>(`${this.endpoint}/?search=${cedula}&limit=1000`)
       return response
     } catch (error: any) {
       throw new Error(error.message || `Error al obtener casos del paciente ${cedula}`)

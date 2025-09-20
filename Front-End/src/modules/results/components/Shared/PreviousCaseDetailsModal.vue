@@ -43,10 +43,10 @@
       </div>
 
           <!-- Observaciones Generales -->
-          <div v-if="caseItem?.observaciones_generales" class="bg-gray-50 rounded-xl p-4">
+          <div v-if="caseItem?.observations" class="bg-gray-50 rounded-xl p-4">
             <h5 class="text-sm font-medium text-gray-700 mb-3">Observaciones Generales</h5>
             <div class="border border-gray-200 rounded-lg p-3 bg-white">
-              <p class="text-sm text-gray-800 break-words">{{ caseItem.observaciones_generales }}</p>
+              <p class="text-sm text-gray-800 break-words">{{ caseItem.observations }}</p>
             </div>
           </div>
 
@@ -77,16 +77,16 @@
           <div v-for="(muestra, mIdx) in muestras" :key="mIdx" class="border border-gray-200 rounded-lg p-3 bg-white">
             <div class="flex items-center justify-between mb-2">
               <p class="text-sm text-gray-600">Región del cuerpo</p>
-              <p class="text-sm font-medium text-gray-900">{{ muestra.region_cuerpo || 'No especificada' }}</p>
+              <p class="text-sm font-medium text-gray-900">{{ muestra.body_region || 'No especificada' }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
               <span
-                v-for="(prueba, pIdx) in muestra.pruebas"
+                v-for="(prueba, pIdx) in muestra.tests"
                 :key="pIdx"
                 class="relative inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs pl-2 pr-6 py-0.5 rounded border text-nowrap"
-                :title="prueba.nombre && prueba.nombre !== prueba.id ? prueba.nombre : ''"
+                :title="prueba.name && prueba.name !== prueba.id ? prueba.name : ''"
               >
-                {{ prueba.id }} - {{ prueba.nombre || prueba.id }}
+                {{ prueba.id }} - {{ prueba.name || prueba.id }}
               </span>
             </div>
           </div>
@@ -100,35 +100,38 @@
         
 
         <!-- Resultado Macroscópico -->
-        <div v-if="resultado.resultado_macro" class="border border-gray-200 rounded-lg p-3 bg-white">
+        <div v-if="resultado.macro_result" class="border border-gray-200 rounded-lg p-3 bg-white">
           <div class="mb-2">
             <p class="text-sm text-gray-600">Resultado Macroscópico</p>
           </div>
-          <p class="text-sm text-gray-800 break-words">{{ resultado.resultado_macro }}</p>
+          <p class="text-sm text-gray-800 break-words">{{ resultado.macro_result }}</p>
         </div>
 
         <!-- Resultado Microscópico -->
-        <div v-if="resultado.resultado_micro" class="border border-gray-200 rounded-lg p-3 bg-white">
+        <div v-if="resultado.micro_result" class="border border-gray-200 rounded-lg p-3 bg-white">
           <div class="mb-2">
             <p class="text-sm text-gray-600">Resultado Microscópico</p>
           </div>
-          <p class="text-sm text-gray-800 break-words">{{ resultado.resultado_micro }}</p>
+          <p class="text-sm text-gray-800 break-words">{{ resultado.micro_result }}</p>
         </div>
 
         <!-- Diagnóstico -->
-        <div v-if="resultado.diagnostico" class="border border-gray-200 rounded-lg p-3 bg-white">
+        <div v-if="resultado.diagnosis" class="border border-gray-200 rounded-lg p-3 bg-white">
           <div class="mb-2">
             <p class="text-sm text-gray-600">Diagnóstico</p>
           </div>
-          <p class="text-sm text-gray-800 break-words">{{ resultado.diagnostico }}</p>
+          <p class="text-sm text-gray-800 break-words">{{ resultado.diagnosis }}</p>
         </div>
       </div>
 
       <!-- Diagnósticos CIE-10 y CIE-O -->
+      <!-- TODO: Implementar cuando estén disponibles en el nuevo backend -->
+      <!--
       <div v-if="resultado && (resultado.diagnostico_cie10 || resultado.diagnostico_cieo)" class="bg-gray-50 rounded-xl p-4 space-y-3">
         <h5 class="text-sm font-medium text-gray-700">Diagnósticos Clasificados</h5>
         
         <!-- Diagnóstico CIE-10 -->
+        <!--
         <div v-if="resultado.diagnostico_cie10" class="border border-gray-200 rounded-lg p-3 bg-white">
           <div class="flex items-center gap-2 mb-2">
             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -140,6 +143,7 @@
         </div>
 
         <!-- Diagnóstico CIE-O -->
+        <!--
         <div v-if="resultado.diagnostico_cieo" class="border border-gray-200 rounded-lg p-3 bg-white">
           <div class="flex items-center gap-2 mb-2">
             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -150,8 +154,11 @@
           <p class="text-sm text-gray-800">{{ resultado.diagnostico_cieo.nombre }}</p>
         </div>
       </div>
+      -->
 
       <!-- Información de firma -->
+      <!-- TODO: Implementar cuando estén disponibles en el nuevo backend -->
+      <!--
       <div v-if="resultado && resultado.firmado" class="bg-gray-50 rounded-xl p-4">
         <h5 class="text-sm font-medium text-gray-700 mb-3">Información de Firma</h5>
         <div class="grid grid-cols-2 gap-4">
@@ -165,6 +172,7 @@
           </div>
         </div>
       </div>
+      -->
     </div>
 
     <template #footer>
@@ -198,63 +206,61 @@ const isOpen = computed(() => {
 
 // Extraer datos del caso de forma unificada
 const caseCode = computed(() => {
-  const code = props.caseItem?.caso_code || 'N/A'
-  console.log('PreviousCaseDetailsModal - caseCode:', code, 'from:', props.caseItem?.caso_code)
+  const code = props.caseItem?.case_code || 'N/A'
+  console.log('PreviousCaseDetailsModal - caseCode:', code, 'from:', props.caseItem?.case_code)
   return code
 })
 const status = computed(() => {
-  const stat = props.caseItem?.estado || 'N/A'
+  const stat = props.caseItem?.state || 'N/A'
   console.log('PreviousCaseDetailsModal - status:', stat)
   return stat
 })
 const patientName = computed(() => {
-  const name = props.caseItem?.paciente?.nombre || 'N/A'
-  console.log('PreviousCaseDetailsModal - patientName:', name, 'paciente:', props.caseItem?.paciente)
+  const name = props.caseItem?.patient_info?.name || 'N/A'
+  console.log('PreviousCaseDetailsModal - patientName:', name, 'patient_info:', props.caseItem?.patient_info)
   return name
 })
 const patientId = computed(() => {
-  const id = props.caseItem?.paciente?.paciente_code || 'N/A'
+  const id = props.caseItem?.patient_info?.patient_code || 'N/A'
   console.log('PreviousCaseDetailsModal - patientId:', id)
   return id
 })
 const patientAge = computed(() => {
-  const age = props.caseItem?.paciente?.edad
+  const age = props.caseItem?.patient_info?.age
   const result = age ? `${age} años` : 'No especificada'
-  console.log('PreviousCaseDetailsModal - patientAge:', result, 'edad:', age)
+  console.log('PreviousCaseDetailsModal - patientAge:', result, 'age:', age)
   return result
 })
 const patientSex = computed(() => {
-  const sex = props.caseItem?.paciente?.sexo || 'No especificado'
+  const sex = props.caseItem?.patient_info?.gender || 'No especificado'
   console.log('PreviousCaseDetailsModal - patientSex:', sex)
   return sex
 })
 const attentionType = computed(() => {
-  const type = props.caseItem?.paciente?.tipo_atencion || 'N/A'
+  const type = props.caseItem?.patient_info?.care_type || 'N/A'
   console.log('PreviousCaseDetailsModal - attentionType:', type)
   return type
 })
 const entity = computed(() => {
-  const ent = props.caseItem?.paciente?.entidad_info?.nombre || 'No especificada'
-  console.log('PreviousCaseDetailsModal - entity:', ent, 'entidad_info:', props.caseItem?.paciente?.entidad_info)
+  const ent = props.caseItem?.patient_info?.entity_info?.name || 'No especificada'
+  console.log('PreviousCaseDetailsModal - entity:', ent, 'entity_info:', props.caseItem?.patient_info?.entity_info)
   return ent
 })
-const createdAt = computed(() => props.caseItem?.fecha_ingreso || '')
+const createdAt = computed(() => props.caseItem?.created_at || '')
 const signedAt = computed(() => {
-  const signedDate = props.caseItem?.fecha_firma
-  return signedDate ? formatDate(signedDate) : 'Pendiente'
+  // TODO: Implementar cuando esté disponible en el nuevo backend
+  return 'Pendiente'
 })
-const priority = computed(() => props.caseItem?.prioridad || 'Normal')
-const pathologist = computed(() => props.caseItem?.patologo_asignado?.nombre || 'Sin asignar')
-const observacionesGenerales = computed(() => props.caseItem?.observaciones_generales)
-const muestras = computed(() => props.caseItem?.muestras)
-const resultado = computed(() => props.caseItem?.resultado)
+const priority = computed(() => props.caseItem?.priority || 'Normal')
+const pathologist = computed(() => props.caseItem?.assigned_pathologist?.name || 'Sin asignar')
+const muestras = computed(() => props.caseItem?.samples)
+const resultado = computed(() => props.caseItem?.result)
 
 const hasResultContent = computed(() => {
   if (!resultado.value) return false
-  return resultado.value.resultado_macro || 
-         resultado.value.resultado_micro || 
-         resultado.value.diagnostico || 
-         resultado.value.tipo_resultado
+  return resultado.value.macro_result || 
+         resultado.value.micro_result || 
+         resultado.value.diagnosis
 })
 
 function formatDate(dateString: string, includeTime: boolean = false) {

@@ -191,7 +191,15 @@
                 <div class="space-y-2">
                   <div v-for="(test, testIndex) in sample.tests" :key="testIndex + '-' + resetKey" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-end">
                     <div class="flex-1 min-w-0">
-                      <TestList :key="'test-' + sampleIndex + '-' + testIndex + '-' + resetKey" v-model="test.code" :label="`Prueba ${testIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${testIndex + 1}...`" :required="true" :auto-load="true" @test-selected="(test) => handleTestSelected(sampleIndex, testIndex, test)" />
+                      <TestList 
+                        :key="'test-' + sampleIndex + '-' + testIndex + '-' + resetKey" 
+                        v-model="test.code" 
+                        :label="`Prueba ${testIndex + 1}`" 
+                        :placeholder="`Buscar y seleccionar prueba ${testIndex + 1}...`" 
+                        :required="true" 
+                        :auto-load="true" 
+                        @test-selected="(test) => handleTestSelected(sampleIndex, testIndex, test)"
+                      />
                     </div>
                     <div class="w-full sm:w-24">
                       <FormInputField v-model.number="test.quantity" label="Cantidad" type="number" :min="1" placeholder="Cantidad" />
@@ -714,10 +722,11 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
         'tipoAtencionPaciente'
       ])),
         
-      numberOfSamples: (getField(['muestras.length', 'numeroMuestras'], 1)).toString(),
+      numberOfSamples: (getField(['muestras.length', 'samples.length', 'numeroMuestras'], 1)).toString(),
          
       samples: (() => {
         const samples = getField(['samples', 'muestras'], [])
+        
         if (samples?.length > 0) {
           return samples.map((sample: any, index: number) => ({
             number: index + 1,
@@ -738,12 +747,6 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
       observations: getField(['observations', 'observaciones_generales', 'observacionesGenerales', 'patient_info.observations'])
     }
     
-    // Debug: verificar carga de observaciones
-    console.log('=== DEBUG: EditCaseForm.vue - Carga de observaciones ===')
-    console.log('caseData completo:', JSON.stringify(caseData, null, 2))
-    console.log('Observaciones encontradas:', caseFormData.observations)
-    console.log('=== FIN DEBUG ===')
-
     Object.assign(formData, caseFormData)
     state.value = translateCaseState(getField(['state', 'estado'], 'En proceso'))
     assignedPathologist.value = getField([

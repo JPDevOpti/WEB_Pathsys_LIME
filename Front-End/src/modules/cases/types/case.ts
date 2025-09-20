@@ -10,8 +10,8 @@ export enum CasePriority {
 }
 
 export interface EntityInfo {
-  codigo: string
-  nombre: string
+  id: string
+  name: string
 }
 
 export interface PatientInfo {
@@ -55,20 +55,16 @@ export interface SampleInfo {
 }
 
 export interface PathologistInfo {
-  codigo: string
-  nombre: string
+  id: string
+  name: string
 }
 
 export interface CaseResult {
-  tipo_resultado?: string
-  resultado_macro?: string
-  resultado_micro?: string
-  diagnostico?: string
-  firmado?: boolean
-  fecha_firma?: string
-  patologo_firma?: string
-  diagnostico_cie10?: { codigo: string; nombre: string }
-  diagnostico_cieo?: { codigo: string; nombre: string }
+  method?: string[]
+  macro_result?: string
+  micro_result?: string
+  diagnosis?: string
+  observations?: string
 }
 
 export interface CaseModel {
@@ -83,44 +79,30 @@ export interface CaseModel {
   created_at: string
   updated_at: string
   observations?: string
-  patologo_asignado?: PathologistInfo
   assigned_pathologist?: PathologistInfo
-  entidad_info?: EntityInfo
-  resultado?: CaseResult
-  creado_por?: string
-  actualizado_por?: string
-  activo?: boolean
-  // Campos en español para compatibilidad
-  _id?: string
-  caso_code?: string
-  paciente?: PatientInfo
-  medico_solicitante?: string
-  servicio?: string
-  muestras?: SampleInfo[]
-  estado?: CaseState
-  prioridad?: CasePriority
-  fecha_ingreso?: string
-  fecha_firma?: string
-  fecha_actualizacion?: string
-  observaciones_generales?: string
+  entity_info?: EntityInfo
+  result?: CaseResult
+  created_by?: string
+  updated_by?: string
+  active?: boolean
 }
 
 export interface CaseListItem {
   _id: string
-  caso_code: string
-  paciente: { nombre: string; cedula: string }
-  estado: CaseState
-  fecha_ingreso: string
-  patologo_asignado?: { nombre: string }
+  case_code: string
+  patient: { name: string; patient_code: string }
+  state: CaseState
+  created_at: string
+  assigned_pathologist?: { name: string }
 }
 
 export interface CaseStatistics {
-  total_casos: number
-  casos_pendientes: number
-  casos_en_proceso: number
-  casos_completados: number
-  casos_entregados: number
-  casos_cancelados: number
-  casos_vencidos: number
-  casos_sin_patologo: number
+  total_cases: number
+  pending_cases: number
+  in_progress_cases: number
+  completed_cases: number
+  delivered_cases: number
+  cancelled_cases: number
+  expired_cases: number
+  cases_without_pathologist: number
 }

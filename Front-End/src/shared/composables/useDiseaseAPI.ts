@@ -77,8 +77,8 @@ export function useDiseaseAPI() {
           // Luego filtrar por el término de búsqueda si se proporciona
           if (query && query.trim()) {
             const filteredDiseases = result.diseases.filter(disease => 
-              disease.nombre.toLowerCase().includes(query.toLowerCase()) ||
-              disease.codigo.toLowerCase().includes(query.toLowerCase())
+              disease.name.toLowerCase().includes(query.toLowerCase()) ||
+              disease.code.toLowerCase().includes(query.toLowerCase())
             )
             result.diseases = filteredDiseases
             result.total = filteredDiseases.length
@@ -89,8 +89,8 @@ export function useDiseaseAPI() {
           // Luego filtrar por el término de búsqueda si se proporciona
           if (query && query.trim()) {
             const filteredDiseases = result.diseases.filter(disease => 
-              disease.nombre.toLowerCase().includes(query.toLowerCase()) ||
-              disease.codigo.toLowerCase().includes(query.toLowerCase())
+              disease.name.toLowerCase().includes(query.toLowerCase()) ||
+              disease.code.toLowerCase().includes(query.toLowerCase())
             )
             result.diseases = filteredDiseases
             result.total = filteredDiseases.length

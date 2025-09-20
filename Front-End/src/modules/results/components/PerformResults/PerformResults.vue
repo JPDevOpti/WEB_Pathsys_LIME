@@ -4,24 +4,24 @@
       <ComponentCard 
         :class="[
           'flex flex-col',
-          casoEncontrado ? 'lg:col-span-2 min-h-[600px]' : 'lg:col-span-2 min-h-[160px]'
+          caseFound ? 'lg:col-span-2 min-h-[600px]' : 'lg:col-span-2 min-h-[160px]'
         ]" 
         :dense="false"
       >
         <div class="flex items-center justify-between mb-2">
           <div>
             <h2 class="text-lg font-semibold">
-              {{ casoEncontrado ? 'Realizar Resultados' : 'Buscar caso para realizar resultados' }}
+              {{ caseFound ? 'Realizar Resultados' : 'Buscar caso para realizar resultados' }}
             </h2>
-            <p v-if="!casoEncontrado" class="text-sm text-gray-500 mt-1">
+            <p v-if="!caseFound" class="text-sm text-gray-500 mt-1">
               Ingresa el código del caso para acceder a los campos de método, cortes y diagnóstico
             </p>
           </div>
-          <div v-if="caseDetails?.caso_code" class="text-sm text-gray-500">
-            <span class="font-medium">Caso:</span> {{ caseDetails.caso_code }}
+          <div v-if="caseDetails?.case_code" class="text-sm text-gray-500">
+            <span class="font-medium">Caso:</span> {{ caseDetails.case_code }}
             <span class="mx-2">-</span>
-            <span v-if="caseDetails.patologo_asignado?.nombre" class="text-blue-600">
-              {{ caseDetails.patologo_asignado.nombre }}
+            <span v-if="caseDetails.assigned_pathologist?.name" class="text-blue-600">
+              {{ caseDetails.assigned_pathologist.name }}
             </span>
             <span v-else class="text-orange-600 italic">
               Sin patólogo asignado
@@ -43,14 +43,14 @@
             <div class="flex-1">
               <FormInputField
                 id="codigo-caso"
-                :model-value="codigoCaso"
-                @update:model-value="handleCodigoChange"
+                :model-value="caseCode"
+                @update:model-value="handleCaseCodeChange"
                 type="text"
                 placeholder="Ejemplo: 2025-00001"
                 maxlength="10"
                 autocomplete="off"
                 :disabled="isLoadingSearch"
-                @keydown.enter.prevent="buscarCaso"
+                @keydown.enter.prevent="searchCase"
                 @keydown="keydownHandler"
                 @paste="handlePaste"
                 class="flex-1"
@@ -60,19 +60,19 @@
 
             <div class="flex gap-2 md:gap-3 md:mt-0 mt-2">
               <SearchButton
-                v-if="!casoEncontrado"
+                v-if="!caseFound"
                 text="Buscar"
                 loading-text="Buscando..."
                 :loading="isLoadingSearch"
-                @click="buscarCaso"
+                @click="searchCase"
                 size="md"
                 variant="primary"
               />
 
               <ClearButton
-                v-if="casoEncontrado"
+                v-if="caseFound"
                 text="Limpiar"
-                @click="limpiarBusqueda"
+                @click="clearSearch"
               />
             </div>
           </div>
@@ -90,7 +90,7 @@
         </div>
 
         <!-- Editor de resultados - Solo visible cuando se encuentra un caso -->
-        <div v-if="casoEncontrado" class="flex-1 flex flex-col min-h-0 mt-0">
+        <div v-if="caseFound" class="flex-1 flex flex-col min-h-0 mt-0">
           <ResultEditor
             class="flex-1 min-h-0"
             :model-value="activeSection === 'method' ? (Array.isArray(sections[activeSection]) ? [...sections[activeSection]] : []) : sections[activeSection]"
@@ -114,7 +114,7 @@
           </ResultEditor>
 
           <!-- Advertencia para casos completados -->
-          <div v-if="casoInfo?.caso_code && !canTranscribeByStatus"
+          <div v-if="caseInfo?.case_code && !canTranscribeByStatus"
             class="mt-3 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
             <div class="flex items-center">
               <svg class="w-5 h-5 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +126,7 @@
                   Este caso ya ha sido completado y no se puede transcribir resultados.
                 </p>
                 <p class="text-xs text-red-600 mt-2">
-                  Estado actual: <span class="font-semibold">{{ casoInfo?.estado }}</span>
+                  Estado actual: <span class="font-semibold">{{ caseInfo?.state }}</span>
                 </p>
               </div>
             </div>
@@ -148,7 +148,7 @@
           :message="notification.message"
           :inline="true"
           :auto-close="false"
-          :case-code="savedCaseCode || caseDetails?.caso_code || props.sampleId"
+          :case-code="savedCaseCode || caseDetails?.case_code || props.sampleId"
           :saved-content="savedContent"
           context="save"
           @close="closeAndClearNotification"
@@ -177,15 +177,14 @@
 
     <PreviousCaseDetailsModal
       v-if="selectedPreviousCase"
-      :case-item="selectedPreviousCase"
+      :case-item="selectedPreviousCase as any"
       @close="selectedPreviousCase = null"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, nextTick, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { ComponentCard } from '@/shared/components'
 import { ErrorMessage, ValidationAlert } from '@/shared/components/feedback'
 import { FormInputField } from '@/shared/components/forms'
@@ -195,11 +194,11 @@ import PatientInfoCard from '../Shared/PatientInfoCard.vue'
 import CaseDetailsCard from '../Shared/CaseDetailsCard.vue'
 import PreviousCaseDetailsModal from '../Shared/PreviousCaseDetailsModal.vue'
 // import AttachmentsPanel from './AttachmentsPanel.vue'
-import Notification from '@/shared/components/feedback/Notification.vue'
 import ResultsActionNotification from '../Shared/ResultsActionNotification.vue'
 import { usePerformResults } from '../../composables/usePerformResults'
 import { useNotifications } from '@/modules/cases/composables/useNotifications'
 import casesApiService from '@/modules/cases/services/casesApi.service'
+import resultsApiService from '../../services/resultsApiService'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useAuthStore } from '@/stores/auth.store'
 
@@ -214,34 +213,52 @@ const {
   patient, caseDetails,
   activeSection,
   errorMessage, validationMessage,
-  previewData, isPreviewOpen, isDirty,
+  isDirty,
   initialize, previousCases, sections,
   canSaveProgress, canComplete,
-  // addAttachment, removeAttachment,
-  onSaveDraft, onCompleteForSigning, closePreview,
-  loadCaseByCode,
-  getDiagnosisData,
-  hasDiseaseCIEO,
-  primaryDiseaseCIEO,
-  formatDiagnosisForReport
+  onSaveDraft, onCompleteForSigning,
+  loadCaseByCode
 } = usePerformResults(props.sampleId)
 
 // Composable para permisos y autenticación
 const { isPatologo } = usePermissions()
 const authStore = useAuthStore()
-const router = useRouter()
+
+// Types
+interface CaseInfo {
+  case_code: string
+  state: string
+  assigned_pathologist?: {
+    name: string
+  }
+}
+
+interface PathologistInfo {
+  name: string
+}
+
+interface CaseData {
+  case_code: string
+  state: string
+  assigned_pathologist?: PathologistInfo
+}
+
+// Constants
+const CASE_CODE_MAX_LENGTH = 10
+const CASE_CODE_FORMAT_POSITION = 4
+const COMPLETED_STATE = 'COMPLETADO'
 
 onMounted(() => {
   initialize()
   
   // Si autoSearch está activado, ejecutar búsqueda automática
   if (props.autoSearch && props.sampleId) {
-    ejecutarBusquedaAutomatica()
+    executeAutomaticSearch()
   }
   
   // Escuchar evento para limpiar el buscador
   const handleClearSearch = () => {
-    limpiarBusqueda()
+    clearSearch()
   }
   window.addEventListener('clear-search', handleClearSearch)
   
@@ -250,6 +267,13 @@ onMounted(() => {
     window.removeEventListener('clear-search', handleClearSearch)
   })
 })
+
+// Watch para cambios en el sampleId
+watch(() => props.sampleId, (newSampleId) => {
+  if (newSampleId && props.autoSearch) {
+    executeAutomaticSearch()
+  }
+}, { immediate: false })
 
 // Confirmación al abandonar si hay cambios sin guardar
 if (typeof window !== 'undefined') {
@@ -264,15 +288,14 @@ if (typeof window !== 'undefined') {
 // ------------------------
 // Buscador de casos (UI)
 // ------------------------
-// const router = useRouter()
-const codigoCaso = ref('')
+const caseCode = ref('')
 const isLoadingSearch = ref(false)
-const casoEncontrado = ref(false)
+const caseFound = ref(false)
 const searchError = ref('')
-const casoInfo = ref<any>(null)
+const caseInfo = ref<CaseInfo | null>(null)
 
 // Estado para el modal de casos anteriores
-const selectedPreviousCase = ref<any>(null)
+const selectedPreviousCase = ref<CaseData | null>(null)
 
 // Normaliza estados a formato de BD (mayúsculas y guiones bajos)
 const normalizeStatus = (status: string): string => {
@@ -282,16 +305,17 @@ const normalizeStatus = (status: string): string => {
 
 // Solo se puede transcribir si el caso NO está en estado COMPLETADO
 const canTranscribeByStatus = computed(() => {
-  if (!casoInfo.value?.estado) return false
-  const normalizedStatus = normalizeStatus(casoInfo.value.estado)
-  return normalizedStatus !== 'COMPLETADO'
+  const estado = caseInfo.value?.state
+  if (!estado) return false
+  const normalizedStatus = normalizeStatus(estado)
+  return normalizedStatus !== COMPLETED_STATE
 })
 
 const invalidStatusMessage = computed(() => {
-  if (!casoInfo.value?.estado) return ''
-  const estado = casoInfo.value.estado
+  const estado = caseInfo.value?.state
+  if (!estado) return ''
   const normalizedStatus = normalizeStatus(estado)
-  if (normalizedStatus === 'COMPLETADO') {
+  if (normalizedStatus === COMPLETED_STATE) {
     return 'Este caso ya ha sido completado y no se puede transcribir resultados.'
   }
   return `El estado "${estado}" no permite la transcripción del caso.`
@@ -314,64 +338,59 @@ const getCurrentUserName = (): string | null => {
   if (!authStore.user) return null
   
   // Para patólogos, comparamos por NOMBRE
-  let userName = authStore.user.nombre || null
-
-  // Si no hay nombre, usar email como fallback
-  if (!userName) {
-    userName = authStore.user.email
-  }
+  const userName = authStore.user.name || authStore.user.email || null
   
   return userName
 }
 
 // Función helper para obtener el nombre del patólogo asignado
-const getAssignedPathologistName = (caseData: any): string | null => {
-  if (!caseData?.patologo_asignado) return null
-  
-  const pathologistName = caseData.patologo_asignado.nombre || null
-  
-  return pathologistName
+const getAssignedPathologistName = (caseData: CaseData): string | null => {
+  return caseData?.assigned_pathologist?.name || null
 }
 
-const handleCodigoChange = (value: string) => {
+const handleCaseCodeChange = (value: string) => {
   // Solo números y guión
-  value = value.replace(/[^\d-]/g, '')
-  // Máximo 10 chars
-  value = value.slice(0, 10)
+  let cleanValue = value.replace(/[^\d-]/g, '')
+  
+  // Máximo chars
+  cleanValue = cleanValue.slice(0, CASE_CODE_MAX_LENGTH)
+  
   // Insertar guión después de 4 dígitos
-  if (value.length >= 4 && !value.includes('-')) {
-    value = value.slice(0, 4) + '-' + value.slice(4)
+  if (cleanValue.length >= CASE_CODE_FORMAT_POSITION && !cleanValue.includes('-')) {
+    cleanValue = cleanValue.slice(0, CASE_CODE_FORMAT_POSITION) + '-' + cleanValue.slice(CASE_CODE_FORMAT_POSITION)
   }
+  
   // Evitar múltiples guiones
-  const parts = value.split('-')
+  const parts = cleanValue.split('-')
   if (parts.length > 2) {
-    value = parts[0] + '-' + parts.slice(1).join('')
+    cleanValue = parts[0] + '-' + parts.slice(1).join('')
   }
-  // Asegurar guión en posición 4
-  if (value.includes('-') && value.indexOf('-') !== 4) {
-    const digits = value.replace(/-/g, '')
-    if (digits.length >= 4) {
-      value = digits.slice(0, 4) + '-' + digits.slice(4, 9)
+  
+  // Asegurar guión en posición correcta
+  if (cleanValue.includes('-') && cleanValue.indexOf('-') !== CASE_CODE_FORMAT_POSITION) {
+    const digits = cleanValue.replace(/-/g, '')
+    if (digits.length >= CASE_CODE_FORMAT_POSITION) {
+      cleanValue = digits.slice(0, CASE_CODE_FORMAT_POSITION) + '-' + digits.slice(CASE_CODE_FORMAT_POSITION, 9)
     } else {
-      value = digits
+      cleanValue = digits
     }
   }
-  codigoCaso.value = value
+  
+  caseCode.value = cleanValue
 }
 
 /**
  * Maneja la entrada de solo números en el campo de código de caso
  */
 const keydownHandler = (event: KeyboardEvent) => {
-  // Permitir teclas de control (backspace, delete, tab, escape, enter, etc.)
-  if (event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab' || 
-      event.key === 'Escape' || event.key === 'Enter' || event.key === 'ArrowLeft' || 
-      event.key === 'ArrowRight' || event.key === 'Home' || event.key === 'End') {
+  // Permitir teclas de control
+  const controlKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End']
+  if (controlKeys.includes(event.key)) {
     return true
   }
   
   // Permitir combinaciones de teclas para copiar y pegar
-  if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v' || event.key === 'a')) {
+  if ((event.ctrlKey || event.metaKey) && ['c', 'v', 'a'].includes(event.key)) {
     return true
   }
   
@@ -392,87 +411,74 @@ const handlePaste = (event: ClipboardEvent) => {
   event.preventDefault()
   const pastedText = event.clipboardData?.getData('text') || ''
   
-  // Filtrar solo números y guiones del texto pegado
-  const filteredText = pastedText.replace(/[^\d-]/g, '')
-  
-  if (filteredText) {
-    // Aplicar el mismo formato que handleCodigoChange
-    let formattedText = filteredText.slice(0, 10)
-    
-    // Insertar guión después de 4 dígitos si no existe
-    if (formattedText.length >= 4 && !formattedText.includes('-')) {
-      formattedText = formattedText.slice(0, 4) + '-' + formattedText.slice(4)
-    }
-    
-    // Evitar múltiples guiones
-    const parts = formattedText.split('-')
-    if (parts.length > 2) {
-      formattedText = parts[0] + '-' + parts.slice(1).join('')
-    }
-    
-    // Asegurar guión en posición 4
-    if (formattedText.includes('-') && formattedText.indexOf('-') !== 4) {
-      const digits = formattedText.replace(/-/g, '')
-      if (digits.length >= 4) {
-        formattedText = digits.slice(0, 4) + '-' + digits.slice(4, 9)
-      } else {
-        formattedText = digits
-      }
-    }
-    
-    codigoCaso.value = formattedText
+  if (pastedText) {
+    // Usar la misma lógica que handleCaseCodeChange
+    handleCaseCodeChange(pastedText)
   }
 }
 
-const buscarCaso = async () => {
-  if (!codigoCaso.value.trim()) {
+const searchCase = async () => {
+  if (!caseCode.value.trim()) {
     searchError.value = 'Por favor, ingrese un código de caso'
     return
   }
   
   isLoadingSearch.value = true
   searchError.value = ''
-  casoEncontrado.value = false
+  caseFound.value = false
   
   try {
-    const data = await casesApiService.getCaseByCode(codigoCaso.value.trim())
+    const data = await casesApiService.getCaseByCode(caseCode.value.trim()) as CaseData
     
     // Validar permisos para patólogos
     if (isPatologo.value && authStore.user) {
-      const nombrePatologoAsignado = getAssignedPathologistName(data)
-      const nombreUsuario = getCurrentUserName()
+      const assignedPathologist = getAssignedPathologistName(data)
+      const currentUser = getCurrentUserName()
       
-      if (!nombrePatologoAsignado) {
+      if (!assignedPathologist) {
         throw new Error('Este caso no tiene un patólogo asignado.')
       }
       
-      if (!nombreUsuario) {
+      if (!currentUser) {
         throw new Error('No se pudo identificar tu nombre de usuario. Contacta al administrador.')
       }
       
-      if (nombrePatologoAsignado !== nombreUsuario) {
+      if (assignedPathologist !== currentUser) {
         throw new Error('No tienes permisos para acceder a este caso. Solo puedes acceder a casos donde estés asignado como patólogo.')
       }
     }
     
-    casoInfo.value = data
-    casoEncontrado.value = true
+    // Validar que el caso se puede editar usando el nuevo endpoint
+    try {
+      const validationResult = await resultsApiService.validateCaseForEditing(caseCode.value.trim())
+      if (validationResult && !validationResult.can_edit) {
+        throw new Error(validationResult.message || 'Este caso no puede ser editado debido a su estado actual.')
+      }
+    } catch (validationError: unknown) {
+      // Si el endpoint de validación falla, usar validación local como fallback
+      const errorMessage = validationError instanceof Error ? validationError.message : 'Error de validación'
+      console.warn('Validación remota falló, usando validación local:', errorMessage)
+    }
+    
+    caseInfo.value = data
+    caseFound.value = true
     // Poblar paneles desde el composable
-    await loadCaseByCode(codigoCaso.value.trim())
-  } catch (error: any) {
-    casoEncontrado.value = false
-    casoInfo.value = null
-    searchError.value = error.message || 'Error al buscar el caso'
+    await loadCaseByCode(caseCode.value.trim())
+  } catch (error: unknown) {
+    caseFound.value = false
+    caseInfo.value = null
+    const errorMessage = error instanceof Error ? error.message : 'Error al buscar el caso'
+    searchError.value = errorMessage
   } finally {
     isLoadingSearch.value = false
   }
 }
 
-const limpiarBusqueda = () => {
-  codigoCaso.value = ''
-  casoEncontrado.value = false  // Siempre establecer a false
+const clearSearch = () => {
+  caseCode.value = ''
+  caseFound.value = false  // Siempre establecer a false
   searchError.value = ''
-  casoInfo.value = null
+  caseInfo.value = null
   
   // Limpiar solo los datos del caso, pero mantener la notificación
   // Limpiar datos del composable manualmente sin usar onClear()
@@ -487,44 +493,21 @@ const limpiarBusqueda = () => {
   // NO cerrar la notificación - se mantiene visible
 }
 
-// Eliminado abrirCaso, navegación ya no es necesaria
-
 // ------------------------
 // Notificaciones de guardado
 // ------------------------
 const { notification, showSuccess, showError, closeNotification } = useNotifications()
 
-  function handleClearResults() {
-    // Limpiar solo las secciones del editor, pero mantener la notificación
-    sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
-    activeSection.value = 'method'
-    
-    // NO cerrar la notificación - se mantiene visible
-  }
+const handleClearResults = () => {
+  // Limpiar solo las secciones del editor, pero mantener la notificación
+  sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
+  activeSection.value = 'method'
+  
+  // NO cerrar la notificación - se mantiene visible
+}
 
-  function goToPreview() {
-    // Guardar payload en sessionStorage para que la vista de previsualización lo consuma
-    const payload = {
-      sampleId: caseDetails?.value?.caso_code || props.sampleId,
-      patient: patient?.value || null,
-      caseDetails: caseDetails?.value || null,
-      sections: sections?.value || null,
-      diagnosis: {
-        cie10: getDiagnosisData(),
-        cieo: hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
-          id: primaryDiseaseCIEO.value.id,
-          codigo: primaryDiseaseCIEO.value.codigo,
-          nombre: primaryDiseaseCIEO.value.nombre
-        } : undefined,
-        formatted: formatDiagnosisForReport()
-      },
-      generatedAt: new Date().toISOString()
-    }
-    // Función de previsualización temporalmente deshabilitada
-    console.log('Previsualización temporalmente deshabilitada')
-  }
 
-async function handleSaveAction() {
+const handleSaveAction = async () => {
   // Evitar múltiples ejecuciones
   if (saving.value) return
   
@@ -541,7 +524,7 @@ async function handleSaveAction() {
     micro: sections.value?.micro || '',
     diagnosis: sections.value?.diagnosis || '',
     isComplete: canComplete.value,
-    caseCode: caseDetails?.value?.caso_code || ''
+    caseCode: caseDetails?.value?.case_code || ''
   }
   
   try {
@@ -567,96 +550,73 @@ async function handleSaveAction() {
         showSuccess('¡Progreso guardado!', '', 0)
       }
       
-  // Mantener los datos visibles tras guardar/completar
+      // Mantener los datos visibles tras guardar/completar
     } else {
       const action = currentState.isComplete ? 'completar el caso para firma' : 'guardar el progreso'
       showError('Error al procesar', errorMessage?.value || `No se pudo ${action}.`, 0)
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error en handleSaveAction:', error)
     showError('Error inesperado', 'Ocurrió un error inesperado al procesar la solicitud.', 0)
   }
 }
 
-// (Removed detailed content summary - not needed when saving simple notification)
-
 // Cerrar notificación y limpiar código de caso guardado
-function closeAndClearNotification() {
+const closeAndClearNotification = () => {
   closeNotification()
   savedCaseCode.value = ''
 }
 
-// Función separada para limpiar el formulario
-function clearFormAfterSave() {
-  // Limpiar en orden específico para evitar dependencias circulares
-  sections.value = { method: [], macro: '', micro: '', diagnosis: '' }
-  activeSection.value = 'method'
-  validationMessage.value = null
-  errorMessage.value = null
-  
-  // Limpiar datos del buscador
-  codigoCaso.value = ''
-  searchError.value = ''
-  casoInfo.value = null
-  patient.value = null
-  caseDetails.value = null
-  previousCases.value = []
-  
-  // Emitir evento para limpiar el buscador en otros componentes
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('clear-search'))
-  }
-}
 
 // Función para ejecutar búsqueda automática
-const ejecutarBusquedaAutomatica = async () => {
+const executeAutomaticSearch = async () => {
   if (!props.sampleId) return
   
-  // Simular que se escribió el código en el buscador
-  codigoCaso.value = props.sampleId
-  
-  // Ejecutar la búsqueda automáticamente
-  await buscarCaso()
+  try {
+    // Simular que se escribió el código en el buscador
+    caseCode.value = props.sampleId
+    
+    // Ejecutar la búsqueda automáticamente
+    await searchCase()
+  } catch (error: unknown) {
+    console.error('Error en búsqueda automática:', error)
+    searchError.value = 'Error al ejecutar búsqueda automática'
+  }
 }
-
-// ------------------------
-// Diagnóstico CIE-10
-// ------------------------
-// Estas funciones ya no se usan en Transcribir Resultados
 
 // Función para actualizar el contenido de la sección activa
 const updateSectionContent = (value: string | string[]) => {
-  if (sections.value) {
-    // Crear una nueva copia del objeto para evitar mutaciones directas
-    const newSections = { ...sections.value }
-    
-    if (activeSection.value === 'method') {
-      // Para la sección method, esperamos un array
-      newSections[activeSection.value] = Array.isArray(value) ? [...value] : []
-    } else {
-      // Para otras secciones, esperamos string
-      newSections[activeSection.value] = Array.isArray(value) ? '' : value
-    }
-    
-    // Asignar la nueva referencia
-    sections.value = newSections
+  if (!sections.value) return
+  
+  // Crear una nueva copia del objeto para evitar mutaciones directas
+  const newSections = { ...sections.value }
+  
+  if (activeSection.value === 'method') {
+    // Para la sección method, esperamos un array
+    newSections[activeSection.value] = Array.isArray(value) ? [...value] : []
+  } else {
+    // Para otras secciones, esperamos string
+    newSections[activeSection.value] = Array.isArray(value) ? '' : value
   }
+  
+  // Asignar la nueva referencia
+  sections.value = newSections
 }
 
 // Función para manejar el clic en casos anteriores
 const handleCaseClick = async (caseItem: any) => {
   try {
     // Obtener el código del caso correctamente
-    const caseCode = caseItem.caso_code || caseItem.CasoCode || caseItem.id
-    if (!caseCode) {
+    const caseCodeValue = caseItem.case_code
+    if (!caseCodeValue) {
       console.error('No se encontró código de caso en:', caseItem)
       return
     }
     
     // Cargar el caso completo desde la base de datos
-    const fullCase = await casesApiService.getCaseByCode(caseCode)
+    const fullCase = await casesApiService.getCaseByCode(caseCodeValue) as CaseData
     selectedPreviousCase.value = fullCase
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error al cargar caso completo:', error)
     // Si falla, usar el caso básico
     selectedPreviousCase.value = caseItem

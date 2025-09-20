@@ -4,33 +4,41 @@ import { API_CONFIG } from '@/core/config/api.config'
 // Types
 export interface Disease {
   id?: string
-  tabla: string
-  codigo: string
-  nombre: string
-  descripcion?: string
-  isActive: boolean
+  table: string
+  code: string
+  name: string
+  description?: string
+  is_active: boolean
   created_at?: string
   updated_at?: string
 }
 
 export interface DiseaseSearchResponse {
   diseases: Disease[]
+  search_term?: string
   total: number
-  page: number
+  skip: number
   limit: number
 }
 
 export interface DiseaseListResponse {
-  data: Disease[]
+  diseases: Disease[]
   total: number
-  page: number
+  skip: number
+  limit: number
+}
+
+export interface DiseaseByTableResponse {
+  diseases: Disease[]
+  table: string
+  skip: number
   limit: number
 }
 
 
 
 class DiseaseService {
-  private readonly endpoint = '/enfermedades'
+  private readonly endpoint = '/diseases' // Nuevo endpoint del nuevo backend
 
   constructor() {
     // Constructor sin logs
@@ -39,9 +47,9 @@ class DiseaseService {
   /**
    * Buscar enfermedades por tabla específica
    */
-  async searchDiseasesByTabla(tabla: string, limit: number = 15000): Promise<DiseaseSearchResponse> {
+  async searchDiseasesByTabla(tabla: string, limit: number = 15000): Promise<DiseaseByTableResponse> {
     try {
-      const response = await apiClient.get(`${this.endpoint}/tabla/${tabla}`, {
+      const response = await apiClient.get(`${this.endpoint}/table/${tabla}`, {
         params: {
           limit,
           skip: 0
@@ -50,9 +58,9 @@ class DiseaseService {
       
       const backendData = response.data || response
       return {
-        diseases: backendData.enfermedades || [],
-        total: backendData.total || 0,
-        page: 1,
+        diseases: backendData.diseases || [],
+        table: backendData.table || tabla,
+        skip: backendData.skip || 0,
         limit: backendData.limit || limit
       }
     } catch (error: any) {
@@ -68,7 +76,7 @@ class DiseaseService {
       // Intentar buscar por código primero (si parece un código)
       if (/^[A-Z]\d{2,3}$/.test(query.toUpperCase())) {
         
-        const response = await apiClient.get(`${this.endpoint}/search/codigo`, {
+        const response = await apiClient.get(`${this.endpoint}/search/code`, {
           params: {
             q: query,
             limit,
@@ -76,20 +84,21 @@ class DiseaseService {
           }
         })
         
-        // El backend devuelve { enfermedades: [...], search_term: ..., skip: ..., limit: ... }
+        // El nuevo backend devuelve { diseases: [...], search_term: ..., skip: ..., limit: ... }
         const backendData = response.data || response
         
         return {
-          diseases: backendData.enfermedades || [],
-          total: backendData.enfermedades?.length || 0,
-          page: 1,
+          diseases: backendData.diseases || [],
+          search_term: backendData.search_term || query,
+          total: backendData.diseases?.length || 0,
+          skip: backendData.skip || 0,
           limit: backendData.limit || limit
         }
       }
       
       // Si no es un código, buscar por nombre
       
-      const response = await apiClient.get(`${this.endpoint}/search/nombre`, {
+      const response = await apiClient.get(`${this.endpoint}/search/name`, {
         params: {
           q: query,
           limit,
@@ -97,13 +106,14 @@ class DiseaseService {
         }
       })
       
-      // El backend devuelve { enfermedades: [...], search_term: ..., skip: ..., limit: ... }
+      // El nuevo backend devuelve { diseases: [...], search_term: ..., skip: ..., limit: ... }
       const backendData = response.data || response
       
       return {
-        diseases: backendData.enfermedades || [],
-        total: backendData.enfermedades?.length || 0,
-        page: 1,
+        diseases: backendData.diseases || [],
+        search_term: backendData.search_term || query,
+        total: backendData.diseases?.length || 0,
+        skip: backendData.skip || 0,
         limit: backendData.limit || limit
       }
     } catch (error: any) {
@@ -114,7 +124,7 @@ class DiseaseService {
   /**
    * Obtener todas las enfermedades
    */
-  async getAllDiseases(): Promise<DiseaseSearchResponse> {
+  async getAllDiseases(): Promise<DiseaseListResponse> {
     try {
       
       // Usar el endpoint general para enfermedades (no necesita filtro activo/inactivo)
@@ -126,14 +136,14 @@ class DiseaseService {
       })
       
       
-      // El backend devuelve { enfermedades: [...], total: ..., skip: ..., limit: ... }
+      // El nuevo backend devuelve { diseases: [...], total: ..., skip: ..., limit: ... }
       const backendData = response.data || response
       
       
       const result = {
-        diseases: backendData.enfermedades || [],
-        total: backendData.total || backendData.enfermedades?.length || 0,
-        page: 1,
+        diseases: backendData.diseases || [],
+        total: backendData.total || 0,
+        skip: backendData.skip || 0,
         limit: backendData.limit || 15000
       }      
       return result
@@ -159,7 +169,7 @@ class DiseaseService {
    */
   async getDiseaseByCode(codigo: string): Promise<Disease> {
     try {
-      const response = await apiClient.get(`${this.endpoint}/codigo/${codigo}`)
+      const response = await apiClient.get(`${this.endpoint}/code/${codigo}`)
       return response.data
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Enfermedad no encontrada')
@@ -169,22 +179,22 @@ class DiseaseService {
   /**
    * Obtener enfermedades por tabla de referencia
    */
-  async getDiseasesByTable(tabla: string, page: number = 1, limit: number = 50): Promise<DiseaseListResponse> {
+  async getDiseasesByTable(tabla: string, page: number = 1, limit: number = 50): Promise<DiseaseByTableResponse> {
     try {
-      const response = await apiClient.get(`${this.endpoint}/tabla/${tabla}`, {
+      const response = await apiClient.get(`${this.endpoint}/table/${tabla}`, {
         params: {
           skip: (page - 1) * limit,
           limit
         }
       })
       
-      // El backend devuelve { enfermedades: [...], tabla: ..., skip: ..., limit: ... }
+      // El nuevo backend devuelve { diseases: [...], table: ..., skip: ..., limit: ... }
       const backendData = response.data
       
       return {
-        data: backendData.enfermedades || [],
-        total: backendData.enfermedades?.length || 0,
-        page: page,
+        diseases: backendData.diseases || [],
+        table: backendData.table || tabla,
+        skip: backendData.skip || 0,
         limit: backendData.limit || limit
       }
     } catch (error: any) {

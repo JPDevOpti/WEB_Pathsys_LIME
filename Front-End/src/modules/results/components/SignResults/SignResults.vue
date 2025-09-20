@@ -590,12 +590,12 @@ const loadExistingDiagnosis = async (caseData: any) => {
     const resultado = caseData.resultado as any
     
     if (resultado.diagnostico_cie10) {
-      const diseaseData = { codigo: resultado.diagnostico_cie10.codigo, nombre: resultado.diagnostico_cie10.nombre, tabla: 'CIE-10', isActive: true }
+      const diseaseData = { code: resultado.diagnostico_cie10.codigo, name: resultado.diagnostico_cie10.nombre, table: 'CIE-10', is_active: true }
       setPrimaryDisease(diseaseData)
     }
     
     if (resultado.diagnostico_cieo) {
-      const diseaseDataCIEO = { codigo: resultado.diagnostico_cieo.codigo, nombre: resultado.diagnostico_cieo.nombre, tabla: 'CIE-O', isActive: true }
+      const diseaseDataCIEO = { code: resultado.diagnostico_cieo.codigo, name: resultado.diagnostico_cieo.nombre, table: 'CIE-O', is_active: true }
       setPrimaryDiseaseCIEO(diseaseDataCIEO)
       showCIEODiagnosis.value = true
     }
@@ -631,7 +631,7 @@ function goToPreview() {
     sections: sections?.value || null,
     diagnosis: {
       cie10: getDiagnosisData(),
-      cieo: hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? { codigo: primaryDiseaseCIEO.value.codigo, nombre: primaryDiseaseCIEO.value.nombre } : undefined,
+      cieo: hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? { codigo: primaryDiseaseCIEO.value.code, nombre: primaryDiseaseCIEO.value.name } : undefined,
       formatted: formatDiagnosisForReport()
     },
     generatedAt: new Date().toISOString()
@@ -666,12 +666,12 @@ async function handleSign() {
     }
     const casoCode = caseDetails?.value?.caso_code || props.sampleId
     const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
-      codigo: primaryDisease.value.codigo,
-      nombre: primaryDisease.value.nombre
+      codigo: primaryDisease.value.code,
+      nombre: primaryDisease.value.name
     } : undefined
     const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
-      codigo: primaryDiseaseCIEO.value.codigo,
-      nombre: primaryDiseaseCIEO.value.nombre
+      codigo: primaryDiseaseCIEO.value.code,
+      nombre: primaryDiseaseCIEO.value.name
     } : undefined
     const requestData = {
       metodo: sections.value?.method || [],
@@ -831,12 +831,12 @@ const handleSignWithChanges = async (data: { details: string; tests: PruebaCompl
     
     // Preparar diagnósticos CIE-10 y CIE-O (igual que en handleSign normal)
     const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
-      codigo: primaryDisease.value.codigo,
-      nombre: primaryDisease.value.nombre
+      codigo: primaryDisease.value.code,
+      nombre: primaryDisease.value.name
     } : undefined
     const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
-      codigo: primaryDiseaseCIEO.value.codigo,
-      nombre: primaryDiseaseCIEO.value.nombre
+      codigo: primaryDiseaseCIEO.value.code,
+      nombre: primaryDiseaseCIEO.value.name
     } : undefined
     
     // Preparar datos para firmar (incluyendo diagnósticos CIE-10/CIEO)

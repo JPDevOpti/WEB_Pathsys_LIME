@@ -2,79 +2,75 @@ import type { CaseModel, CaseListItem } from '@/modules/cases/types/case'
 import type { Patient, CaseDetails } from '../types/results.types'
 
 export function mapCaseToPatient(beCase: CaseModel): Patient {
-  const p = beCase.paciente
+  const p = beCase.patient_info
   return {
-    id: p.paciente_code,
-    fullName: p.nombre,
-    document: p.paciente_code,
-    age: p.edad,
-    entity: beCase.entidad_info?.nombre || p.entidad_info?.nombre,
-    entityCode: beCase.entidad_info?.codigo || p.entidad_info?.codigo,
-    sexo: p.sexo,
-    tipoAtencion: p.tipo_atencion,
-    observaciones: p.observaciones || ''
+    id: p?.patient_code || '',
+    fullName: p?.name || '',
+    document: p?.patient_code || '',
+    age: p?.age || 0,
+    entity: p?.entity_info?.name || '',
+    entityCode: p?.entity_info?.id || '',
+    sexo: p?.gender || '',
+    tipoAtencion: p?.care_type || '',
+    observaciones: p?.observations || ''
   }
 }
 
 export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
   return {
-    _id: beCase._id || '',
-    caso_code: beCase.caso_code,
-    paciente: {
-      paciente_code: beCase.paciente.paciente_code,
-      nombre: beCase.paciente.nombre,
-      edad: beCase.paciente.edad,
-      sexo: beCase.paciente.sexo,
-      entidad_info: {
-        codigo: beCase.paciente.entidad_info?.codigo,
-        nombre: beCase.paciente.entidad_info?.nombre
+    _id: beCase.id || '',
+    case_code: beCase.case_code,
+    patient_info: {
+      patient_code: beCase.patient_info?.patient_code || '',
+      name: beCase.patient_info?.name || '',
+      age: beCase.patient_info?.age || 0,
+      gender: beCase.patient_info?.gender || '',
+      entity_info: {
+        id: beCase.patient_info?.entity_info?.id || '',
+        name: beCase.patient_info?.entity_info?.name || ''
       },
-      tipo_atencion: beCase.paciente.tipo_atencion,
-      observaciones: beCase.paciente.observaciones || '',
-      fecha_actualizacion: beCase.paciente.fecha_actualizacion
+      care_type: beCase.patient_info?.care_type || '',
+      observations: beCase.patient_info?.observations || '',
+      updated_at: beCase.updated_at || ''
     },
-    medico_solicitante: beCase.medico_solicitante
-      ? { nombre: beCase.medico_solicitante }
-      : undefined,
-    muestras: (beCase.muestras || []).map(m => ({
-      region_cuerpo: m.region_cuerpo,
-      pruebas: (m.pruebas || []).map(p => ({ id: p.id, nombre: p.nombre }))
+    requesting_physician: beCase.requesting_physician || undefined,
+    samples: (beCase.samples || []).map(m => ({
+      body_region: m.body_region,
+      tests: (m.tests || []).map(p => ({ id: p.id, name: p.name }))
     })),
-    estado: beCase.estado,
-    fecha_creacion: (beCase as any).fecha_creacion || beCase.fecha_ingreso,
-    fecha_ingreso: beCase.fecha_ingreso || (beCase as any).fecha_creacion,
-    fecha_firma: beCase.fecha_firma || null,
-    fecha_actualizacion: beCase.fecha_actualizacion,
-    observaciones_generales: beCase.observaciones_generales || '',
-    is_active: beCase.activo ?? true,
-    patologo_asignado: beCase.patologo_asignado
-      ? { codigo: beCase.patologo_asignado.codigo, nombre: beCase.patologo_asignado.nombre }
+    state: beCase.state,
+    created_at: beCase.created_at,
+    updated_at: beCase.updated_at,
+    observations: beCase.observations || '',
+    active: true,
+    assigned_pathologist: beCase.assigned_pathologist
+      ? { id: beCase.assigned_pathologist.id || '', name: beCase.assigned_pathologist.name || '' }
       : undefined,
-    actualizado_por: beCase.actualizado_por,
-    entidad_info: beCase.entidad_info
-      ? { codigo: beCase.entidad_info.codigo, nombre: beCase.entidad_info.nombre }
+    updated_by: undefined,
+    entity_info: beCase.patient_info?.entity_info
+      ? { id: beCase.patient_info.entity_info.id || '', name: beCase.patient_info.entity_info.name || '' }
       : undefined,
-    servicio: (beCase as any).servicio,
-    resultado: (beCase as any).resultado ? {
-      diagnostico: ((beCase as any).resultado)?.diagnostico || '',
-      diagnostico_cie10: ((beCase as any).resultado)?.diagnostico_cie10 || null,
-      diagnostico_cieo: ((beCase as any).resultado)?.diagnostico_cieo || null,
-      observaciones: ((beCase as any).resultado)?.observaciones || null
+    service: beCase.service,
+    result: beCase.result ? {
+      diagnosis: beCase.result.diagnosis || '',
+      macro_result: beCase.result.macro_result || '',
+      micro_result: beCase.result.micro_result || '',
+      observations: beCase.result.observations || null
     } : undefined
   }
 }
 
 export function mapCaseToListItem(beCase: CaseModel): CaseListItem {
   return {
-    _id: beCase._id || beCase.caso_code,
-    caso_code: beCase.caso_code,
-    paciente: {
-      nombre: beCase.paciente?.nombre || '',
-      cedula: beCase.paciente?.paciente_code || ''
+    _id: beCase.id || beCase.case_code,
+    case_code: beCase.case_code,
+    patient: {
+      name: beCase.patient_info?.name || '',
+      patient_code: beCase.patient_info?.patient_code || ''
     },
-    estado: beCase.estado as any,
-    fecha_ingreso: (beCase as any).fecha_creacion || beCase.fecha_ingreso,
-    patologo_asignado: beCase.patologo_asignado ? { nombre: beCase.patologo_asignado.nombre } : undefined
+    state: beCase.state as any,
+    created_at: beCase.created_at,
+    assigned_pathologist: beCase.assigned_pathologist ? { name: beCase.assigned_pathologist.name || '' } : undefined
   }
 }
 

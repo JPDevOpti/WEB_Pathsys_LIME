@@ -579,8 +579,8 @@ function handleEdit(c: Case) {
   // Emitir evento para mantener compatibilidad
   emit('edit', c)
   
-  // Navegar directamente a la vista de edición (consistente con dashboard)
-  router.push(`/cases/edit/${code}`)
+  // Navegar directamente a la vista de edición usando la ruta correcta
+  router.push({ name: 'cases-edit', params: { code } })
 }
 
 function handlePerform(c: Case) {
@@ -592,7 +592,7 @@ function handlePerform(c: Case) {
   
   // Navegar a realizar resultados y simular búsqueda automática
   // El parámetro 'case' será usado por el buscador automáticamente
-  router.push(`/results/perform?case=${code}&auto=1`)
+  router.push({ name: 'results-perform', query: { case: code, auto: '1' } })
 }
 
 function handleValidate(c: Case) {
@@ -604,7 +604,7 @@ function handleValidate(c: Case) {
   
   // Navegar a validar/firmar resultados y simular búsqueda automática
   // El parámetro 'case' será usado por el buscador automáticamente
-  router.push(`/results/sign?case=${code}&auto=1`)
+  router.push({ name: 'results-sign', query: { case: code, auto: '1' } })
 }
 
 // Funciones utilitarias

@@ -57,58 +57,56 @@ export interface PreviewData {
 
 // Datos completos del caso (mock realista)
 export interface CaseEntidadInfo {
-  codigo: string
-  nombre: string
+  id: string
+  name: string
 }
 
 export interface CasePaciente {
-  paciente_code: string
-  nombre: string
-  edad: number
-  sexo: string
-  entidad_info: CaseEntidadInfo
-  tipo_atencion: string
-  observaciones: string
-  fecha_actualizacion: string
+  patient_code: string
+  name: string
+  age: number
+  gender: string
+  entity_info: CaseEntidadInfo
+  care_type: string
+  observations: string
+  updated_at: string
 }
 
 export interface CasePrueba {
   id: string
-  nombre: string
+  name: string
 }
 
 export interface CaseMuestra {
-  region_cuerpo: string
-  pruebas: CasePrueba[]
+  body_region: string
+  tests: CasePrueba[]
 }
 
 export interface CasePatologoAsignado {
-  codigo: string
-  nombre: string
+  id: string
+  name: string
 }
 
 export interface CaseDetails {
   _id: string
-  caso_code: string
-  paciente: CasePaciente
-  medico_solicitante?: { nombre: string }
-  muestras: CaseMuestra[]
-  estado: string
-  fecha_creacion: string
-  fecha_ingreso: string
-  fecha_firma: string | null
-  fecha_actualizacion: string
-  observaciones_generales?: string
-  is_active: boolean
-  patologo_asignado?: CasePatologoAsignado
-  actualizado_por?: string
-  entidad_info?: CaseEntidadInfo
-  servicio?: string
-  resultado?: {
-    diagnostico?: string
-    diagnostico_cie10?: { codigo: string; nombre: string } | null
-    diagnostico_cieo?: { codigo: string; nombre: string } | null
-    observaciones?: string | null
+  case_code: string
+  patient_info: CasePaciente
+  requesting_physician?: string
+  samples: CaseMuestra[]
+  state: string
+  created_at: string
+  updated_at: string
+  observations?: string
+  active?: boolean
+  assigned_pathologist?: CasePatologoAsignado
+  updated_by?: string
+  entity_info?: CaseEntidadInfo
+  service?: string
+  result?: {
+    diagnosis?: string
+    macro_result?: string
+    micro_result?: string
+    observations?: string | null
   }
 }
 

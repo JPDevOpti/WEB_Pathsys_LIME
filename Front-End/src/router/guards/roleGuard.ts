@@ -20,11 +20,6 @@ export function roleGuard(
 
   const userRole = authStore.userRole
   
-  // Debug: mostrar información del usuario y rol
-  console.log('RoleGuard - User:', authStore.user)
-  console.log('RoleGuard - UserRole:', userRole)
-  console.log('RoleGuard - Navigating to:', to.path)
-  
   // SIEMPRE permitir acceso al dashboard para evitar bucles infinitos
   if (to.path === '/dashboard') {
     next()

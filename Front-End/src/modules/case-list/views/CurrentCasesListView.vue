@@ -124,7 +124,7 @@ function editCase(c: any) {
   const code = c?.caseCode || c?.id || ''
   if (!code) return
   // Navega a la vista de edición con el código en la URL
-  router.push({ name: 'cases-edit-with-code', params: { code }, query: { auto: '1' } })
+  router.push({ name: 'cases-edit', params: { code }, query: { auto: '1' } })
 }
 
 // Listener para detectar cuando se crea un nuevo caso

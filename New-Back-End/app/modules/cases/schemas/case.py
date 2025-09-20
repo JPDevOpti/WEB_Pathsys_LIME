@@ -67,6 +67,18 @@ class CaseUpdate(BaseModel):
     assigned_pathologist: Optional[AssignedPathologist] = None
 
 
+class CaseResult(BaseModel):
+    method: Optional[List[str]] = None
+    macro_result: Optional[str] = None
+    micro_result: Optional[str] = None
+    diagnosis: Optional[str] = None
+    observations: Optional[str] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 class CaseResponse(BaseModel):
     id: str
     case_code: str
@@ -80,6 +92,7 @@ class CaseResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     assigned_pathologist: Optional[AssignedPathologist] = None
+    result: Optional[CaseResult] = None
 
     class Config:
         from_attributes = True

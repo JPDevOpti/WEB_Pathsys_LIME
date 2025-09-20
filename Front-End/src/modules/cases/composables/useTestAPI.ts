@@ -29,11 +29,9 @@ export function useTestAPI() {
 
     loadPromise = (async () => {
       try {
-        console.log('useTestAPI: Cargando pruebas desde el servidor...')
         // Usar el límite máximo permitido por el backend (100)
         const response = await testsApiService.getTests({ limit: 100 })
         tests.value = response.pruebas || []
-        console.log('useTestAPI: Pruebas cargadas:', tests.value.length)
         return { success: true, tests: tests.value }
       } catch (err: any) {
         error.value = err.message || 'Error al cargar las pruebas'

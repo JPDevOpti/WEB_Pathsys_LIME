@@ -25,7 +25,7 @@ export function useDiseaseDiagnosis() {
   // Función para formatear el diagnóstico para el reporte
   const formatDiagnosisForReport = (): string => {
     if (primaryDisease.value) {
-      return `${primaryDisease.value.codigo} - ${primaryDisease.value.nombre}`
+      return `${primaryDisease.value.code} - ${primaryDisease.value.name}`
     }
     return ''
   }

@@ -4,7 +4,7 @@ import type { CaseListItem } from '@/modules/cases/types/case'
 
 import casesApiService from '@/modules/cases/services/casesApi.service'
 import { mapCaseToPatient, mapCaseToCaseDetails } from '../services/results.mappers'
-import resultsApiService from '../services/resultsApiService'
+import resultsApiService, { type UpdateResultRequest } from '../services/resultsApiService'
 import { useDiseaseDiagnosis } from '@/shared/composables/useDiseaseDiagnosis'
 import type { Disease } from '@/shared/services/disease.service'
 
@@ -127,41 +127,47 @@ export function usePerformResults(sampleId: string) {
       patient.value = mapCaseToPatient(beCase)
       caseDetails.value = mapCaseToCaseDetails(beCase)
       sample.value = {
-        id: beCase.caso_code,
+        id: beCase.case_code,
         type: 'Caso',
-        collectedAt: (beCase as any).fecha_creacion || beCase.fecha_ingreso,
-        status: beCase.estado as any,
-        patientId: beCase.paciente.paciente_code
+        collectedAt: beCase.created_at || beCase.updated_at,
+        status: beCase.state as any,
+        patientId: beCase.patient_info?.patient_code || ''
       }
-      // Cargar casos anteriores del paciente por paciente_code
-      if (beCase.paciente?.paciente_code) {
+      // Cargar casos anteriores del paciente por patient_code
+      if (beCase.patient_info?.patient_code) {
         try {
-          const list = await casesApiService.getCasesByPatient(beCase.paciente.paciente_code)
+          const list = await casesApiService.getCasesByPatient(beCase.patient_info.patient_code)
           previousCases.value = list
-            .filter(c => c.caso_code !== beCase.caso_code)
+            .filter(c => 
+              c.case_code !== beCase.case_code && 
+              c.patient_info?.patient_code === beCase.patient_info?.patient_code
+            )
             .map(c => ({
-              _id: c._id || c.caso_code,
-              caso_code: c.caso_code,
-              paciente: { nombre: c.paciente?.nombre || '', cedula: c.paciente?.paciente_code || '' },
-              estado: c.estado as any,
-              fecha_ingreso: c.fecha_ingreso || (c as any).fecha_creacion,
-              patologo_asignado: c.patologo_asignado ? { nombre: c.patologo_asignado.nombre } : undefined
+              _id: c.id || c.case_code,
+              case_code: c.case_code,
+              patient: { name: c.patient_info?.name || '', patient_code: c.patient_info?.patient_code || '' },
+              state: c.state as any,
+              created_at: c.created_at || c.updated_at,
+              assigned_pathologist: c.assigned_pathologist ? { name: c.assigned_pathologist.name || '' } : undefined
             }))
         } catch (e) {
+          console.error('Error loading previous cases:', e)
           previousCases.value = []
         }
       } else {
         previousCases.value = []
       }
-      // Si en el futuro deseamos precargar secciones desde beCase.resultado, se mapea aquí
-      if (beCase.resultado) {
-        const metodoData = (beCase.resultado as any)?.metodo
+      // Cargar resultados existentes del nuevo backend
+      if (beCase.result) {
+        const resultData = beCase.result
         let methodArray: string[] = []
         
-        if (Array.isArray(metodoData)) {
-          methodArray = metodoData
-        } else if (typeof metodoData === 'string' && metodoData.trim()) {
-          methodArray = [metodoData.trim()]
+        // Mapear métodos (nuevo formato: method)
+        if (resultData.method && Array.isArray(resultData.method)) {
+          methodArray = resultData.method
+        } else if ((resultData as any).metodo && Array.isArray((resultData as any).metodo)) {
+          // Compatibilidad con formato legacy
+          methodArray = (resultData as any).metodo
         }
 
         // Normalizar entradas para que coincidan con los option.value
@@ -172,9 +178,9 @@ export function usePerformResults(sampleId: string) {
         
         sections.value = {
           method: methodArray,
-          macro: (beCase.resultado as any)?.resultado_macro || '',
-          micro: (beCase.resultado as any)?.resultado_micro || '',
-          diagnosis: (beCase.resultado as any)?.diagnostico || ''
+          macro: resultData.macro_result || '',
+          micro: resultData.micro_result || '',
+          diagnosis: resultData.diagnosis || ''
         }
         savedSectionsSnapshot.value = JSON.stringify(sections.value)
         
@@ -246,30 +252,31 @@ export function usePerformResults(sampleId: string) {
       // Preparar datos del diagnóstico CIE-10
       const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
         id: primaryDisease.value.id,
-        codigo: primaryDisease.value.codigo,
-        nombre: primaryDisease.value.nombre
+        codigo: primaryDisease.value.code,
+        nombre: primaryDisease.value.name
       } : undefined
 
       // Preparar datos del diagnóstico CIEO
       const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
         id: primaryDiseaseCIEO.value.id,
-        codigo: primaryDiseaseCIEO.value.codigo,
-        nombre: primaryDiseaseCIEO.value.nombre
+        codigo: primaryDiseaseCIEO.value.code,
+        nombre: primaryDiseaseCIEO.value.name
       } : undefined
 
-      const requestData = {
-        metodo: sections.value?.method || [],
-        resultado_macro: sections.value?.macro || '',
-        resultado_micro: sections.value?.micro || '',
-        diagnostico: sections.value?.diagnosis || '',
-        observaciones: undefined,
+      // Preparar datos para el nuevo backend
+      const requestData: UpdateResultRequest = {
+        method: sections.value?.method || [],
+        macro_result: sections.value?.macro || '',
+        micro_result: sections.value?.micro || '',
+        diagnosis: sections.value?.diagnosis || '',
+        observations: undefined,
         diagnostico_cie10: diagnosticoCie10,
         diagnostico_cieo: diagnosticoCIEO
       }
       
-      console.log('Enviando datos al backend:', requestData)
+      console.log('Enviando datos al nuevo backend:', requestData)
       
-      await resultsApiService.upsertResultado(sample.value.id, requestData)
+      await resultsApiService.updateCaseResult(sample.value.id, requestData)
       lastSavedAt.value = new Date().toISOString()
       
       // NO limpiar automáticamente aquí - dejar que el componente maneje cuándo limpiar
@@ -297,31 +304,32 @@ export function usePerformResults(sampleId: string) {
       // Preparar datos del diagnóstico CIE-10
       const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
         id: primaryDisease.value.id,
-        codigo: primaryDisease.value.codigo,
-        nombre: primaryDisease.value.nombre
+        codigo: primaryDisease.value.code,
+        nombre: primaryDisease.value.name
       } : undefined
 
       // Preparar datos del diagnóstico CIEO
       const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
         id: primaryDiseaseCIEO.value.id,
-        codigo: primaryDiseaseCIEO.value.codigo,
-        nombre: primaryDiseaseCIEO.value.nombre
+        codigo: primaryDiseaseCIEO.value.code,
+        nombre: primaryDiseaseCIEO.value.name
       } : undefined
 
-      const requestData = {
-        metodo: sections.value?.method || [],
-        resultado_macro: sections.value?.macro || '',
-        resultado_micro: sections.value?.micro || '',
-        diagnostico: sections.value?.diagnosis || '',
-        observaciones: undefined,
+      // Preparar datos para el nuevo backend
+      const requestData: UpdateResultRequest = {
+        method: sections.value?.method || [],
+        macro_result: sections.value?.macro || '',
+        micro_result: sections.value?.micro || '',
+        diagnosis: sections.value?.diagnosis || '',
+        observations: undefined,
         diagnostico_cie10: diagnosticoCie10,
         diagnostico_cieo: diagnosticoCIEO
       }
       
-      console.log('Enviando datos de completion al backend:', requestData)
+      console.log('Enviando datos de completion al nuevo backend:', requestData)
       
-      // Guardar resultado y marcar como completado (Por firmar)
-      await resultsApiService.upsertResultado(sample.value.id, requestData)
+      // Guardar resultado en el nuevo backend
+      await resultsApiService.updateCaseResult(sample.value.id, requestData)
       // TODO: Llamar endpoint para cambiar estado a "Por firmar"
       // await casesApiService.updateCaseStatus(sample.value.caso_id, 'Por firmar')
       
