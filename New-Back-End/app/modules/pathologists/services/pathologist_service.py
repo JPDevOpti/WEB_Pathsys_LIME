@@ -88,6 +88,83 @@ class PathologistService:
         ok = await self.repo.delete_by_pathologist_code(pathologist_code)
         return {"deleted": ok, "pathologist_code": pathologist_code}
     
+    async def update_signature(self, pathologist_code: str, signature_url: str) -> PathologistResponse:
+        """Actualizar solo la firma digital de un patólogo"""
+        # Verificar que el patólogo existe
+        existing = await self.repo.get_by_pathologist_code(pathologist_code)
+        if not existing:
+            raise NotFoundError(f"Pathologist with code {pathologist_code} not found")
+        
+        # Actualizar solo la firma
+        updated = await self.repo.update_signature_by_code(pathologist_code, signature_url)
+        if not updated:
+            raise BadRequestError("Failed to update signature")
+        
+        return self._to_response(updated)
+
+    async def get_signature(self, pathologist_code: str) -> Dict[str, str]:
+        """Obtener solo la firma digital de un patólogo"""
+        doc = await self.repo.get_by_pathologist_code(pathologist_code)
+        if not doc:
+            raise NotFoundError(f"Pathologist with code {pathologist_code} not found")
+        
+        return {
+            "pathologist_code": pathologist_code,
+            "signature": doc.get("signature", "")
+        }
+
+    async def upload_signature_file(self, pathologist_code: str, file_content: bytes, filename: str) -> PathologistResponse:
+        """Subir archivo de firma y actualizar la URL en la base de datos"""
+        import os
+        import uuid
+        from datetime import datetime, timezone
+        
+        # Verificar que el patólogo existe
+        existing = await self.repo.get_by_pathologist_code(pathologist_code)
+        if not existing:
+            raise NotFoundError(f"Pathologist with code {pathologist_code} not found")
+        
+        # Validar tipo de archivo
+        allowed_extensions = ['.png', '.jpg', '.jpeg', '.svg']
+        file_ext = os.path.splitext(filename)[1].lower()
+        if file_ext not in allowed_extensions:
+            raise BadRequestError(f"File type not allowed. Allowed types: {', '.join(allowed_extensions)}")
+        
+        # Validar tamaño (1MB máximo)
+        max_size = 1024 * 1024  # 1MB
+        if len(file_content) > max_size:
+            raise BadRequestError("File size too large. Maximum size is 1MB")
+        
+        # Crear directorio de firmas si no existe
+        signatures_dir = "uploads/signatures"
+        os.makedirs(signatures_dir, exist_ok=True)
+        
+        # Generar nombre único para el archivo
+        unique_filename = f"{pathologist_code}_{uuid.uuid4().hex}{file_ext}"
+        file_path = os.path.join(signatures_dir, unique_filename)
+        
+        # Guardar archivo
+        try:
+            with open(file_path, "wb") as f:
+                f.write(file_content)
+        except Exception as e:
+            raise BadRequestError(f"Failed to save file: {str(e)}")
+        
+        # Generar URL relativa
+        signature_url = f"/uploads/signatures/{unique_filename}"
+        
+        # Actualizar en base de datos
+        updated = await self.repo.update_signature_by_code(pathologist_code, signature_url)
+        if not updated:
+            # Si falla la actualización, eliminar el archivo
+            try:
+                os.remove(file_path)
+            except:
+                pass
+            raise BadRequestError("Failed to update signature in database")
+        
+        return self._to_response(updated)
+
     def _to_response(self, doc: Dict[str, Any]) -> PathologistResponse:
         """Convertir documento a respuesta"""
         from datetime import datetime, timezone

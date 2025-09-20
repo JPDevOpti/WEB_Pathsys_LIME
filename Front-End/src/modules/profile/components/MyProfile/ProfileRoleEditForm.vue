@@ -240,7 +240,7 @@ const onSubmit = () => {
     payload = { role: 'auxiliar', ...auxiliarForm, auxiliarCode: '' }
   } else if (props.user.role === 'facturacion') {
     if (!validatePasswords(facturacionForm.password, facturacionForm.passwordConfirm)) return
-    payload = { role: 'facturacion', ...facturacionForm, facturacionCode: '' }
+    payload = { role: 'facturacion', ...facturacionForm, facturacionCode: (props.user.roleSpecificData as any)?.facturacionCode || (props.user.roleSpecificData as any)?.billingCode || '' }
   } else {
     payload = { role: 'admin', ...adminForm }
   }

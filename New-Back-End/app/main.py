@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi import APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 
 # Crear aplicación FastAPI
 app = FastAPI(title="WEB-LIS PathSys - New Backend", version="1.0.0")
@@ -13,6 +15,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Crear directorio de uploads si no existe
+os.makedirs("uploads/signatures", exist_ok=True)
+
+# Montar archivos estáticos para servir firmas
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Incluir router principal v1 si existe; si falla, montar al menos auth
 try:

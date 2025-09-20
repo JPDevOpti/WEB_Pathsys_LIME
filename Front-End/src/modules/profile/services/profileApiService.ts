@@ -1,6 +1,10 @@
-import apiClient from '@/core/config/axios.config'
-import { API_CONFIG } from '@/core/config/api.config'
+// import apiClient from '@/core/config/axios.config'
+// import { API_CONFIG } from '@/core/config/api.config'
 import type { UserRole } from '../types/userProfile.types'
+import { PathologistApiService } from './pathologistApiService'
+import { ResidentApiService } from './residentApiService'
+import { AuxiliarApiService } from './auxiliarApiService'
+import { BillingApiService } from './billingApiService'
 
 export interface BackendPatologo {
   patologoName: string
@@ -47,99 +51,79 @@ export interface BackendFacturacion {
   fecha_actualizacion?: string
 }
 
-const pickFirstFromUnknown = (resp: any) => {
-  if (Array.isArray(resp)) return resp[0]
-  if (!resp || typeof resp !== 'object') return undefined
-  const candidates = ['patologos', 'residentes', 'auxiliares', 'facturacion', 'results', 'items', 'data', 'resultados']
-  for (const key of candidates) {
-    if (Array.isArray(resp[key]) && resp[key].length > 0) return resp[key][0]
-  }
-  return undefined
-}
-
 export const profileApiService = {
   async getByRoleAndEmail(role: UserRole, email: string) {
     switch (role) {
       case 'patologo': {
-        // Backend de patólogos no expone filtro directo por email; usamos q=email y luego filtramos localmente
-        const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/search`, {
-          params: { q: email, limit: 5 }
-        })
-        let raw = pickFirstFromUnknown(data)
-        // Intentar encontrar coincidencia exacta de email si la estructura retornada contiene lista
-        if (Array.isArray((data as any)?.patologos)) {
-          const exact = (data as any).patologos.find((p: any) => (p.patologo_email || p.PatologoEmail) === email)
-          if (exact) raw = exact
-        }
-        if (!raw) return undefined
-        // Normalizamos sólo si vienen campos en snake_case
+        // Usar el nuevo servicio de patólogos
+        const pathologist = await PathologistApiService.getByEmail(email)
+        if (!pathologist) return undefined
+        
+        // Mapear a la estructura esperada por el frontend
         const mapped = {
-          patologoName: raw.patologo_name || raw.patologoName,
-          InicialesPatologo: raw.iniciales_patologo || raw.InicialesPatologo || raw.iniciales,
-            patologoCode: raw.patologo_code || raw.patologoCode,
-          PatologoEmail: raw.patologo_email || raw.PatologoEmail,
-          registro_medico: raw.registro_medico,
-          firma: raw.firma,
-          observaciones: raw.observaciones,
-          isActive: typeof raw.is_active === 'boolean' ? raw.is_active : raw.isActive,
-          fecha_creacion: raw.fecha_creacion,
-          fecha_actualizacion: raw.fecha_actualizacion
+          patologoName: pathologist.pathologist_name,
+          InicialesPatologo: pathologist.initials,
+          patologoCode: pathologist.pathologist_code,
+          PatologoEmail: pathologist.pathologist_email,
+          registro_medico: pathologist.medical_license,
+          firma: pathologist.signature,
+          observaciones: pathologist.observations,
+          isActive: pathologist.is_active,
+          fecha_creacion: pathologist.created_at,
+          fecha_actualizacion: pathologist.updated_at
         } as BackendPatologo
         return mapped
       }
       case 'residente': {
-        // BACKEND espera 'residente_email' (snake_case). Antes se enviaba 'ResidenteEmail' y no filtraba correctamente.
-        const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.RESIDENTS}/search`, {
-          params: { residente_email: email, limit: 1 }
-        })
-        const raw = pickFirstFromUnknown(data)
-        if (!raw) return undefined
+        // Usar el nuevo servicio de residentes
+        const resident = await ResidentApiService.getByEmail(email)
+        if (!resident) return undefined
+        
+        // Mapear a la estructura esperada por el frontend
         const mapped = {
-          residenteName: raw.residente_name || raw.residenteName,
-          InicialesResidente: raw.iniciales_residente || raw.InicialesResidente || raw.iniciales,
-          residenteCode: raw.residente_code || raw.residenteCode,
-          ResidenteEmail: raw.residente_email || raw.ResidenteEmail,
-          registro_medico: raw.registro_medico,
-          observaciones: raw.observaciones,
-          isActive: typeof raw.is_active === 'boolean' ? raw.is_active : raw.isActive,
-          fecha_creacion: raw.fecha_creacion,
-          fecha_actualizacion: raw.fecha_actualizacion
+          residenteName: resident.resident_name,
+          InicialesResidente: resident.initials,
+          residenteCode: resident.resident_code,
+          ResidenteEmail: resident.resident_email,
+          registro_medico: resident.medical_license,
+          observaciones: resident.observations,
+          isActive: resident.is_active,
+          fecha_creacion: resident.created_at,
+          fecha_actualizacion: resident.updated_at
         } as BackendResidente
         return mapped
       }
       case 'auxiliar': {
-        // Backend espera auxiliar_email (snake_case)
-        const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.AUXILIARIES}/search`, {
-          params: { auxiliar_email: email, limit: 5 }
-        })
-        const raw = pickFirstFromUnknown(data)
-        if (!raw) return undefined
+        // Usar el nuevo servicio de auxiliares
+        const auxiliar = await AuxiliarApiService.getByEmail(email)
+        if (!auxiliar) return undefined
+        
+        // Mapear a la estructura esperada por el frontend
         const mapped = {
-          auxiliarName: raw.auxiliar_name || raw.auxiliarName,
-          auxiliarCode: raw.auxiliar_code || raw.auxiliarCode,
-          AuxiliarEmail: raw.auxiliar_email || raw.AuxiliarEmail,
-          observaciones: raw.observaciones,
-          isActive: typeof raw.is_active === 'boolean' ? raw.is_active : raw.isActive,
-          fecha_creacion: raw.fecha_creacion,
-          fecha_actualizacion: raw.fecha_actualizacion
+          auxiliarName: auxiliar.auxiliar_name,
+          auxiliarCode: auxiliar.auxiliar_code,
+          AuxiliarEmail: auxiliar.auxiliar_email,
+          observaciones: auxiliar.observations,
+          isActive: auxiliar.is_active,
+          fecha_creacion: auxiliar.created_at,
+          fecha_actualizacion: auxiliar.updated_at
         } as BackendAuxiliar
         return mapped
       }
       case 'facturacion': {
-        // Backend espera facturacion_email (snake_case)
-        const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.FACTURACION}/search`, {
-          params: { facturacion_email: email, limit: 5 }
-        })
-        const raw = pickFirstFromUnknown(data)
-        if (!raw) return undefined
+        // Usar el nuevo servicio de facturación
+        const billing = await BillingApiService.getByEmail(email)
+        if (!billing) return undefined
+        
+        // Mapear a la estructura esperada por el frontend
         const mapped = {
-          facturacionName: raw.facturacion_name || raw.facturacionName,
-          facturacionCode: raw.facturacion_code || raw.facturacionCode,
-          FacturacionEmail: raw.facturacion_email || raw.FacturacionEmail,
-          observaciones: raw.observaciones,
-          isActive: typeof raw.is_active === 'boolean' ? raw.is_active : raw.isActive,
-          fecha_creacion: raw.fecha_creacion,
-          fecha_actualizacion: raw.fecha_actualizacion
+          facturacionName: billing.billing_name,
+          facturacionCode: billing.billing_code,
+          FacturacionEmail: billing.billing_email,
+          observaciones: billing.observations,
+          isActive: billing.is_active,
+          fecha_creacion: billing.created_at,
+          fecha_actualizacion: billing.updated_at
         } as BackendFacturacion
         return mapped
       }
@@ -151,8 +135,84 @@ export const profileApiService = {
 
   async getPathologistByCode(code: string): Promise<BackendPatologo | undefined> {
     try {
-      const data = await apiClient.get<any>(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`)
-      return (data?.data ?? data) as BackendPatologo
+      const pathologist = await PathologistApiService.getByCode(code)
+      if (!pathologist) return undefined
+      
+      // Mapear a la estructura esperada por el frontend
+      return {
+        patologoName: pathologist.pathologist_name,
+        InicialesPatologo: pathologist.initials,
+        patologoCode: pathologist.pathologist_code,
+        PatologoEmail: pathologist.pathologist_email,
+        registro_medico: pathologist.medical_license,
+        firma: pathologist.signature,
+        observaciones: pathologist.observations,
+        isActive: pathologist.is_active,
+        fecha_creacion: pathologist.created_at,
+        fecha_actualizacion: pathologist.updated_at
+      } as BackendPatologo
+    } catch {
+      return undefined
+    }
+  },
+
+  async getResidentByCode(code: string): Promise<BackendResidente | undefined> {
+    try {
+      const resident = await ResidentApiService.getByCode(code)
+      if (!resident) return undefined
+      
+      // Mapear a la estructura esperada por el frontend
+      return {
+        residenteName: resident.resident_name,
+        InicialesResidente: resident.initials,
+        residenteCode: resident.resident_code,
+        ResidenteEmail: resident.resident_email,
+        registro_medico: resident.medical_license,
+        observaciones: resident.observations,
+        isActive: resident.is_active,
+        fecha_creacion: resident.created_at,
+        fecha_actualizacion: resident.updated_at
+      } as BackendResidente
+    } catch {
+      return undefined
+    }
+  },
+
+  async getAuxiliarByCode(code: string): Promise<BackendAuxiliar | undefined> {
+    try {
+      const auxiliar = await AuxiliarApiService.getByCode(code)
+      if (!auxiliar) return undefined
+      
+      // Mapear a la estructura esperada por el frontend
+      return {
+        auxiliarName: auxiliar.auxiliar_name,
+        auxiliarCode: auxiliar.auxiliar_code,
+        AuxiliarEmail: auxiliar.auxiliar_email,
+        observaciones: auxiliar.observations,
+        isActive: auxiliar.is_active,
+        fecha_creacion: auxiliar.created_at,
+        fecha_actualizacion: auxiliar.updated_at
+      } as BackendAuxiliar
+    } catch {
+      return undefined
+    }
+  },
+
+  async getBillingByCode(code: string): Promise<BackendFacturacion | undefined> {
+    try {
+      const billing = await BillingApiService.getByCode(code)
+      if (!billing) return undefined
+      
+      // Mapear a la estructura esperada por el frontend
+      return {
+        facturacionName: billing.billing_name,
+        facturacionCode: billing.billing_code,
+        FacturacionEmail: billing.billing_email,
+        observaciones: billing.observations,
+        isActive: billing.is_active,
+        fecha_creacion: billing.created_at,
+        fecha_actualizacion: billing.updated_at
+      } as BackendFacturacion
     } catch {
       return undefined
     }
@@ -161,60 +221,60 @@ export const profileApiService = {
   async updateByRole(role: UserRole, code: string, payload: any) {
     switch (role) {
       case 'patologo':
-        // Mapear a snake_case si viene en camel/Pascal
+        // Usar el nuevo servicio de patólogos
         const patoPayload = {
-          patologo_name: payload.patologoName || payload.patologo_name,
-          iniciales_patologo: payload.InicialesPatologo || payload.iniciales_patologo || payload.iniciales,
-          patologo_email: payload.PatologoEmail || payload.patologo_email,
-          registro_medico: payload.registro_medico,
-          observaciones: payload.observaciones,
-          // Incluir password solo si se proporciona y tiene al menos 6 caracteres
-          ...(payload.password && payload.password.trim().length >= 6 ? { password: payload.password } : {})
+          pathologist_name: payload.patologoName || payload.patologo_name,
+          initials: payload.InicialesPatologo || payload.iniciales_patologo || payload.iniciales,
+          pathologist_email: payload.PatologoEmail || payload.patologo_email,
+          medical_license: payload.registro_medico,
+          observations: payload.observaciones,
+          is_active: payload.isActive !== undefined ? payload.isActive : true
         }
-        return apiClient.put(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`, patoPayload)
+        return PathologistApiService.update(code, patoPayload)
       case 'residente':
-        // Asegurar que exista code; si viene vacío no se debe intentar PUT raíz
-        if (!code) throw new Error('No se pudo determinar el código del residente para actualizar')
+        // Usar el nuevo servicio de residentes
         const resPayload = {
-          residente_name: payload.residenteName || payload.residente_name,
-          iniciales_residente: payload.InicialesResidente || payload.iniciales_residente || payload.iniciales,
-          residente_email: payload.ResidenteEmail || payload.residente_email,
-          registro_medico: payload.registro_medico,
-          observaciones: payload.observaciones,
-          // Permitir opcionalmente cambio de estado o password si se incluyen
-          ...(payload.is_active !== undefined ? { is_active: payload.is_active } : {}),
-          ...(payload.isActive !== undefined ? { is_active: payload.isActive } : {}),
-          ...(payload.password ? { password: payload.password } : {})
+          resident_name: payload.residenteName || payload.residente_name,
+          initials: payload.InicialesResidente || payload.iniciales_residente || payload.iniciales,
+          resident_email: payload.ResidenteEmail || payload.residente_email,
+          medical_license: payload.registro_medico,
+          observations: payload.observaciones,
+          is_active: payload.isActive !== undefined ? payload.isActive : true
         }
-        return apiClient.put(`${API_CONFIG.ENDPOINTS.RESIDENTS}/${code}`, resPayload)
+        return ResidentApiService.update(code, resPayload)
       case 'auxiliar':
+        // Usar el nuevo servicio de auxiliares
         const auxPayload = {
           auxiliar_name: payload.auxiliarName || payload.auxiliar_name,
           auxiliar_email: payload.AuxiliarEmail || payload.auxiliar_email,
-          observaciones: payload.observaciones,
-          // Incluir password solo si se proporciona y tiene al menos 6 caracteres
-          ...(payload.password && payload.password.trim().length >= 6 ? { password: payload.password } : {})
+          observations: payload.observaciones,
+          is_active: payload.isActive !== undefined ? payload.isActive : true
         }
-        return apiClient.put(`${API_CONFIG.ENDPOINTS.AUXILIARIES}/${code}`, auxPayload)
+        return AuxiliarApiService.update(code, auxPayload)
       case 'facturacion':
+        // Usar el nuevo servicio de facturación
         const factPayload = {
-          facturacion_name: payload.facturacionName || payload.facturacion_name,
-          facturacion_email: payload.FacturacionEmail || payload.facturacion_email,
-          observaciones: payload.observaciones,
-          ...(payload.is_active !== undefined ? { is_active: payload.is_active } : {}),
-          ...(payload.isActive !== undefined ? { is_active: payload.isActive } : {}),
-          ...(payload.password ? { password: payload.password } : {})
+          billing_name: payload.facturacionName || payload.facturacion_name,
+          billing_email: payload.FacturacionEmail || payload.facturacion_email,
+          observations: payload.observaciones,
+          is_active: payload.isActive !== undefined ? payload.isActive : true
         }
-        return apiClient.put(`${API_CONFIG.ENDPOINTS.FACTURACION}/${code}`, factPayload)
+        return BillingApiService.update(code, factPayload)
       default:
         return null
     }
   },
 
   async updateFirma(patologoCode: string, firmaUrl: string) {
-    return apiClient.put(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${patologoCode}/firma`, {
-      firma: firmaUrl
-    })
+    return PathologistApiService.updateSignature(patologoCode, firmaUrl)
+  },
+
+  async uploadFirma(patologoCode: string, file: File) {
+    return PathologistApiService.uploadSignature(patologoCode, file)
+  },
+
+  async getFirma(patologoCode: string) {
+    return PathologistApiService.getSignature(patologoCode)
   }
 }
 

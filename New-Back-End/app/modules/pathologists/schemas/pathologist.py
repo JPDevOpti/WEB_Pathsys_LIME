@@ -56,3 +56,18 @@ class PathologistSearch(BaseModel):
 
     class Config:
         populate_by_name = True
+
+class SignatureUpdate(BaseModel):
+    """Esquema para actualizar la firma digital de un patólogo"""
+    signature: str = Field(..., description="URL de la firma digital del patólogo")
+    
+    class Config:
+        populate_by_name = True
+
+class SignatureResponse(BaseModel):
+    """Esquema para respuesta de firma digital"""
+    pathologist_code: str = Field(..., description="Código del patólogo")
+    signature: str = Field(..., description="URL de la firma digital")
+    
+    class Config:
+        populate_by_name = True

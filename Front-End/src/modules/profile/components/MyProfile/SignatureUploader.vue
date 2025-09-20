@@ -73,15 +73,18 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
+import { profileApiService } from '../../services/profileApiService'
 
 interface Props {
   currentUrl?: string
   userRole?: string // rol del usuario autenticado
+  pathologistCode?: string // código del patólogo para las operaciones de API
 }
 
 const props = withDefaults(defineProps<Props>(), {
   currentUrl: '',
-  userRole: ''
+  userRole: '',
+  pathologistCode: ''
 })
 
 // Solo permitir funcionamiento si es patólogo
@@ -141,8 +144,8 @@ const onFileChange = (event: Event) => {
   }
 }
 
-const handleFile = (file: File) => {
-  if (!isPatologo.value) return
+const handleFile = async (file: File) => {
+  if (!isPatologo.value || !props.pathologistCode) return
   const isValidType = ['image/png', 'image/jpeg', 'image/svg+xml'].includes(file.type)
   const isValidSize = file.size <= 1024 * 1024 // 1MB
   
@@ -158,25 +161,55 @@ const handleFile = (file: File) => {
   
   isUploading.value = true
   selectedFile.value = file
-  const reader = new FileReader()
-  reader.onload = () => {
-    previewUrl.value = typeof reader.result === 'string' ? reader.result : null
+  
+  try {
+    // Subir archivo al backend
+    const response = await profileApiService.uploadFirma(props.pathologistCode, file)
+    if (response) {
+      // Obtener la URL de la firma desde la respuesta
+      const signatureUrl = response.signature
+      if (signatureUrl) {
+        previewUrl.value = signatureUrl.startsWith('http') ? signatureUrl : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}${signatureUrl}`
+      } else {
+        // Fallback: mostrar preview local
+        const reader = new FileReader()
+        reader.onload = () => {
+          previewUrl.value = typeof reader.result === 'string' ? reader.result : null
+        }
+        reader.readAsDataURL(file)
+      }
+    } else {
+      throw new Error('No se pudo subir la firma')
+    }
+  } catch (error) {
+    console.error('Error al subir firma:', error)
+    alert('Error al subir la firma. Inténtalo de nuevo.')
+    // Fallback: mostrar preview local
+    const reader = new FileReader()
+    reader.onload = () => {
+      previewUrl.value = typeof reader.result === 'string' ? reader.result : null
+    }
+    reader.readAsDataURL(file)
+  } finally {
     isUploading.value = false
     emitChange()
   }
-  reader.onerror = () => {
-    isUploading.value = false
-    alert('Error al leer el archivo. Inténtalo de nuevo.')
-  }
-  reader.readAsDataURL(file)
 }
 
-const remove = () => {
-  if (!isPatologo.value) return
-  selectedFile.value = null
-  previewUrl.value = null
-  if (fileInput.value) fileInput.value.value = ''
-  emitChange()
+const remove = async () => {
+  if (!isPatologo.value || !props.pathologistCode) return
+  
+  try {
+    // Eliminar firma del backend
+    await profileApiService.updateFirma(props.pathologistCode, '')
+    selectedFile.value = null
+    previewUrl.value = null
+    if (fileInput.value) fileInput.value.value = ''
+    emitChange()
+  } catch (error) {
+    console.error('Error al eliminar firma:', error)
+    alert('Error al eliminar la firma. Inténtalo de nuevo.')
+  }
 }
 
 

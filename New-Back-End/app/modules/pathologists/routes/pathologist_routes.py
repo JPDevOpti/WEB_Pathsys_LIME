@@ -1,7 +1,7 @@
 """Rutas de la API para el módulo de Pathologists"""
 
 from typing import List
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, status, UploadFile, File
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.config.database import get_database
@@ -10,7 +10,9 @@ from app.modules.pathologists.schemas.pathologist import (
     PathologistCreate,
     PathologistUpdate,
     PathologistResponse,
-    PathologistSearch
+    PathologistSearch,
+    SignatureUpdate,
+    SignatureResponse
 )
 from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 
@@ -116,5 +118,61 @@ async def delete_pathologist(
         return {"message": f"Pathologist with code {pathologist_code} deleted successfully", **result}
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+
+@router.put("/{pathologist_code}/signature", response_model=PathologistResponse)
+async def update_signature(
+    pathologist_code: str,
+    signature_data: SignatureUpdate,
+    pathologist_service: PathologistService = Depends(get_pathologist_service)
+):
+    """Actualizar solo la firma digital de un patólogo"""
+    try:
+        return await pathologist_service.update_signature(pathologist_code, signature_data.signature)
+    except NotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except BadRequestError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+
+@router.get("/{pathologist_code}/signature", response_model=SignatureResponse)
+async def get_signature(
+    pathologist_code: str,
+    pathologist_service: PathologistService = Depends(get_pathologist_service)
+):
+    """Obtener solo la firma digital de un patólogo"""
+    try:
+        return await pathologist_service.get_signature(pathologist_code)
+    except NotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+
+@router.put("/{pathologist_code}/upload-signature", response_model=PathologistResponse)
+async def upload_signature_file(
+    pathologist_code: str,
+    file: UploadFile = File(...),
+    pathologist_service: PathologistService = Depends(get_pathologist_service)
+):
+    """Subir archivo de firma digital para un patólogo"""
+    try:
+        # Leer contenido del archivo
+        file_content = await file.read()
+        
+        # Validar que el archivo no esté vacío
+        if len(file_content) == 0:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is empty")
+        
+        return await pathologist_service.upload_signature_file(
+            pathologist_code, 
+            file_content, 
+            file.filename or "signature"
+        )
+    except NotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except BadRequestError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

@@ -112,3 +112,18 @@ class PathologistRepository:
         """Eliminar patólogo por código"""
         result = await self.collection.delete_one({"pathologist_code": pathologist_code})
         return result.deleted_count > 0
+
+    async def update_signature_by_code(self, pathologist_code: str, signature_url: str) -> Optional[dict]:
+        """Actualizar firma digital por código de patólogo"""
+        from datetime import datetime, timezone
+        update_data = {
+            "signature": signature_url,
+            "updated_at": datetime.now(timezone.utc)
+        }
+        result = await self.collection.update_one(
+            {"pathologist_code": pathologist_code},
+            {"$set": update_data}
+        )
+        if result.modified_count > 0:
+            return await self.get_by_pathologist_code(pathologist_code)
+        return None

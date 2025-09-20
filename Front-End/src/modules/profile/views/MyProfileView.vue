@@ -36,6 +36,7 @@
             v-if="userProfile.role === 'patologo'"
             :user-role="userProfile.role"
             :current-url="userProfile.roleSpecificData?.firmaUrl"
+            :pathologist-code="getPathologistCode()"
             @change="handleSignatureChange"
           />
         </div>
@@ -59,8 +60,9 @@
 
     <!-- Edit Modal -->
     <ProfileEditModal
+      v-if="userProfile"
       :is-open="isEditModalOpen"
-      :user="userProfile!"
+      :user="userProfile"
       :is-loading="isSaving"
       :errors="editErrors"
       @close="closeEditModal"
@@ -138,16 +140,36 @@ const loadUserProfile = async () => {
 
     const mapAuthRoleToUserRole = (rol?: string): UserRole => {
       const r = (rol || '').toString().trim().toLowerCase()
-      if (r.includes('admin') || r === 'administrador') return 'admin'
+      console.log('🔍 Mapeando rol del token:', { original: rol, normalized: r })
+      
+      // Mapeo exacto primero
+      if (r === 'pathologist' || r === 'patologo') return 'patologo'
+      if (r === 'admin' || r === 'administrator' || r === 'administrador') return 'admin'
+      if (r === 'resident' || r === 'residente') return 'residente'
+      if (r === 'auxiliar' || r === 'auxiliary') return 'auxiliar'
+      if (r === 'facturacion' || r === 'facturación' || r === 'billing') return 'facturacion'
+      
+      // Mapeo por contenido
+      if (r.includes('admin')) return 'admin'
       if (r.includes('patolog')) return 'patologo'
       if (r.includes('resident')) return 'residente'
-      if (r.includes('facturacion') || r.includes('facturación') || r.includes('billing')) return 'facturacion'
       if (r.includes('auxiliar')) return 'auxiliar'
+      if (r.includes('facturacion') || r.includes('billing')) return 'facturacion'
+      
+      // Si no se reconoce el rol, intentar detectar por email o datos del usuario
+      console.log('⚠️ Rol no reconocido, usando admin como fallback:', r)
       return 'admin'
     }
 
-    const role = mapAuthRoleToUserRole(authUser.rol)
+    const role = mapAuthRoleToUserRole(authUser.role)
     const email = authUser.email
+    
+    console.log('🔍 Información del usuario autenticado:', {
+      authUser,
+      roleFromAuth: authUser.role,
+      mappedRole: role,
+      email
+    })
 
     // Base para UserProfile a partir del usuario autenticado
     const fullNameFromAuth = (authUser.nombre || ((authUser as any).nombres && (authUser as any).apellidos ? `${(authUser as any).nombres} ${(authUser as any).apellidos}` : '')).toString().trim()
@@ -166,21 +188,40 @@ const loadUserProfile = async () => {
       updatedAt: new Date()
     }
 
-    // Intentar detectar el rol efectivo priorizando colecciones con búsqueda fiable por email
-    const [residenteData, auxiliarData, facturacionData] = await Promise.all([
-      profileApiService.getByRoleAndEmail('residente', email).catch(() => undefined),
-      profileApiService.getByRoleAndEmail('auxiliar', email).catch(() => undefined),
-      profileApiService.getByRoleAndEmail('facturacion', email).catch(() => undefined)
-    ])
+    // Buscar patólogo primero si el rol del token es patólogo
     let patologoData = undefined
-    if (!residenteData && !auxiliarData && !facturacionData) {
-      patologoData = await profileApiService.getByRoleAndEmail('patologo', email).catch(() => undefined)
+    if (role === 'patologo') {
+      console.log('🔍 Buscando datos de patólogo para:', email)
+      patologoData = await profileApiService.getByRoleAndEmail('patologo', email).catch((error) => {
+        console.error('Error al buscar patólogo:', error)
+        return undefined
+      })
+      console.log('📋 Datos de patólogo encontrados:', patologoData)
+    }
+    
+    // Si no se encontró patólogo, buscar en otros roles
+    let residenteData, auxiliarData, facturacionData
+    if (!patologoData) {
+      [residenteData, auxiliarData, facturacionData] = await Promise.all([
+        profileApiService.getByRoleAndEmail('residente', email).catch(() => undefined),
+        profileApiService.getByRoleAndEmail('auxiliar', email).catch(() => undefined),
+        profileApiService.getByRoleAndEmail('facturacion', email).catch(() => undefined)
+      ])
     }
 
     const hasResidente = !!(residenteData && (residenteData as any).residenteCode)
     const hasAuxiliar = !!(auxiliarData && (auxiliarData as any).auxiliarCode)
     const hasPatologo = !!(patologoData && (patologoData as any).patologoCode)
-    const hasFacturacion = !!(facturacionData && (facturacionData as any).facturacionCode)
+    const hasFacturacion = !!(facturacionData && (facturacionData as BackendFacturacion).facturacionCode)
+    
+    console.log('🔍 Verificación de datos encontrados:', {
+      role,
+      hasPatologo,
+      hasResidente,
+      hasAuxiliar,
+      hasFacturacion,
+      patologoData: patologoData ? 'encontrado' : 'no encontrado'
+    })
 
     console.log('🔍 Detección de roles:', {
       email,
@@ -192,23 +233,42 @@ const loadUserProfile = async () => {
       facturacionData
     })
 
-    // Determinar rol efectivo: priorizar detección en colecciones sobre rol del token
+    // Determinar rol efectivo: priorizar patólogo si el token lo indica
     let effectiveRole: UserRole
-    if (hasResidente) effectiveRole = 'residente'
-    else if (hasFacturacion) effectiveRole = 'facturacion'
-    else if (hasAuxiliar) effectiveRole = 'auxiliar'
-    else if (hasPatologo) effectiveRole = 'patologo'
-    else effectiveRole = role
-
-    // Forzar rol de facturación si se detectó en la colección, independientemente del token
-    if (hasFacturacion) {
+    if (role === 'patologo' && hasPatologo) {
+      effectiveRole = 'patologo'
+    } else if (hasResidente) {
+      effectiveRole = 'residente'
+    } else if (hasFacturacion) {
       effectiveRole = 'facturacion'
-      console.log('🔧 Forzando rol a facturacion porque se detectó en la colección')
+    } else if (hasAuxiliar) {
+      effectiveRole = 'auxiliar'
+    } else if (hasPatologo) {
+      effectiveRole = 'patologo'
+    } else {
+      effectiveRole = role
     }
 
     console.log('✅ Rol efectivo detectado:', effectiveRole)
 
     if (effectiveRole === 'patologo') {
+      if (!patologoData) {
+        console.warn('⚠️ No se encontraron datos específicos de patólogo, usando perfil básico')
+        // Usar perfil básico si no se encuentran datos específicos
+        userProfile.value = {
+          ...base,
+          role: 'patologo',
+          roleSpecificData: {
+            iniciales: '',
+            registroMedico: '',
+            firmaUrl: '',
+            observaciones: '',
+            patologoCode: '',
+            pathologistCode: ''
+          }
+        }
+        return
+      }
       const pb = patologoData as BackendPatologo | undefined
       // Separar el nombre completo del patólogo
       const fullName = pb?.patologoName || base.firstName + ' ' + base.lastName
@@ -225,7 +285,9 @@ const loadUserProfile = async () => {
           iniciales: (pb as any)?.InicialesPatologo || (pb as any)?.iniciales || '',
           registroMedico: pb?.registro_medico || '',
           firmaUrl: pb?.firma || '',
-          observaciones: pb?.observaciones || ''
+          observaciones: pb?.observaciones || '',
+          patologoCode: pb?.patologoCode || '',
+          pathologistCode: pb?.patologoCode || ''
         }
       } as any
       return
@@ -274,7 +336,7 @@ const loadUserProfile = async () => {
     }
 
     if (effectiveRole === 'facturacion') {
-      const fb = facturacionData as any
+      const fb = facturacionData as BackendFacturacion | undefined
       // Separar el nombre completo del usuario de facturación
       const fullName = fb?.facturacionName || base.firstName + ' ' + base.lastName
       const [firstName, ...rest] = fullName.split(' ').filter(Boolean)
@@ -431,19 +493,27 @@ const showSuccessMessage = () => {
   }, 3000)
 }
 
+// Obtener código del patólogo
+const getPathologistCode = (): string => {
+  if (!userProfile.value || userProfile.value.role !== 'patologo') return ''
+  
+  // Buscar el código en los datos específicos del rol
+  const roleData = userProfile.value.roleSpecificData as any
+  return roleData?.patologoCode || roleData?.pathologistCode || ''
+}
+
 // Manejo de la firma digital
 const handleSignatureChange = async (payload: { file: File | null; previewUrl: string | null }) => {
   try {
     if (!userProfile.value || userProfile.value.role !== 'patologo') return
 
-    // Obtener el código del patólogo
-    const patologoData = await profileApiService.getByRoleAndEmail('patologo', userProfile.value.email) as BackendPatologo | undefined
-    if (!patologoData) {
-      throw new Error('No se pudo obtener la información del patólogo')
+    const pathologistCode = getPathologistCode()
+    if (!pathologistCode) {
+      throw new Error('No se pudo obtener el código del patólogo')
     }
 
     // Actualizar la firma en el backend
-    await profileApiService.updateFirma(patologoData.patologoCode, payload.previewUrl || '')
+    await profileApiService.updateFirma(pathologistCode, payload.previewUrl || '')
 
     // Actualizar localmente
     if (userProfile.value.roleSpecificData) {

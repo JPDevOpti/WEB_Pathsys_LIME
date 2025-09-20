@@ -25,6 +25,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.config.database import get_database, close_mongo_connection
 from app.modules.pathologists.schemas.pathologist import PathologistCreate
 from app.modules.pathologists.services.pathologist_service import PathologistService
+from app.shared.services.user_management import UserManagementService
 
 
 def derive_initials(raw_initials: Optional[str], raw_name: str) -> str:
@@ -38,6 +39,11 @@ def derive_initials(raw_initials: Optional[str], raw_name: str) -> str:
 def compose_email(code: str, initials: str) -> str:
     # Required format: "numero.iniciales@udea.edu.co"
     return f"{code}.{(initials or '').lower()}@udea.edu.co"
+
+
+def generate_default_password(code: str, initials: str) -> str:
+    # Generate a default password using only the code
+    return code
 
 
 # Embedded list of pathologists (Teachers) provided
@@ -65,6 +71,8 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
     created = 0
     skipped = 0
     errors = 0
+    users_created = 0
+    users_skipped = 0
 
     print(f"{'='*60}")
     print("PATHOLOGIST IMPORT")
@@ -118,12 +126,23 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
             print(f"    - Email: {email}")
             print(f"    - Initials: {initials}")
             print(f"    - Medical License: {registro_medico}")
+            
+            # Generate default password for user creation
+            default_password = generate_default_password(raw_code, initials)
+            print(f"  [DRY-RUN] Would create user account: {raw_name}")
+            print(f"    - Email: {email}")
+            print(f"    - Role: pathologist")
+            print(f"    - Password: {default_password} (will be encrypted)")
+            print(f"    - Pathologist Code: {raw_code}")
+            
             created += 1
+            users_created += 1
         return created, skipped
 
     db = await get_database()
     try:
         service = PathologistService(db)
+        user_service = UserManagementService(db)
 
         for i, row in enumerate(PATHOLOGISTS_DOCENTES, 1):
             raw_code = str(row.get("raw_code", "")).strip()
@@ -175,6 +194,7 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                     observations=None,
                 )
 
+                # Create pathologist
                 await service.create_pathologist(payload)
                 print(f"  [OK] Pathologist created successfully")
                 print(f"    - Code: {raw_code}")
@@ -182,6 +202,27 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                 print(f"    - Initials: {initials}")
                 print(f"    - Medical License: {registro_medico}")
                 created += 1
+                
+                # Create user account
+                default_password = generate_default_password(raw_code, initials)
+                user = await user_service.create_user_for_pathologist(
+                    name=raw_name,
+                    email=email,
+                    password=default_password,
+                    pathologist_code=raw_code,
+                    is_active=True
+                )
+                
+                if user:
+                    print(f"  [OK] User account created successfully")
+                    print(f"    - User ID: {user.get('id', 'N/A')}")
+                    print(f"    - Email: {user.get('email', 'N/A')}")
+                    print(f"    - Role: {user.get('role', 'N/A')}")
+                    print(f"    - Password: {default_password} (encrypted in database)")
+                    users_created += 1
+                else:
+                    print(f"  [WARNING] User account already exists or could not be created")
+                    users_skipped += 1
                 
             except ValueError as e:
                 print(f"  [SKIP] Validation error: {str(e)}")
@@ -195,8 +236,10 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
         print("IMPORT SUMMARY")
         print(f"{'='*60}")
         print(f"Total processed: {len(PATHOLOGISTS_DOCENTES)}")
-        print(f"Created: {created}")
-        print(f"Skipped: {skipped}")
+        print(f"Pathologists created: {created}")
+        print(f"Pathologists skipped: {skipped}")
+        print(f"Users created: {users_created}")
+        print(f"Users skipped: {users_skipped}")
         print(f"Errors: {errors}")
         
         if dry_run:

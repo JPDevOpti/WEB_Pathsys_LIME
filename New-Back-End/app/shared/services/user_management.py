@@ -60,3 +60,49 @@ class UserManagementService:
 
         except Exception:
             return None
+
+    async def create_user_for_pathologist(
+        self,
+        name: str,
+        email: EmailStr,
+        password: str,
+        pathologist_code: str,
+        is_active: bool = True
+    ) -> Optional[Dict[str, Any]]:
+        """Create a new pathologist user"""
+        try:
+            # Check if user already exists
+            if await self.check_email_exists_in_users(email):
+                return None
+
+            # Hash the password
+            password_hash = get_password_hash(password)
+
+            # Prepare user data
+            user_data = {
+                "name": name,
+                "email": email,
+                "role": "pathologist",
+                "password_hash": password_hash,
+                "is_active": is_active,
+                "pathologist_code": pathologist_code
+            }
+
+            # Insert user into database
+            result = await self.db.users.insert_one(user_data)
+            
+            if result.inserted_id:
+                # Return the created user data
+                return {
+                    "id": str(result.inserted_id),
+                    "name": name,
+                    "email": email,
+                    "role": "pathologist",
+                    "is_active": is_active,
+                    "pathologist_code": pathologist_code
+                }
+            
+            return None
+
+        except Exception:
+            return None
