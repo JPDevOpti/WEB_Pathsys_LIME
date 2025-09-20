@@ -16,12 +16,12 @@ class SignService:
         """Firmar un caso cambiando su estado de 'Por firmar' a 'Por entregar'"""
         
         # Validar que el caso existe y puede ser firmado
-        if not await self.repo.validate_case_can_be_signed(case_code):
-            current_state = await self.repo.get_case_state(case_code)
-            if not current_state:
-                raise NotFoundError(f"Caso con código {case_code} no encontrado")
+        validation_result = await self.validate_case_for_signing(case_code)
+        if not validation_result.can_sign:
+            if validation_result.current_state is None:
+                raise NotFoundError(validation_result.message)
             else:
-                raise BadRequestError(f"No se puede firmar un caso con estado '{current_state}'. Solo se pueden firmar casos que no estén completados")
+                raise BadRequestError(validation_result.message)
         
         # Preparar datos del resultado (solo campos no nulos)
         sign_data = {}
@@ -54,17 +54,30 @@ class SignService:
                 )
             
             current_state = case_doc.get("state")
-            can_sign = current_state != "Completado"
+            assigned_pathologist = case_doc.get("assigned_pathologist")
             
-            if can_sign:
-                message = "El caso puede ser firmado"
-            else:
-                message = f"No se puede firmar un caso con estado '{current_state}'. Solo se pueden firmar casos que no estén completados"
+            # Validar estado
+            if current_state == "Completado":
+                return CaseSignValidation(
+                    case_code=case_code,
+                    can_sign=False,
+                    message=f"No se puede firmar un caso con estado '{current_state}'. Solo se pueden firmar casos que no estén completados",
+                    current_state=current_state
+                )
+            
+            # Validar patólogo asignado
+            if not assigned_pathologist or not assigned_pathologist.get("name"):
+                return CaseSignValidation(
+                    case_code=case_code,
+                    can_sign=False,
+                    message="No se puede firmar un caso que no tenga un patólogo asignado. Contacta al auxiliar administrativo para asignar un patólogo",
+                    current_state=current_state
+                )
             
             return CaseSignValidation(
                 case_code=case_code,
-                can_sign=can_sign,
-                message=message,
+                can_sign=True,
+                message="El caso puede ser firmado",
                 current_state=current_state
             )
             

@@ -113,7 +113,7 @@
             </template>
           </ResultEditor>
 
-          <!-- Advertencia para casos completados -->
+          <!-- Advertencia para casos que no están en proceso -->
           <div v-if="caseInfo?.case_code && !canTranscribeByStatus"
             class="mt-3 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
             <div class="flex items-center">
@@ -121,9 +121,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
               <div>
-                <p class="text-sm font-bold text-red-800">Caso ya completado</p>
+                <p class="text-sm font-bold text-red-800">Estado no válido para transcripción</p>
                 <p class="text-sm text-red-700 mt-1">
-                  Este caso ya ha sido completado y no se puede transcribir resultados.
+                  Solo se pueden transcribir resultados en casos con estado "En proceso".
                 </p>
                 <p class="text-xs text-red-600 mt-2">
                   Estado actual: <span class="font-semibold">{{ caseInfo?.state }}</span>
@@ -246,7 +246,7 @@ interface CaseData {
 // Constants
 const CASE_CODE_MAX_LENGTH = 10
 const CASE_CODE_FORMAT_POSITION = 4
-const COMPLETED_STATE = 'COMPLETADO'
+const IN_PROGRESS_STATE = 'EN_PROCESO'
 
 onMounted(() => {
   initialize()
@@ -303,22 +303,22 @@ const normalizeStatus = (status: string): string => {
   return status.toUpperCase().replace(/\s+/g, '_')
 }
 
-// Solo se puede transcribir si el caso NO está en estado COMPLETADO
+// Solo se puede transcribir si el caso está en estado "En proceso"
 const canTranscribeByStatus = computed(() => {
   const estado = caseInfo.value?.state
   if (!estado) return false
   const normalizedStatus = normalizeStatus(estado)
-  return normalizedStatus !== COMPLETED_STATE
+  return normalizedStatus === IN_PROGRESS_STATE
 })
 
 const invalidStatusMessage = computed(() => {
   const estado = caseInfo.value?.state
   if (!estado) return ''
   const normalizedStatus = normalizeStatus(estado)
-  if (normalizedStatus === COMPLETED_STATE) {
-    return 'Este caso ya ha sido completado y no se puede transcribir resultados.'
+  if (normalizedStatus !== IN_PROGRESS_STATE) {
+    return `Este caso está en estado "${estado}". Solo se pueden transcribir resultados en casos con estado "En proceso".`
   }
-  return `El estado "${estado}" no permite la transcripción del caso.`
+  return ''
 })
 
 

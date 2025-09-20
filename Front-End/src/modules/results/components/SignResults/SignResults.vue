@@ -121,7 +121,7 @@
             :errors="validationMessage ? [validationMessage] : []" />
           <ErrorMessage v-if="errorMessage" class="mt-2" :message="errorMessage" />
 
-          <div v-if="caseDetails?.case_code && !caseDetails.assigned_pathologist?.name && authStore.user?.role === 'patologo'"
+          <div v-if="needsAssignedPathologist"
             class="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <div class="flex items-center">
               <WarningIcon class="w-5 h-5 text-orange-500 mr-2 flex-shrink-0" />
@@ -173,9 +173,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
               <div>
-                <p class="text-sm font-bold text-red-800">Caso ya completado</p>
+                <p class="text-sm font-bold text-red-800">Caso completado</p>
                 <p class="text-sm text-red-700 mt-1">
-                  Este caso ya ha sido completado y firmado. No se puede firmar nuevamente.
+                  Este caso ya ha sido completado. No se puede firmar un caso completado.
                 </p>
                 <p class="text-xs text-red-600 mt-2">
                   Estado actual: <span class="font-semibold">{{ caseDetails?.state }}</span>
@@ -351,7 +351,9 @@ const isAssignedPathologist = computed(() => {
 // Reglas de autorización: administradores pueden firmar cualquier caso, patólogos solo sus casos asignados
 const canUserSign = computed(() => {
   if (!authStore.user) return false
+  // Los administradores pueden firmar cualquier caso
   if (authStore.user.role === 'administrator' || authStore.user.role === 'administrador') return true
+  // Los patólogos solo pueden firmar sus casos asignados
   if (authStore.user.role === 'patologo') return isAssignedPathologist.value
   return false
 })
@@ -368,11 +370,13 @@ const isPathologistWithoutSignature = computed(() => {
   return !firma || (typeof firma === 'string' && firma.trim() === '')
 })
 
-// Solo los patólogos requieren que el caso tenga un patólogo asignado
+// Todos los casos requieren que tengan un patólogo asignado para poder firmarse (excepto administradores)
 const needsAssignedPathologist = computed(() => {
   if (!authStore.user || !caseDetails.value?.case_code) return false
-  if (authStore.user.role === 'patologo') return !caseDetails.value.assigned_pathologist?.name
-  return false
+  // Los administradores pueden firmar casos sin patólogo asignado
+  if (authStore.user.role === 'administrator' || authStore.user.role === 'administrador') return false
+  // Todos los demás usuarios requieren que el caso tenga un patólogo asignado
+  return !caseDetails.value.assigned_pathologist?.name
 })
 
 // Normaliza estados a formato de BD (mayúsculas y guiones bajos)
@@ -393,9 +397,9 @@ const invalidStatusMessage = computed(() => {
   const estado = caseDetails.value.state
   const normalizedStatus = normalizeStatus(estado)
   if (normalizedStatus === 'COMPLETADO') {
-    return 'Este caso ya ha sido completado y firmado. No se puede firmar nuevamente.'
+    return 'Este caso ya ha sido completado. No se puede firmar un caso completado.'
   }
-  return `El estado "${estado}" no permite la firma del caso.`
+  return ''
 })
 
 const caseCode = ref('')
@@ -552,12 +556,11 @@ const searchCase = async () => {
       const nombrePatologoAsignado = getAssignedPathologistName(data)
       const nombreUsuario = getCurrentUserName()
       if (!nombrePatologoAsignado) {
-        throw new Error('Este caso no tiene un patólogo asignado.')
-      }
-      if (!nombreUsuario) {
+        // No lanzar error, permitir cargar el caso pero mostrar alerta
+        console.warn('Caso sin patólogo asignado')
+      } else if (!nombreUsuario) {
         throw new Error('No se pudo identificar tu nombre de usuario. Contacta al administrador.')
-      }
-      if (nombrePatologoAsignado !== nombreUsuario) {
+      } else if (nombrePatologoAsignado !== nombreUsuario) {
         throw new Error('No tienes permisos para acceder a este caso. Solo puedes acceder a casos donde estés asignado como patólogo.')
       }
     }

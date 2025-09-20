@@ -52,7 +52,7 @@ class SignRepository:
         """Validar que el caso puede ser firmado"""
         doc = await self.collection.find_one(
             {"case_code": case_code},
-            {"state": 1}
+            {"state": 1, "assigned_pathologist": 1}
         )
         
         if not doc:
@@ -60,7 +60,15 @@ class SignRepository:
             
         # Se pueden firmar todos los casos excepto los completados
         state = doc.get("state")
-        return state != "Completado"
+        if state == "Completado":
+            return False
+            
+        # El caso debe tener un patólogo asignado para poder ser firmado
+        assigned_pathologist = doc.get("assigned_pathologist")
+        if not assigned_pathologist or not assigned_pathologist.get("name"):
+            return False
+            
+        return True
 
     async def get_case_for_signing(self, case_code: str) -> Optional[Dict[str, Any]]:
         """Obtener caso para validaciones de firma"""
