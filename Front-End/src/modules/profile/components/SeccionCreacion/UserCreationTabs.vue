@@ -5,7 +5,6 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h8m4-7v3m0 0h3m-3 0h-3" />
       </svg>
     </template>
-    <!-- Tabs de tipos -->
     <div class="border-b border-gray-200 mb-1">
       <nav class="-mb-px flex flex-wrap gap-1 md:gap-4" aria-label="Tabs">
         <button
@@ -23,7 +22,6 @@
       </nav>
     </div>
 
-    <!-- Contenido: formulario a ancho completo -->
     <FormAuxiliary
       v-if="selectedType === 'auxiliar'"
       v-model="formAuxiliar"
@@ -85,27 +83,18 @@ const tabs = [
 
 const selectedType = ref<UserType>('auxiliar')
 
-// Formularios locales - iniciados vacíos
 const formAuxiliar = ref({ auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', password: '', observaciones: '', isActive: true })
-const formFacturacion = ref({ facturacionName: '', facturacionCode: '', FacturacionEmail: '', password: '', observaciones: '', isActive: true })
+const formFacturacion = ref({ billingName: '', billingCode: '', billingEmail: '', password: '', observations: '', isActive: true })
 const formPatologo = ref({ patologoName: '', InicialesPatologo: '', patologoCode: '', PatologoEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true, firma: '' })
 const formResident = ref({ residenteName: '', InicialesResidente: '', residenteCode: '', ResidenteEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true })
 const formEntidad = ref({ entityName: '', entityCode: '', notes: '', isActive: true })
 const formPruebas = ref({ testCode: '', testName: '', testDescription: '', timeDays: 1, price: 0, isActive: true })
 
-// Labels por tipo (reserva para futuros encabezados contextuales)
-// Nota: reservado por si se muestra encabezado contextual en el futuro
-// const creationTitle = computed(() => {
-//   const labels: Record<UserType, string> = { auxiliar: 'Auxiliar administrativo', patologo: 'Patólogo', entidad: 'Entidad', pruebas: 'Pruebas' }
-//   return labels[selectedType.value]
-// })
-
 const selectType = (type: UserType) => { selectedType.value = type }
 const forwardCreated = (tipo: UserType, data: any) => {
   emit('usuario-creado', { tipo, data })
-  // limpiar formulario del tipo actual
   if (tipo === 'auxiliar') formAuxiliar.value = { auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', password: '', observaciones: '', isActive: true }
-  if (tipo === 'facturacion') formFacturacion.value = { facturacionName: '', facturacionCode: '', FacturacionEmail: '', password: '', observaciones: '', isActive: true }
+  if (tipo === 'facturacion') formFacturacion.value = { billingName: '', billingCode: '', billingEmail: '', password: '', observations: '', isActive: true }
   if (tipo === 'patologo') formPatologo.value = { patologoName: '', InicialesPatologo: '', patologoCode: '', PatologoEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true, firma: '' }
   if (tipo === 'residente') formResident.value = { residenteName: '', InicialesResidente: '', residenteCode: '', ResidenteEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true }
   if (tipo === 'entidad') formEntidad.value = { entityName: '', entityCode: '', notes: '', isActive: true }

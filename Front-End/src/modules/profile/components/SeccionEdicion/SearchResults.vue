@@ -1,5 +1,4 @@
 <template>
-  <!-- Solo mostrar cuando hay búsqueda activa, resultados o está buscando -->
   <div v-if="estaBuscando || busquedaRealizada">
     <h4 class="text-base font-semibold text-gray-800 mb-1">Resultados</h4>
     
@@ -17,7 +16,6 @@
       Sin resultados para tu búsqueda
     </div>
     
-    <!-- Tabla de resultados -->
     <div v-else-if="resultados.length > 0" class="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 rounded-lg">
       <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
@@ -55,7 +53,6 @@
                   <div class="text-sm font-medium text-gray-900">
                     {{ r.nombre }}
                   </div>
-                  <!-- Mostrar documento en móvil -->
                   <div class="sm:hidden text-xs text-gray-500">
                     {{ r.documento || r.nit || r.codigo || '-' }}
                   </div>

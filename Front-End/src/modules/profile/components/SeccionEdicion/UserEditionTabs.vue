@@ -7,7 +7,6 @@
           d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z" />
       </svg>
     </template>
-    <!-- Tabs de tipos -->
     <div class="border-b border-gray-200 mb-1">
       <nav class="-mb-px flex flex-wrap gap-1 md:gap-4" aria-label="Tabs">
         <button v-for="t in tabs" :key="t.value" type="button"
@@ -20,20 +19,17 @@
       </nav>
     </div>
 
-    <!-- Contenido: buscador, resultados y formulario de edición -->
     <div class="space-y-3 md:space-y-4">
       <div>
         <UserSearch :busqueda="searchQuery" :tipo-busqueda="selectedType" :esta-buscando="isSearching"
           :error="searchError" @buscar="onSearch" @limpiar="onClearSearch" />
       </div>
 
-      <!-- Resultados -->
       <div>
         <SearchResults :resultados="filteredResults" :busqueda-realizada="searchPerformed" :esta-buscando="isSearching"
           :selected-id="selectedUser?.id || ''" @usuario-seleccionado="onSelectUserToEdit" />
       </div>
 
-      <!-- Formulario de edición debajo de resultados para flujo vertical -->
       <div>
         <div v-if="selectedUser">
           <h5 class="text-base font-semibold text-gray-800 dark:text-white/90 mb-4">
@@ -115,8 +111,6 @@ const selectType = (type: UserType) => {
   selectedUser.value = null
 }
 
-// No precargar datos al abrir la página
-
 const onSearch = async (params: { query: string; tipo: string; includeInactive: boolean }) => {
   searchQuery.value = params.query
   searchPerformed.value = true
@@ -124,26 +118,16 @@ const onSearch = async (params: { query: string; tipo: string; includeInactive: 
   searchError.value = ''
   
   try {
-    console.log('🔍 Iniciando búsqueda con parámetros:', params)
-    let searchResults: any[] = []
-
-    if (params.tipo === 'pruebas') {
-      searchResults = await testSearchService.searchTests(params.query, params.includeInactive)
-    } else if (params.tipo === 'entidad') {
-      searchResults = await entitySearchService.searchEntities(params.query, params.includeInactive)
-    } else if (params.tipo === 'residente') {
-      searchResults = await entitySearchService.searchResidents(params.query, params.includeInactive)
-    } else if (params.tipo === 'patologo') {
-      searchResults = await entitySearchService.searchPathologists(params.query, params.includeInactive)
-    } else if (params.tipo === 'auxiliar') {
-      searchResults = await entitySearchService.searchAuxiliaries(params.query, params.includeInactive)
-    } else if (params.tipo === 'facturacion') {
-      searchResults = await entitySearchService.searchFacturacion(params.query, params.includeInactive)
-    } else {
-      searchResults = []
+    const searchServices = {
+      pruebas: () => testSearchService.searchTests(params.query, params.includeInactive),
+      entidad: () => entitySearchService.searchEntities(params.query, params.includeInactive),
+      residente: () => entitySearchService.searchResidents(params.query, params.includeInactive),
+      patologo: () => entitySearchService.searchPathologists(params.query, params.includeInactive),
+      auxiliar: () => entitySearchService.searchAuxiliaries(params.query, params.includeInactive),
+      facturacion: () => entitySearchService.searchFacturacion(params.query, params.includeInactive)
     }
-
-    console.log('🔍 Resultados de búsqueda obtenidos:', searchResults)
+    
+    const searchResults = await (searchServices[params.tipo as keyof typeof searchServices]?.() || Promise.resolve([]))
     results.value = searchResults
     
     if (searchResults.length === 0) {
@@ -160,7 +144,6 @@ const onSearch = async (params: { query: string; tipo: string; includeInactive: 
       searchError.value = `No se encontraron ${typeLabel} que coincidan con "${params.query}"${statusText}`
     }
   } catch (error: any) {
-    console.error('Error en búsqueda:', error)
     searchError.value = error.message || 'Error al realizar la búsqueda. Por favor, inténtelo nuevamente.'
     results.value = []
   } finally {
@@ -178,162 +161,63 @@ const onClearSearch = () => {
 }
 
 const onSelectUserToEdit = (item: any) => {
-  // Mapeo específico según el tipo
-  if (item.tipo === 'pruebas') {
-    // Mapeo específico para pruebas con estructura del backend
-    selectedUser.value = {
-      id: item.id,
-      nombre: item.nombre,
-      tipo: item.tipo,
-      codigo: item.codigo,
-      activo: item.activo,
-      // Campos específicos para pruebas (estructura del FormEditTests)
-      pruebaCode: item.test_code || item.codigo,
-      pruebasName: item.name || item.nombre,
-      pruebasDescription: item.description || item.descripcion || '',
-      tiempo: item.time || item.tiempo || 1,
-      isActive: item.is_active !== undefined ? item.is_active : item.activo,
-      fecha_creacion: item.created_at || item.fecha_creacion,
-      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
+  const baseFields = {
+    id: item.id,
+    nombre: item.nombre,
+    tipo: item.tipo,
+    codigo: item.codigo,
+    activo: item.activo,
+    email: item.email,
+    isActive: item.is_active ?? item.isActive ?? item.activo,
+    fecha_creacion: item.created_at ?? item.fecha_creacion,
+    fecha_actualizacion: item.updated_at ?? item.fecha_actualizacion
+  }
+
+  const typeMappings = {
+    pruebas: {
+      pruebaCode: item.test_code ?? item.codigo,
+      pruebasName: item.name ?? item.nombre,
+      pruebasDescription: item.description ?? item.descripcion ?? '',
+      tiempo: item.time ?? item.tiempo ?? 1
+    },
+    entidad: {
+      EntidadName: item.name ?? item.nombre,
+      EntidadCode: item.entity_code ?? item.codigo,
+      observaciones: item.notes ?? item.observaciones ?? ''
+    },
+    facturacion: {
+      facturacionName: item.billing_name ?? item.facturacionName ?? item.nombre,
+      facturacionCode: item.billing_code ?? item.facturacionCode ?? item.codigo,
+      FacturacionEmail: item.billing_email ?? item.FacturacionEmail ?? item.email,
+      observaciones: item.observations ?? item.observaciones ?? ''
+    },
+    residente: {
+      residenteName: item.resident_name ?? item.residenteName ?? item.nombre,
+      residenteCode: item.resident_code ?? item.residenteCode ?? item.codigo,
+      InicialesResidente: item.initials ?? item.InicialesResidente ?? '',
+      ResidenteEmail: item.resident_email ?? item.ResidenteEmail ?? item.email,
+      registro_medico: item.medical_license ?? item.registro_medico ?? '',
+      observaciones: item.observations ?? item.observaciones ?? ''
+    },
+    patologo: {
+      patologoName: item.pathologist_name ?? item.patologoName ?? item.nombre,
+      InicialesPatologo: item.initials ?? item.InicialesPatologo ?? '',
+      patologoCode: item.pathologist_code ?? item.patologoCode ?? item.codigo,
+      PatologoEmail: item.pathologist_email ?? item.PatologoEmail ?? item.email,
+      registro_medico: item.medical_license ?? item.registro_medico ?? '',
+      observaciones: item.observations ?? item.observaciones ?? ''
+    },
+    auxiliar: {
+      auxiliarName: item.auxiliar_name ?? item.auxiliarName ?? item.nombre,
+      auxiliarCode: item.auxiliar_code ?? item.auxiliarCode ?? item.codigo,
+      AuxiliarEmail: item.auxiliar_email ?? item.AuxiliarEmail ?? item.email,
+      observaciones: item.observations ?? item.observaciones ?? ''
     }
-  } else if (item.tipo === 'entidad') {
-    // Mapeo específico para entidades con estructura del formulario de edición
-    selectedUser.value = {
-      id: item.id,
-      nombre: item.nombre,
-      tipo: item.tipo,
-      codigo: item.codigo,
-      activo: item.activo,
-      // Campos específicos para entidades
-      EntidadName: item.name || item.nombre,
-      EntidadCode: item.entity_code || item.codigo,
-      observaciones: item.notes || item.observaciones || '',
-      isActive: item.is_active !== undefined ? item.is_active : item.activo,
-      fecha_creacion: item.created_at || item.fecha_creacion,
-      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
-    }
-  } else if (item.tipo === 'facturacion') {
-    // Mapeo específico para facturación con estructura del formulario de edición
-    selectedUser.value = {
-      id: item.id,
-      nombre: item.nombre,
-      tipo: item.tipo,
-      codigo: item.codigo,
-      activo: item.activo,
-      email: item.email,
-      // Campos específicos para facturación (estructura del FormEditBilling)
-      facturacionName: item.billing_name || item.facturacionName || item.nombre,
-      facturacionCode: item.billing_code || item.facturacionCode || item.codigo,
-      FacturacionEmail: item.billing_email || item.FacturacionEmail || item.email,
-      observaciones: item.observations || item.observaciones || '',
-      isActive: item.is_active !== undefined ? item.is_active : (item.isActive !== undefined ? item.isActive : item.activo),
-      fecha_creacion: item.created_at || item.fecha_creacion,
-      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
-    }
-  } else if (item.tipo === 'residente') {
-    // Mapeo específico para residentes con estructura del formulario de edición
-    selectedUser.value = {
-      id: item.id,
-      nombre: item.nombre,
-      tipo: item.tipo,
-      codigo: item.codigo,
-      activo: item.activo,
-      email: item.email,
-      // Campos específicos para residentes
-      residenteName: item.resident_name || item.residenteName || item.nombre,
-      residenteCode: item.resident_code || item.residenteCode || item.codigo,
-      InicialesResidente: item.initials || item.InicialesResidente || '',
-      ResidenteEmail: item.resident_email || item.ResidenteEmail || item.email,
-      registro_medico: item.medical_license || item.registro_medico || '',
-      observaciones: item.observations || item.observaciones || '',
-      isActive: item.is_active !== undefined ? item.is_active : (item.isActive !== undefined ? item.isActive : item.activo),
-      fecha_creacion: item.created_at || item.fecha_creacion,
-      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
-    }
-  } else if (item.tipo === 'patologo') {
-    // Mapeo específico para patólogos con estructura del formulario de edición
-    selectedUser.value = {
-      id: item.id,
-      nombre: item.nombre,
-      tipo: item.tipo,
-      codigo: item.codigo,
-      activo: item.activo,
-      email: item.email,
-      // Campos específicos
-      patologoName: item.pathologist_name || item.patologoName || item.nombre,
-      InicialesPatologo: item.initials || item.InicialesPatologo || '',
-      patologoCode: item.pathologist_code || item.patologoCode || item.codigo,
-      PatologoEmail: item.pathologist_email || item.PatologoEmail || item.email,
-      registro_medico: item.medical_license || item.registro_medico || '',
-      observaciones: item.observations || item.observaciones || '',
-      isActive: item.is_active !== undefined ? item.is_active : (item.isActive !== undefined ? item.isActive : item.activo),
-      fecha_creacion: item.created_at || item.fecha_creacion,
-      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
-    }
-  } else if (item.tipo === 'auxiliar') {
-    // Mapeo específico para auxiliares con estructura del formulario de edición
-    selectedUser.value = {
-      id: item.id,
-      nombre: item.nombre,
-      tipo: item.tipo,
-      codigo: item.codigo,
-      activo: item.activo,
-      email: item.email,
-      auxiliarName: item.auxiliar_name || item.auxiliarName || item.nombre,
-      auxiliarCode: item.auxiliar_code || item.auxiliarCode || item.codigo,
-      AuxiliarEmail: item.auxiliar_email || item.AuxiliarEmail || item.email,
-      observaciones: item.observations || item.observaciones || '',
-      isActive: item.is_active !== undefined ? item.is_active : (item.isActive !== undefined ? item.isActive : item.activo),
-      fecha_creacion: item.created_at || item.fecha_creacion,
-      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
-    }
-  } else if (item.tipo === 'facturacion') {
-    // Mapeo específico para usuarios de facturación con estructura del formulario de edición
-    selectedUser.value = {
-      id: item.id,
-      nombre: item.nombre,
-      tipo: item.tipo,
-      codigo: item.codigo,
-      activo: item.activo,
-      email: item.email,
-      facturacionName: item.facturacionName || item.nombre,
-      facturacionCode: item.facturacionCode || item.codigo,
-      FacturacionEmail: item.FacturacionEmail || item.email,
-      observaciones: item.observaciones || '',
-      isActive: item.isActive !== undefined ? item.isActive : item.activo,
-      fecha_creacion: item.fecha_creacion,
-      fecha_actualizacion: item.fecha_actualizacion
-    }
-  } else {
-    // Mapeo genérico para otros tipos (mantener estructura existente)
-    selectedUser.value = {
-      id: item.id,
-      nombre: item.nombre,
-      tipo: item.tipo,
-      documento: item.documento,
-      nit: item.nit,
-      codigo: item.codigo,
-      email: item.email || '',
-      activo: item.activo,
-      role: item.tipo,
-      firstName: item.nombre,
-      lastName: '',
-      phone: '',
-      startDate: '',
-      isActive: item.activo,
-      specialty: item.descripcion || '',
-      medicalLicense: item.licencia || '',
-      residencyYear: item.residencyYear || '',
-      entityName: item.tipo === 'entidad' ? item.nombre : '',
-      entityType: item.categoria || '',
-      address: '',
-      pruebaCode: item.codigo || '',
-      pruebasName: item.nombre,
-      pruebasCategory: item.categoria || '',
-      pruebasDescription: item.descripcion || '',
-      observaciones: item.observaciones || '',
-      firmaPatologoUrl: ''
-    }
+  }
+
+  selectedUser.value = {
+    ...baseFields,
+    ...(typeMappings[item.tipo as keyof typeof typeMappings] || {})
   }
 }
 
@@ -341,12 +225,12 @@ const onSelectUserToEdit = (item: any) => {
 
 const onUpdateUser = (_data: any) => {
   const tipo = selectedUser.value?.tipo
-  // Para formularios con notificación detallada interna, no duplicar notificaciones ni cerrar el formulario
-  if (tipo === 'pruebas' || tipo === 'entidad' || tipo === 'residente' || tipo === 'auxiliar' || tipo === 'facturacion') {
-    // Mantener el formulario visible y no mostrar banner externo
+  const formsWithInternalNotification = ['pruebas', 'entidad', 'residente', 'auxiliar', 'facturacion']
+  
+  if (formsWithInternalNotification.includes(tipo)) {
     return
   }
-  // Comportamiento previo para otros tipos
+  
   updateSuccessMessage.value = 'Registro actualizado exitosamente'
   userUpdated.value = true
   setTimeout(() => { selectedUser.value = null }, 700)

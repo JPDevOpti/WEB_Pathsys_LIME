@@ -12,7 +12,6 @@
     />
     <div v-if="error" :id="errorId" role="alert" class="text-sm text-red-600">{{ error }}</div>
     
-    <!-- Botones como footer -->
     <div class="flex justify-end space-x-3 pt-2 border-t border-gray-200">
       <ClearButton @click="$emit('limpiar')" :disabled="estaBuscando" />
       <SearchButton 
@@ -30,7 +29,6 @@ import { ref, watch, computed } from 'vue'
 import { FormInput } from '@/shared/components/forms'
 import { SearchButton, ClearButton } from '@/shared/components/buttons'
 
-// Tipos estrictos para evitar valores arbitrarios y errores de conexión con el backend
 type TipoBusqueda = 'auxiliar' | 'facturacion' | 'patologo' | 'residente' | 'entidad' | 'pruebas'
 
 interface BuscarEventPayload {
@@ -46,17 +44,19 @@ const emit = defineEmits<{
 }>()
 
 const localBusqueda = ref(props.busqueda)
-// IDs únicos (en componentes repetidos en la página evitar colisiones)
 const uid = Math.random().toString(36).slice(2, 9)
 const inputId = `buscador-${uid}`
 const titleId = `buscador-title-${uid}`
 const errorId = `buscador-error-${uid}`
 
-// Metadatos centralizados por tipo para evitar desalineaciones
 const SEARCH_META: Record<TipoBusqueda, { title: string; placeholder: string }> = {
   auxiliar: {
     title: 'Buscar Auxiliar Administrativo',
     placeholder: 'Nombre del auxiliar, código o email...'
+  },
+  facturacion: {
+    title: 'Buscar Usuario de Facturación',
+    placeholder: 'Nombre del usuario, código o email...'
   },
   patologo: {
     title: 'Buscar Patólogo',
@@ -77,15 +77,11 @@ const SEARCH_META: Record<TipoBusqueda, { title: string; placeholder: string }> 
 }
 
 const tipoActual = computed(() => props.tipoBusqueda)
-
-// Título y placeholder derivados
 const searchTitle = computed(() => SEARCH_META[tipoActual.value]?.title || 'Buscar registros')
 const searchPlaceholder = computed(() => SEARCH_META[tipoActual.value]?.placeholder || 'Buscar...')
 
-// Evitar emitir búsquedas duplicadas con la misma query y tipo consecutivos
 const lastPayload = ref<{ query: string; tipo: TipoBusqueda } | null>(null)
 
-// Función para manejar la búsqueda - SIEMPRE incluir inactivos en edición
 const handleSearch = () => {
   const query = localBusqueda.value.trim()
   if (!query || props.estaBuscando) return
@@ -93,17 +89,16 @@ const handleSearch = () => {
   const payload: BuscarEventPayload = {
     query,
     tipo: tipoActual.value,
-    includeInactive: true // Requisito de sección edición
+    includeInactive: true
   }
 
   if (lastPayload.value && lastPayload.value.query === payload.query && lastPayload.value.tipo === payload.tipo) {
-    return // Evitar llamada redundante que generaría petición HTTP innecesaria
+    return
   }
   lastPayload.value = { query: payload.query, tipo: payload.tipo }
   emit('buscar', payload)
 }
 
-// Sincronizar cambios externos de la búsqueda (prop -> estado local editable)
 watch(() => props.busqueda, v => { if (v !== localBusqueda.value) localBusqueda.value = v })
 </script>
 
