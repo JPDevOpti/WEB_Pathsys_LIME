@@ -3,7 +3,6 @@
     <PageBreadcrumb :pageTitle="currentPageTitle" />
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div class="space-y-6">
-        <!-- Componente de Modificar Caso -->
         <ComponentCard 
           title="Modificar datos del caso"
           description="Actualice la información del caso existente."
@@ -21,7 +20,6 @@
       </div>
       
       <div class="space-y-6">
-        <!-- Componente de Modificar Datos del Paciente -->
         <ComponentCard 
           title="Modificar los datos del paciente"
           description="Edite los datos demográficos del paciente asociado."
@@ -49,48 +47,11 @@ import { PageBreadcrumb, ComponentCard } from '@/shared/components/common'
 import { EditCaseForm, EditPatientForm } from '../components'
 import type { CaseModel, PatientData } from '../types'
 
-// ============================================================================
-// ESTADO DEL COMPONENTE
-// ============================================================================
-
 const currentPageTitle = ref('Modificar Caso Médico')
-
-// Obtener el código del caso desde la ruta
 const route = useRoute()
-const caseCodeFromRoute = computed(() => {
-  const code = route.params.code
-  return Array.isArray(code) ? code[0] || '' : code || ''
-})
-
-// Estado para el caso actual
+const caseCodeFromRoute = computed(() => (Array.isArray(route.params.code) ? route.params.code[0] || '' : (route.params.code as string) || ''))
 const currentCase = ref<CaseModel | null>(null)
 const currentPatient = ref<PatientData | null>(null)
-
-// ============================================================================
-// FUNCIONES PRINCIPALES
-// ============================================================================
-
-/**
- * Maneja la actualización exitosa del caso
- */
-const handleCaseUpdated = (updatedCase: CaseModel) => {
-  currentCase.value = updatedCase
-  
-  // Aquí puedes agregar lógica adicional como:
-  // - Mostrar notificación de éxito
-  // - Actualizar estado global
-  // - Sincronizar con otros componentes
-}
-
-/**
- * Maneja la actualización exitosa del paciente
- */
-const handlePatientUpdated = (patientData: PatientData) => {
-  currentPatient.value = patientData
-  
-  // Aquí puedes agregar lógica adicional como:
-  // - Mostrar notificación de éxito
-  // - Actualizar información del caso si es necesario
-  // - Validar consistencia de datos
-}
+const handleCaseUpdated = (updatedCase: CaseModel) => { currentCase.value = updatedCase }
+const handlePatientUpdated = (patientData: PatientData) => { currentPatient.value = patientData }
 </script> 

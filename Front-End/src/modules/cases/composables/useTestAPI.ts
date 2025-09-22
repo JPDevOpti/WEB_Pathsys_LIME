@@ -1,8 +1,9 @@
+// Tests API composable: shared cache, in-flight dedupe, simple errors
 import { ref } from 'vue'
 import { testsApiService } from '../services/testsApiService'
 import type { TestDetails, TestOperationResult } from '../types'
 
-// Estado global compartido para todas las instancias
+// Shared reactive state across instances
 let globalTests = ref<TestDetails[]>([])
 let globalIsLoading = ref(false)
 let globalError = ref('')
@@ -14,28 +15,19 @@ export function useTestAPI() {
   const error = globalError
 
   const loadTests = async (): Promise<TestOperationResult> => {
-    // Si ya hay una carga en progreso, esperar a que termine
-    if (loadPromise) {
-      return loadPromise
-    }
-
-    // Si ya tenemos pruebas cargadas, no volver a cargar
-    if (tests.value.length > 0) {
-      return { success: true, tests: tests.value }
-    }
+    if (loadPromise) return loadPromise
+    if (tests.value.length > 0) return { success: true, tests: tests.value }
 
     isLoading.value = true
     error.value = ''
 
     loadPromise = (async () => {
       try {
-        // Usar el límite máximo permitido por el backend (100)
         const response = await testsApiService.getTests({ limit: 100 })
         tests.value = response.pruebas || []
         return { success: true, tests: tests.value }
       } catch (err: any) {
-        error.value = err.message || 'Error al cargar las pruebas'
-        console.error('useTestAPI: Error al cargar pruebas:', err)
+        error.value = err?.message || 'Error al cargar las pruebas'
         return { success: false, error: error.value }
       } finally {
         isLoading.value = false
@@ -46,14 +38,7 @@ export function useTestAPI() {
     return loadPromise
   }
 
-  const clearState = () => {
-    tests.value = []
-    error.value = ''
-    isLoading.value = false
-    loadPromise = null
-  }
+  const clearState = () => { tests.value = []; error.value = ''; isLoading.value = false; loadPromise = null }
 
-  return {
-    tests, isLoading, error, loadTests, clearState
-  }
+  return { tests, isLoading, error, loadTests, clearState }
 }

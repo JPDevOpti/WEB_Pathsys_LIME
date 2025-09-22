@@ -1,11 +1,7 @@
+// Case form state/validation composable: holds reactive form, validations and helpers
 import { ref, reactive, computed } from 'vue'
 import type { 
-  CaseFormData, 
-  CaseFormErrors, 
-  CaseFormWarnings, 
-  CaseValidationState,
-  FormSubSample,
-  FormTestInfo
+  CaseFormData, CaseFormErrors, CaseFormWarnings, CaseValidationState, FormSubSample, FormTestInfo
 } from '../types'
 import { MAX_MUESTRAS } from '../types'
 
@@ -23,29 +19,22 @@ export function useCaseForm() {
     observations: ''
   })
 
-  const validationState = reactive<CaseValidationState>({
-    hasAttemptedSubmit: false,
-    showValidationError: false,
-    isValidating: false
-  })
+  // UI validation flags
+  const validationState = reactive<CaseValidationState>({ hasAttemptedSubmit: false, showValidationError: false, isValidating: false })
 
-  const errors = reactive<CaseFormErrors>({
-    entryDate: [], requestingPhysician: [], service: [], patientEntity: [],
-    patientCareType: [], casePriority: [], numberOfSamples: [], samples: [], observations: []
-  })
+  // Validation messages
+  const errors = reactive<CaseFormErrors>({ entryDate: [], requestingPhysician: [], service: [], patientEntity: [], patientCareType: [], casePriority: [], numberOfSamples: [], samples: [], observations: [] })
 
-  const warnings = reactive<CaseFormWarnings>({
-    entryDate: [], requestingPhysician: [], service: [], casePriority: [], numberOfSamples: []
-  })
+  const warnings = reactive<CaseFormWarnings>({ entryDate: [], requestingPhysician: [], service: [], casePriority: [], numberOfSamples: [] })
 
   const isLoading = ref(false)
 
-  const createEmptySubSample = (number: number): FormSubSample => ({
-    number, bodyRegion: '', tests: [{ code: '', quantity: 1, name: '' }]
-  })
+  // Factories
+  const createEmptySubSample = (number: number): FormSubSample => ({ number, bodyRegion: '', tests: [{ code: '', quantity: 1, name: '' }] })
 
   const createEmptyTest = (): FormTestInfo => ({ code: '', quantity: 1, name: '' })
 
+  // Field validations
   const validateEntryDate = (): boolean => {
     errors.entryDate = []
     warnings.entryDate = []
@@ -93,15 +82,9 @@ export function useCaseForm() {
     warnings.service = []
 
     if (formData.requestingPhysician?.trim()) {
-      if (!formData.service?.trim()) {
-        errors.service.push('El servicio es requerido cuando se especifica un médico')
-        return false
-      }
-
-      if (formData.service.trim().length < 2) {
-        errors.service.push('El servicio debe tener al menos 2 caracteres')
-        return false
-      }
+      const sv = formData.service?.trim() || ''
+      if (!sv) { errors.service.push('El servicio es requerido cuando se especifica un médico'); return false }
+      if (sv.length < 2) { errors.service.push('El servicio debe tener al menos 2 caracteres'); return false }
     }
 
     return true
@@ -167,16 +150,12 @@ export function useCaseForm() {
         errors.samples.push(`Muestra ${index + 1}: Debe tener al menos una prueba`)
         hasErrors = true
       } else {
-        // Nuevo requisito: todas las pruebas deben tener código
-        const testsWithoutCode = sample.tests
-          .map((test, tIndex) => ({ test, tIndex }))
-          .filter(x => x.test.code.trim() === '')
-        if (testsWithoutCode.length > 0) {
-          testsWithoutCode.forEach(x => {
-            errors.samples.push(`Muestra ${index + 1}, Prueba ${x.tIndex + 1}: El código de la prueba es obligatorio`)
-          })
-          hasErrors = true
-        }
+        sample.tests.forEach((test, tIndex) => {
+          if (test.code.trim() === '') {
+            errors.samples.push(`Muestra ${index + 1}, Prueba ${tIndex + 1}: El código de la prueba es obligatorio`)
+            hasErrors = true
+          }
+        })
       }
     })
 
@@ -191,8 +170,7 @@ export function useCaseForm() {
       String(formData[field as keyof CaseFormData]).trim() !== ''
     )
     
-    const serviceValid = !formData.requestingPhysician?.trim() || 
-                         !!(formData.service?.trim())
+    const serviceValid = !formData.requestingPhysician?.trim() || !!(formData.service?.trim())
     
     return basicFieldsValid && serviceValid
   }
@@ -203,6 +181,7 @@ export function useCaseForm() {
            validateNumberOfSamples() && validateSamples() && validateRequiredFields()
   }
 
+  // Add/remove sub-samples to match the selected count
   const handleNumberOfSamplesChange = (newNumber: string): void => {
     const number = parseInt(newNumber)
     if (isNaN(number) || number < 1) return
@@ -210,40 +189,29 @@ export function useCaseForm() {
     formData.numberOfSamples = newNumber
     
     if (number > formData.samples.length) {
-      while (formData.samples.length < number) {
-        formData.samples.push(createEmptySubSample(formData.samples.length + 1))
-      }
+      while (formData.samples.length < number) formData.samples.push(createEmptySubSample(formData.samples.length + 1))
     } else if (number < formData.samples.length) {
       formData.samples = formData.samples.slice(0, number)
     }
   }
 
-  const addTestToSample = (sampleIndex: number): void => {
-    if (sampleIndex >= 0 && sampleIndex < formData.samples.length) {
-      formData.samples[sampleIndex].tests.push(createEmptyTest())
-    }
-  }
+  const addTestToSample = (sampleIndex: number): void => { if (sampleIndex >= 0 && sampleIndex < formData.samples.length) formData.samples[sampleIndex].tests.push(createEmptyTest()) }
 
   const removeTestFromSample = (sampleIndex: number, testIndex: number): void => {
-    if (sampleIndex >= 0 && sampleIndex < formData.samples.length) {
-      const sample = formData.samples[sampleIndex]
-      if (sample.tests.length > 1 && testIndex >= 0 && testIndex < sample.tests.length) {
-        sample.tests.splice(testIndex, 1)
-      }
-    }
+    if (sampleIndex < 0 || sampleIndex >= formData.samples.length) return
+    const sample = formData.samples[sampleIndex]
+    if (sample.tests.length > 1 && testIndex >= 0 && testIndex < sample.tests.length) sample.tests.splice(testIndex, 1)
   }
 
+  // Reset validation messages/flags
   const clearValidationErrors = (): void => {
-    Object.keys(errors).forEach(key => errors[key as keyof CaseFormErrors] = [])
-    Object.keys(warnings).forEach(key => warnings[key as keyof CaseFormWarnings] = [])
+    Object.keys(errors).forEach(key => (errors[key as keyof CaseFormErrors] = []))
+    Object.keys(warnings).forEach(key => (warnings[key as keyof CaseFormWarnings] = []))
   }
 
-  const clearValidationState = (): void => {
-    validationState.hasAttemptedSubmit = false
-    validationState.showValidationError = false
-    validationState.isValidating = false
-  }
+  const clearValidationState = (): void => { validationState.hasAttemptedSubmit = false; validationState.showValidationError = false; validationState.isValidating = false }
 
+  // Reset form to pristine state
   const clearForm = (): void => {
     Object.assign(formData, {
       patientDocument: '',
@@ -262,23 +230,11 @@ export function useCaseForm() {
     clearValidationErrors()
   }
 
-  const isFormValid = computed(() => {
-    const hasRequiredFields = formData.patientEntity && 
-                              formData.patientCareType && 
-                              formData.entryDate && 
-                              formData.casePriority && 
-                              formData.requestingPhysician &&
-                              formData.numberOfSamples &&
-                              (!formData.requestingPhysician.trim() || formData.service.trim())
-    
-    const hasSamplesValid = formData.samples.length > 0 && 
-                           formData.samples.every(sample => 
-                             sample.bodyRegion.trim() !== '' && 
-                             sample.tests.some(test => test.code.trim() !== '')
-                           )
-    
-    return hasRequiredFields && hasSamplesValid
-  })
+  const isFormValid = computed(() => (
+    formData.patientEntity && formData.patientCareType && formData.entryDate && formData.casePriority && formData.requestingPhysician && formData.numberOfSamples &&
+    (!formData.requestingPhysician.trim() || formData.service.trim()) &&
+    formData.samples.length > 0 && formData.samples.every(sample => sample.bodyRegion.trim() !== '' && sample.tests.some(test => test.code.trim() !== ''))
+  ))
 
   return {
     formData, validationState, errors, warnings, isLoading, isFormValid,

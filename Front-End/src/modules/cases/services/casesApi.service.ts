@@ -9,6 +9,7 @@ import type {
 export class CasesApiService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.CASES
 
+  // Normalize responses by removing duplicate active flags recursively
   private cleanDuplicateActiveFields(data: any): any {
     if (!data || typeof data !== 'object') return data
     
@@ -27,104 +28,66 @@ export class CasesApiService {
     return data
   }
 
+  // Small helpers to reduce boilerplate in requests
+  private async getClean<T>(url: string, config?: any): Promise<T> {
+    try { return this.cleanDuplicateActiveFields(await apiClient.get<T>(url, config)) } 
+    catch (error: any) { throw new Error(error.message || `Error GET ${url}`) }
+  }
+  private async postClean<T>(url: string, body?: any, config?: any): Promise<T> {
+    try { return this.cleanDuplicateActiveFields(await apiClient.post<T>(url, body, config)) } 
+    catch (error: any) { throw new Error(error.message || `Error POST ${url}`) }
+  }
+  private async putClean<T>(url: string, body?: any, config?: any): Promise<T> {
+    try { return this.cleanDuplicateActiveFields(await apiClient.put<T>(url, body, config)) } 
+    catch (error: any) { throw this.handleValidationError(error) }
+  }
+  private async deleteRaw<T>(url: string, config?: any): Promise<T> {
+    try { return await apiClient.delete<T>(url, config) } 
+    catch (error: any) { throw new Error(error.message || `Error DELETE ${url}`) }
+  }
+
   async consultarConsecutivo(): Promise<{ codigo_consecutivo: string; mensaje: string }> {
-    try {
-      const response = await apiClient.get<{ codigo_consecutivo: string; mensaje: string }>(`${this.endpoint}/siguiente-consecutivo`)
-      return response
-    } catch (error: any) {
-      throw new Error(error.message || 'Error al consultar el consecutivo')
-    }
+    return this.getClean<{ codigo_consecutivo: string; mensaje: string }>(`${this.endpoint}/siguiente-consecutivo`)
   }
 
   async getCases(params: CaseListParams = {}): Promise<CaseListResponse> {
-    try {
-      const response = await apiClient.get<CaseListResponse>(this.endpoint, { params })
-      return this.cleanDuplicateActiveFields(response)
-    } catch (error: any) {
-      throw new Error(error.message || 'Error al obtener la lista de casos')
-    }
+    return this.getClean<CaseListResponse>(this.endpoint, { params })
   }
 
   async getCaseByCode(caseCode: string): Promise<CaseModel> {
-    try {
-      const response = await apiClient.get<CaseModel>(`${this.endpoint}/${encodeURIComponent(caseCode)}`)
-      return this.cleanDuplicateActiveFields(response)
-    } catch (error: any) {
-      throw new Error(error.message || `Error al obtener el caso ${caseCode}`)
-    }
+    return this.getClean<CaseModel>(`${this.endpoint}/${encodeURIComponent(caseCode)}`)
   }
 
   async getCasesByPatient(cedula: string): Promise<CaseModel[]> {
-    try {
-      const response = await apiClient.get<CaseModel[]>(`${this.endpoint}/?search=${cedula}&limit=1000`)
-      return response
-    } catch (error: any) {
-      throw new Error(error.message || `Error al obtener casos del paciente ${cedula}`)
-    }
+    return this.getClean<CaseModel[]>(`${this.endpoint}/?search=${cedula}&limit=1000`)
   }
 
   async getCasesByPathologist(codigo: string): Promise<CaseListResponse> {
-    try {
-      const response = await apiClient.get<CaseListResponse>(`${this.endpoint}/patologo/${codigo}`)
-      return response
-    } catch (error: any) {
-      throw new Error(error.message || `Error al obtener casos del patólogo ${codigo}`)
-    }
+    return this.getClean<CaseListResponse>(`${this.endpoint}/patologo/${codigo}`)
   }
 
   async getCasesByState(estado: string): Promise<CaseListResponse> {
-    try {
-      const response = await apiClient.get<CaseListResponse>(`${this.endpoint}/estado/${estado}`)
-      return response
-    } catch (error: any) {
-      throw new Error(error.message || `Error al obtener casos con estado ${estado}`)
-    }
+    return this.getClean<CaseListResponse>(`${this.endpoint}/estado/${estado}`)
   }
 
   async getCaseStatistics(): Promise<CaseStatisticsResponse> {
-    try {
-      const response = await apiClient.get<CaseStatisticsResponse>(`${this.endpoint}/estadisticas`)
-      return response
-    } catch (error: any) {
-      throw new Error(error.message || 'Error al obtener estadísticas del sistema')
-    }
+    return this.getClean<CaseStatisticsResponse>(`${this.endpoint}/estadisticas`)
   }
 
   async searchCases(searchParams: CaseSearchParams): Promise<CaseSearchResponse> {
-    try {
-      const response = await apiClient.post<CaseSearchResponse>(`${this.endpoint}/buscar`, searchParams)
-      return response
-    } catch (error: any) {
-      throw new Error(error.message || 'Error al buscar casos')
-    }
+    return this.postClean<CaseSearchResponse>(`${this.endpoint}/buscar`, searchParams)
   }
 
   async searchCasesAdvanced(searchParams: CaseSearchParams): Promise<CaseSearchResponse> {
-    try {
-      const response = await apiClient.get<CaseSearchResponse>(`${this.endpoint}/search`, { params: searchParams })
-      return response
-    } catch (error: any) {
-      throw new Error(error.message || 'Error en la búsqueda avanzada')
-    }
+    return this.getClean<CaseSearchResponse>(`${this.endpoint}/search`, { params: searchParams })
   }
 
   async createCase(caseData: any): Promise<any> {
-    try {
-      const response = await apiClient.post<CreateCaseResponse>(this.endpoint, caseData)
-      return this.cleanDuplicateActiveFields(response)
-    } catch (error: any) {
-      throw this.handleValidationError(error)
-    }
+    return this.postClean<CreateCaseResponse>(this.endpoint, caseData)
   }
 
   async updateCase(caseCode: string, updateData: any): Promise<any> {
-    try {
-      const response = await apiClient.put<UpdateCaseResponse>(`${this.endpoint}/${caseCode}`, updateData)
-      return this.cleanDuplicateActiveFields(response)
-    } catch (error: any) {
-      // Reutilizar formateo de errores de validación
-      throw this.handleValidationError(error)
-    }
+    return this.putClean<UpdateCaseResponse>(`${this.endpoint}/${caseCode}`, updateData)
   }
 
   async assignPathologist(caseCode: string, pathologistData: { codigo: string; nombre: string }): Promise<UpdateCaseResponse> {
@@ -153,12 +116,7 @@ export class CasesApiService {
   }
 
   async deleteCase(caseCode: string): Promise<any> {
-    try {
-      const response = await apiClient.delete<DeleteCaseResponse>(`${this.endpoint}/${caseCode}`)
-      return response
-    } catch (error: any) {
-      throw new Error(error.message || `Error al eliminar el caso ${caseCode}`)
-    }
+    return this.deleteRaw<DeleteCaseResponse>(`${this.endpoint}/${caseCode}`)
   }
 
   async addAdditionalNote(caseCode: string, note: string, addedBy?: string): Promise<UpdateCaseResponse> {

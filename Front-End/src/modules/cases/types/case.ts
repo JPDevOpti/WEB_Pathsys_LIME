@@ -23,7 +23,6 @@ export interface PatientInfo {
   care_type: AttentionType
   observations?: string
   updated_at?: string
-  // Campos en español para compatibilidad
   paciente_code?: string
   nombre?: string
   edad?: number
@@ -33,15 +32,10 @@ export interface PatientInfo {
   fecha_actualizacion?: string
 }
 
-export interface DoctorInfo {
-  nombre: string
-}
-
 export interface TestInfo {
   id: string
   name: string
   quantity?: number
-  // Campos en español para compatibilidad
   nombre?: string
   cantidad?: number
 }
@@ -49,7 +43,6 @@ export interface TestInfo {
 export interface SampleInfo {
   body_region: string
   tests: TestInfo[]
-  // Campos en español para compatibilidad
   region_cuerpo?: string
   pruebas?: TestInfo[]
 }

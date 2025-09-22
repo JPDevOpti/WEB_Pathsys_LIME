@@ -1,4 +1,5 @@
 <template>
+  <!-- Register a new patient -->
   <ComponentCard title="Ingresar un nuevo paciente al sistema" description="Complete la información del paciente para ingresarlo al sistema.">
     <template #icon>
       <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -7,28 +8,36 @@
     </template>
 
     <div class="space-y-6">
+      <!-- Basic identity fields -->
       <FormInputField v-model="formData.patientCode" label="Documento de identidad" placeholder="Ejemplo: 12345678" :required="true" :max-length="12" inputmode="numeric" :only-numbers="true" :errors="getDocumentoErrors" @input="handleCedulaInput" />
       <FormInputField v-model="formData.name" label="Nombre del Paciente" placeholder="Ejemplo: Juan Perez" :required="true" :max-length="200" :only-letters="true" :errors="getNombreErrors" @input="handleNombreInput" />
       
+      <!-- Demographics -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormInputField v-model="formData.age" label="Edad" placeholder="Edad en años" :required="true" :max-length="3" inputmode="numeric" :only-numbers="true" :errors="getEdadErrors" @input="handleEdadInput" />
         <FormSelect v-model="formData.gender" label="Sexo" placeholder="Seleccione el sexo" :required="true" :options="sexoOptions" :error="getSexoError" />
       </div>
 
+      <!-- Entity and care type -->
       <EntityList v-model="formData.entity" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :errors="entidadErrors" :key="entityListKey" @entity-selected="onEntitySelected" />
       <FormSelect v-model="formData.careType" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="getTipoAtencionError" />
+      
+      <!-- Notes -->
       <FormTextarea v-model="formData.observations" label="Observaciones del paciente" placeholder="Observaciones adicionales del paciente" :rows="3" :max-length="500" />
 
+      <!-- Actions -->
       <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
         <ClearButton @click="handleClearForm" :disabled="isLoading" />
         <SaveButton text="Guardar Paciente" @click="handleSaveClick" :disabled="isLoading" :loading="isLoading" />
       </div>
 
+      <!-- Inline notification with success summary -->
       <div ref="notificationContainer">
         <Notification :visible="notification.visible" :type="notification.type" :title="notification.title" :message="notification.message" :inline="true" :auto-close="false" @close="closeNotification">
           <template v-if="notification.type === 'success' && createdPatient" #content>
             <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div class="space-y-4">
+                <!-- Header -->
                 <div class="mb-4 pb-3 border-b border-gray-100">
                   <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdPatient.nombre }}</h3>
                   <p class="text-gray-600">
@@ -37,6 +46,7 @@
                   </p>
                 </div>
                 
+                <!-- Key fields -->
                 <div class="space-y-3 text-sm">
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Edad:</span>
@@ -64,6 +74,7 @@
         </Notification>
       </div>
 
+      <!-- Global validation -->
       <ValidationAlert :visible="validationState.showValidationError && validationErrors.length > 0" :errors="validationErrors" />
     </div>
   </ComponentCard>
@@ -81,92 +92,65 @@ import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList } from '@/shared/components/List'
 
+// UI refs/state
 const notificationContainer = ref<HTMLElement | null>(null)
 const createdPatient = ref<any>(null)
 const selectedEntity = ref<{ codigo: string; nombre: string } | null>(null)
 const entityListKey = ref(0)
 
+// Composables
 const { formData, validationState, errors, handleCedulaInput, handleNombreInput, handleEdadInput, clearForm, validateForm } = usePatientForm()
 const { notification, showNotification, closeNotification } = useNotifications()
 const { createPatient, isLoading, clearState } = usePatientAPI()
 
+// Select options
 const sexoOptions = [{ value: 'Masculino', label: 'Masculino' }, { value: 'Femenino', label: 'Femenino' }]
 const tipoAtencionOptions = [{ value: 'Ambulatorio', label: 'Ambulatorio' }, { value: 'Hospitalizado', label: 'Hospitalizado' }]
 
+// Aggregate validation messages for banner (avoid duplicates with field errors)
 const validationErrors = computed(() => {
-  if (!validationState.hasAttemptedSubmit) return []
-  
-  const errorsList: string[] = []
-  
-  // Errores de campos requeridos
-  if (!formData.patientCode?.trim()) errorsList.push('Documento de identidad')
-  if (!formData.name?.trim()) errorsList.push('Nombre del paciente')
-  if (!formData.age?.trim()) errorsList.push('Edad')
-  if (!formData.gender) errorsList.push('Sexo')
-  if (!formData.entity) errorsList.push('Entidad')
-  if (!formData.careType) errorsList.push('Tipo de atención')
-  
-  // Errores de validación específicos
-  if (errors.patientCode.length > 0) errorsList.push(`Documento: ${errors.patientCode[0]}`)
-  if (errors.name.length > 0) errorsList.push(`Nombre: ${errors.name[0]}`)
-  if (errors.age.length > 0) errorsList.push(`Edad: ${errors.age[0]}`)
-  
-  return errorsList
+  if (!validationState.hasAttemptedSubmit) return [] as string[]
+  const list: string[] = []
+  // Prefer specific field errors when present, else show required label
+  if (errors.patientCode.length > 0) list.push(`Documento: ${errors.patientCode[0]}`)
+  else if (!formData.patientCode?.trim()) list.push('Documento de identidad')
+
+  if (errors.name.length > 0) list.push(`Nombre: ${errors.name[0]}`)
+  else if (!formData.name?.trim()) list.push('Nombre del paciente')
+
+  if (errors.age.length > 0) list.push(`Edad: ${errors.age[0]}`)
+  else if (!formData.age?.trim()) list.push('Edad')
+
+  if (!formData.gender) list.push('Sexo')
+  if (!formData.entity) list.push('Entidad')
+  if (!formData.careType) list.push('Tipo de atención')
+  return list
 })
 
-const getDocumentoErrors = computed(() => {
-  if (!validationState.hasAttemptedSubmit) return []
-  if (errors.patientCode.length > 0) return errors.patientCode
-  if (!formData.patientCode?.trim()) return ['El documento de identidad es obligatorio']
-  return []
-})
+// Field-level validation helpers
+const getDocumentoErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (errors.patientCode.length > 0 ? errors.patientCode : (!formData.patientCode?.trim() ? ['El documento de identidad es obligatorio'] : [])))
+const getNombreErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (errors.name.length > 0 ? errors.name : (!formData.name?.trim() ? ['El nombre del paciente es obligatorio'] : [])))
+const getEdadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (errors.age.length > 0 ? errors.age : (!formData.age?.trim() ? ['La edad es obligatoria'] : [])))
+const getSexoError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!formData.gender ? 'Por favor seleccione el sexo' : ''))
+const getTipoAtencionError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!formData.careType ? 'Por favor seleccione el tipo de atención' : ''))
+const entidadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (!formData.entity ? ['La entidad es obligatoria'] : []))
 
-const getNombreErrors = computed(() => {
-  if (!validationState.hasAttemptedSubmit) return []
-  if (errors.name.length > 0) return errors.name
-  if (!formData.name?.trim()) return ['El nombre del paciente es obligatorio']
-  return []
-})
+// Entity selected from list (normalize to expected shape)
+const onEntitySelected = (entity: any) => {
+  if (!entity) { selectedEntity.value = null; return }
+  selectedEntity.value = { codigo: entity.codigo || entity.code || entity.id || '', nombre: entity.nombre || entity.name || '' }
+}
 
-const getEdadErrors = computed(() => {
-  if (!validationState.hasAttemptedSubmit) return []
-  if (errors.age.length > 0) return errors.age
-  if (!formData.age?.trim()) return ['La edad es obligatoria']
-  return []
-})
-
-const getSexoError = computed(() => {
-  return !validationState.hasAttemptedSubmit ? '' : (!formData.gender ? 'Por favor seleccione el sexo' : '')
-})
-
-const getTipoAtencionError = computed(() => {
-  return !validationState.hasAttemptedSubmit ? '' : (!formData.careType ? 'Por favor seleccione el tipo de atención' : '')
-})
-
-const entidadErrors = computed(() => {
-  return !validationState.hasAttemptedSubmit ? [] : (!formData.entity ? ['La entidad es obligatoria'] : [])
-})
-
-const onEntitySelected = (entity: { codigo: string; nombre: string } | null) => selectedEntity.value = entity
+// Reset inputs and entity selector
 const handleClearForm = () => { clearForm(); selectedEntity.value = null; entityListKey.value++ }
 
+// Create patient flow
 const handleSaveClick = async () => {
-  // Validar formulario
   const isValid = validateForm()
-  if (!isValid) { 
-    validationState.showValidationError = true
-    // No mostrar notificación aquí, solo mostrar ValidationAlert
-    return 
-  }
-  
+  if (!isValid) { validationState.showValidationError = true; return }
   validationState.showValidationError = false
   clearState()
-
   try {
-    console.log('=== DEBUG: NewPatient.vue ===')
-    console.log('formData:', JSON.stringify(formData, null, 2))
-    console.log('selectedEntity.value:', selectedEntity.value)
-    
     const patientData: PatientData = {
       patientCode: formData.patientCode,
       name: formData.name,
@@ -177,25 +161,15 @@ const handleSaveClick = async () => {
       careType: formData.careType,
       observations: formData.observations
     }
-    
-    console.log('patientData construido:', JSON.stringify(patientData, null, 2))
-    console.log('=== FIN DEBUG ===')
-    
     const result = await createPatient(patientData)
     if (result.success && result.patient) {
       createdPatient.value = result.patient
       showNotification('success', '¡Paciente Registrado Exitosamente!', '', 15000)
       emit('patient-saved', patientData)
-      // Notificar al dashboard para refrescar métricas
       try { window.dispatchEvent(new CustomEvent('patient-created')) } catch {}
-      clearForm()
-      selectedEntity.value = null
-      entityListKey.value++
+      clearForm(); selectedEntity.value = null; entityListKey.value++
     } else {
-      // Manejar errores específicos del API
-      if (result.message?.toLowerCase().includes('duplicad') || 
-          result.message?.toLowerCase().includes('ya existe') || 
-          result.message?.toLowerCase().includes('repetid')) {
+      if (result.message?.toLowerCase().includes('duplicad') || result.message?.toLowerCase().includes('ya existe') || result.message?.toLowerCase().includes('repetid')) {
         showNotification('error', 'Documento Duplicado', 'Ya existe un paciente con este documento de identidad. Por favor, verifique el número e intente con otro.', 0)
       } else {
         throw new Error(result.message || 'Error desconocido al crear el paciente')
@@ -203,43 +177,19 @@ const handleSaveClick = async () => {
     }
   } catch (error: any) {
     let errorMessage = 'No se pudo guardar el paciente. Por favor, inténtelo nuevamente.'
-    
-    // Manejar errores de conexión
-    if (error.message?.includes('ERR_CONNECTION_REFUSED') || error.code === 'ERR_NETWORK') {
-      errorMessage = 'Error de conexión: El servidor no está disponible. Verifique que el backend esté ejecutándose.'
-    }
-    // Manejar errores de validación del backend
-    else if (error.response?.data?.detail) {
-      if (Array.isArray(error.response.data.detail)) {
-        errorMessage = error.response.data.detail.map((err: any) => err.msg || err.message || String(err)).join(', ')
-      } else {
-        errorMessage = String(error.response.data.detail)
-      }
-    } 
-    // Manejar errores de duplicado
-    else if (error.message?.toLowerCase().includes('duplicad') || 
-             error.message?.toLowerCase().includes('ya existe') || 
-             error.message?.toLowerCase().includes('repetid')) {
-      errorMessage = 'Ya existe un paciente con este documento de identidad. Por favor, verifique el número e intente con otro.'
-    }
-    // Manejar otros errores
-    else if (error.response?.data?.message) {
-      errorMessage = String(error.response.data.message)
-    } else if (error.message) {
-      errorMessage = String(error.message)
-    } else if (typeof error === 'string') {
-      errorMessage = error
-    }
-    
+    if (error.message?.includes('ERR_CONNECTION_REFUSED') || error.code === 'ERR_NETWORK') errorMessage = 'Error de conexión: El servidor no está disponible. Verifique que el backend esté ejecutándose.'
+    else if (error.response?.data?.detail) errorMessage = Array.isArray(error.response.data.detail) ? error.response.data.detail.map((err: any) => err.msg || err.message || String(err)).join(', ') : String(error.response.data.detail)
+    else if (error.message?.toLowerCase().includes('duplicad') || error.message?.toLowerCase().includes('ya existe') || error.message?.toLowerCase().includes('repetid')) errorMessage = 'Ya existe un paciente con este documento de identidad. Por favor, verifique el número e intente con otro.'
+    else if (error.response?.data?.message) errorMessage = String(error.response.data.message)
+    else if (error.message) errorMessage = String(error.message)
+    else if (typeof error === 'string') errorMessage = error
     showNotification('error', 'Error al Guardar Paciente', errorMessage, 0)
   }
 }
 
-watch(() => notification.visible, (newValue) => {
-  if (newValue && notificationContainer.value) {
-    notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
-})
+// Smooth-scroll to notification when visible
+watch(() => notification.visible, (v) => { if (v && notificationContainer.value) notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' }) })
 
+// Emit for parent listeners
 const emit = defineEmits<{ 'patient-saved': [patient: PatientData] }>()
 </script>

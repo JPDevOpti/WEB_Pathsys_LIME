@@ -1,3 +1,4 @@
+// Entity API composable: load and expose list
 import { ref } from 'vue'
 import type { EntityInfo } from '../types'
 import { entitiesApiService } from '../services'
@@ -24,11 +25,7 @@ export function useEntityAPI() {
     }
   }
 
-  const clearState = () => {
-    entities.value = []
-    error.value = ''
-    isLoading.value = false
-  }
+  const clearState = () => { entities.value = []; error.value = ''; isLoading.value = false }
 
   return { isLoading, error, entities, loadEntities, clearState }
 }

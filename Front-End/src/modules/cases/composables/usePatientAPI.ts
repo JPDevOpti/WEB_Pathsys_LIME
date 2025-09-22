@@ -1,3 +1,4 @@
+// Patient API composable: create patient, track minimal status/stats
 import { ref, reactive } from 'vue'
 import { patientsApiService } from '../services/patientsApi.service'
 import type { PatientData } from '../types'
@@ -8,6 +9,7 @@ export function usePatientAPI() {
   const success = ref(false)
   const stats = reactive({ totalCreated: 0, lastCreatedId: null as string | null })
 
+  // Validate and send creation request
   async function createPatient(patientData: PatientData) {
     isLoading.value = true
     error.value = null
@@ -27,8 +29,9 @@ export function usePatientAPI() {
         message: `Paciente ${newPatient.nombre} registrado exitosamente`
       }
     } catch (err: any) {
-      const errorMessage = err.message || 'Error desconocido al crear el paciente'
-      if (errorMessage.toLowerCase().includes('duplicad') || errorMessage.toLowerCase().includes('ya existe') || errorMessage.toLowerCase().includes('repetid')) {
+      const errorMessage = (err?.response?.data?.detail as string) || err.message || 'Error desconocido al crear el paciente'
+      const lower = errorMessage.toLowerCase()
+      if (lower.includes('duplicad') || lower.includes('ya existe') || lower.includes('repetid')) {
         error.value = 'Ya existe un paciente con este documento de identidad'
         return { success: false, patient: null, message: 'Ya existe un paciente con este documento de identidad' }
       }
@@ -39,19 +42,15 @@ export function usePatientAPI() {
     }
   }
 
+  // Stats for UI widgets
   function updateStats(patientId: string): void {
     stats.totalCreated++
     stats.lastCreatedId = patientId
   }
 
-  function clearState(): void {
-    error.value = null
-    success.value = false
-    isLoading.value = false
-  }
+  // Reset flags
+  function clearState(): void { error.value = null; success.value = false; isLoading.value = false }
 
 
-  return {
-    isLoading, error, success, stats, createPatient, clearState
-  }
+  return { isLoading, error, success, stats, createPatient, clearState }
 }

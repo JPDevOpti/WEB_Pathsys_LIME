@@ -80,7 +80,7 @@
           <div class="flex items-center justify-between">
             <div class="flex flex-col">
               <span class="font-medium">{{ option.label }}</span>
-              <span v-if="option.entity.codigo" class="text-xs text-gray-500">{{ option.entity.codigo }}</span>
+              <span v-if="(option.entity as any).codigo || (option.entity as any).id" class="text-xs text-gray-500">{{ (option.entity as any).codigo || (option.entity as any).id }}</span>
             </div>
             <svg 
               v-if="selectedEntity === option.value"
@@ -187,8 +187,8 @@ const entityOptions = computed((): (SelectOption & { entity: EntityInfo })[] => 
   }
   
   return entities.value.map(entity => ({
-    value: entity.codigo,
-    label: entity.nombre,
+    value: (entity as any).codigo || (entity as any).id,
+    label: (entity as any).nombre || (entity as any).name,
     entity
   }))
 })
@@ -202,13 +202,10 @@ const filteredOptions = computed((): (SelectOption & { entity: EntityInfo })[] =
   const query = searchQuery.value.toLowerCase().trim()
   return entityOptions.value.filter(option => {
     const label = option.label.toLowerCase()
-    const entity = option.entity
-    
-    return (
-      label.includes(query) ||
-      entity.nombre.toLowerCase().includes(query) ||
-      entity.codigo.toLowerCase().includes(query)
-    )
+    const entity = option.entity as any
+    const nombre = (entity.nombre || entity.name || '').toLowerCase()
+    const codigo = (entity.codigo || entity.id || '').toLowerCase()
+    return label.includes(query) || nombre.includes(query) || codigo.includes(query)
   })
 })
 
@@ -227,7 +224,8 @@ const displayText = computed(() => {
   }
   
   if (selectedEntity.value && currentSelectedEntity.value) {
-    return currentSelectedEntity.value.nombre
+    const e: any = currentSelectedEntity.value
+    return e.nombre || e.name
   }
   
   return searchQuery.value

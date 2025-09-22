@@ -1,3 +1,4 @@
+// Patients API: helpers, robust error mapping, normalized payloads
 import { apiClient } from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 import type { PatientData } from '../types'
@@ -29,9 +30,20 @@ interface PatientResponse {
 export class PatientsApiService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.PATIENTS
 
+  // Generic helpers to reduce repetition
+  private async getClean<T>(url: string): Promise<T> {
+    try { return await apiClient.get<T>(url) } catch (error: any) { throw error }
+  }
+  private async postClean<T>(url: string, body: any): Promise<T> {
+    try { return await apiClient.post<T>(url, body) } catch (error: any) { throw error }
+  }
+  private async putClean<T>(url: string, body?: any): Promise<T> {
+    try { return await apiClient.put<T>(url, body) } catch (error: any) { throw error }
+  }
+
   async getPatientByDocumento(documento: string): Promise<PatientResponse | null> {
     try {
-      const response = await apiClient.get<any>(`${this.endpoint}/${documento}`)
+      const response = await this.getClean<any>(`${this.endpoint}/${documento}`)
       return response.nombre || response.cedula || response.sexo 
         ? response 
         : this.transformToSpanishResponse(response)
@@ -46,7 +58,7 @@ export class PatientsApiService {
   async createPatient(patientData: PatientData): Promise<PatientResponse> {
     try {
       const patientRequest = this.buildPatientRequest(patientData)
-      const response = await apiClient.post<any>(this.endpoint, patientRequest)
+      const response = await this.postClean<any>(this.endpoint, patientRequest)
       return this.transformToSpanishResponse(response)
     } catch (error: any) {
       throw this.handleApiError(error, 'registrar el paciente')
@@ -54,6 +66,7 @@ export class PatientsApiService {
   }
 
   async getPatientByCedula(cedula: string): Promise<PatientResponse | null> {
+    // Alias for documento-based lookup; harmonizes error message
     try {
       return await this.getPatientByDocumento(cedula)
     } catch (error: any) {
@@ -67,7 +80,7 @@ export class PatientsApiService {
   async updatePatient(cedula: string, patientData: any): Promise<PatientResponse> {
     try {
       const patientRequest = patientData.patientCode ? this.buildPatientRequest(patientData) : patientData
-      const response = await apiClient.put<PatientResponse>(`${this.endpoint}/${cedula}`, patientRequest)
+      const response = await this.putClean<PatientResponse>(`${this.endpoint}/${cedula}`, patientRequest)
       return response
     } catch (error: any) {
       throw this.handleApiError(error, `actualizar el paciente con cédula ${cedula}`)
@@ -76,9 +89,7 @@ export class PatientsApiService {
 
   async changePatientCode(currentCedula: string, newCode: string): Promise<PatientResponse> {
     try {
-      const response = await apiClient.put<PatientResponse>(
-        `${this.endpoint}/${currentCedula}/change-code?new_code=${encodeURIComponent(newCode)}`
-      )
+      const response = await this.putClean<PatientResponse>(`${this.endpoint}/${currentCedula}/change-code?new_code=${encodeURIComponent(newCode)}`)
       return response
     } catch (error: any) {
       throw this.handleApiError(error, `cambiar el código del paciente ${currentCedula}`, 'Error al cambiar código: ')
@@ -86,6 +97,7 @@ export class PatientsApiService {
   }
 
   async checkPatientExists(cedula: string): Promise<boolean> {
+    // Lightweight existence check; returns false on any error
     try {
       const patient = await this.getPatientByCedula(cedula)
       return patient !== null
@@ -97,46 +109,29 @@ export class PatientsApiService {
   validatePatientData(patientData: PatientData): { isValid: boolean; errors: string[] } {
     const errors: string[] = []
     const validations = [
-      { 
-        condition: !patientData.patientCode || patientData.patientCode.length < 6 || patientData.patientCode.length > 10,
-        message: 'La cédula debe tener entre 6 y 10 dígitos'
-      },
-      {
-        condition: !patientData.name || patientData.name.length < 2,
-        message: 'El nombre debe tener al menos 2 caracteres'
-      },
-      {
-        condition: !parseInt(patientData.age) || parseInt(patientData.age) < 0 || parseInt(patientData.age) > 150,
-        message: 'La edad debe ser un número válido entre 0 y 150'
-      },
-      { condition: !patientData.gender, message: 'Debe seleccionar el sexo del paciente' },
-      { condition: !patientData.entity, message: 'Debe seleccionar una entidad de salud' },
-      { condition: !patientData.careType, message: 'Debe seleccionar el tipo de atención' }
+      { ok: !!patientData.patientCode && patientData.patientCode.length >= 6 && patientData.patientCode.length <= 11, msg: 'La cédula debe tener entre 6 y 11 dígitos' },
+      { ok: !!patientData.name && patientData.name.length >= 2, msg: 'El nombre debe tener al menos 2 caracteres' },
+      { ok: !!parseInt(patientData.age) && parseInt(patientData.age) >= 0 && parseInt(patientData.age) <= 150, msg: 'La edad debe ser un número válido entre 0 y 150' },
+      { ok: !!patientData.gender, msg: 'Debe seleccionar el sexo del paciente' },
+      { ok: !!patientData.entity, msg: 'Debe seleccionar una entidad de salud' },
+      { ok: !!patientData.careType, msg: 'Debe seleccionar el tipo de atención' }
     ]
-
-    validations.forEach(({ condition, message }) => condition && errors.push(message))
+    validations.forEach(v => { if (!v.ok) errors.push(v.msg) })
     return { isValid: errors.length === 0, errors }
   }
 
   private buildPatientRequest(patientData: PatientData): CreatePatientRequest {
-    const requiredFields = [
-      { field: patientData.patientCode, name: 'código del paciente' },
-      { field: patientData.name, name: 'nombre del paciente' },
-      { field: patientData.gender, name: 'sexo del paciente' },
-      { field: patientData.age, name: 'edad del paciente' },
-      { field: patientData.careType, name: 'tipo de atención' },
-      { field: patientData.entity, name: 'entidad' }
-    ]
-
-    requiredFields.forEach(({ field, name }) => {
-      if (!field || !String(field).trim()) {
-        throw new Error(`El ${name} es requerido`)
-      }
-    })
-    
+    const required = [
+      ['patientCode', 'código del paciente'],
+      ['name', 'nombre del paciente'],
+      ['gender', 'sexo del paciente'],
+      ['age', 'edad del paciente'],
+      ['careType', 'tipo de atención'],
+      ['entity', 'entidad']
+    ] as const
+    required.forEach(([key, label]) => { const v = (patientData as any)[key]; if (!v || !String(v).trim()) throw new Error(`El ${label} es requerido`) })
     const entidadNombre = String(patientData.entity).trim()
     const entidadCodigo = String(patientData.entityCode || entidadNombre || 'UNKNOWN').trim()
-    
     return {
       patient_code: String(patientData.patientCode).trim(),
       name: String(patientData.name).trim(),
@@ -148,6 +143,7 @@ export class PatientsApiService {
     }
   }
 
+  // Normalize backend English response to Spanish field naming used in UI
   private transformToSpanishResponse(api: any): PatientResponse {
     return {
       id: api.id,
@@ -164,6 +160,7 @@ export class PatientsApiService {
     }
   }
 
+  // Build human-friendly error from validation or HTTP errors
   private handleApiError(error: any, context: string, customPrefix: string = 'Error de validación: '): Error {
     const isDuplicateError = (message: string) => 
       ['duplicad', 'ya existe', 'repetid'].some(keyword => message.toLowerCase().includes(keyword))

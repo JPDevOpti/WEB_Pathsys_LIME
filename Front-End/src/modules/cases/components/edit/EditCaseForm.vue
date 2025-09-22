@@ -1,6 +1,8 @@
 <template>
+  <!-- Edit case: search by code, review status, edit details, show summary -->
   <div class="space-y-6">
     <form class="space-y-4" @submit.prevent="onSubmit">
+      <!-- Search section (hidden when case code prop provided) -->
       <div v-if="!caseCodeProp" class="bg-gray-50 rounded-lg border border-gray-200">
         <div class="px-4 pt-4 pb-4">
           <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
@@ -33,7 +35,8 @@
             </div>
           </div>
 
-          <div v-if="searchError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <!-- Search error banner -->
+              <div v-if="searchError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
             <div class="flex items-center">
               <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -42,6 +45,7 @@
             </div>
           </div>
 
+          <!-- Non-editable warning for completed cases -->
           <div v-if="caseFound && foundCaseInfo && isCaseCompleted" class="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
             <div class="flex items-center mb-4">
               <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,36 +57,37 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Nombre</p>
-                  <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.patient_info?.name || foundCaseInfo.paciente?.nombre || 'N/A' }}</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.patient_info?.name || (foundCaseInfo as any)?.paciente?.nombre || 'N/A' }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Código</p>
-                  <p class="text-gray-900 font-mono font-semibold">{{ foundCaseInfo.patient_info?.patient_code || foundCaseInfo.paciente?.paciente_code || 'N/A' }}</p>
+                  <p class="text-gray-900 font-mono font-semibold">{{ foundCaseInfo.patient_info?.patient_code || (foundCaseInfo as any)?.paciente?.paciente_code || 'N/A' }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Edad</p>
-                  <p class="text-gray-900 font-semibold">{{ (foundCaseInfo.patient_info?.age ?? foundCaseInfo.paciente?.edad ?? 'N/A') + (foundCaseInfo.patient_info?.age || foundCaseInfo.paciente?.edad ? ' años' : '') }}</p>
+                  <p class="text-gray-900 font-semibold">{{ (foundCaseInfo.patient_info?.age ?? (foundCaseInfo as any)?.paciente?.edad ?? 'N/A') + (foundCaseInfo.patient_info?.age || (foundCaseInfo as any)?.paciente?.edad ? ' años' : '') }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Sexo</p>
-                  <p class="text-gray-900 font-semibold capitalize">{{ translateGender(foundCaseInfo.patient_info?.gender || foundCaseInfo.paciente?.sexo) }}</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ translateGender(foundCaseInfo.patient_info?.gender || (foundCaseInfo as any)?.paciente?.sexo) }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Tipo de Atención</p>
-                  <p class="text-gray-900 font-semibold capitalize">{{ translateCareType(foundCaseInfo.patient_info?.care_type || foundCaseInfo.paciente?.tipo_atencion) }}</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ translateCareType(foundCaseInfo.patient_info?.care_type || (foundCaseInfo as any)?.paciente?.tipo_atencion) }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Entidad</p>
-                  <p class="text-gray-900 break-words font-semibold">{{ (foundCaseInfo.patient_info?.entity_info as any)?.name || foundCaseInfo.paciente?.entidad_info?.nombre || foundCaseInfo.entidad_info?.nombre || 'N/A' }}</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ (foundCaseInfo.patient_info?.entity_info as any)?.name || (foundCaseInfo as any)?.paciente?.entidad_info?.nombre || (foundCaseInfo as any)?.entidad_info?.nombre || 'N/A' }}</p>
                 </div>
                 <div class="space-y-1 sm:col-span-2">
                   <p class="text-gray-600 font-medium">Estado del Caso</p>
-                  <p class="text-red-600 font-semibold">{{ translateCaseState(foundCaseInfo.state || foundCaseInfo.estado) }}</p>
+                  <p class="text-red-600 font-semibold">{{ translateCaseState((foundCaseInfo as any).state || (foundCaseInfo as any).estado) }}</p>
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- Loaded editable case summary -->
           <div v-if="caseFound && foundCaseInfo && !isCaseCompleted" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div class="flex items-center mb-4">
               <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,6 +136,7 @@
       </div>
 
 
+      <!-- Helper message when no case loaded -->
       <div v-if="!caseFound && !notification.visible" class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
         <div class="flex flex-col items-center space-y-3">
           <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,31 +147,37 @@
         </div>
       </div>
 
+      <!-- Edit form (only when case is found and not completed) -->
       <div v-if="caseFound && !isCaseCompleted" class="space-y-6">
+        <!-- Entity and care type -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <EntityList :key="'entity-' + resetKey" v-model="formData.patientEntity" label="Entidad del Paciente" placeholder="Seleciona la entidad" :required="true" :auto-load="true" @entity-selected="onEntitySelected" />
           <FormSelect :key="'tipoAtencion-' + resetKey + '-' + formData.patientCareType" v-model="formData.patientCareType" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" />
         </div>
 
+        <!-- Entry date and priority -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <FormInputField v-model="formData.entryDate" label="Fecha de Ingreso" type="date" :required="true" help-text="Fecha en que ingresa el caso al sistema" />
           <FormSelect v-model="formData.casePriority" label="Prioridad del Caso" placeholder="Seleccione la prioridad" :required="true" :options="prioridadOptions" help-text="Nivel de urgencia del caso" />
         </div>
 
+        <!-- Requesting physician and service -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <FormInputField v-model="formData.requestingPhysician" label="Médico Solicitante" placeholder="Ejemplo: Alberto Perez" :required="true" :max-length="200" help-text="Medico solicitante del estudio" />
           <FormInputField v-model="formData.service" label="Servicio" placeholder="Ejemplo: Medicina Interna" :required="true" :max-length="100" help-text="Área de procedencia del caso" />
         </div>
 
+        <!-- Case state and assigned pathologist -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <FormSelect :key="'estado-' + resetKey" v-model="state" label="Estado del Caso" placeholder="Seleccione el estado" :required="true" :options="estadoOptions" />
           <PathologistList :key="'pathologist-' + resetKey" v-model="assignedPathologist" label="Patólogo Asignado" placeholder="Buscar patólogo..." :required="false" :auto-load="true" @pathologist-selected="onPathologistSelected" />
         </div>
 
         <div>
-          <FormInputField class="max-w-xs" v-model="formData.numberOfSamples" label="Número de Muestras" type="number" :min="1" :max="99" :required="true" @input="handleLocalNumberOfSamplesChange" />
+          <FormInputField class="max-w-xs" v-model="formData.numberOfSamples" label="Número de Muestras" type="number" :min="1" :max="99" :required="true" @input="handleNumberOfSamplesChange" />
         </div>
 
+        <!-- Samples editor -->
         <div v-if="formData.samples.length > 0" class="space-y-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center">
             <TestIcon class="w-5 h-5 mr-2 text-blue-600" />
@@ -184,7 +196,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label class="block text-sm font-medium text-gray-700">Pruebas a realizar</label>
                   <div class="self-end sm:self-auto">
-                    <AddButton text="Agregar Prueba" @click="addLocalTestToSample(sampleIndex)" />
+                    <AddButton text="Agregar Prueba" @click="addTestToSample(sampleIndex)" />
                   </div>
                 </div>
                 
@@ -205,7 +217,7 @@
                       <FormInputField v-model.number="test.quantity" label="Cantidad" type="number" :min="1" placeholder="Cantidad" />
                     </div>
                     <div class="flex items-end justify-center sm:w-10 pb-1">
-                      <RemoveButton @click="removeLocalTestFromSample(sampleIndex, testIndex)" title="Eliminar prueba" />
+                      <RemoveButton @click="removeTestFromSample(sampleIndex, testIndex)" title="Eliminar prueba" />
                     </div>
                   </div>
                 </div>
@@ -214,8 +226,10 @@
           </div>
         </div>
 
+        <!-- Observations -->
         <FormTextarea v-model="formData.observations" label="Observaciones del Caso" placeholder="Observaciones adicionales sobre el caso o procedimiento..." :rows="3" :max-length="500" :show-counter="true" help-text="Información adicional relevante para el procesamiento del caso" />
 
+        <!-- Save/Reset actions -->
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
           <ClearButton @click="onReset" :disabled="isLoading" />
           <SaveButton 
@@ -226,6 +240,7 @@
           />
         </div>
 
+        <!-- Missing required fields banner -->
         <div v-if="caseFound && !isFormValid" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div class="flex items-start">
             <svg class="w-5 h-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,6 +257,7 @@
         </div>
       </div>
       
+      <!-- Success notification with updated case summary -->
       <div ref="notificationContainer" v-if="notification.visible">
         <Notification :visible="notification.visible" :type="notification.type" :title="notification.title" :message="notification.message" :inline="true" :auto-close="false" @close="handleNotificationClosed">
           <template v-if="notification.type === 'success' && updatedCase" #content>
@@ -303,7 +319,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+// Edit case form: load case by code, map legacy/new API shapes, edit and submit
+import { ref, computed, watch, nextTick } from 'vue'
 import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { EntityList, TestList, BodyRegionList, PathologistList } from '@/shared/components/List'
@@ -329,9 +346,9 @@ const emit = defineEmits<Emits>()
 const { notification, showSuccess, showError, closeNotification } = useNotifications()
 const { formData, errors, clearForm: clearCaseForm, handleNumberOfSamplesChange, addTestToSample, removeTestFromSample, createEmptySubSample } = useCaseForm()
 
+// UI and data state
 const isLoading = ref(false)
 const updatedCase = ref<any>(null)
-const caseLoaded = ref(false)
 const patientInfo = ref<any>(null)
 const notificationContainer = ref<HTMLElement | null>(null)
 const suppressValidation = ref(false)
@@ -343,7 +360,7 @@ const searchError = ref('')
 const caseFound = ref(false)
 const foundCaseInfo = ref<CaseModel | null>(null)
 
-// Campos adicionales para edición
+// Extra editable fields not in base form
 const state = ref('')
 const assignedPathologist = ref('')
 
@@ -435,6 +452,7 @@ const toInputDate = (value: string | undefined | null): string => {
 }
 
 
+// Load case when case code is provided via prop
 const loadCaseData = async () => {
   if (!props.caseCodeProp) return
 
@@ -449,6 +467,7 @@ const loadCaseData = async () => {
   }
 }
 
+// Validate and submit case updates to backend
 const onSubmit = async () => {
   const caseCode = props.caseCodeProp || (foundCaseInfo.value as any)?.case_code || (foundCaseInfo.value as any)?.caso_code
   
@@ -471,7 +490,7 @@ const onSubmit = async () => {
     return
   }
 
-  const cedulaToUse = formData.patientDocument || foundCaseInfo.value?.paciente?.paciente_code
+  const cedulaToUse = formData.patientDocument || (foundCaseInfo.value as any)?.paciente?.paciente_code || (foundCaseInfo.value as any)?.patient_info?.patient_code
   if (!cedulaToUse) {
     showError('Información incompleta', 'No se encontró información del paciente para este caso')
     return
@@ -483,16 +502,13 @@ const onSubmit = async () => {
       ? { id: selectedEntity.value.codigo, nombre: selectedEntity.value.nombre }
       : undefined
 
-    const mapTipoAtencionToBackend = (tipo: string): string => {
-      // Mantener el formato original en español como lo espera el backend
-      return tipo || 'Ambulatorio'
-    }
+    const mapTipoAtencionToBackend = (tipo: string): string => tipo || 'Ambulatorio'
 
     // Mantener valores en español como lo espera el backend
     const estadoToSend = state.value || 'En proceso'
     const prioridadToSend = formData.casePriority || 'Normal'
 
-    const existingSamples = (foundCaseInfo.value?.muestras || []) as any[]
+  const existingSamples = (((foundCaseInfo.value as any)?.muestras) || []) as any[]
     const samplesClean = formData.samples.map((s, idx) => {
       const region = s.bodyRegion || existingSamples[idx]?.region_cuerpo || existingSamples[idx]?.regionCuerpo || ''
       return {
@@ -534,7 +550,7 @@ const onSubmit = async () => {
     if (updateData.samples && updateData.samples.length) {
       updateData.samples = updateData.samples.filter((s: any) => s.body_region)
       if (!updateData.samples.length) delete updateData.samples
-    } else if (!updateData.samples && foundCaseInfo.value?.muestras?.length) {
+    } else if (!updateData.samples && (foundCaseInfo.value as any)?.muestras?.length) {
       delete updateData.samples
     }
 
@@ -600,16 +616,13 @@ const onSubmit = async () => {
     } else {
       try { msg = JSON.stringify(error) } catch { msg = 'Error desconocido' }
     }
-    console.error('Error updateCase:', error)
     showError('Error al actualizar el caso', msg || 'Error desconocido')
   } finally {
     isLoading.value = false
   }
 }
 
-const isValidCaseCodeFormat = (code: string): boolean => {
-  return /^\d{4}-\d{5}$/.test(code)
-}
+const isValidCaseCodeFormat = (code: string): boolean => /^\d{4}-\d{5}$/.test(code)
 
 const handleCaseCodeChange = () => {
   searchError.value = ''
@@ -618,13 +631,15 @@ const handleCaseCodeChange = () => {
 }
 
 const handleNumericInput = (value: string) => {
-  const numericValue = value.replace(/[^0-9-]/g, '')
-  
-  if (numericValue.length === 4 && !numericValue.includes('-')) {
-    searchCaseCode.value = numericValue + '-'
-  } else {
-    searchCaseCode.value = numericValue
+  let v = value.replace(/[^\d-]/g, '').slice(0, 10)
+  if (v.length >= 4 && !v.includes('-')) v = v.slice(0, 4) + '-' + v.slice(4)
+  const parts = v.split('-')
+  if (parts.length > 2) v = parts[0] + '-' + parts.slice(1).join('')
+  if (v.includes('-') && v.indexOf('-') !== 4) {
+    const digits = v.replace(/-/g, '')
+    v = digits.length >= 4 ? digits.slice(0, 4) + '-' + digits.slice(4, 9) : digits
   }
+  searchCaseCode.value = v
 }
 const searchCase = async () => {
   if (!searchCaseCode.value.trim()) {
@@ -667,6 +682,7 @@ const searchCase = async () => {
   }
 }
 
+// Normalize backend response into local `formData` and helpers
 const loadCaseDataFromFound = async (caseData: CaseModel) => {
   try {
     currentCaseCode.value = (caseData as any).case_code || (caseData as any).caso_code || searchCaseCode.value || props.caseCodeProp || ''
@@ -818,12 +834,12 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
       selectedEntity.value = null
     }
 
-    caseLoaded.value = true
   } catch (error: any) {
     showError('Error al cargar datos del caso', error.message || 'Error desconocido')
   }
 }
 
+// Reset form and local state (keeps notifications quiet once)
 const onReset = () => {
   suppressValidation.value = true
   searchCaseCode.value = ''
@@ -845,7 +861,6 @@ const onReset = () => {
   }
   selectedPathologist.value = null
   selectedEntity.value = null
-  caseLoaded.value = false
   currentCaseCode.value = ''
   updatedCase.value = null
   closeNotification()
@@ -874,17 +889,7 @@ const onPathologistSelected = (pathologist: any | null) => {
   }
 }
 
-const handleLocalNumberOfSamplesChange = (newNumber: string): void => {
-  handleNumberOfSamplesChange(newNumber)
-}
-
-const addLocalTestToSample = (sampleIndex: number): void => {
-  addTestToSample(sampleIndex)
-}
-
-const removeLocalTestFromSample = (sampleIndex: number, testIndex: number): void => {
-  removeTestFromSample(sampleIndex, testIndex)
-}
+// Reuse composable handlers directly (removed local wrappers)
 
 const handleTestSelected = (sampleIndex: number, testIndex: number, test: any) => {
   if (test && sampleIndex >= 0 && sampleIndex < formData.samples.length) {
@@ -896,6 +901,7 @@ const handleTestSelected = (sampleIndex: number, testIndex: number, test: any) =
   }
 }
 
+// Clear after successful save to avoid accidental re-submit
 const clearFormAfterSave = () => {
   clearCaseForm()
   state.value = ''
@@ -904,9 +910,9 @@ const clearFormAfterSave = () => {
   searchCaseCode.value = ''
   searchError.value = ''
   caseFound.value = false
-  caseLoaded.value = false
 }
 
+// Unified getter for patient info across legacy/new structures
 const getPatientInfo = (field: string): string => {
   const cp: any = patientInfo.value || {}
   const uc: any = updatedCase.value || {}
@@ -931,50 +937,36 @@ const getPatientInfo = (field: string): string => {
   }
 }
 
+// Count samples from updated case or current form
 const getMuestrasCount = (): number => {
   const uc: any = updatedCase.value || {}
   return uc?.samples?.length || uc?.muestras?.length || formData.samples.length
 }
 
-const getObservaciones = (): string => {
-  const uc: any = updatedCase.value || {}
-  return uc?.observations || uc?.observaciones_generales || uc?.observacionesGenerales || formData.observations || ''
-}
+// Observations fallback across keys
+const getObservaciones = (): string => ((updatedCase.value as any)?.observations) || ((updatedCase.value as any)?.observaciones_generales) || ((updatedCase.value as any)?.observacionesGenerales) || formData.observations || ''
 
+// Build samples list with normalized fields for notification view
 const getMuestras = () => {
   const backendSamples = (updatedCase.value as any)?.samples || (updatedCase.value as any)?.muestras || []
   const formSamples = formData.samples || []
-  
   if (!backendSamples.length) return formSamples
-  
-  return backendSamples.map((backendSample: any, index: number) => {
-    const formSample = formSamples[index]
-    return {
-      ...backendSample,
-      bodyRegion: backendSample.body_region || backendSample.regionCuerpo || backendSample.region_cuerpo || formSample?.bodyRegion || 'Sin especificar',
-      tests: (backendSample.tests || backendSample.pruebas || []).map((test: any, tIndex: number) => ({
-        ...test,
-        id: test.id || test.code || test.codigo,
-        name: test.name || test.nombre,
-        quantity: test.quantity || test.cantidad || formSample?.tests?.[tIndex]?.quantity || 1
-      }))
-    }
-  })
+  return backendSamples.map((s: any, i: number) => ({
+    ...s,
+    bodyRegion: s.body_region || s.regionCuerpo || s.region_cuerpo || formSamples[i]?.bodyRegion || 'Sin especificar',
+    tests: (s.tests || s.pruebas || []).map((t: any, ti: number) => ({ ...t, id: t.id || t.code || t.codigo, name: t.name || t.nombre, quantity: t.quantity || t.cantidad || formSamples[i]?.tests?.[ti]?.quantity || 1 }))
+  }))
 }
 
-const getPruebasCount = (sample: any): number => {
-  return (sample.tests && sample.tests.length) || (sample.pruebas && sample.pruebas.length) || 0
-}
+// Number of tests in a sample (supports legacy/new keys)
+const getPruebasCount = (sample: any): number => (sample.tests?.length) || (sample.pruebas?.length) || 0
 
-const getPruebasText = (sample: any): string => {
-  return (sample.tests || sample.pruebas || []).map((t: any) => {
-    const codigo = t.id || t.code || t.codigo || ''
-    const nombre = t.name || t.nombre || ''
-    const etiqueta = codigo || nombre || 'Sin código'
-    return `${etiqueta} (${t.quantity || t.cantidad || 1})`
-  }).join(', ')
-}
+// Human-readable tests summary for a sample
+const getPruebasText = (sample: any): string => (sample.tests || sample.pruebas || [])
+  .map((t: any) => `${t.id || t.code || t.codigo || t.name || t.nombre || 'Sin código'} (${t.quantity || t.cantidad || 1})`)
+  .join(', ')
 
+// Small field resolver used by notification details
 const getFieldValue = (field: string, fallback: string = 'No especificado'): string => {
   const uc: any = updatedCase.value || {}
   const fc: any = foundCaseInfo.value || {}
@@ -986,6 +978,7 @@ const getFieldValue = (field: string, fallback: string = 'No especificado'): str
   return fieldMap[field] || fallback
 }
 
+// Prefer current code, otherwise fallbacks from found/updated structures
 const getCaseCode = (): string => {
   return currentCaseCode.value || 
          (foundCaseInfo.value as any)?.case_code || 
@@ -1028,11 +1021,7 @@ const handleNotificationClosed = () => {
   closeNotification()
 }
 
-onMounted(() => {
-  if (props.caseCodeProp) {
-    loadCaseData()
-  }
-})
+// load from prop is handled by the watcher below (immediate)
 
 const translateValue = (value: any, type: 'state' | 'gender' | 'careType'): string => {
   const raw = String(value || '').toLowerCase()

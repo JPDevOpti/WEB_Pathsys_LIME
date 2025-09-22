@@ -1,19 +1,17 @@
+// Patient form state/validation composable
 import { ref, reactive } from 'vue'
 import type { PatientData, PatientFormErrors, PatientFormWarnings, ValidationState } from '../types'
 
 export function usePatientForm() {
-  const formData = reactive<PatientData>({
-    patientCode: '', name: '', gender: '', age: '', entity: '', careType: '', observations: ''
-  })
+  const formData = reactive<PatientData>({ patientCode: '', name: '', gender: '', age: '', entity: '', careType: '', observations: '' })
 
-  const validationState = reactive<ValidationState>({
-    hasAttemptedSubmit: false, isValidating: false, showValidationError: false
-  })
+  const validationState = reactive<ValidationState>({ hasAttemptedSubmit: false, isValidating: false, showValidationError: false })
 
   const errors = reactive<PatientFormErrors>({ patientCode: [], name: [], age: [] })
   const warnings = reactive<PatientFormWarnings>({ patientCode: [], age: [] })
   const isLoading = ref(false)
 
+  // Field validations
   const validateCedula = (): boolean => {
     const cedula = formData.patientCode.trim()
     errors.patientCode = []
@@ -29,8 +27,8 @@ export function usePatientForm() {
       return false
     }
 
-    if (cedula.length > 10) {
-      errors.patientCode.push('La cédula no puede tener más de 10 dígitos')
+    if (cedula.length > 11) {
+      errors.patientCode.push('La cédula no puede tener más de 11 dígitos')
       return false
     }
 
@@ -102,16 +100,14 @@ export function usePatientForm() {
     return true
   }
 
-  const validateRequiredFields = (): boolean => {
-    const requiredFields = ['gender', 'entity', 'careType']
-    return requiredFields.every(field => formData[field as keyof PatientData])
-  }
+  const validateRequiredFields = (): boolean => ['gender', 'entity', 'careType'].every(field => formData[field as keyof PatientData])
 
   const validateForm = (): boolean => {
     validationState.hasAttemptedSubmit = true
     return validateCedula() && validateNombre() && validateEdad() && validateRequiredFields()
   }
 
+  // Input handlers with sanitation and live validation
   const handleCedulaInput = (value: string): void => {
     const numericValue = value.replace(/\D/g, '')
     formData.patientCode = numericValue
@@ -121,7 +117,6 @@ export function usePatientForm() {
   }
 
   const handleNombreInput = (value: string): void => {
-    // Solo permitir letras, espacios, guiones y apostrofes
     const lettersOnly = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\-']/g, '')
     const capitalizedValue = lettersOnly.replace(/\b\w/g, (char) => char.toUpperCase())
     formData.name = capitalizedValue
@@ -139,20 +134,16 @@ export function usePatientForm() {
   }
 
   const clearValidationErrors = (): void => {
-    Object.keys(errors).forEach(key => errors[key as keyof PatientFormErrors] = [])
-    Object.keys(warnings).forEach(key => warnings[key as keyof PatientFormWarnings] = [])
+    Object.keys(errors).forEach(key => (errors[key as keyof PatientFormErrors] = []))
+    Object.keys(warnings).forEach(key => (warnings[key as keyof PatientFormWarnings] = []))
   }
 
-  const clearValidationState = (): void => {
-    validationState.hasAttemptedSubmit = false
-    validationState.showValidationError = false
-    validationState.isValidating = false
-  }
+  const clearValidationState = (): void => { validationState.hasAttemptedSubmit = false; validationState.showValidationError = false; validationState.isValidating = false }
 
+  // Reset form and validation
   const clearForm = (): void => {
-    Object.keys(formData).forEach(key => formData[key as keyof PatientData] = '')
-    clearValidationErrors()
-    clearValidationState()
+    Object.keys(formData).forEach(key => (formData[key as keyof PatientData] = ''))
+    clearValidationErrors(); clearValidationState()
   }
 
 

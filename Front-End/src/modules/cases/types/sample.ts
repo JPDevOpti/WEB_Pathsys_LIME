@@ -23,17 +23,6 @@ export interface CaseFormData {
   observations: string
 }
 
-export interface CaseFormDefaults {
-  entryDate: string
-  requestingPhysician: string
-  service: string
-  patientEntity: string
-  patientCareType: string
-  casePriority: string
-  numberOfSamples: string
-  samples: FormSubSample[]
-  observations: string
-}
 
 export interface CaseValidationState {
   hasAttemptedSubmit: boolean

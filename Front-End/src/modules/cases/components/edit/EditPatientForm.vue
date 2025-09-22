@@ -1,6 +1,8 @@
 <template>
+  <!-- Edit patient: search by ID, edit fields, confirm update -->
   <div class="space-y-4">
     <form class="space-y-4" @submit.prevent="onSubmit">
+      <!-- Search block (hidden when editing via case code prop) -->
       <div v-if="!caseCodeProp" class="bg-gray-50 rounded-lg border border-gray-200 px-4 py-4">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
           <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,6 +19,7 @@
             <ClearButton v-if="patientFound" text="Limpiar" @click="onReset" />
           </div>
         </div>
+        <!-- Search error -->
         <div v-if="searchError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
           <div class="flex items-center">
             <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,6 +28,7 @@
             <p class="text-sm text-red-600">{{ searchError }}</p>
           </div>
         </div>
+        <!-- Found banner -->
         <div v-if="patientFound" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div class="flex items-center">
             <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,6 +39,7 @@
         </div>
       </div>
 
+      <!-- Helper when nothing loaded -->
       <div v-if="!patientFound && !notification.visible" class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
         <div class="flex flex-col items-center space-y-3">
           <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,25 +50,30 @@
         </div>
       </div>
 
+      <!-- Edit form -->
       <div v-if="patientFound" class="space-y-6">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormInputField v-model="form.name" label="Nombre completo" placeholder="Ingrese el nombre del paciente" required />
-          <FormInputField v-model="form.patientCode" label="Documento de identidad" placeholder="Documento del paciente" :required="true" :max-length="12" inputmode="numeric" />
+          <FormInputField v-model="form.name" label="Nombre completo" placeholder="Ingrese el nombre del paciente" required :errors="getNombreErrors" :only-letters="true" />
+          <FormInputField v-model="form.patientCode" label="Documento de identidad" placeholder="Documento del paciente" :required="true" :max-length="12" inputmode="numeric" :only-numbers="true" :errors="getDocumentoErrors" />
         </div>
         
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormInputField v-model="form.age" type="number" label="Edad" placeholder="Ingrese la edad" required />
-          <FormSelect v-model="form.gender" :options="sexoOptions" label="Sexo" placeholder="Seleccione sexo" required />
-          <FormSelect v-model="form.careType" :options="tipoAtencionOptions" label="Tipo de atención" placeholder="Seleccione tipo de atención" required />
-          <EntityList v-model="form.entityCode" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :error="getEntidadError" @entity-selected="onEntitySelected" />
+          <FormInputField v-model="form.age" type="number" label="Edad" placeholder="Ingrese la edad" required :errors="getEdadErrors" :only-numbers="true" />
+          <FormSelect v-model="form.gender" :options="sexoOptions" label="Sexo" placeholder="Seleccione sexo" required :error="getSexoError" />
+          <FormSelect v-model="form.careType" :options="tipoAtencionOptions" label="Tipo de atención" placeholder="Seleccione tipo de atención" required :error="getTipoAtencionError" />
+          <EntityList v-model="form.entityCode" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :errors="entidadErrors" @entity-selected="onEntitySelected" />
         </div>
         <FormTextarea v-model="form.observations" label="Observaciones" placeholder="Observaciones del paciente" :rows="3" :max-length="500" />
+        <!-- Actions -->
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
           <ClearButton @click="onReset" :disabled="isLoading" />
-          <SaveButton text="Guardar Cambios" @click="onSubmit" :disabled="isLoading || !isFormValid" :loading="isLoading" />
+          <SaveButton text="Guardar Cambios" @click="onSubmit" :disabled="isLoading" :loading="isLoading" />
         </div>
+        <!-- Global validation -->
+        <ValidationAlert :visible="validationState.showValidationError && validationErrors.length > 0" :errors="validationErrors" />
       </div>
 
+      <!-- Success notification -->
       <div ref="notificationContainer" v-if="notification.visible">
         <Notification :visible="notification.visible" :type="notification.type" :title="notification.title" :message="notification.message" :inline="true" :auto-close="false" @close="closeNotification">
           <template v-if="notification.type === 'success' && updatedPatient" #content>
@@ -104,7 +114,8 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, watch, onMounted } from 'vue'
+// Edit patient form: load by case or document, normalize fields, submit updates
+import { reactive, ref, computed, watch } from 'vue'
 import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton, SearchButton } from '@/shared/components/buttons'
 import { useNotifications } from '../../composables'
@@ -112,9 +123,9 @@ import casesApiService from '../../services/casesApi.service'
 import patientsApiService from '../../services/patientsApi.service'
 import { EntityList } from '@/shared/components/List'
 import Notification from '@/shared/components/feedback/Notification.vue'
+import { ValidationAlert } from '@/shared/components/feedback'
 import type { PatientData } from '../../types'
 
-// Props y emits del componente
 interface Props { caseCodeProp?: string }
 interface Emits { (e: 'patient-updated', patient: PatientData): void }
 
@@ -122,7 +133,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const { notification, showNotification, closeNotification } = useNotifications()
 
-// Estados reactivos del componente
 const isLoading = ref(false)
 const originalData = ref<PatientData | null>(null)
 const notificationContainer = ref<HTMLElement | null>(null)
@@ -133,7 +143,6 @@ const searchError = ref('')
 const patientFound = ref(false)
 const selectedEntity = ref<{ codigo: string; nombre: string } | null>(null)
 
-// Formulario reactivo con datos del paciente
 const form = reactive<PatientData>({
   patientCode: '', name: '', gender: '', age: '', entity: '', entityCode: '', careType: '', observations: ''
 })
@@ -141,30 +150,43 @@ const form = reactive<PatientData>({
 const sexoOptions = [{ value: 'masculino', label: 'Masculino' }, { value: 'femenino', label: 'Femenino' }]
 const tipoAtencionOptions = [{ value: 'ambulatorio', label: 'Ambulatorio' }, { value: 'hospitalizado', label: 'Hospitalizado' }]
 
-// Validación del formulario
-const isFormValid = computed(() => (
-  form.name.trim() !== '' && form.gender !== '' && form.age.trim() !== '' && 
-  form.entityCode && form.careType !== ''
-))
+// Mirror validation UX from NewPatient.vue
+const validationState = reactive({ hasAttemptedSubmit: false, showValidationError: false })
+const isFormValid = computed(() => form.name.trim() !== '' && form.gender !== '' && form.age.trim() !== '' && form.entityCode && form.careType !== '')
+const validationErrors = computed(() => {
+  if (!validationState.hasAttemptedSubmit) return [] as string[]
+  const list: string[] = []
+  if (!form.patientCode?.trim()) list.push('Documento de identidad')
+  if (!form.name?.trim()) list.push('Nombre del paciente')
+  if (!form.age?.trim()) list.push('Edad')
+  if (!form.gender) list.push('Sexo')
+  if (!form.entityCode) list.push('Entidad')
+  if (!form.careType) list.push('Tipo de atención')
+  if (getDocumentoErrors.value.length > 0) list.push(`Documento: ${getDocumentoErrors.value[0]}`)
+  if (getNombreErrors.value.length > 0) list.push(`Nombre: ${getNombreErrors.value[0]}`)
+  if (getEdadErrors.value.length > 0) list.push(`Edad: ${getEdadErrors.value[0]}`)
+  return list
+})
+const getDocumentoErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (!/^[0-9]{6,12}$/.test(form.patientCode) ? ['La cédula debe tener entre 6 y 12 dígitos y solo números'] : []))
+const getNombreErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (form.name.trim().length < 2 ? ['El nombre del paciente es obligatorio'] : []))
+const getEdadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (!/^[0-9]+$/.test(form.age) || parseInt(form.age) < 0 || parseInt(form.age) > 150 ? ['La edad debe ser un número válido entre 0 y 150'] : []))
+const getSexoError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!form.gender ? 'Por favor seleccione el sexo' : ''))
+const getTipoAtencionError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!form.careType ? 'Por favor seleccione el tipo de atención' : ''))
+const entidadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (!form.entityCode ? ['La entidad es obligatoria'] : []))
 
-const getEntidadError = computed(() => !form.entityCode ? 'La entidad es obligatoria' : '')
 
+const mapApiResponseToPatientData = (patient: any): PatientData => ({
+  patientCode: patient.cedula || patient.paciente_code || patient.patient_code || '',
+  name: patient.nombre || patient.name || '',
+  gender: patient.sexo === 'Masculino' ? 'masculino' : patient.sexo === 'Femenino' ? 'femenino' : (patient.sexo || ''),
+  age: String(patient.edad || patient.age || ''),
+  entity: patient.entidad_info?.nombre || patient.entity_info?.name || '',
+  entityCode: patient.entidad_info?.id || patient.entity_info?.id || '',
+  careType: patient.tipo_atencion === 'Ambulatorio' ? 'ambulatorio' : patient.tipo_atencion === 'Hospitalizado' ? 'hospitalizado' : (patient.tipo_atencion || ''),
+  observations: patient.observaciones || patient.observations || ''
+})
 
-const mapApiResponseToPatientData = (patient: any): PatientData => {
-  // Mapear datos que vienen en español a valores internos en minúsculas
-  return {
-    patientCode: patient.cedula || patient.paciente_code || patient.patient_code || '',
-    name: patient.nombre || patient.name || '',
-    gender: patient.sexo === 'Masculino' ? 'masculino' : patient.sexo === 'Femenino' ? 'femenino' : (patient.sexo || ''),
-    age: String(patient.edad || patient.age || ''),
-    entity: patient.entidad_info?.nombre || patient.entity_info?.name || '',
-    entityCode: patient.entidad_info?.id || patient.entity_info?.id || '',
-    careType: patient.tipo_atencion === 'Ambulatorio' ? 'ambulatorio' : patient.tipo_atencion === 'Hospitalizado' ? 'hospitalizado' : (patient.tipo_atencion || ''),
-    observations: patient.observaciones || patient.observations || ''
-  }
-}
-
-// Actualiza la entidad seleccionada del paciente
+// Keep selection state in sync with patient entity
 const updateSelectedEntity = (patient: any) => {
   const entityInfo = patient.entidad_info || patient.entity_info
   if (entityInfo) {
@@ -176,11 +198,8 @@ const updateSelectedEntity = (patient: any) => {
   }
 }
 
-// Resetea todos los datos del formulario
 const resetFormData = () => {
-  Object.assign(form, {
-    patientCode: '', name: '', gender: '', age: '', entity: '', entityCode: '', careType: '', observations: ''
-  })
+  Object.assign(form, { patientCode: '', name: '', gender: '', age: '', entity: '', entityCode: '', careType: '', observations: '' })
   searchPatientCedula.value = ''
   searchError.value = ''
   patientFound.value = false
@@ -188,38 +207,24 @@ const resetFormData = () => {
   originalData.value = null
 }
 
-// Carga los datos del paciente desde un caso existente
+// Load patient data using case code prop
 const loadPatientData = async () => {
   if (!props.caseCodeProp) return
   isLoading.value = true
   try {
     const caseInfo = await casesApiService.getCaseByCode(props.caseCodeProp)
-    
-    // Intentar obtener el código del paciente de diferentes campos posibles
-    const pacienteCode = caseInfo?.patient_info?.patient_code || 
-                        caseInfo?.paciente?.paciente_code || 
-                        caseInfo?.paciente?.patient_code ||
-                        caseInfo?.patient_info?.paciente_code
-    
+    const ci: any = caseInfo as any
+    const pacienteCode = ci?.patient_info?.patient_code || 
+                        ci?.paciente?.paciente_code || 
+                        ci?.paciente?.patient_code ||
+                        ci?.patient_info?.paciente_code
     if (!pacienteCode) {
       throw new Error('El caso no contiene código de paciente')
     }
-    
     const patient = await patientsApiService.getPatientByCedula(pacienteCode)
     if (!patient) throw new Error('Paciente no encontrado en la colección de pacientes')
-    
     const mapped = mapApiResponseToPatientData(patient)
-    
-    // Asignar cada campo individualmente para asegurar reactividad
-    form.patientCode = mapped.patientCode
-    form.name = mapped.name
-    form.gender = mapped.gender
-    form.age = mapped.age
-    form.entity = mapped.entity
-    form.entityCode = mapped.entityCode
-    form.careType = mapped.careType
-    form.observations = mapped.observations
-    
+    Object.assign(form, mapped)
     originalData.value = { ...mapped }
     updateSelectedEntity(patient)
     patientFound.value = true
@@ -230,8 +235,10 @@ const loadPatientData = async () => {
   }
 }
 
+// Validate and submit update payload
 const onSubmit = async () => {
-  if (!isFormValid.value) return
+  validationState.hasAttemptedSubmit = true
+  if (!isFormValid.value) { validationState.showValidationError = true; return }
   
   const originalPatientCode = originalData.value?.patientCode || searchPatientCedula.value
   if (!originalPatientCode) {
@@ -241,10 +248,7 @@ const onSubmit = async () => {
 
   isLoading.value = true
   try {
-    if (selectedEntity.value) {
-      form.entityCode = selectedEntity.value.codigo
-      form.entity = selectedEntity.value.nombre
-    }
+    if (selectedEntity.value) Object.assign(form, { entityCode: selectedEntity.value.codigo, entity: selectedEntity.value.nombre })
 
     const codeChanged = form.patientCode.trim() !== originalPatientCode
     let updatedPatientResponse: any
@@ -282,10 +286,7 @@ const onSubmit = async () => {
     originalData.value = { ...mappedUpdatedData }
     updatedPatient.value = updatedPatientResponse
     emit('patient-updated', mappedUpdatedData)
-    
-    if (!codeChanged) {
-      resetFormData()
-    }
+    if (!codeChanged) resetFormData()
   } catch (error: any) {
     showNotification('error', 'Error de Validación', error.message || 'Error al actualizar los datos del paciente')
   } finally {
@@ -293,13 +294,14 @@ const onSubmit = async () => {
   }
 }
 
-// Resetea el formulario y limpia las notificaciones
+// Reset form and clear success toast
 const onReset = () => {
   closeNotification()
   resetFormData()
   updatedPatient.value = null
 }
 
+// Sanitize numeric input and clear previous results
 const handleCedulaInput = (value: string) => {
   let cleanValue = value.replace(/\D/g, '')
   if (cleanValue.length > 12) cleanValue = cleanValue.substring(0, 12)
@@ -308,6 +310,7 @@ const handleCedulaInput = (value: string) => {
   patientFound.value = false
 }
 
+// Fetch patient by document and populate form
 const searchPatient = async () => {
   if (!searchPatientCedula.value.trim()) {
     searchError.value = 'Por favor ingrese un documento de identidad'
@@ -327,19 +330,8 @@ const searchPatient = async () => {
     
     if (patient) {
       const mappedPatientData = mapApiResponseToPatientData(patient)
-      
       patientFound.value = true
-      
-      // Asignar cada campo individualmente para asegurar reactividad
-      form.patientCode = mappedPatientData.patientCode
-      form.name = mappedPatientData.name
-      form.gender = mappedPatientData.gender
-      form.age = mappedPatientData.age
-      form.entity = mappedPatientData.entity
-      form.entityCode = mappedPatientData.entityCode
-      form.careType = mappedPatientData.careType
-      form.observations = mappedPatientData.observations
-      
+      Object.assign(form, mappedPatientData)
       originalData.value = { ...mappedPatientData }
       updateSelectedEntity(patient)
       searchPatientCedula.value = mappedPatientData.patientCode
@@ -348,7 +340,6 @@ const searchPatient = async () => {
       patientFound.value = false
     }
   } catch (error: any) {
-    // Manejar diferentes tipos de errores
     if (error.message?.includes('ERR_CONNECTION_REFUSED') || error.code === 'ERR_NETWORK') {
       searchError.value = 'Error de conexión: El servidor no está disponible. Verifique que el backend esté ejecutándose.'
     } else if (error.message?.includes('404') || error.message?.includes('No encontrado')) {
@@ -362,23 +353,22 @@ const searchPatient = async () => {
   }
 }
 
-const onEntitySelected = (entity: { codigo: string; nombre: string } | null) => {
-  selectedEntity.value = entity
-  if (entity) {
-    form.entity = entity.nombre
-    form.entityCode = entity.codigo
+// Normalize entity selection from list component
+const onEntitySelected = (entity: any | null) => {
+  if (entity && (entity.codigo || entity.id)) {
+    const codigo = entity.codigo || entity.id
+    const nombre = entity.nombre || entity.name || ''
+    selectedEntity.value = { codigo, nombre }
+    form.entity = nombre
+    form.entityCode = codigo
   } else {
+    selectedEntity.value = null
     form.entity = ''
     form.entityCode = undefined
   }
 }
 
+// Load by prop immediately; scroll to notification when visible
 watch(() => props.caseCodeProp, (newCode) => { if (newCode) loadPatientData() }, { immediate: true })
-watch(() => notification.visible, (newValue) => { 
-  if (newValue && notificationContainer.value) {
-    notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
-})
-
-onMounted(() => { if (props.caseCodeProp) loadPatientData() })
+watch(() => notification.visible, (newValue) => { if (newValue && notificationContainer.value) notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' }) })
 </script>

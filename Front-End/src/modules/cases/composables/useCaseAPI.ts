@@ -1,3 +1,4 @@
+// Case creation API composable: normalize form, call backend, map response
 import { ref } from 'vue'
 import { casesApiService, entitiesApiService } from '../services'
 import type { CaseFormData, CaseCreationResult, CreatedCase } from '../types'
@@ -7,14 +8,14 @@ export function useCaseAPI() {
   const error = ref('')
   const entitiesCache = ref<Map<string, string>>(new Map())
 
+  // Resolve entity name by code with simple in-memory cache
   const getEntityNameByCode = async (entityCode: string): Promise<string> => {
-    if (entitiesCache.value.has(entityCode)) return entitiesCache.value.get(entityCode) || entityCode
-    
     if (!entityCode) return 'Entidad no especificada'
-    
+    const cached = entitiesCache.value.get(entityCode)
+    if (cached) return cached
     try {
-      const entity = await entitiesApiService.getEntityByCode(entityCode)
-      const entityName = entity?.nombre || entityCode
+      const entity: any = await entitiesApiService.getEntityByCode(entityCode)
+      const entityName = entity?.nombre || entity?.name || entityCode
       entitiesCache.value.set(entityCode, entityName)
       return entityName
     } catch {
@@ -22,30 +23,32 @@ export function useCaseAPI() {
     }
   }
 
+  // Normalize gender to backend-expected Spanish values
   const normalizeSexo = (sexo?: string): string => {
-    const sexoLower = String(sexo || '').toLowerCase()
-    if (['masculino', 'm', 'hombre'].includes(sexoLower)) return 'Masculino'
-    if (['femenino', 'f', 'mujer'].includes(sexoLower)) return 'Femenino'
+    const v = String(sexo || '').toLowerCase()
+    if (v.startsWith('m') || v.includes('hombre')) return 'Masculino'
+    if (v.startsWith('f') || v.includes('mujer')) return 'Femenino'
     return 'Masculino'
   }
 
+  // Normalize care type to backend-expected Spanish values
   const normalizeTipoAtencion = (tipoAtencion?: string): string => {
-    const tipoLower = String(tipoAtencion || '').toLowerCase()
-    if (['ambulatorio', 'ambulatoria'].includes(tipoLower)) return 'Ambulatorio'
-    if (['hospitalizado', 'hospitalizada', 'hospitalizacion'].includes(tipoLower)) return 'Hospitalizado'
+    const v = String(tipoAtencion || '').toLowerCase()
+    if (v.includes('ambulator')) return 'Ambulatorio'
+    if (v.includes('hospital')) return 'Hospitalizado'
     return 'Ambulatorio'
   }
 
+  // Map form state + verified patient to backend request body
   const transformCaseFormToApiRequest = async (formData: CaseFormData, verifiedPatient: any): Promise<any> => {
-    const entityName = formData.patientEntity 
+    const entityName = formData.patientEntity
       ? await getEntityNameByCode(formData.patientEntity)
       : (verifiedPatient?.entity || 'Entidad no especificada')
-    
     return {
       patient_info: {
         patient_code: verifiedPatient?.patientCode || verifiedPatient?.codigo || '',
         name: verifiedPatient?.name || '',
-        age: Number(verifiedPatient?.age || 0),
+        age: Number.parseInt(String(verifiedPatient?.age || 0)) || 0,
         gender: normalizeSexo(verifiedPatient?.gender),
         entity_info: {
           id: formData.patientEntity || verifiedPatient?.entityCode || 'ent_default',
@@ -58,10 +61,10 @@ export function useCaseAPI() {
       service: formData?.service || undefined,
       samples: (formData?.samples || []).map(s => ({
         body_region: s?.bodyRegion || '',
-        tests: (s?.tests || []).map(t => ({ 
-          id: t?.code || '', 
-          name: t?.name || t?.code || '', 
-          quantity: t?.quantity || 1 
+        tests: (s?.tests || []).map(t => ({
+          id: t?.code || '',
+          name: t?.name || t?.code || '',
+          quantity: t?.quantity || 1
         }))
       })),
       state: 'En proceso',
@@ -70,6 +73,7 @@ export function useCaseAPI() {
     }
   }
 
+  // Build a minimal CreatedCase object for UI from backend response
   const buildCreatedCase = (apiResponse: any, verifiedPatient: any, caseData: CaseFormData): CreatedCase => {
     const codigoCaso = apiResponse.case_code || apiResponse.caso_code || apiResponse.code || apiResponse.codigo
     const stateRaw = String(apiResponse.state || '').toLowerCase()
@@ -92,7 +96,7 @@ export function useCaseAPI() {
         patient_code: apiResponse.patient_info?.patient_code || verifiedPatient.patientCode,
         cedula: apiResponse.patient_info?.patient_code || verifiedPatient.patientCode,
         name: apiResponse.patient_info?.name || verifiedPatient.name,
-        age: apiResponse.patient_info?.age || parseInt(verifiedPatient.age),
+        age: apiResponse.patient_info?.age || Number.parseInt(String(verifiedPatient.age || 0)) || 0,
         gender: apiResponse.patient_info?.gender || verifiedPatient.gender,
         entity: apiResponse.patient_info?.entity_info?.name || verifiedPatient.entity,
         careType: apiResponse.patient_info?.care_type || caseData.patientCareType
@@ -100,14 +104,15 @@ export function useCaseAPI() {
       entryDate: caseData.entryDate,
       requestingPhysician: apiResponse.requesting_physician || caseData.requestingPhysician,
       service: caseData.service,
-        priority: apiResponse.priority || caseData.casePriority || 'Normal',
+      priority: apiResponse.priority || caseData.casePriority || 'Normal',
       samples: caseData.samples,
       observations: apiResponse.observations || caseData.observations || '',
-        state: stateEs,
+      state: stateEs,
       creationDate: apiResponse.created_at || new Date().toISOString()
     }
   }
 
+  // Public API: create case and return success/result for UI handling
   const createCase = async (caseData: CaseFormData, verifiedPatient?: any): Promise<CaseCreationResult> => {
     isLoading.value = true
     error.value = ''
@@ -116,12 +121,6 @@ export function useCaseAPI() {
       if (!verifiedPatient) throw new Error('Información del paciente verificado requerida')
 
       const apiRequest = await transformCaseFormToApiRequest(caseData, verifiedPatient)
-      
-      // Debug: mostrar la estructura que se envía al backend
-      console.log('Enviando al backend - Estructura completa:', apiRequest)
-      console.log('Enviando al backend - Patient info:', apiRequest.patient_info)
-      console.log('Enviando al backend - Samples:', apiRequest.samples)
-      
       const apiResponse = await casesApiService.createCase(apiRequest)
       
       if (apiResponse?.case_code) {
