@@ -8,19 +8,27 @@ import type {
 
 class BillingCreateService {
   private readonly facturacionEndpoint = API_CONFIG.ENDPOINTS.FACTURACION
+  private readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  private trimOrEmpty = (v?: string) => (v ?? '').toString().trim()
+  private isEmailValid = (email: string) => this.EMAIL_REGEX.test(email)
 
   async createFacturacion(facturacionData: BillingCreateRequest): Promise<BillingCreateResponse> {
     try {
+      const payload: BillingCreateRequest = {
+        billing_name: this.trimOrEmpty(facturacionData.billing_name),
+        billing_code: this.trimOrEmpty(facturacionData.billing_code),
+        billing_email: this.trimOrEmpty(facturacionData.billing_email),
+        password: this.trimOrEmpty(facturacionData.password),
+        observations: this.trimOrEmpty(facturacionData.observations),
+        is_active: !!facturacionData.is_active
+      }
+
       const response: AxiosResponse<BillingCreateResponse> = await apiClient.post<BillingCreateResponse>(
         `${this.facturacionEndpoint}/`,
-        facturacionData
+        payload
       )
-      
-      if (response.data === undefined) {
-        return response as any
-      }
-      
-      return response.data
+
+      return (response as any).data ?? (response as any)
     } catch (error: any) {
       console.error('Error creating facturacion:', error)
       
@@ -43,10 +51,13 @@ class BillingCreateService {
 
   async checkEmailExists(email: string): Promise<boolean> {
     try {
+      const normalized = this.trimOrEmpty(email)
+      if (!normalized) return false
       const response = await apiClient.get(
-        `${this.facturacionEndpoint}/search?billing_email=${encodeURIComponent(email)}`
+        `${this.facturacionEndpoint}/search?billing_email=${encodeURIComponent(normalized)}`
       )
-      return response && response.length > 0
+      const list = Array.isArray(response) ? response : (response as any)?.data
+      return Array.isArray(list) && list.length > 0
     } catch (error: any) {
       if (error.response?.status === 404) {
         return false
@@ -58,39 +69,28 @@ class BillingCreateService {
   validateFacturacionData(data: BillingCreateRequest): { isValid: boolean; errors: string[] } {
     const errors: string[] = []
 
-    if (!data.billing_name?.trim()) {
-      errors.push('El nombre es requerido')
-    } else if (data.billing_name.length < 2) {
-      errors.push('El nombre debe tener al menos 2 caracteres')
-    } else if (data.billing_name.length > 200) {
-      errors.push('El nombre no puede exceder 200 caracteres')
-    }
+    const name = this.trimOrEmpty(data.billing_name)
+    const code = this.trimOrEmpty(data.billing_code)
+    const email = this.trimOrEmpty(data.billing_email)
+    const password = this.trimOrEmpty(data.password)
+    const observations = this.trimOrEmpty(data.observations)
 
-    if (!data.billing_code?.trim()) {
-      errors.push('El código es requerido')
-    } else if (data.billing_code.length < 3) {
-      errors.push('El código debe tener al menos 3 caracteres')
-    } else if (data.billing_code.length > 20) {
-      errors.push('El código no puede exceder 20 caracteres')
-    }
+    if (!name) errors.push('El nombre es requerido')
+    else if (name.length < 2) errors.push('El nombre debe tener al menos 2 caracteres')
+    else if (name.length > 200) errors.push('El nombre no puede exceder 200 caracteres')
 
-    if (!data.billing_email?.trim()) {
-      errors.push('El email es requerido')
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.billing_email)) {
-      errors.push('El email no tiene un formato válido')
-    }
+    if (!code) errors.push('El código es requerido')
+    else if (code.length < 3) errors.push('El código debe tener al menos 3 caracteres')
+    else if (code.length > 20) errors.push('El código no puede exceder 20 caracteres')
 
-    if (!data.password?.trim()) {
-      errors.push('La contraseña es requerida')
-    } else if (data.password.length < 6) {
-      errors.push('La contraseña debe tener al menos 6 caracteres')
-    } else if (data.password.length > 128) {
-      errors.push('La contraseña no puede exceder 128 caracteres')
-    }
+    if (!email) errors.push('El email es requerido')
+    else if (!this.isEmailValid(email)) errors.push('El email no tiene un formato válido')
 
-    if (data.observations && data.observations.length > 500) {
-      errors.push('Las observaciones no pueden exceder 500 caracteres')
-    }
+    if (!password) errors.push('La contraseña es requerida')
+    else if (password.length < 6) errors.push('La contraseña debe tener al menos 6 caracteres')
+    else if (password.length > 128) errors.push('La contraseña no puede exceder 128 caracteres')
+
+    if (observations && observations.length > 500) errors.push('Las observaciones no pueden exceder 500 caracteres')
 
     return { isValid: errors.length === 0, errors }
   }

@@ -303,6 +303,7 @@ const handleAuxiliaryCreated = async (createdAuxiliaryData: any) => {
   createdAuxiliary.value = createdAuxiliaryData
   showNotification('success', '¡Auxiliar Registrado Exitosamente!', '')
   emit('usuario-creado', { ...localModel })
+  ;(localModel as any).passwordConfirm = ''
   await scrollToNotification()
 }
 

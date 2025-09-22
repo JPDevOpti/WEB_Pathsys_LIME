@@ -21,16 +21,23 @@ export interface BillingUpdate {
 
 class BillingApiService {
   private static readonly BASE_URL = `${API_CONFIG.BASE_URL}${API_CONFIG.VERSION}/billing`
+  private static readonly logPrefix = '[BillingApiService]'
+
+  private static trimOrEmpty(value?: string) {
+    return (value ?? '').toString().trim()
+  }
 
   /**
    * Obtener usuario de facturación por código
    */
   static async getByCode(code: string): Promise<BillingResponse | null> {
     try {
-      const billing = await apiClient.get<BillingResponse>(`${this.BASE_URL}/${code}`)
+      const normalized = this.trimOrEmpty(code)
+      if (!normalized) return null
+      const billing = await apiClient.get<BillingResponse>(`${this.BASE_URL}/${normalized}`)
       return billing
     } catch (error) {
-      console.error('Error al obtener usuario de facturación:', error)
+      console.error(`${this.logPrefix} getByCode error:`, error)
       return null
     }
   }
@@ -40,23 +47,14 @@ class BillingApiService {
    */
   static async getByEmail(email: string): Promise<BillingResponse | null> {
     try {
-      console.log('🔍 BillingApiService.getByEmail - Buscando usuario de facturación para:', email)
+      const normalized = this.trimOrEmpty(email)
+      if (!normalized) return null
       const billingUsers = await apiClient.get<BillingResponse[]>(`${this.BASE_URL}/search`, {
-        params: { q: email, limit: 1 }
+        params: { q: normalized, limit: 1 }
       })
-      
-      console.log('📋 BillingApiService.getByEmail - Respuesta completa:', billingUsers)
-      
-      // El endpoint devuelve un array directamente
-      if (Array.isArray(billingUsers) && billingUsers.length > 0) {
-        console.log('✅ BillingApiService.getByEmail - Usuario de facturación encontrado:', billingUsers[0])
-        return billingUsers[0] as BillingResponse
-      }
-      
-      console.log('❌ BillingApiService.getByEmail - No se encontraron usuarios de facturación')
-      return null
+      return Array.isArray(billingUsers) && billingUsers.length > 0 ? billingUsers[0] : null
     } catch (error) {
-      console.error('❌ BillingApiService.getByEmail - Error al buscar usuario de facturación por email:', error)
+      console.error(`${this.logPrefix} getByEmail error:`, error)
       return null
     }
   }
@@ -66,10 +64,12 @@ class BillingApiService {
    */
   static async update(code: string, data: BillingUpdate): Promise<BillingResponse | null> {
     try {
-      const billing = await apiClient.put<BillingResponse>(`${this.BASE_URL}/${code}`, data)
+      const normalized = this.trimOrEmpty(code)
+      if (!normalized) return null
+      const billing = await apiClient.put<BillingResponse>(`${this.BASE_URL}/${normalized}`, data)
       return billing
     } catch (error) {
-      console.error('Error al actualizar usuario de facturación:', error)
+      console.error(`${this.logPrefix} update error:`, error)
       return null
     }
   }

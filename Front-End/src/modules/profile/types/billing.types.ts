@@ -1,4 +1,4 @@
-`// Types for the billing module
+// Types for the billing module
 
 // Creation form
 export interface BillingFormModel {

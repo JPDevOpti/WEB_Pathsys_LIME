@@ -8,6 +8,7 @@ import type {
 } from '../types/billing.types'
 
 export function useBillingCreation() {
+  // Local state for request/feedback
   const state = reactive<BillingCreationState>({
     isLoading: false,
     isSuccess: false,
@@ -18,58 +19,49 @@ export function useBillingCreation() {
   const emailValidationError = ref('')
   const isCheckingEmail = ref(false)
 
+  // Helpers
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const isEmailValid = (email: string) => EMAIL_REGEX.test(email)
+  const trimOrEmpty = (value?: string) => (value?.trim() ?? '')
+
   const validateForm = (formData: BillingFormModel): BillingFormValidation => {
+    const name = trimOrEmpty(formData.billingName)
+    const code = trimOrEmpty(formData.billingCode)
+    const email = trimOrEmpty(formData.billingEmail)
+    const password = trimOrEmpty(formData.password)
+    const observations = formData.observations || ''
+
     const errors: BillingFormValidation['errors'] = {}
 
-    if (!formData.facturacionName?.trim()) {
-      errors.facturacionName = 'El nombre es requerido'
-    } else if (formData.facturacionName.length < 2) {
-      errors.facturacionName = 'El nombre debe tener al menos 2 caracteres'
-    } else if (formData.facturacionName.length > 200) {
-      errors.facturacionName = 'El nombre no puede exceder 200 caracteres'
-    }
+    if (!name) errors.billingName = 'El nombre es requerido'
+    else if (name.length < 2) errors.billingName = 'El nombre debe tener al menos 2 caracteres'
+    else if (name.length > 200) errors.billingName = 'El nombre no puede exceder 200 caracteres'
 
-    if (!formData.facturacionCode?.trim()) {
-      errors.facturacionCode = 'El código es requerido'
-    } else if (formData.facturacionCode.length < 3) {
-      errors.facturacionCode = 'El código debe tener al menos 3 caracteres'
-    } else if (formData.facturacionCode.length > 20) {
-      errors.facturacionCode = 'El código no puede exceder 20 caracteres'
-    }
+    if (!code) errors.billingCode = 'El código es requerido'
+    else if (code.length < 3) errors.billingCode = 'El código debe tener al menos 3 caracteres'
+    else if (code.length > 20) errors.billingCode = 'El código no puede exceder 20 caracteres'
 
-    if (!formData.FacturacionEmail?.trim()) {
-      errors.FacturacionEmail = 'El email es requerido'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.FacturacionEmail)) {
-      errors.FacturacionEmail = 'El email no tiene un formato válido'
-    }
+    if (!email) errors.billingEmail = 'El email es requerido'
+    else if (!isEmailValid(email)) errors.billingEmail = 'El email no tiene un formato válido'
 
-    if (!formData.password?.trim()) {
-      errors.password = 'La contraseña es requerida'
-    } else if (formData.password.length < 6) {
-      errors.password = 'La contraseña debe tener al menos 6 caracteres'
-    } else if (formData.password.length > 128) {
-      errors.password = 'La contraseña no puede exceder 128 caracteres'
-    }
+    if (!password) errors.password = 'La contraseña es requerida'
+    else if (password.length < 6) errors.password = 'La contraseña debe tener al menos 6 caracteres'
+    else if (password.length > 128) errors.password = 'La contraseña no puede exceder 128 caracteres'
 
-    if (formData.observaciones && formData.observaciones.length > 500) {
-      errors.observaciones = 'Las observaciones no pueden exceder 500 caracteres'
-    }
+    if (observations && observations.length > 500) errors.observations = 'Las observaciones no pueden exceder 500 caracteres'
 
     return { isValid: Object.keys(errors).length === 0, errors }
   }
 
   const checkEmailAvailability = async (email: string): Promise<boolean> => {
-    if (!email?.trim()) return true
-
+    const normalized = trimOrEmpty(email)
+    if (!normalized) return true
     isCheckingEmail.value = true
     emailValidationError.value = ''
 
     try {
-      const exists = await billingCreateService.checkEmailExists(email)
-      if (exists) {
-        emailValidationError.value = 'Este email ya está en uso'
-        return false
-      }
+      const exists = await billingCreateService.checkEmailExists(normalized)
+      if (exists) { emailValidationError.value = 'Este email ya está en uso'; return false }
       return true
     } catch (error) {
       console.error('Error checking email availability:', error)
@@ -81,11 +73,11 @@ export function useBillingCreation() {
   }
 
   const normalizeFacturacionData = (formData: BillingFormModel): BillingCreateRequest => ({
-    billing_name: formData.facturacionName.trim(),
-    billing_code: formData.facturacionCode.trim(),
-    billing_email: formData.FacturacionEmail.trim(),
+    billing_name: trimOrEmpty(formData.billingName),
+    billing_code: trimOrEmpty(formData.billingCode),
+    billing_email: trimOrEmpty(formData.billingEmail),
     password: formData.password,
-    observations: formData.observaciones?.trim() || '',
+    observations: trimOrEmpty(formData.observations),
     is_active: formData.isActive
   })
 
@@ -101,11 +93,8 @@ export function useBillingCreation() {
         return { success: false }
       }
 
-      const emailAvailable = await checkEmailAvailability(formData.FacturacionEmail)
-      if (!emailAvailable) {
-        state.error = 'El email ya está en uso'
-        return { success: false }
-      }
+      const emailAvailable = await checkEmailAvailability(formData.billingEmail)
+      if (!emailAvailable) { state.error = 'El email ya está en uso'; return { success: false } }
 
       const facturacionData = normalizeFacturacionData(formData)
       const result = await billingCreateService.createFacturacion(facturacionData)

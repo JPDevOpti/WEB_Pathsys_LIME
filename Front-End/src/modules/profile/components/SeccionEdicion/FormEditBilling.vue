@@ -1,4 +1,5 @@
 <template>
+  <div v-if="localModel.billingCode" class="space-y-6">
   <form @submit.prevent="submit" class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4">
     <div class="col-span-full">
       <h4 class="text-base font-semibold text-gray-800">Editar Usuario de Facturación</h4>
@@ -84,7 +85,7 @@
         :message="notification.message"
         :inline="true"
         :auto-close="false"
-        @close="() => {}"
+        @close="closeNotification"
       >
         <template v-if="notification.type === 'success' && updatedFacturacion" #content>
           <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -127,9 +128,14 @@
       :errors="validationErrors"
     />
   </form>
+  </div>
+  <div v-else class="text-center py-8">
+    <p class="text-gray-500">No se pudieron cargar los datos de facturación para edición.</p>
+  </div>
 </template>
 
 <script setup lang="ts">
+// Edit billing user form: validates edits, updates via API, and shows inline notifications
 import { reactive, computed, watch, nextTick, ref } from 'vue'
 import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
@@ -137,7 +143,8 @@ import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useBillingEdition } from '../../composables/useBillingEdition'
 import type { BillingEditFormModel } from '../../types/billing.types'
 
-const modelValue = defineModel<BillingEditFormModel>({ required: true })
+const modelValue = defineModel<BillingEditFormModel>({ required: false })
+const props = defineProps<{ usuario?: any; facturacion?: any; selectedUser?: any }>()
 const emit = defineEmits<{ (e: 'usuario-actualizado', payload: BillingEditFormModel): void }>()
 
 const notificationContainer = ref<HTMLElement | null>(null)
@@ -165,11 +172,19 @@ const {
   clearMessages
 } = useBillingEdition()
 
-const localModel = reactive<BillingEditFormModel>({ 
-  ...modelValue.value,
+// Normalize incoming model (maps snake_case from API to camelCase expected here)
+const normalizeIncoming = (mv: Partial<BillingEditFormModel> | any): BillingEditFormModel => ({
+  id: (mv.id ?? '').toString(),
+  billingName: (mv.billingName ?? mv.billing_name ?? mv.facturacionName ?? mv.nombre ?? '').toString(),
+  billingCode: (mv.billingCode ?? mv.billing_code ?? mv.facturacionCode ?? mv.codigo ?? '').toString(),
+  billingEmail: (mv.billingEmail ?? mv.billing_email ?? mv.FacturacionEmail ?? mv.email ?? '').toString(),
+  observations: (mv.observations ?? mv.observaciones ?? '').toString(),
+  isActive: mv.isActive !== undefined ? !!mv.isActive : (mv.is_active !== undefined ? !!mv.is_active : true),
   password: '',
   passwordConfirm: ''
 })
+
+const localModel = reactive<BillingEditFormModel>(normalizeIncoming(modelValue.value))
 
 const formErrors = reactive({
   billingName: '',
@@ -196,10 +211,35 @@ const passwordValue = computed({
   }
 })
 
-watch(() => modelValue.value, (newValue) => {
-  Object.assign(localModel, newValue)
-  setInitialData(newValue)
+watch(() => modelValue?.value, (newValue) => {
+  if (!newValue) { console.debug('[FormEditBilling] modelValue empty'); return }
+  console.debug('[FormEditBilling] modelValue received:', newValue)
+  const normalized = normalizeIncoming(newValue)
+  Object.assign(localModel, normalized)
+  setInitialData(normalized)
 }, { deep: true })
+
+// Allow loading from prop `usuario` (like auxiliary edit)
+const normalizeFromUsuario = (u: any): BillingEditFormModel => ({
+  id: (u?.id ?? '').toString(),
+  billingName: (u?.billingName ?? u?.billing_name ?? u?.nombre ?? u?.name ?? '').toString(),
+  billingCode: (u?.billingCode ?? u?.billing_code ?? u?.codigo ?? u?.code ?? '').toString(),
+  billingEmail: (u?.billingEmail ?? u?.billing_email ?? u?.email ?? '').toString(),
+  observations: (u?.observations ?? u?.observaciones ?? '').toString(),
+  isActive: u?.isActive !== undefined ? !!u.isActive : (u?.is_active !== undefined ? !!u.is_active : true),
+  password: '',
+  passwordConfirm: ''
+})
+
+const pickIncoming = (p: any) => p?.usuario ?? p?.facturacion ?? p?.selectedUser ?? null
+
+watch(() => pickIncoming(props), (u) => {
+  if (!u) { console.debug('[FormEditBilling] incoming user empty'); return }
+  console.debug('[FormEditBilling] incoming user received:', u)
+  const normalized = normalizeFromUsuario(u)
+  Object.assign(localModel, normalized)
+  setInitialData(normalized)
+}, { immediate: true, deep: true })
 
 watch(() => localModel, () => {
   if (validationState.hasAttemptedSubmit && !notification.visible) {
@@ -208,13 +248,18 @@ watch(() => localModel, () => {
   }
 }, { deep: true })
 
+// Reusable email regex and helpers
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const isEmailValid = (email: string) => EMAIL_REGEX.test(email)
+
+// Field-level email validation with server-side availability errors surfaced from composable
 const validateEmail = async () => {
   formErrors.billingEmail = ''
   if (!localModel.billingEmail?.trim()) {
     formErrors.billingEmail = 'El email es requerido'
     return
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(localModel.billingEmail)) {
+  if (!isEmailValid(localModel.billingEmail)) {
     formErrors.billingEmail = 'Formato de email inválido'
     return
   }
@@ -251,18 +296,21 @@ const scrollToNotification = async () => {
   }
 }
 
+// Submit handler: validates optional password rules, runs schema validation, updates and shows result
 const submit = async () => {
   validationState.hasAttemptedSubmit = true
   clearFormErrors()
   clearNotification()
   
-  if (localModel.password && localModel.password.trim().length > 0) {
-    if (localModel.password.trim().length < 6) {
+  const pwd = (localModel.password || '').trim()
+  const pwdConfirm = (localModel.passwordConfirm || '').trim()
+  if (pwd.length > 0) {
+    if (pwd.length < 6) {
       formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
       validationState.showValidationError = true
       return
     }
-    if (localModel.password !== localModel.passwordConfirm) {
+    if (pwd !== pwdConfirm) {
       formErrors.passwordConfirm = 'Las contraseñas no coinciden'
       validationState.showValidationError = true
       return
@@ -316,6 +364,9 @@ const handleFacturacionUpdated = async (data: any) => {
   
   showNotification('success', '¡Usuario de Facturación Actualizado Exitosamente!', '')
   emit('usuario-actualizado', { ...localModel })
+  // Clear sensitive password fields after successful update
+  localModel.password = ''
+  localModel.passwordConfirm = ''
   await scrollToNotification()
 }
 

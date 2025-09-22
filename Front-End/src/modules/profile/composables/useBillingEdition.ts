@@ -1,3 +1,6 @@
+// Billing edition composable: validates edit form, prepares payloads, updates via API,
+// and exposes helpers to track original data and UI messages. Keep field names aligned
+// with BillingEditFormModel (billingName, billingEmail, observations, billingCode).
 import { ref, reactive } from 'vue'
 import { billingEditService } from '../services/billingEditService'
 import type { 
@@ -7,6 +10,7 @@ import type {
 } from '../types/billing.types'
 
 export const useBillingEdition = () => {
+  // Request/feedback state used by UI
   const state = reactive<BillingEditionState>({
     isLoading: false,
     isSuccess: false,
@@ -17,42 +21,42 @@ export const useBillingEdition = () => {
   const emailValidationError = ref('')
   const originalData = ref<BillingEditFormModel | null>(null)
 
+  // Helpers (keep consistent with creation composable)
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const isEmailValid = (email: string) => EMAIL_REGEX.test(email)
+  const trimOrEmpty = (value?: string) => (value?.trim() ?? '')
+
+  // Validate the edition form. Password is optional but must meet rules if provided.
   const validateForm = (form: BillingEditFormModel): BillingEditFormValidation => {
     const errors: BillingEditFormValidation['errors'] = {}
 
-    if (!form.facturacionName?.trim()) {
-      errors.facturacionName = 'El nombre es requerido'
-    } else if (form.facturacionName.length < 2) {
-      errors.facturacionName = 'El nombre debe tener al menos 2 caracteres'
-    } else if (form.facturacionName.length > 200) {
-      errors.facturacionName = 'El nombre no puede exceder 200 caracteres'
+    const name = trimOrEmpty(form.billingName)
+    const email = trimOrEmpty(form.billingEmail)
+    const observations = form.observations || ''
+    const pwd = trimOrEmpty(form.password)
+    const pwdConfirm = trimOrEmpty(form.passwordConfirm)
+
+    if (!name) errors.billingName = 'El nombre es requerido'
+    else if (name.length < 2) errors.billingName = 'El nombre debe tener al menos 2 caracteres'
+    else if (name.length > 200) errors.billingName = 'El nombre no puede exceder 200 caracteres'
+
+    if (!email) errors.billingEmail = 'El email es requerido'
+    else if (!isEmailValid(email)) errors.billingEmail = 'El email no tiene un formato válido'
+
+    if (observations && observations.length > 500) {
+      errors.observations = 'Las observaciones no pueden exceder 500 caracteres'
     }
 
-    if (!form.FacturacionEmail?.trim()) {
-      errors.FacturacionEmail = 'El email es requerido'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.FacturacionEmail)) {
-      errors.FacturacionEmail = 'El email no tiene un formato válido'
-    }
-
-    if (form.observaciones && form.observaciones.length > 500) {
-      errors.observaciones = 'Las observaciones no pueden exceder 500 caracteres'
-    }
-
-    if (form.password && form.password.trim().length > 0) {
-      if (form.password.length < 6) {
-        errors.password = 'La contraseña debe tener al menos 6 caracteres'
-      } else if (form.password.length > 128) {
-        errors.password = 'La contraseña no puede exceder 128 caracteres'
-      }
-      
-      if (form.passwordConfirm && form.password !== form.passwordConfirm) {
-        errors.passwordConfirm = 'Las contraseñas no coinciden'
-      }
+    if (pwd.length > 0) {
+      if (pwd.length < 6) errors.password = 'La contraseña debe tener al menos 6 caracteres'
+      else if (pwd.length > 128) errors.password = 'La contraseña no puede exceder 128 caracteres'
+      if (pwd !== pwdConfirm) errors.passwordConfirm = 'Las contraseñas no coinciden'
     }
 
     return { isValid: Object.keys(errors).length === 0, errors }
   }
 
+  // Calls backend to update an existing billing user by code
   const update = async (form: BillingEditFormModel) => {
     state.isLoading = true
     state.error = ''
@@ -66,7 +70,7 @@ export const useBillingEdition = () => {
       }
 
       const updateData = billingEditService.prepareUpdateData(form)
-      const result = await billingEditService.updateByCode(form.facturacionCode, updateData)
+      const result = await billingEditService.updateByCode(form.billingCode, updateData)
 
       if (result.success) {
         state.isSuccess = true
@@ -86,23 +90,29 @@ export const useBillingEdition = () => {
     }
   }
 
+  // Store original data to compare changes or reset
   const setInitialData = (data: BillingEditFormModel) => { 
     originalData.value = { ...data } 
   }
   
+  // Return a copy of original data if present
   const resetToOriginal = () => (originalData.value ? { ...originalData.value } : null)
   
+  // Clear transient UI messages
   const clearMessages = () => { 
     emailValidationError.value = '' 
+    state.error = ''
+    state.successMessage = ''
   }
 
+  // Compare current values against the captured originals to know if there are changes
   const createHasChanges = (current: BillingEditFormModel) => {
     if (!originalData.value) return false
     
     return (
-      current.facturacionName !== originalData.value.facturacionName ||
-      current.FacturacionEmail !== originalData.value.FacturacionEmail ||
-      current.observaciones !== originalData.value.observaciones ||
+      current.billingName !== originalData.value.billingName ||
+      current.billingEmail !== originalData.value.billingEmail ||
+      current.observations !== originalData.value.observations ||
       current.isActive !== originalData.value.isActive ||
       (current.password && current.password.trim() !== '')
     )

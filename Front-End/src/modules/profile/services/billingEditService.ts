@@ -15,11 +15,16 @@ export interface FacturacionEditResult {
 
 class BillingEditService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.FACTURACION
+  private trimOrEmpty = (v?: string) => (v ?? '').toString().trim()
 
+  // Obtener usuario de facturación por código
   async getByCode(code: string): Promise<FacturacionEditResult> {
     try {
-      const response: AxiosResponse<BillingUpdateResponse> = await apiClient.get<BillingUpdateResponse>(`${this.endpoint}/${code}`)
-      return { success: true, data: response.data }
+      const normalized = this.trimOrEmpty(code)
+      if (!normalized) return { success: false, error: 'Código inválido' }
+      const response: AxiosResponse<BillingUpdateResponse> | BillingUpdateResponse = await apiClient.get<BillingUpdateResponse>(`${this.endpoint}/${normalized}`)
+      const data = (response as any).data ?? (response as any)
+      return { success: true, data }
     } catch (error: any) {
       return { 
         success: false, 
@@ -28,10 +33,14 @@ class BillingEditService {
     }
   }
 
+  // Actualizar usuario de facturación por código
   async updateByCode(code: string, data: BillingUpdateRequest): Promise<FacturacionEditResult> {
     try {
-      const response: AxiosResponse<BillingUpdateResponse> = await apiClient.put<BillingUpdateResponse>(`${this.endpoint}/${code}`, data)
-      return { success: true, data: response.data }
+      const normalized = this.trimOrEmpty(code)
+      if (!normalized) return { success: false, error: 'Código inválido' }
+      const response: AxiosResponse<BillingUpdateResponse> | BillingUpdateResponse = await apiClient.put<BillingUpdateResponse>(`${this.endpoint}/${normalized}`, data)
+      const payload = (response as any).data ?? (response as any)
+      return { success: true, data: payload }
     } catch (error: any) {
       return { 
         success: false, 
@@ -40,14 +49,22 @@ class BillingEditService {
     }
   }
 
+  // Preparar payload de actualización desde el formulario de edición (camelCase -> snake_case)
   prepareUpdateData(formModel: BillingEditFormModel): BillingUpdateRequest {
-    return {
-      billing_name: formModel.facturacionName,
-      billing_email: formModel.FacturacionEmail,
-      observations: formModel.observaciones,
-      is_active: formModel.isActive,
-      password: formModel.password || undefined
+    const billing_name = this.trimOrEmpty((formModel as any).billingName ?? (formModel as any).facturacionName)
+    const billing_email = this.trimOrEmpty((formModel as any).billingEmail ?? (formModel as any).FacturacionEmail)
+    const observations = this.trimOrEmpty((formModel as any).observations ?? (formModel as any).observaciones)
+    const is_active = !!formModel.isActive
+    const password = this.trimOrEmpty(formModel.password)
+
+    const payload: BillingUpdateRequest = {
+      billing_name,
+      billing_email,
+      observations,
+      is_active,
+      ...(password ? { password } : {})
     }
+    return payload
   }
 }
 

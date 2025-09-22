@@ -43,6 +43,17 @@
       autocomplete="new-password" 
     />
 
+    <FormInputField 
+      class="col-span-full md:col-span-6" 
+      label="Confirmar contraseña" 
+      type="password" 
+      placeholder="••••••••" 
+      :model-value="(localModel as any).passwordConfirm || ''"
+      @update:model-value="val => ((localModel as any).passwordConfirm = val)"
+      :error="(formErrors as any).passwordConfirm"
+      autocomplete="new-password" 
+    />
+
     <FormTextarea 
       class="col-span-full" 
       label="Observaciones" 
@@ -59,7 +70,7 @@
     <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
       <ClearButton type="button" @click="onClear" :disabled="isLoading" />
       <SaveButton 
-        text="Guardar Usuario de Facturación" 
+        text="Guardar Facturacion" 
         type="submit" 
         :disabled="!canSubmit || isLoading"
         :loading="isLoading"
@@ -121,6 +132,7 @@
 </template>
 
 <script setup lang="ts">
+// Billing user creation form: validates inputs, submits to API, and shows inline notifications
 import { reactive, computed, watch, nextTick, ref } from 'vue'
 import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
@@ -157,28 +169,46 @@ const {
   clearMessages
 } = useBillingCreation()
 
-const localModel = reactive<BillingFormModel>({ ...modelValue.value })
+// Local copy of model for two-way binding
+// Normalize incoming model from parent to ensure all fields are defined (avoid undefined warnings)
+const normalizeIncoming = (mv: Partial<BillingFormModel> | any): BillingFormModel => ({
+  billingName: (mv.billingName ?? mv.facturacionName ?? '').toString(),
+  billingCode: (mv.billingCode ?? mv.facturacionCode ?? '').toString(),
+  billingEmail: (mv.billingEmail ?? mv.FacturacionEmail ?? '').toString(),
+  password: (mv.password ?? '').toString(),
+  observations: (mv.observations ?? mv.observaciones ?? '').toString(),
+  isActive: mv.isActive !== undefined ? !!mv.isActive : true
+})
 
+const localModel = reactive<BillingFormModel>(normalizeIncoming(modelValue.value))
+;(localModel as any).passwordConfirm = ''
+
+// Field-level error messages
 const formErrors = reactive({
   billingName: '',
   billingCode: '',
   billingEmail: '',
   password: '',
+  passwordConfirm: '',
   observations: ''
 })
 
+// Banner errors: include base validation + password specific ones
 const validationErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
   const validation = validateForm(localModel)
-  if (!validation.isValid) return Object.values(validation.errors)
-  return []
+  const base = validation.isValid ? [] : Object.values(validation.errors)
+  const extra: string[] = []
+  if ((formErrors as any).password) extra.push((formErrors as any).password)
+  if ((formErrors as any).passwordConfirm) extra.push((formErrors as any).passwordConfirm)
+  return [...base, ...extra]
 })
 
 const canSubmit = computed(() => true)
 
 watch(() => modelValue.value, (newValue) => {
-  Object.assign(localModel, newValue)
-}, { deep: true })
+  Object.assign(localModel, normalizeIncoming(newValue))
+}, { deep: true, immediate: true })
 
 watch(() => localModel, () => {
   if (validationState.hasAttemptedSubmit && !notification.visible) {
@@ -225,6 +255,7 @@ const clearFormErrors = () => {
   })
 }
 
+// Inline notification helpers
 const showNotification = (type: typeof notification.type, title: string, message: string) => {
   notification.type = type
   notification.title = title
@@ -271,6 +302,24 @@ const submit = async () => {
   clearFormErrors()
   clearNotification()
   
+  // Local password confirmation validation
+  const pwd = (localModel.password || '').trim()
+  const pwdConfirm = (((localModel as any).passwordConfirm as string) || '').trim()
+  if (!pwd) {
+    formErrors.password = 'La contraseña es requerida'
+  } else if (pwd.length < 6) {
+    formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+  }
+  if (pwdConfirm && pwd !== pwdConfirm) {
+    ;(formErrors as any).passwordConfirm = 'Las contraseñas no coinciden'
+  } else if (!pwdConfirm) {
+    ;(formErrors as any).passwordConfirm = 'La confirmación de contraseña es requerida'
+  }
+  if (formErrors.password || (formErrors as any).passwordConfirm) {
+    validationState.showValidationError = true
+    return
+  }
+
   const validation = validateForm(localModel)
   if (!validation.isValid) {
     validationState.showValidationError = true
@@ -303,8 +352,6 @@ const handleFacturacionCreated = async (createdFacturacionData: any) => {
 }
 
 const handleFacturacionCreationError = async (error: any) => {
-  console.error('Error al guardar usuario de facturación:', error)
-  
   let errorMessage = 'No se pudo guardar el usuario de facturación. Por favor, inténtelo nuevamente.'
   let errorTitle = 'Error al Guardar Usuario de Facturación'
   
@@ -341,6 +388,7 @@ const clearForm = () => {
   Object.assign(localModel, { 
     billingName: '', billingCode: '', billingEmail: '', password: '', observations: '', isActive: true
   })
+  ;(localModel as any).passwordConfirm = ''
 }
 
 const onClear = () => {
