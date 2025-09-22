@@ -20,13 +20,13 @@ export interface ResidentFormModel {
  * Request para crear un nuevo residente (colección residentes)
  */
 export interface ResidentCreateRequest {
-  residente_name: string
-  iniciales_residente: string
-  residente_code: string
-  residente_email: string
-  registro_medico: string
+  resident_name: string
+  initials: string
+  resident_code: string
+  resident_email: string
+  medical_license: string
   password: string // Contraseña para crear el usuario asociado
-  observaciones: string
+  observations: string
   is_active: boolean
 }
 
@@ -35,15 +35,15 @@ export interface ResidentCreateRequest {
  */
 export interface ResidentCreateResponse {
   id: string
-  residente_name: string
-  iniciales_residente: string
-  residente_code: string
-  residente_email: string
-  registro_medico: string
-  observaciones: string
+  resident_name: string
+  initials: string
+  resident_code: string
+  resident_email: string
+  medical_license: string
+  observations: string
   is_active: boolean
-  fecha_creacion: string
-  fecha_actualizacion?: string
+  created_at: string
+  updated_at?: string
 }
 
 /**
@@ -92,11 +92,11 @@ export interface ResidentEditFormModel {
  * Request para actualizar un residente
  */
 export interface ResidentUpdateRequest {
-  residente_name: string
-  iniciales_residente: string
-  residente_email: string
-  registro_medico: string
-  observaciones: string
+  resident_name: string
+  initials: string
+  resident_email: string
+  medical_license: string
+  observations: string
   is_active: boolean
   password?: string
 }
@@ -106,15 +106,15 @@ export interface ResidentUpdateRequest {
  */
 export interface ResidentUpdateResponse {
   id: string
-  residenteName: string
-  InicialesResidente: string
-  residenteCode: string
-  ResidenteEmail: string
-  registro_medico: string
-  observaciones: string
-  isActive: boolean
-  fecha_creacion: string
-  fecha_actualizacion: string
+  resident_name: string
+  initials: string
+  resident_code: string
+  resident_email: string
+  medical_license: string
+  observations: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
 /**

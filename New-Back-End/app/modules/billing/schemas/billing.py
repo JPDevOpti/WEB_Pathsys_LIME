@@ -17,7 +17,7 @@ class BillingBase(BaseModel):
 
 class BillingCreate(BillingBase):
     """Esquema para crear un nuevo usuario de facturación"""
-    pass
+    password: str = Field(..., min_length=6, max_length=128, description="Contraseña del usuario de facturación")
 
 class BillingUpdate(BaseModel):
     """Esquema para actualizar un usuario de facturación existente"""
@@ -25,6 +25,7 @@ class BillingUpdate(BaseModel):
     billing_email: Optional[EmailStr] = Field(None, description="Email único del usuario de facturación")
     is_active: Optional[bool] = Field(None, description="Estado activo/inactivo del usuario de facturación")
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
+    password: Optional[str] = Field(None, min_length=6, max_length=128, description="Nueva contraseña del usuario de facturación")
 
     class Config:
         populate_by_name = True

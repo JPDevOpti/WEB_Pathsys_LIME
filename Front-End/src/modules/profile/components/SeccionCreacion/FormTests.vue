@@ -9,16 +9,38 @@
       class="col-span-full md:col-span-6" 
       label="Nombre de la prueba" 
       placeholder="Ejemplo: Biopsia" 
-      v-model="localModel.pruebasName"
-      :error="formErrors.pruebasName"
+      v-model="localModel.testName"
+      :error="formErrors.testName"
     />
     <FormInputField 
       class="col-span-full md:col-span-6" 
       label="Código de prueba" 
       placeholder="Ejemplo: BIO-01" 
-      v-model="localModel.pruebaCode"
-      :error="formErrors.pruebaCode"
+      v-model="localModel.testCode"
+      :error="formErrors.testCode"
       @blur="validateCode"
+    />
+
+    <!-- Tiempo estimado y Precio -->
+    <FormInputField 
+      class="col-span-full md:col-span-6" 
+      label="Tiempo estimado (días)" 
+      type="number"
+      placeholder="Ej. 7" 
+      v-model.number="localModel.timeDays"
+      :error="formErrors.timeDays"
+      min="1"
+      max="365"
+    />
+    <FormInputField 
+      class="col-span-full md:col-span-6" 
+      label="Precio (COP)" 
+      type="number"
+      placeholder="Ej. 50000" 
+      v-model.number="localModel.price"
+      :error="formErrors.price"
+      min="0"
+      step="100"
     />
 
     <!-- Descripción -->
@@ -26,27 +48,15 @@
       class="col-span-full" 
       label="Descripción" 
       placeholder="Descripción detallada de la prueba" 
-      v-model="localModel.pruebasDescription" 
+      v-model="localModel.testDescription" 
       :rows="3"
-      :error="formErrors.pruebasDescription"
+      :error="formErrors.testDescription"
     />
 
-    <!-- Tiempo estimado y Estado activo -->
-    <FormInputField 
-      class="col-span-full md:col-span-6" 
-      label="Tiempo estimado (días)" 
-      type="number"
-      placeholder="Ej. 7" 
-      v-model.number="localModel.tiempo"
-      :error="formErrors.tiempo"
-      min="1"
-      max="365"
-    />
-    <div class="col-span-full md:col-span-6 flex items-center justify-center pt-6">
+    <!-- Estado activo -->
+    <div class="col-span-full flex items-center justify-center pt-4">
       <FormCheckbox label="Activo" v-model="localModel.isActive" />
     </div>
-
-
 
     <!-- Botones de acción -->
     <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
@@ -75,10 +85,10 @@
             <div class="space-y-4">
               <!-- Información principal de la prueba -->
               <div class="mb-4 pb-3 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdTest.prueba_name }}</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdTest.name }}</h3>
                 <p class="text-gray-600">
                   <span class="font-medium">Código:</span> 
-                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdTest.prueba_code }}</span>
+                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdTest.test_code }}</span>
                 </p>
               </div>
               
@@ -86,7 +96,11 @@
               <div class="space-y-4 text-sm">
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Tiempo estimado:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdTest.tiempo }} día{{ createdTest.tiempo !== 1 ? 's' : '' }}</p>
+                  <p class="text-gray-800 font-semibold">{{ createdTest.time }} día{{ createdTest.time !== 1 ? 's' : '' }}</p>
+                </div>
+                <div>
+                  <span class="text-gray-500 font-medium block mb-1">Precio:</span>
+                  <p class="text-gray-800 font-semibold">${{ createdTest.price?.toLocaleString('es-CO') || '0' }} COP</p>
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Estado:</span>
@@ -97,14 +111,14 @@
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Fecha de creación:</span>
-                  <p class="text-gray-800 font-semibold">{{ formatDate(createdTest.fecha_creacion) }}</p>
+                  <p class="text-gray-800 font-semibold">{{ formatDate(createdTest.created_at) }}</p>
                 </div>
               </div>
               
               <!-- Descripción -->
-              <div v-if="createdTest.prueba_description">
+              <div v-if="createdTest.description">
                 <span class="text-gray-500 font-medium block mb-2">Descripción:</span>
-                <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ createdTest.prueba_description }}</p>
+                <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ createdTest.description }}</p>
               </div>
             </div>
           </div>
@@ -171,50 +185,41 @@ const isLoading = ref(false)
 // Modelo local del formulario
 const localModel = reactive<TestFormModel>({ 
   ...modelValue.value,
-  tiempo: modelValue.value.tiempo || 1
+  timeDays: modelValue.value.timeDays || 1,
+  price: modelValue.value.price || 0
 })
 
 // Errores del formulario
 const formErrors = reactive({
-  pruebaCode: '',
-  pruebasName: '',
-  pruebasDescription: '',
-  tiempo: ''
+  testCode: '',
+  testName: '',
+  testDescription: '',
+  timeDays: '',
+  price: ''
 })
 
 // Lista de errores de validación para mostrar en la alerta
 const validationErrors = computed(() => {
-  // Solo mostrar errores si se ha intentado enviar el formulario
-  if (!validationState.hasAttemptedSubmit) {
-    return []
-  }
+  if (!validationState.hasAttemptedSubmit) return []
   
-  // ✅ Usar la validación del composable para obtener errores estándar
   const validation = validateForm(localModel)
-  if (!validation.isValid) {
-    return Object.values(validation.errors)
-  }
-  
-  return []
+  return validation.isValid ? [] : Object.values(validation.errors)
 })
 
 // Computed para verificar si se puede enviar
-const canSubmit = computed(() => {
-  // ✅ SIEMPRE HABILITADO: El botón de guardar nunca se bloquea
-  return true
-})
+const canSubmit = computed(() => true)
 
 // Watchers
 watch(() => modelValue.value, (newValue) => {
   Object.assign(localModel, {
     ...newValue,
-    tiempo: newValue.tiempo || 1
+    timeDays: newValue.timeDays || 1,
+    price: newValue.price || 0
   })
 }, { deep: true })
 
-// Watcher para detectar cambios en el modelo solo cuando el usuario está escribiendo
+// Watcher para detectar cambios en el modelo
 watch(() => localModel, () => {
-  // Solo reaccionar a cambios si el usuario ya intentó enviar Y hay una notificación activa
   if (validationState.hasAttemptedSubmit && !notification.visible) {
     clearMessages()
     clearFormErrors()
@@ -223,22 +228,22 @@ watch(() => localModel, () => {
 
 // Validación del código al perder el foco
 const validateCode = async () => {
-  formErrors.pruebaCode = ''
+  formErrors.testCode = ''
   
-  if (!localModel.pruebaCode?.trim()) {
-    formErrors.pruebaCode = 'El código es requerido'
+  if (!localModel.testCode?.trim()) {
+    formErrors.testCode = 'El código es requerido'
     return
   }
   
-  if (!/^[A-Z0-9_-]+$/i.test(localModel.pruebaCode)) {
-    formErrors.pruebaCode = 'Solo letras, números, guiones y guiones bajos'
+  if (!/^[A-Z0-9_-]+$/i.test(localModel.testCode)) {
+    formErrors.testCode = 'Solo letras, números, guiones y guiones bajos'
     return
   }
   
   // Verificar disponibilidad en el backend
-  await checkCodeAvailability(localModel.pruebaCode)
+  await checkCodeAvailability(localModel.testCode)
   if (codeValidationError.value) {
-    formErrors.pruebaCode = codeValidationError.value
+    formErrors.testCode = codeValidationError.value
   }
 }
 
@@ -265,16 +270,12 @@ const clearNotification = () => {
   createdTest.value = null
 }
 
-const closeNotification = () => {
-  // Usar exactamente la misma función que el botón Limpiar
-  onClear()
-}
+const closeNotification = () => onClear()
 
 // Función para formatear fecha
 const formatDate = (dateString: string): string => {
   try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-ES', {
+    return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -289,12 +290,10 @@ const formatDate = (dateString: string): string => {
 // Hacer scroll a la notificación
 const scrollToNotification = async () => {
   await nextTick()
-  if (notificationContainer.value) {
-    notificationContainer.value.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    })
-  }
+  notificationContainer.value?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  })
 }
 
 // Envío del formulario
@@ -306,7 +305,6 @@ const submit = async () => {
   // Validación local primero
   const validation = validateForm(localModel)
   if (!validation.isValid) {
-    // ✅ SOLO usar la validación estándar, no mostrar errores en campos individuales
     validationState.showValidationError = true
     return
   }
@@ -321,10 +319,7 @@ const submit = async () => {
     if (result.success && result.data) {
       await handleTestCreated(result.data)
     } else {
-      // ✅ El composable ya maneja los errores y los coloca en state.error
-      // Solo necesitamos mostrar el error que ya está en el estado
-      const errorMessage = state.error || 'Error desconocido al crear la prueba'
-      throw new Error(errorMessage)
+      throw new Error(state.error || 'Error desconocido al crear la prueba')
     }
   } catch (error: any) {
     await handleTestCreationError(error)
@@ -335,20 +330,9 @@ const submit = async () => {
 
 // Manejar la creación exitosa de la prueba
 const handleTestCreated = async (createdTestData: TestCreateResponse) => {
-  // Almacenar información de la prueba creada
   createdTest.value = createdTestData
-  
-  // Mostrar notificación de éxito
-  showNotification(
-    'success',
-    '¡Prueba Registrada Exitosamente!',
-    ''
-  )
-  
-  // Emitir evento para compatibilidad
+  showNotification('success', '¡Prueba Registrada Exitosamente!', '')
   emit('usuario-creado', { ...localModel })
-  
-  // Hacer scroll a la notificación
   await scrollToNotification()
 }
 
@@ -359,54 +343,35 @@ const handleTestCreationError = async (error: any) => {
   let errorMessage = 'No se pudo guardar la prueba. Por favor, inténtelo nuevamente.'
   let errorTitle = 'Error al Guardar Prueba'
   
-  // Determinar el tipo de error y mostrar mensaje específico
   if (error.message) {
     errorMessage = error.message
-    
-    // Personalizar el título según el tipo de error
-    if (error.message.includes('código')) {
-      errorTitle = 'Datos Duplicados'
-    } else if (error.message.includes('válido') || error.message.includes('requerido')) {
-      errorTitle = 'Datos Inválidos'
-    } else if (error.message.includes('servidor')) {
-      errorTitle = 'Error del Servidor'
-    }
+    if (error.message.includes('código')) errorTitle = 'Datos Duplicados'
+    else if (error.message.includes('válido') || error.message.includes('requerido')) errorTitle = 'Datos Inválidos'
+    else if (error.message.includes('servidor')) errorTitle = 'Error del Servidor'
   } else if (error.response?.data?.detail) {
     errorMessage = error.response.data.detail
   } else if (error.response?.status) {
-    switch (error.response.status) {
-      case 409:
-        errorTitle = 'Datos Duplicados'
-        errorMessage = 'Ya existe una prueba con los datos proporcionados'
-        break
-      case 422:
-        errorTitle = 'Datos Inválidos'
-        errorMessage = 'Los datos proporcionados no son válidos'
-        break
-      case 400:
-        errorTitle = 'Datos Incorrectos'
-        errorMessage = 'Datos incorrectos o incompletos'
-        break
-      case 500:
-        errorTitle = 'Error del Servidor'
-        errorMessage = 'Error interno del servidor. Inténtelo más tarde'
-        break
-      default:
-        errorTitle = `Error del Servidor (${error.response.status})`
-        errorMessage = 'Ha ocurrido un error inesperado'
+    const statusMessages = {
+      409: { title: 'Datos Duplicados', message: 'Ya existe una prueba con los datos proporcionados' },
+      422: { title: 'Datos Inválidos', message: 'Los datos proporcionados no son válidos' },
+      400: { title: 'Datos Incorrectos', message: 'Datos incorrectos o incompletos' },
+      500: { title: 'Error del Servidor', message: 'Error interno del servidor. Inténtelo más tarde' }
+    }
+    const statusError = statusMessages[error.response.status as keyof typeof statusMessages]
+    if (statusError) {
+      errorTitle = statusError.title
+      errorMessage = statusError.message
+    } else {
+      errorTitle = `Error del Servidor (${error.response.status})`
+      errorMessage = 'Ha ocurrido un error inesperado'
     }
   }
   
-  showNotification(
-    'error',
-    errorTitle,
-    errorMessage
-  )
-  
+  showNotification('error', errorTitle, errorMessage)
   await scrollToNotification()
 }
 
-// Función para limpiar solo el formulario (para uso interno)
+// Función para limpiar solo el formulario
 const clearForm = () => {
   validationState.hasAttemptedSubmit = false
   validationState.showValidationError = false
@@ -414,10 +379,11 @@ const clearForm = () => {
   clearState()
   
   Object.assign(localModel, { 
-    pruebaCode: '', 
-    pruebasName: '', 
-    pruebasDescription: '', 
-    tiempo: 1,
+    testCode: '', 
+    testName: '', 
+    testDescription: '', 
+    timeDays: 1,
+    price: 0,
     isActive: true 
   })
 }
@@ -429,14 +395,9 @@ const onClear = () => {
 }
 
 // Watcher para hacer scroll cuando aparece la notificación
-watch(
-  () => notification.visible,
-  (newValue) => {
-    if (newValue) {
-      scrollToNotification()
-    }
-  }
-)
+watch(() => notification.visible, (newValue) => {
+  if (newValue) scrollToNotification()
+})
 </script>
 
 

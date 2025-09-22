@@ -216,7 +216,9 @@ const normalizePathologist = (raw: any): PathologistEditFormModel | null => {
     PatologoEmail: String(email),
     registro_medico: String(registro),
     observaciones: String(obs),
-    isActive: !!active
+    isActive: !!active,
+    password: '',
+    passwordConfirm: ''
   }
 }
 
@@ -269,14 +271,14 @@ const submit = async () => {
     const data = (result as any).data
     // Normalizar datos del backend (snake_case) para mostrar en la interfaz
     updatedPathologist.value = {
-      patologoName: data.patologo_name,
-      InicialesPatologo: data.iniciales_patologo,
-      patologoCode: data.patologo_code,
-      PatologoEmail: data.patologo_email,
-      registro_medico: data.registro_medico,
-      observaciones: data.observaciones,
+      patologoName: data.pathologist_name,
+      InicialesPatologo: data.initials,
+      patologoCode: data.pathologist_code,
+      PatologoEmail: data.pathologist_email,
+      registro_medico: data.medical_license,
+      observaciones: data.observations,
       isActive: data.is_active,
-      fecha_actualizacion: data.fecha_actualizacion
+      fecha_actualizacion: data.updated_at
     }
     showNotification('success', '¡Patólogo Actualizado Exitosamente!', '')
     await scrollToNotification()

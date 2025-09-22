@@ -10,12 +10,12 @@ export function usePermissions() {
   const authStore = useAuthStore()
 
   // Getters para verificar roles específicos
-  const isAdmin = computed(() => authStore.isAdministrador)
-  const isAuxiliar = computed(() => authStore.isAuxiliar)
-  const isPatologo = computed(() => authStore.isPatologo)
-  const isResidente = computed(() => authStore.isResidente)
+  const isAdmin = computed(() => authStore.isAdministrator)
+  const isAuxiliar = computed(() => authStore.isAuxiliary)
+  const isPatologo = computed(() => authStore.isPathologist)
+  const isResidente = computed(() => authStore.isResident)
   const isRecepcionista = computed(() => authStore.userRole === 'recepcionista')
-  const isFacturacion = computed(() => authStore.isFacturacion)
+  const isFacturacion = computed(() => authStore.isBilling)
 
   // Permisos específicos por funcionalidad
   const canCreateCases = computed(() => isAdmin.value || isRecepcionista.value)

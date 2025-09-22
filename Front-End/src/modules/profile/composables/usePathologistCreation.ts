@@ -169,14 +169,14 @@ export function usePathologistCreation() {
    */
   const normalizePathologistData = (formData: PathologistFormModel): PathologistCreateRequest => {
     return {
-      patologo_name: formData.patologoName?.trim() || '',
-      iniciales_patologo: formData.InicialesPatologo?.trim().toUpperCase() || '',
-      patologo_code: formData.patologoCode?.trim().toUpperCase() || '',
-      patologo_email: formData.PatologoEmail?.trim() || '',
-      registro_medico: formData.registro_medico?.trim() || '',
+      pathologist_name: formData.patologoName?.trim() || '',
+      initials: formData.InicialesPatologo?.trim().toUpperCase() || '',
+      pathologist_code: formData.patologoCode?.trim().toUpperCase() || '',
+      pathologist_email: formData.PatologoEmail?.trim() || '',
+      medical_license: formData.registro_medico?.trim() || '',
       password: formData.password?.trim() || '',
-      firma: formData.firma?.trim() || '',
-      observaciones: formData.observaciones?.trim() || '',
+      signature: formData.firma?.trim() || '',
+      observations: formData.observaciones?.trim() || '',
       is_active: formData.isActive ?? true
     }
   }
@@ -223,7 +223,7 @@ export function usePathologistCreation() {
 
       // Manejar éxito
       state.isSuccess = true
-      state.successMessage = `Patólogo "${response.patologo_name}" (${response.patologo_code}) creado exitosamente como ${response.is_active ? 'ACTIVO' : 'INACTIVO'}`
+      state.successMessage = `Patólogo "${response.pathologist_name}" (${response.pathologist_code}) creado exitosamente como ${response.is_active ? 'ACTIVO' : 'INACTIVO'}`
 
       return { 
         success: true, 

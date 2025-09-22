@@ -10,38 +10,32 @@ class EntitySearchService {
     let endpoint: string
     
     if (includeInactive) {
-      endpoint = `${this.endpoint}/all-including-inactive`
+      endpoint = `${this.endpoint}/search?q=${encodeURIComponent(query.trim())}&include_inactive=true`
     } else {
-      endpoint = `${this.endpoint}/active`
+      endpoint = `${this.endpoint}/search?q=${encodeURIComponent(query.trim())}`
     }
     
-    // Construir parámetros de búsqueda
-    const params: any = { 
-      query: query.trim(),
-      limit: 50 
-    }
+    console.log('🔍 Endpoint búsqueda entidades:', endpoint)
     
-    console.log('🔍 Parámetros de búsqueda entidades:', params, 'Endpoint:', endpoint)
-    
-    const response = await apiClient.get(endpoint, { params })
-    if (response.entidades && Array.isArray(response.entidades)) {
-      return response.entidades.map((entidad: any) => {
+    const response = await apiClient.get(endpoint)
+    if (Array.isArray(response)) {
+      return response.map((entidad: any) => {
         // Mapeo correcto según documentación del backend
-        const EntidadName = entidad.entidad_name || entidad.EntidadName || entidad.nombre || entidad.name || ''
-        const EntidadCode = entidad.entidad_code || entidad.EntidadCode || entidad.codigo || entidad.code || ''
-        const activo = entidad.is_active !== undefined ? entidad.is_active : (entidad.isActive !== undefined ? entidad.isActive : entidad.activo)
+        const entityName = entidad.name || entidad.entity_name || ''
+        const entityCode = entidad.entity_code || entidad.code || ''
+        const activo = entidad.is_active !== undefined ? entidad.is_active : true
         return {
-          id: entidad.id || entidad._id || EntidadCode,
-          nombre: EntidadName,
-          codigo: EntidadCode,
+          id: entidad.id || entidad._id || entityCode,
+          nombre: entityName,
+          codigo: entityCode,
           tipo: 'entidad',
           activo,
-          observaciones: entidad.observaciones || entidad.observations || '',
-          fecha_creacion: entidad.fecha_creacion,
-          fecha_actualizacion: entidad.fecha_actualizacion,
+          observaciones: entidad.notes || entidad.observaciones || '',
+          fecha_creacion: entidad.created_at,
+          fecha_actualizacion: entidad.updated_at,
           // Campos específicos manteniendo nombres esperados por formularios
-          EntidadName,
-          EntidadCode,
+          entityName,
+          entityCode,
           isActive: activo
         }
       })
@@ -55,29 +49,23 @@ class EntitySearchService {
     let endpoint: string
     
     if (includeInactive) {
-      endpoint = '/residentes/all-including-inactive'
+      endpoint = `${API_CONFIG.ENDPOINTS.RESIDENTS}/search?q=${encodeURIComponent(query.trim())}&include_inactive=true`
     } else {
-      endpoint = '/residentes/active'
+      endpoint = `${API_CONFIG.ENDPOINTS.RESIDENTS}/search?q=${encodeURIComponent(query.trim())}`
     }
     
-    // Construir parámetros de búsqueda
-    const params: any = { 
-      query: query.trim(),
-      limit: 50 
-    }
+    console.log('🔍 Endpoint búsqueda residentes:', endpoint)
     
-    console.log('🔍 Parámetros de búsqueda residentes:', params, 'Endpoint:', endpoint)
-    
-    const response = await apiClient.get(endpoint, { params })
+    const response = await apiClient.get(endpoint)
     // console.log('🔍 Respuesta búsqueda residentes:', response)
-    if (response && response.residentes && Array.isArray(response.residentes)) {
-      return response.residentes.map((residente: any) => {
+    if (Array.isArray(response)) {
+      return response.map((residente: any) => {
         // Mapeo correcto según documentación del backend
-        const residenteName = residente.residente_name || residente.residenteName || residente.nombre || residente.name || ''
-        const residenteCode = residente.residente_code || residente.residenteCode || residente.codigo || residente.code || residente.documento || ''
-        const email = residente.residente_email || residente.ResidenteEmail || residente.email || ''
+        const residenteName = residente.resident_name || residente.residente_name || residente.residenteName || residente.nombre || residente.name || ''
+        const residenteCode = residente.resident_code || residente.residente_code || residente.residenteCode || residente.codigo || residente.code || residente.documento || ''
+        const email = residente.resident_email || residente.residente_email || residente.ResidenteEmail || residente.email || ''
         const activo = residente.is_active !== undefined ? residente.is_active : (residente.isActive !== undefined ? residente.isActive : residente.activo)
-        const iniciales = residente.iniciales_residente || residente.InicialesResidente || residente.initials || ''
+        const iniciales = residente.initials || residente.iniciales_residente || residente.InicialesResidente || ''
         return {
           id: residente.id || residente._id || residenteCode,
           nombre: residenteName,
@@ -93,8 +81,8 @@ class EntitySearchService {
           residenteCode,
           InicialesResidente: iniciales,
           ResidenteEmail: email,
-          registro_medico: residente.registro_medico || residente.medicalLicense || '',
-          observaciones: residente.observaciones || residente.observations || '',
+          registro_medico: residente.medical_license || residente.registro_medico || residente.medicalLicense || '',
+          observaciones: residente.observations || residente.observaciones || '',
           isActive: activo
         }
       })
@@ -108,28 +96,22 @@ class EntitySearchService {
     let endpoint: string
     
     if (includeInactive) {
-      endpoint = '/patologos/search/all-including-inactive'
+      endpoint = `${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/search?q=${encodeURIComponent(query.trim())}&include_inactive=true`
     } else {
-      endpoint = '/patologos/search/active'
+      endpoint = `${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/search?q=${encodeURIComponent(query.trim())}`
     }
     
-    // Construir parámetros de búsqueda
-    const params: any = { 
-      q: query.trim(),
-      limit: 50 
-    }
+    console.log('🔍 Endpoint búsqueda patólogos:', endpoint)
     
-    console.log('🔍 Parámetros de búsqueda patólogos:', params, 'Endpoint:', endpoint)
-    
-    const response = await apiClient.get(endpoint, { params })
+    const response = await apiClient.get(endpoint)
     if (Array.isArray(response)) {
       return response.map((p: any) => {
         // Mapeo correcto según documentación del backend
-        const patologoName = p.patologo_name || p.patologoName || p.nombre || p.name || ''
-        const patologoCode = p.patologo_code || p.patologoCode || p.codigo || p.code || ''
-        const email = p.patologo_email || p.PatologoEmail || p.email || ''
+        const patologoName = p.pathologist_name || p.patologo_name || p.patologoName || p.nombre || p.name || ''
+        const patologoCode = p.pathologist_code || p.patologo_code || p.patologoCode || p.codigo || p.code || ''
+        const email = p.pathologist_email || p.patologo_email || p.PatologoEmail || p.email || ''
         const activo = p.is_active !== undefined ? p.is_active : (p.isActive !== undefined ? p.isActive : p.activo)
-        const iniciales = p.iniciales_patologo || p.InicialesPatologo || p.initials || ''
+        const iniciales = p.initials || p.iniciales_patologo || p.InicialesPatologo || ''
         return {
           id: p.id || p._id || patologoCode,
           nombre: patologoName,
@@ -142,9 +124,9 @@ class EntitySearchService {
           InicialesPatologo: iniciales,
           patologoCode,
           PatologoEmail: email,
-          registro_medico: p.registro_medico || p.medicalLicense || '',
-          firma: p.firma || p.signature || '',
-          observaciones: p.observaciones || p.observations || '',
+          registro_medico: p.medical_license || p.registro_medico || p.medicalLicense || '',
+          firma: p.signature || p.firma || '',
+          observaciones: p.observations || p.observaciones || '',
           isActive: activo
         }
       })
@@ -158,22 +140,16 @@ class EntitySearchService {
     let endpoint: string
     
     if (includeInactive) {
-      endpoint = '/auxiliares/all-including-inactive'
+      endpoint = `${API_CONFIG.ENDPOINTS.AUXILIARIES}/search?q=${encodeURIComponent(query.trim())}&include_inactive=true`
     } else {
-      endpoint = '/auxiliares/active'
-    }
-    
-    // Construir parámetros de búsqueda
-    const params: any = { 
-      query: query.trim(),
-      limit: 50 
+      endpoint = `${API_CONFIG.ENDPOINTS.AUXILIARIES}/search?q=${encodeURIComponent(query.trim())}`
     }
 
-    console.log('🔍 Parámetros de búsqueda auxiliares:', params, 'Endpoint:', endpoint)
+    console.log('🔍 Endpoint búsqueda auxiliares:', endpoint)
 
-    const response = await apiClient.get(endpoint, { params })
-    if (response && response.auxiliares && Array.isArray(response.auxiliares)) {
-      return response.auxiliares.map((aux: any) => {
+    const response = await apiClient.get(endpoint)
+    if (Array.isArray(response)) {
+      return response.map((aux: any) => {
         // Mapeo correcto según documentación del backend
         const auxiliarName = aux.auxiliar_name || aux.auxiliarName || aux.name || aux.nombre || ''
         const auxiliarCode = aux.auxiliar_code || aux.auxiliarCode || aux.code || aux.codigo || ''
@@ -192,7 +168,7 @@ class EntitySearchService {
           auxiliarName,
           auxiliarCode,
           AuxiliarEmail: email,
-          observaciones: aux.observaciones || aux.observations || '',
+          observaciones: aux.observations || aux.observaciones || '',
           isActive: activo
         }
       })
@@ -206,29 +182,23 @@ class EntitySearchService {
     let endpoint: string
     
     if (includeInactive) {
-      endpoint = '/facturacion/search/all-including-inactive'
+      endpoint = `${API_CONFIG.ENDPOINTS.FACTURACION}/search?q=${encodeURIComponent(query.trim())}&include_inactive=true`
     } else {
-      endpoint = '/facturacion/search/active'
-    }
-    
-    // Construir parámetros de búsqueda
-    const params: any = { 
-      query: query.trim(),
-      limit: 50 
+      endpoint = `${API_CONFIG.ENDPOINTS.FACTURACION}/search?q=${encodeURIComponent(query.trim())}`
     }
 
-    console.log('🔍 Parámetros de búsqueda facturación:', params, 'Endpoint:', endpoint)
+    console.log('🔍 Endpoint búsqueda facturación:', endpoint)
 
-    const response = await apiClient.get(endpoint, { params })
+    const response = await apiClient.get(endpoint)
     console.log('🔍 Respuesta búsqueda facturación:', response)
     
     // El backend devuelve la respuesta directamente, no en response.data
-    if (response && response.facturacion && Array.isArray(response.facturacion)) {
-      return response.facturacion.map((fact: any) => {
+    if (Array.isArray(response)) {
+      return response.map((fact: any) => {
         // Mapeo correcto según documentación del backend
-        const facturacionName = fact.facturacion_name || fact.facturacionName || fact.name || fact.nombre || ''
-        const facturacionCode = fact.facturacion_code || fact.facturacionCode || fact.code || fact.codigo || ''
-        const email = fact.facturacion_email || fact.FacturacionEmail || fact.email || ''
+        const facturacionName = fact.billing_name || fact.facturacion_name || fact.facturacionName || fact.name || fact.nombre || ''
+        const facturacionCode = fact.billing_code || fact.facturacion_code || fact.facturacionCode || fact.code || fact.codigo || ''
+        const email = fact.billing_email || fact.facturacion_email || fact.FacturacionEmail || fact.email || ''
         const activo = fact.is_active !== undefined ? fact.is_active : (fact.isActive !== undefined ? fact.isActive : fact.activo)
         return {
           id: fact.id || fact._id || facturacionCode,
@@ -243,7 +213,7 @@ class EntitySearchService {
           facturacionName,
           facturacionCode,
           FacturacionEmail: email,
-          observaciones: fact.observaciones || fact.observations || '',
+          observaciones: fact.observations || fact.observaciones || '',
           isActive: activo
         }
       })
@@ -257,25 +227,19 @@ class EntitySearchService {
     let endpoint: string
     
     if (includeInactive) {
-      endpoint = '/pruebas/all-including-inactive'
+      endpoint = `${API_CONFIG.ENDPOINTS.TESTS}/search?q=${encodeURIComponent(query.trim())}&include_inactive=true`
     } else {
-      endpoint = '/pruebas/active'
-    }
-    
-    // Construir parámetros de búsqueda
-    const params: any = { 
-      query: query.trim(),
-      limit: 50 
+      endpoint = `${API_CONFIG.ENDPOINTS.TESTS}/search?q=${encodeURIComponent(query.trim())}`
     }
 
-    console.log('🔍 Parámetros de búsqueda pruebas:', params, 'Endpoint:', endpoint)
+    console.log('🔍 Endpoint búsqueda pruebas:', endpoint)
 
-    const response = await apiClient.get(endpoint, { params })
-    if (response && response.pruebas && Array.isArray(response.pruebas)) {
-      return response.pruebas.map((prueba: any) => {
-        const pruebasName = prueba.prueba_name || prueba.pruebasName || prueba.nombre || prueba.name || ''
-        const pruebaCode = prueba.prueba_code || prueba.pruebaCode || prueba.codigo || prueba.code || ''
-        const pruebasDescription = prueba.prueba_description || prueba.pruebasDescription || prueba.descripcion || prueba.description || ''
+    const response = await apiClient.get(endpoint)
+    if (Array.isArray(response)) {
+      return response.map((prueba: any) => {
+        const pruebasName = prueba.name || prueba.prueba_name || prueba.pruebasName || prueba.nombre || ''
+        const pruebaCode = prueba.test_code || prueba.prueba_code || prueba.pruebaCode || prueba.codigo || prueba.code || ''
+        const pruebasDescription = prueba.description || prueba.prueba_description || prueba.pruebasDescription || prueba.descripcion || ''
         const activo = prueba.is_active !== undefined ? prueba.is_active : (prueba.isActive !== undefined ? prueba.isActive : prueba.activo)
         return {
           id: prueba.id || prueba._id || pruebaCode,
@@ -284,7 +248,7 @@ class EntitySearchService {
           tipo: 'prueba',
           activo,
           descripcion: pruebasDescription,
-          tiempo: prueba.tiempo || 0,
+          tiempo: prueba.time || prueba.tiempo || 0,
           fecha_creacion: prueba.fecha_creacion,
           fecha_actualizacion: prueba.fecha_actualizacion,
           // Campos específicos manteniendo nombres esperados por formularios

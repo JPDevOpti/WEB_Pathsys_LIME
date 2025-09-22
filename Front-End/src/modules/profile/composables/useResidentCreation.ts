@@ -169,13 +169,13 @@ export function useResidentCreation() {
    */
   const normalizeResidentData = (formData: ResidentFormModel): ResidentCreateRequest => {
     return {
-      residente_name: formData.residenteName?.trim() || '',
-      iniciales_residente: formData.InicialesResidente?.trim().toUpperCase() || '',
-      residente_code: formData.residenteCode?.trim().toUpperCase() || '',
-      residente_email: formData.ResidenteEmail?.trim() || '',
-      registro_medico: formData.registro_medico?.trim() || '',
+      resident_name: formData.residenteName?.trim() || '',
+      initials: formData.InicialesResidente?.trim().toUpperCase() || '',
+      resident_code: formData.residenteCode?.trim().toUpperCase() || '',
+      resident_email: formData.ResidenteEmail?.trim() || '',
+      medical_license: formData.registro_medico?.trim() || '',
       password: formData.password?.trim() || '',
-      observaciones: formData.observaciones?.trim() || '',
+      observations: formData.observaciones?.trim() || '',
       is_active: formData.isActive ?? true
     }
   }
@@ -222,7 +222,7 @@ export function useResidentCreation() {
 
       // Manejar éxito
       state.isSuccess = true
-      state.successMessage = `Residente "${response.residente_name}" (${response.residente_code}) creado exitosamente como ${response.is_active ? 'ACTIVO' : 'INACTIVO'}`
+      state.successMessage = `Residente "${response.resident_name}" (${response.resident_code}) creado exitosamente como ${response.is_active ? 'ACTIVO' : 'INACTIVO'}`
 
       return { 
         success: true, 

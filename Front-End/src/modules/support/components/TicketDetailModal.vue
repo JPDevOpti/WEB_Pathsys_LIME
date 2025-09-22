@@ -19,7 +19,7 @@
       <div class="relative bg-white w-full max-w-4xl rounded-t-2xl sm:rounded-2xl shadow-2xl h-[85vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <!-- Header -->
         <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-900">{{ ticket.titulo }}</h3>
+          <h3 class="text-xl font-semibold text-gray-900">{{ ticket.title }}</h3>
           <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">✕</button>
         </div>
 
@@ -36,17 +36,17 @@
                 </div>
                 <div>
                   <p class="text-sm text-gray-500">Estado</p>
-                  <span :class="getStatusBadgeClass(ticket.estado)" class="text-xs font-medium px-2 py-1 rounded-full">
-                    {{ getStatusLabel(ticket.estado) }}
+                  <span :class="getStatusBadgeClass(ticket.status)" class="text-xs font-medium px-2 py-1 rounded-full">
+                    {{ getStatusLabel(ticket.status) }}
                   </span>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500">Categoría</p>
-                  <p class="text-base font-medium text-gray-900">{{ getCategoryLabel(ticket.categoria) }}</p>
+                  <p class="text-base font-medium text-gray-900">{{ getCategoryLabel(ticket.category) }}</p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500">Fecha de Creación</p>
-                  <p class="text-base font-medium text-gray-900">{{ formatDate(ticket.fecha_ticket) }}</p>
+                  <p class="text-base font-medium text-gray-900">{{ formatDate(ticket.ticket_date) }}</p>
                 </div>
               </div>
 
@@ -54,7 +54,7 @@
               <div class="bg-gray-50 rounded-xl p-4">
                 <h5 class="text-sm font-medium text-gray-700 mb-3">Descripción</h5>
                 <div class="bg-white border border-gray-200 rounded-lg p-3">
-                  <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ ticket.descripcion }}</p>
+                  <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ ticket.description }}</p>
                 </div>
               </div>
             </div>
@@ -63,9 +63,9 @@
             <div class="space-y-4">
               <div class="bg-gray-50 rounded-xl p-4 h-full">
                 <h5 class="text-sm font-medium text-gray-700 mb-3">Imagen</h5>
-                <div v-if="ticket.imagen" class="cursor-pointer group" @click="openImageModal(getImageSrc(ticket.imagen))">
+                <div v-if="ticket.image" class="cursor-pointer group" @click="openImageModal(getImageSrc(ticket.image))">
                   <img
-                    :src="getImageSrc(ticket.imagen)"
+                    :src="getImageSrc(ticket.image)"
                     alt="Imagen del ticket"
                     class="w-full h-56 object-cover rounded-lg border border-gray-200 group-hover:border-blue-300 transition-colors"
                   />
@@ -104,7 +104,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { PaperclipIcon } from '@/assets/icons'
 import { ActionButton } from '@/shared/components/buttons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import type { SupportTicket } from '../types/support.types'

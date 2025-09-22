@@ -20,10 +20,10 @@ class TestEditService {
       // Convertir la respuesta del backend (snake_case) al modelo del formulario (camelCase)
       return {
         id: response.id,
-        pruebaCode: response.prueba_code,
-        pruebasName: response.prueba_name,
-        pruebasDescription: response.prueba_description,
-        tiempo: response.tiempo,
+        pruebaCode: response.test_code,
+        pruebasName: response.name,
+        pruebasDescription: response.description,
+        tiempo: response.time,
         isActive: response.is_active
       }
     } catch (error: any) {

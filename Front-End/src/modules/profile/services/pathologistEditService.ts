@@ -1,4 +1,5 @@
 import { apiClient } from '@/core/config/axios.config'
+import { API_CONFIG } from '@/core/config/api.config'
 import type { PathologistEditFormModel, PathologistUpdateRequest, PathologistUpdateResponse } from '../types/pathologist.types'
 
 export interface PathologistEditResult {
@@ -10,7 +11,7 @@ export interface PathologistEditResult {
 export const pathologistEditService = {
   async getByCode(code: string): Promise<PathologistEditResult> {
     try {
-      const res = await apiClient.get(`/patologos/${code}`)
+      const res = await apiClient.get(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`)
       // Normalizar la respuesta del backend (snake_case) al frontend (camelCase)
       const normalizedData = this.normalizePathologistData(res)
       return { success: true, data: normalizedData }
@@ -21,7 +22,7 @@ export const pathologistEditService = {
 
   async update(code: string, data: PathologistUpdateRequest): Promise<PathologistEditResult> {
     try {
-      const res = await apiClient.put(`/patologos/${code}`, data)
+      const res = await apiClient.put(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`, data)
       // Normalizar la respuesta del backend (snake_case) al frontend (camelCase)
       const normalizedData = this.normalizePathologistData(res)
       return { success: true, data: normalizedData }
@@ -32,11 +33,11 @@ export const pathologistEditService = {
 
   prepareUpdateData(form: PathologistEditFormModel): PathologistUpdateRequest {
     return {
-      patologo_name: form.patologoName.trim(),
-      iniciales_patologo: form.InicialesPatologo.trim(),
-      patologo_email: form.PatologoEmail.trim(),
-      registro_medico: form.registro_medico.trim(),
-      observaciones: form.observaciones?.trim() || '',
+      pathologist_name: form.patologoName.trim(),
+      initials: form.InicialesPatologo.trim(),
+      pathologist_email: form.PatologoEmail.trim(),
+      medical_license: form.registro_medico.trim(),
+      observations: form.observaciones?.trim() || '',
       is_active: form.isActive,
       ...(form.password && form.password.trim().length >= 6 ? { password: form.password } : {})
     }
@@ -46,15 +47,15 @@ export const pathologistEditService = {
   normalizePathologistData(backendData: any): PathologistUpdateResponse {
     return {
       id: backendData.id || backendData._id,
-      patologo_name: backendData.patologo_name,
-      iniciales_patologo: backendData.iniciales_patologo,
-      patologo_code: backendData.patologo_code,
-      patologo_email: backendData.patologo_email,
-      registro_medico: backendData.registro_medico,
-      observaciones: backendData.observaciones || '',
+      pathologist_name: backendData.pathologist_name,
+      initials: backendData.initials,
+      pathologist_code: backendData.pathologist_code,
+      pathologist_email: backendData.pathologist_email,
+      medical_license: backendData.medical_license,
+      observations: backendData.observations || '',
       is_active: backendData.is_active,
-      fecha_creacion: backendData.fecha_creacion,
-      fecha_actualizacion: backendData.fecha_actualizacion
+      created_at: backendData.created_at,
+      updated_at: backendData.updated_at
     }
   }
 }

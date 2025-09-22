@@ -38,24 +38,24 @@ export function useEntityCreation() {
     const errors: EntityFormValidation['errors'] = {}
 
     // Validar nombre
-    if (!formData.EntidadName?.trim()) {
-      errors.EntidadName = 'El nombre es requerido'
-    } else if (formData.EntidadName.length > 200) {
-      errors.EntidadName = 'El nombre no puede tener más de 200 caracteres'
+    if (!formData.entityName?.trim()) {
+      errors.entityName = 'El nombre es requerido'
+    } else if (formData.entityName.length > 200) {
+      errors.entityName = 'El nombre no puede tener más de 200 caracteres'
     }
 
     // Validar código
-    if (!formData.EntidadCode?.trim()) {
-      errors.EntidadCode = 'El código es requerido'
-    } else if (formData.EntidadCode.length > 20) {
-      errors.EntidadCode = 'El código no puede tener más de 20 caracteres'
-    } else if (!/^[A-Z0-9_-]+$/i.test(formData.EntidadCode)) {
-      errors.EntidadCode = 'Solo letras, números, guiones y guiones bajos'
+    if (!formData.entityCode?.trim()) {
+      errors.entityCode = 'El código es requerido'
+    } else if (formData.entityCode.length > 20) {
+      errors.entityCode = 'El código no puede tener más de 20 caracteres'
+    } else if (!/^[A-Z0-9_-]+$/i.test(formData.entityCode)) {
+      errors.entityCode = 'Solo letras, números, guiones y guiones bajos'
     }
 
     // Validar observaciones (opcional)
-    if (formData.observaciones && formData.observaciones.length > 500) {
-      errors.observaciones = 'Máximo 500 caracteres'
+    if (formData.notes && formData.notes.length > 500) {
+      errors.notes = 'Máximo 500 caracteres'
     }
 
     return {
@@ -93,9 +93,9 @@ export function useEntityCreation() {
    */
   const normalizeEntityData = (formData: EntityFormModel): EntityCreateRequest => {
     return {
-      entidad_name: formData.EntidadName?.trim() || '',
-      entidad_code: formData.EntidadCode?.trim().toUpperCase() || '',
-      observaciones: formData.observaciones?.trim() || '',
+      name: formData.entityName?.trim() || '',
+      entity_code: formData.entityCode?.trim().toUpperCase() || '',
+      notes: formData.notes?.trim() || '',
       is_active: formData.isActive ?? true
     }
   }

@@ -56,7 +56,7 @@ export class PathologistApiService {
     try {
       console.log('🔍 PathologistApiService.getByEmail - Buscando patólogo para:', email)
       const pathologists = await apiClient.get<PathologistResponse[]>(`${this.BASE_URL}/search`, {
-        params: { pathologist_email: email, limit: 1 }
+        params: { q: email, limit: 1 }
       })
       
       console.log('📋 PathologistApiService.getByEmail - Respuesta completa:', pathologists)

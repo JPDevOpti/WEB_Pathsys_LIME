@@ -1,76 +1,34 @@
 <template>
   <form @submit.prevent="submit" class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4">
     <div class="col-span-full">
-      <h4 class="text-base font-semibold text-gray-800">Formulario de Patólogo</h4>
+      <h4 class="text-base font-semibold text-gray-800">Formulario de Entidad</h4>
     </div>
 
-    <!-- Nombre e Iniciales -->
+    <!-- Nombre y Código -->
     <FormInputField 
       class="col-span-full md:col-span-6" 
-      label="Nombre completo" 
-      placeholder="Ejemplo: Juan Carlos Pérez González" 
-      v-model="localModel.patologoName"
-      :error="formErrors.patologoName"
-      autocomplete="name" 
+      label="Nombre de entidad" 
+      placeholder="Ejemplo: Clínica Norte" 
+      v-model="localModel.entityName"
+      :error="formErrors.entityName"
     />
     <FormInputField 
       class="col-span-full md:col-span-6" 
-      label="Iniciales" 
-      placeholder="Ejemplo: JCPG" 
-      v-model="localModel.InicialesPatologo"
-      :error="formErrors.InicialesPatologo"
-      autocomplete="off" 
-    />
-
-    <!-- Código y Email -->
-    <FormInputField 
-      class="col-span-full md:col-span-6" 
-      label="Código del patólogo" 
-      placeholder="Ejemplo: 123456" 
-      v-model="localModel.patologoCode"
-      :error="formErrors.patologoCode"
+      label="Código de entidad" 
+      placeholder="Ejemplo: CLINICA001" 
+      v-model="localModel.entityCode"
+      :error="formErrors.entityCode"
       @blur="validateCode"
-      autocomplete="off"
-      maxlength="10"
-    />
-    <FormInputField 
-      class="col-span-full md:col-span-6" 
-      label="Email" 
-      type="email" 
-      placeholder="juan.perez@udea.edu.co" 
-      v-model="localModel.PatologoEmail"
-      :error="formErrors.PatologoEmail"
-      @blur="validateEmail"
-      autocomplete="email" 
-    />
-
-    <!-- Registro médico y Contraseña -->
-    <FormInputField 
-      class="col-span-full md:col-span-6" 
-      label="Registro médico" 
-      placeholder="Ejemplo: RM-12345" 
-      v-model="localModel.registro_medico"
-      :error="formErrors.registro_medico"
-      @blur="validateMedicalLicense"
-    />
-    <FormInputField 
-      class="col-span-full md:col-span-6" 
-      label="Contraseña" 
-      type="password" 
-      placeholder="••••••••" 
-      v-model="localModel.password"
-      :error="formErrors.password"
-      autocomplete="new-password" 
     />
 
     <!-- Observaciones -->
     <FormTextarea 
-      class="col-span-full md:col-span-12 w-full" 
+      class="col-span-full" 
       label="Observaciones" 
-      placeholder="Notas adicionales sobre el patólogo (opcional)" 
-      v-model="localModel.observaciones" 
+      placeholder="Notas u observaciones relevantes (opcional)" 
+      v-model="localModel.notes" 
       :rows="3"
-      :error="formErrors.observaciones"
+      :error="formErrors.notes"
     />
 
     <!-- Estado activo -->
@@ -82,7 +40,7 @@
     <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
       <ClearButton type="button" @click="onClear" :disabled="isLoading" />
       <SaveButton 
-        text="Guardar Patólogo" 
+        text="Guardar Entidad" 
         type="submit" 
         :disabled="!canSubmit || isLoading"
         :loading="isLoading"
@@ -100,49 +58,37 @@
         :auto-close="false"
         @close="closeNotification"
       >
-        <template v-if="notification.type === 'success' && createdPathologist" #content>
+        <template v-if="notification.type === 'success' && createdEntity" #content>
           <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
             <div class="space-y-4">
-              <!-- Información principal del patólogo -->
+              <!-- Información principal de la entidad -->
               <div class="mb-4 pb-3 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdPathologist.patologo_name }}</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdEntity.name }}</h3>
                 <p class="text-gray-600">
                   <span class="font-medium">Código:</span> 
-                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdPathologist.patologo_code }}</span>
+                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdEntity.entity_code }}</span>
                 </p>
               </div>
               
-              <!-- Detalles del patólogo en vertical -->
+              <!-- Detalles de la entidad en vertical -->
               <div class="space-y-4 text-sm">
-                <div>
-                  <span class="text-gray-500 font-medium block mb-1">Iniciales:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdPathologist.iniciales_patologo }}</p>
-                </div>
-                <div>
-                  <span class="text-gray-500 font-medium block mb-1">Email:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdPathologist.patologo_email }}</p>
-                </div>
-                <div>
-                  <span class="text-gray-500 font-medium block mb-1">Registro médico:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdPathologist.registro_medico }}</p>
-                </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Estado:</span>
                   <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                    :class="createdPathologist.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                    {{ createdPathologist.is_active ? 'Activo' : 'Inactivo' }}
+                    :class="createdEntity.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ createdEntity.is_active ? 'Activo' : 'Inactivo' }}
                   </span>
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Fecha de creación:</span>
-                  <p class="text-gray-800 font-semibold">{{ formatDate(createdPathologist.fecha_creacion) }}</p>
+                  <p class="text-gray-800 font-semibold">{{ formatDate(createdEntity.created_at) }}</p>
                 </div>
               </div>
               
               <!-- Observaciones -->
-              <div v-if="createdPathologist.observaciones">
+              <div v-if="createdEntity.notes">
                 <span class="text-gray-500 font-medium block mb-2">Observaciones:</span>
-                <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ createdPathologist.observaciones }}</p>
+                <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ createdEntity.notes }}</p>
               </div>
             </div>
           </div>
@@ -163,20 +109,20 @@ import { reactive, computed, watch, nextTick, ref } from 'vue'
 import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { Notification, ValidationAlert } from '@/shared/components/feedback'
-import { usePathologistCreation } from '../../composables/usePathologistCreation'
-import type { PathologistFormModel, PathologistCreateResponse } from '../../types/pathologist.types'
+import { useEntityCreation } from '../../composables/useEntityCreation'
+import type { EntityFormModel, EntityCreateResponse } from '../../types/entity.types'
 
 // Props y emits
-const modelValue = defineModel<PathologistFormModel>({ required: true })
+const modelValue = defineModel<EntityFormModel>({ required: true })
 const emit = defineEmits<{ 
-  (e: 'usuario-creado', payload: PathologistFormModel): void 
+  (e: 'usuario-creado', payload: EntityFormModel): void 
 }>()
 
 // Referencias
 const notificationContainer = ref<HTMLElement | null>(null)
 
-// Estado del patólogo creado
-const createdPathologist = ref<PathologistCreateResponse | null>(null)
+// Estado de la entidad creada
+const createdEntity = ref<EntityCreateResponse | null>(null)
 
 // Estado de notificación
 const notification = reactive({
@@ -196,34 +142,26 @@ const validationState = reactive({
 const {
   state,
   codeValidationError,
-  emailValidationError,
-  licenseValidationError,
   validateForm,
   checkCodeAvailability,
-  checkEmailAvailability,
-  checkMedicalLicenseAvailability,
-  createPathologist,
+  createEntity,
   clearState,
   clearMessages
-} = usePathologistCreation()
+} = useEntityCreation()
 
 // Estado de loading local
 const isLoading = ref(false)
 
 // Modelo local del formulario
-const localModel = reactive<PathologistFormModel>({ 
+const localModel = reactive<EntityFormModel>({ 
   ...modelValue.value
 })
 
 // Errores del formulario
 const formErrors = reactive({
-  patologoName: '',
-  InicialesPatologo: '',
-  patologoCode: '',
-  PatologoEmail: '',
-  registro_medico: '',
-  password: '',
-  observaciones: ''
+  entityName: '',
+  entityCode: '',
+  notes: ''
 })
 
 // Lista de errores de validación para mostrar en la alerta
@@ -264,64 +202,27 @@ watch(() => localModel, () => {
 
 // Validación del código al perder el foco
 const validateCode = async () => {
-  formErrors.patologoCode = ''
+  formErrors.entityCode = ''
   
-  if (!localModel.patologoCode?.trim()) {
-    formErrors.patologoCode = 'El código es requerido'
+  if (!localModel.entityCode?.trim()) {
+    formErrors.entityCode = 'El código es requerido'
     return
   }
   
-  if (localModel.patologoCode.length > 10) {
-    formErrors.patologoCode = 'Máximo 10 caracteres'
+  if (localModel.entityCode.length > 20) {
+    formErrors.entityCode = 'Máximo 20 caracteres'
+    return
+  }
+  
+  if (!/^[A-Z0-9_-]+$/i.test(localModel.entityCode)) {
+    formErrors.entityCode = 'Solo letras, números, guiones y guiones bajos'
     return
   }
   
   // Verificar disponibilidad en el backend
-  await checkCodeAvailability(localModel.patologoCode)
+  await checkCodeAvailability(localModel.entityCode)
   if (codeValidationError.value) {
-    formErrors.patologoCode = codeValidationError.value
-  }
-}
-
-// Validación del email al perder el foco
-const validateEmail = async () => {
-  formErrors.PatologoEmail = ''
-  
-  if (!localModel.PatologoEmail?.trim()) {
-    formErrors.PatologoEmail = 'El email es requerido'
-    return
-  }
-  
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(localModel.PatologoEmail)) {
-    formErrors.PatologoEmail = 'Formato de email inválido'
-    return
-  }
-  
-  // Verificar disponibilidad en el backend
-  await checkEmailAvailability(localModel.PatologoEmail)
-  if (emailValidationError.value) {
-    formErrors.PatologoEmail = emailValidationError.value
-  }
-}
-
-// Validación del registro médico al perder el foco
-const validateMedicalLicense = async () => {
-  formErrors.registro_medico = ''
-  
-  if (!localModel.registro_medico?.trim()) {
-    formErrors.registro_medico = 'El registro médico es requerido'
-    return
-  }
-  
-  if (localModel.registro_medico.length > 50) {
-    formErrors.registro_medico = 'Máximo 50 caracteres'
-    return
-  }
-  
-  // Verificar disponibilidad en el backend
-  await checkMedicalLicenseAvailability(localModel.registro_medico)
-  if (licenseValidationError.value) {
-    formErrors.registro_medico = licenseValidationError.value
+    formErrors.entityCode = codeValidationError.value
   }
 }
 
@@ -345,7 +246,7 @@ const clearNotification = () => {
   notification.visible = false
   notification.title = ''
   notification.message = ''
-  createdPathologist.value = null
+  createdEntity.value = null
 }
 
 const closeNotification = () => {
@@ -399,32 +300,32 @@ const submit = async () => {
   
   try {
     // Enviar al backend
-    const result = await createPathologist(localModel)
+    const result = await createEntity(localModel)
     
     if (result.success && result.data) {
-      await handlePathologistCreated(result.data)
+      await handleEntityCreated(result.data)
     } else {
       // ✅ El composable ya maneja los errores y los coloca en state.error
       // Solo necesitamos mostrar el error que ya está en el estado
-      const errorMessage = state.error || 'Error desconocido al crear el patólogo'
+      const errorMessage = state.error || 'Error desconocido al crear la entidad'
       throw new Error(errorMessage)
     }
   } catch (error: any) {
-    await handlePathologistCreationError(error)
+    await handleEntityCreationError(error)
   } finally {
     isLoading.value = false
   }
 }
 
-// Manejar la creación exitosa del patólogo
-const handlePathologistCreated = async (createdPathologistData: any) => {
-  // Almacenar información del patólogo creado
-  createdPathologist.value = createdPathologistData
+// Manejar la creación exitosa de la entidad
+const handleEntityCreated = async (createdEntityData: EntityCreateResponse) => {
+  // Almacenar información de la entidad creada
+  createdEntity.value = createdEntityData
   
   // Mostrar notificación de éxito
   showNotification(
     'success',
-    '¡Patólogo Registrado Exitosamente!',
+    '¡Entidad Registrada Exitosamente!',
     ''
   )
   
@@ -436,18 +337,18 @@ const handlePathologistCreated = async (createdPathologistData: any) => {
 }
 
 // Manejar errores durante la creación
-const handlePathologistCreationError = async (error: any) => {
-  console.error('Error al guardar patólogo:', error)
+const handleEntityCreationError = async (error: any) => {
+  console.error('Error al guardar entidad:', error)
   
-  let errorMessage = 'No se pudo guardar el patólogo. Por favor, inténtelo nuevamente.'
-  let errorTitle = 'Error al Guardar Patólogo'
+  let errorMessage = 'No se pudo guardar la entidad. Por favor, inténtelo nuevamente.'
+  let errorTitle = 'Error al Guardar Entidad'
   
   // Determinar el tipo de error y mostrar mensaje específico
   if (error.message) {
     errorMessage = error.message
     
     // Personalizar el título según el tipo de error
-    if (error.message.includes('email') || error.message.includes('código') || error.message.includes('registro')) {
+    if (error.message.includes('código')) {
       errorTitle = 'Datos Duplicados'
     } else if (error.message.includes('válido') || error.message.includes('requerido')) {
       errorTitle = 'Datos Inválidos'
@@ -460,7 +361,7 @@ const handlePathologistCreationError = async (error: any) => {
     switch (error.response.status) {
       case 409:
         errorTitle = 'Datos Duplicados'
-        errorMessage = 'Ya existe un patólogo con los datos proporcionados'
+        errorMessage = 'Ya existe una entidad con los datos proporcionados'
         break
       case 422:
         errorTitle = 'Datos Inválidos'
@@ -497,15 +398,10 @@ const clearForm = () => {
   clearState()
   
   Object.assign(localModel, { 
-    patologoName: '', 
-    InicialesPatologo: '', 
-    patologoCode: '', 
-    PatologoEmail: '', 
-    registro_medico: '', 
-    password: '', 
-    observaciones: '', 
-    isActive: true,
-    firma: ''
+    entityName: '', 
+    entityCode: '', 
+    notes: '', 
+    isActive: true 
   })
 }
 

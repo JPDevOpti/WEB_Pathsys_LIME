@@ -2,6 +2,7 @@
  * Servicio para la edición de residentes
  */
 import { apiClient } from '@/core/config/axios.config'
+import { API_CONFIG } from '@/core/config/api.config'
 import type { 
   ResidentEditFormModel, 
   ResidentUpdateRequest, 
@@ -35,7 +36,7 @@ export const residentEditService = {
    */
   async getResidentByCode(code: string): Promise<ResidentEditResult> {
     try {
-      const response = await apiClient.get(`/residentes/${code}`)
+      const response = await apiClient.get(`${API_CONFIG.ENDPOINTS.RESIDENTS}/${code}`)
       return {
         success: true,
         data: response.data
@@ -54,7 +55,7 @@ export const residentEditService = {
   async updateResident(code: string, residentData: ResidentUpdateRequest): Promise<ResidentEditResult> {
     try {
       // console.log('🔧 Datos a enviar para actualización:', { code, residentData })
-      const response = await apiClient.put(`/residentes/${code}`, residentData)
+      const response = await apiClient.put(`${API_CONFIG.ENDPOINTS.RESIDENTS}/${code}`, residentData)
       // console.log('✅ Respuesta actualización residente:', response)
       return {
         success: true,
@@ -80,7 +81,7 @@ export const residentEditService = {
     }
 
     try {
-      await apiClient.get(`/residentes/${code}`)
+      await apiClient.get(`${API_CONFIG.ENDPOINTS.RESIDENTS}/${code}`)
       // Si encuentra el residente, el código no está disponible
       return {
         available: false,
@@ -109,12 +110,12 @@ export const residentEditService = {
     }
 
     try {
-      const response = await apiClient.get('/residentes/search', {
-        params: { residente_email: email, limit: 1 }
+      const response = await apiClient.get(`${API_CONFIG.ENDPOINTS.RESIDENTS}/search`, {
+        params: { q: email, limit: 1 }
       })
       
       // Si hay resultados, el email no está disponible
-      if (response.data && response.data.residentes && response.data.residentes.length > 0) {
+      if (Array.isArray(response) && response.length > 0) {
         return {
           available: false,
           error: 'Este email ya está en uso'
@@ -140,12 +141,12 @@ export const residentEditService = {
     }
 
     try {
-      const response = await apiClient.get('/residentes/search', {
-        params: { registro_medico: license, limit: 1 }
+      const response = await apiClient.get(`${API_CONFIG.ENDPOINTS.RESIDENTS}/search`, {
+        params: { q: license, limit: 1 }
       })
       
       // Si hay resultados, el registro no está disponible
-      if (response.data && response.data.residentes && response.data.residentes.length > 0) {
+      if (Array.isArray(response) && response.length > 0) {
         return {
           available: false,
           error: 'Este registro médico ya está en uso'

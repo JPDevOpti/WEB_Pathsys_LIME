@@ -6,10 +6,11 @@
  * Modelo del formulario de creación de pruebas
  */
 export interface TestFormModel {
-  pruebaCode: string
-  pruebasName: string
-  pruebasDescription: string
-  tiempo: number // Tiempo en días
+  testCode: string
+  testName: string
+  testDescription: string
+  timeDays: number // Tiempo en días
+  price: number // Precio de la prueba
   isActive: boolean
 }
 
@@ -17,10 +18,11 @@ export interface TestFormModel {
  * Request para crear una nueva prueba
  */
 export interface TestCreateRequest {
-  prueba_code: string
-  prueba_name: string
-  prueba_description: string
-  tiempo: number // Tiempo en días
+  test_code: string
+  name: string
+  description: string
+  time: number // Tiempo en días
+  price: number // Precio de la prueba
   is_active: boolean
 }
 
@@ -28,14 +30,15 @@ export interface TestCreateRequest {
  * Response de creación de prueba
  */
 export interface TestCreateResponse {
-  id: string
-  prueba_code: string
-  prueba_name: string
-  prueba_description: string
-  tiempo: number // Tiempo en días
+  _id: string
+  test_code: string
+  name: string
+  description: string
+  time: number // Tiempo en días
+  price: number // Precio de la prueba
   is_active: boolean
-  fecha_creacion: string
-  fecha_actualizacion?: string
+  created_at: string
+  updated_at?: string
 }
 
 /**
@@ -54,10 +57,11 @@ export interface TestCreationState {
 export interface TestFormValidation {
   isValid: boolean
   errors: {
-    pruebaCode?: string
-    pruebasName?: string
-    pruebasDescription?: string
-    tiempo?: string
+    testCode?: string
+    testName?: string
+    testDescription?: string
+    timeDays?: string
+    price?: string
   }
 }
 
@@ -66,10 +70,11 @@ export interface TestFormValidation {
  */
 export interface TestEditFormModel {
   id: string
-  pruebaCode: string
-  pruebasName: string
-  pruebasDescription: string
-  tiempo: number // Tiempo en días
+  testCode: string
+  testName: string
+  testDescription: string
+  timeDays: number // Tiempo en días
+  price: number // Precio de la prueba
   isActive: boolean
 }
 
@@ -77,10 +82,11 @@ export interface TestEditFormModel {
  * Request para actualizar una prueba existente
  */
 export interface TestUpdateRequest {
-  prueba_code?: string
-  prueba_name?: string
-  prueba_description?: string
-  tiempo?: number // Tiempo en días
+  test_code?: string
+  name?: string
+  description?: string
+  time?: number // Tiempo en minutos
+  price?: number // Precio de la prueba
   is_active?: boolean
 }
 
@@ -88,14 +94,15 @@ export interface TestUpdateRequest {
  * Response de actualización de prueba
  */
 export interface TestUpdateResponse {
-  id: string
-  prueba_code: string
-  prueba_name: string
-  prueba_description: string
-  tiempo: number // Tiempo en días
+  _id: string
+  test_code: string
+  name: string
+  description: string
+  time: number // Tiempo en días
+  price: number // Precio de la prueba
   is_active: boolean
-  fecha_creacion: string
-  fecha_actualizacion: string
+  created_at: string
+  updated_at: string
 }
 
 /**
@@ -114,14 +121,15 @@ export interface TestEditionState {
 export interface TestEditFormValidation {
   isValid: boolean
   errors: {
-    pruebaCode?: string
-    pruebasName?: string
-    pruebasDescription?: string
-    tiempo?: string
+    testCode?: string
+    testName?: string
+    testDescription?: string
+    timeDays?: string
+    price?: string
   }
 }
 
 /**
- * Nota: El campo tiempo se maneja como input de texto
- * para permitir al usuario ingresar días directamente
+ * Nota: El campo tiempo se maneja en días para coincidir con el backend
+ * El backend valida que el tiempo esté entre 1 y 365 días
  */

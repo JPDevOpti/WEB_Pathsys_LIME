@@ -38,27 +38,34 @@ export function useTestCreation() {
     const errors: TestFormValidation['errors'] = {}
 
     // Validar código
-    if (!formData.pruebaCode?.trim()) {
-      errors.pruebaCode = 'El código es requerido'
-    } else if (!/^[A-Z0-9_-]+$/i.test(formData.pruebaCode)) {
-      errors.pruebaCode = 'Solo letras, números, guiones y guiones bajos'
+    if (!formData.testCode?.trim()) {
+      errors.testCode = 'El código es requerido'
+    } else if (!/^[A-Z0-9_-]+$/i.test(formData.testCode)) {
+      errors.testCode = 'Solo letras, números, guiones y guiones bajos'
     }
 
     // Validar nombre
-    if (!formData.pruebasName?.trim()) {
-      errors.pruebasName = 'El nombre es requerido'
+    if (!formData.testName?.trim()) {
+      errors.testName = 'El nombre es requerido'
     }
 
     // Validar descripción
-    if (!formData.pruebasDescription?.trim()) {
-      errors.pruebasDescription = 'La descripción es requerida'
+    if (!formData.testDescription?.trim()) {
+      errors.testDescription = 'La descripción es requerida'
     }
 
     // Validar tiempo (en días)
-    if (!formData.tiempo || formData.tiempo <= 0) {
-      errors.tiempo = 'Ingresa un tiempo válido en días'
-    } else if (formData.tiempo > 365) {
-      errors.tiempo = 'Máximo 365 días'
+    if (!formData.timeDays || formData.timeDays <= 0) {
+      errors.timeDays = 'Ingresa un tiempo válido en días'
+    } else if (formData.timeDays > 365) {
+      errors.timeDays = 'Máximo 365 días'
+    }
+
+    // Validar precio
+    if (formData.price === undefined || formData.price === null) {
+      errors.price = 'El precio es requerido'
+    } else if (formData.price < 0) {
+      errors.price = 'El precio no puede ser negativo'
     }
 
     return {
@@ -92,14 +99,15 @@ export function useTestCreation() {
   }
 
   /**
-   * Normalizar datos del formulario para que sean compatibles con el backend (snake_case)
+   * Normalizar datos del formulario para que sean compatibles con el backend
    */
   const normalizeTestData = (formData: TestFormModel): TestCreateRequest => {
     return {
-      prueba_code: formData.pruebaCode?.trim().toUpperCase() || '',
-      prueba_name: formData.pruebasName?.trim() || '',
-      prueba_description: formData.pruebasDescription?.trim() || '',
-      tiempo: formData.tiempo || 1,
+      test_code: formData.testCode?.trim().toUpperCase() || '',
+      name: formData.testName?.trim() || '',
+      description: formData.testDescription?.trim() || '',
+      time: formData.timeDays || 1,
+      price: formData.price || 0,
       is_active: formData.isActive ?? true
     }
   }

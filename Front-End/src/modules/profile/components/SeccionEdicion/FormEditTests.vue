@@ -14,23 +14,45 @@
     </div>
 
     <!-- Formulario de edición -->
-    <template v-else-if="localModel.pruebaCode">
+    <template v-else-if="localModel.testCode">
       <!-- Nombre y Código -->
       <FormInputField 
         class="col-span-full md:col-span-6" 
         label="Nombre de la prueba" 
         placeholder="Ejemplo: Biopsia" 
-        v-model="localModel.pruebasName"
-        :error="formErrors.pruebasName"
+        v-model="localModel.testName"
+        :error="formErrors.testName"
       />
       <FormInputField 
         class="col-span-full md:col-span-6" 
         label="Código de prueba" 
         placeholder="Ejemplo: BIO-01" 
-        v-model="localModel.pruebaCode"
-        :error="formErrors.pruebaCode"
+        v-model="localModel.testCode"
+        :error="formErrors.testCode"
         @blur="validateCode"
         :disabled="true"
+      />
+
+      <!-- Tiempo estimado y Precio -->
+      <FormInputField 
+        class="col-span-full md:col-span-6" 
+        label="Tiempo estimado (días)" 
+        type="number"
+        placeholder="Ej. 7" 
+        v-model.number="localModel.timeDays"
+        :error="formErrors.timeDays"
+        min="1"
+        max="365"
+      />
+      <FormInputField 
+        class="col-span-full md:col-span-6" 
+        label="Precio (COP)" 
+        type="number"
+        placeholder="Ej. 50000" 
+        v-model.number="localModel.price"
+        :error="formErrors.price"
+        min="0"
+        step="100"
       />
 
       <!-- Descripción -->
@@ -38,23 +60,13 @@
         class="col-span-full" 
         label="Descripción" 
         placeholder="Descripción detallada de la prueba" 
-        v-model="localModel.pruebasDescription" 
+        v-model="localModel.testDescription" 
         :rows="3"
-        :error="formErrors.pruebasDescription"
+        :error="formErrors.testDescription"
       />
 
-      <!-- Tiempo estimado y Estado activo -->
-      <FormInputField 
-        class="col-span-full md:col-span-6" 
-        label="Tiempo estimado (días)" 
-        type="number"
-        placeholder="Ej. 7" 
-        v-model.number="localModel.tiempo"
-        :error="formErrors.tiempo"
-        min="1"
-        max="365"
-      />
-      <div class="col-span-full md:col-span-6 flex items-center justify-center pt-6">
+      <!-- Estado activo -->
+      <div class="col-span-full flex items-center justify-center pt-4">
         <FormCheckbox label="Activo" v-model="localModel.isActive" />
       </div>
 
@@ -96,10 +108,10 @@
               <div class="space-y-4">
                 <!-- Información principal de la prueba -->
                 <div class="mb-4 pb-3 border-b border-gray-100">
-                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedTest.prueba_name }}</h3>
+                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedTest.name }}</h3>
                   <p class="text-gray-600">
                     <span class="font-medium">Código:</span> 
-                    <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedTest.prueba_code }}</span>
+                    <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedTest.test_code }}</span>
                   </p>
                 </div>
                 
@@ -107,7 +119,11 @@
                 <div class="space-y-4 text-sm">
                   <div>
                     <span class="text-gray-500 font-medium block mb-1">Tiempo estimado:</span>
-                    <p class="text-gray-800 font-semibold">{{ updatedTest.tiempo }} día{{ updatedTest.tiempo !== 1 ? 's' : '' }}</p>
+                    <p class="text-gray-800 font-semibold">{{ updatedTest.time }} día{{ updatedTest.time !== 1 ? 's' : '' }}</p>
+                  </div>
+                  <div>
+                    <span class="text-gray-500 font-medium block mb-1">Precio:</span>
+                    <p class="text-gray-800 font-semibold">${{ updatedTest.price?.toLocaleString('es-CO') || '0' }} COP</p>
                   </div>
                   <div>
                     <span class="text-gray-500 font-medium block mb-1">Estado:</span>
@@ -118,14 +134,14 @@
                   </div>
                   <div>
                     <span class="text-gray-500 font-medium block mb-1">Última actualización:</span>
-                    <p class="text-gray-800 font-semibold">{{ formatDate(updatedTest.fecha_actualizacion) }}</p>
+                    <p class="text-gray-800 font-semibold">{{ formatDate(updatedTest.updated_at) }}</p>
                   </div>
                 </div>
                 
                 <!-- Descripción -->
-                <div v-if="updatedTest.prueba_description">
+                <div v-if="updatedTest.description">
                   <span class="text-gray-500 font-medium block mb-2">Descripción:</span>
-                  <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ updatedTest.prueba_description }}</p>
+                  <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ updatedTest.description }}</p>
                 </div>
               </div>
             </div>
@@ -141,7 +157,7 @@
     </template>
 
     <!-- Estado de error al cargar (solo mostrar si hay datos pero faltan campos críticos) -->
-    <div v-else-if="!isLoadingTest && props.usuario && !localModel.pruebaCode" class="col-span-full">
+    <div v-else-if="!isLoadingTest && props.usuario && !localModel.testCode" class="col-span-full">
       <div class="text-center py-8">
         <div class="text-red-600 mb-2">
           <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -241,44 +257,29 @@ const hasChanges = computed(() => {
 // Modelo local del formulario
 const localModel = reactive<TestEditFormModel>({
   id: '',
-  pruebaCode: '',
-  pruebasName: '',
-  pruebasDescription: '',
-  tiempo: 1,
+  testCode: '',
+  testName: '',
+  testDescription: '',
+  timeDays: 1,
+  price: 0,
   isActive: true
 })
 
 // Errores del formulario
 const formErrors = reactive({
-  pruebaCode: '',
-  pruebasName: '',
-  pruebasDescription: '',
-  tiempo: ''
+  testCode: '',
+  testName: '',
+  testDescription: '',
+  timeDays: '',
+  price: ''
 })
 
 // Lista de errores de validación para mostrar en la alerta
 const validationErrors = computed(() => {
-  // Solo mostrar errores si se ha intentado enviar el formulario
-  if (!validationState.hasAttemptedSubmit) {
-    return []
-  }
+  if (!validationState.hasAttemptedSubmit) return []
   
-  const validationErrorsList: string[] = []
-  
-  if (!localModel.pruebaCode || formErrors.pruebaCode) {
-    validationErrorsList.push('Código de prueba válido requerido')
-  }
-  if (!localModel.pruebasName || formErrors.pruebasName) {
-    validationErrorsList.push('Nombre de la prueba requerido')
-  }
-  if (!localModel.pruebasDescription || formErrors.pruebasDescription) {
-    validationErrorsList.push('Descripción requerida')
-  }
-  if (!localModel.tiempo || localModel.tiempo <= 0) {
-    validationErrorsList.push('Tiempo estimado válido requerido')
-  }
-  
-  return validationErrorsList
+  const validation = validateForm(localModel)
+  return validation.isValid ? [] : Object.values(validation.errors)
 })
 
 
@@ -294,18 +295,20 @@ onMounted(() => {
 // Normalizador de campos para pruebas (pruebas -> test, etc.)
 const normalizeTest = (raw: any): TestEditFormModel | null => {
   if (!raw) return null
-  const code = raw.pruebaCode || raw.testCode || raw.codigo || raw.code || ''
-  const name = raw.pruebasName || raw.testName || raw.nombre || raw.name || ''
-  const desc = raw.pruebasDescription || raw.testDescription || raw.descripcion || raw.description || ''
-  const tiempo = raw.tiempo !== undefined ? Number(raw.tiempo) : 1
+  const code = raw.testCode || raw.pruebaCode || raw.codigo || raw.code || ''
+  const name = raw.testName || raw.pruebasName || raw.nombre || raw.name || ''
+  const desc = raw.testDescription || raw.pruebasDescription || raw.descripcion || raw.description || ''
+  const timeDays = raw.timeDays || raw.tiempo || raw.time || 1
+  const price = raw.price || raw.precio || 0
   const active = raw.isActive !== undefined ? raw.isActive : (raw.is_active !== undefined ? raw.is_active : (raw.activo !== undefined ? raw.activo : true))
   const id = raw.id || raw._id || code
   return {
     id: id,
-    pruebaCode: String(code),
-    pruebasName: String(name),
-    pruebasDescription: String(desc),
-    tiempo: tiempo > 0 ? tiempo : 1,
+    testCode: String(code),
+    testName: String(name),
+    testDescription: String(desc),
+    timeDays: Number(timeDays) > 0 ? Number(timeDays) : 1,
+    price: Number(price) >= 0 ? Number(price) : 0,
     isActive: !!active
   }
 }
@@ -314,7 +317,7 @@ const loadInitialData = () => {
   try {
     const mappedData = normalizeTest(props.usuario)
     if (!mappedData) throw new Error('No se recibieron datos de la prueba')
-    if (!mappedData.pruebaCode || !mappedData.pruebasName) throw new Error('Código y nombre de la prueba son requeridos')
+    if (!mappedData.testCode || !mappedData.testName) throw new Error('Código y nombre de la prueba son requeridos')
     Object.assign(localModel, mappedData)
     setInitialData(mappedData)
   } catch (error: any) {
@@ -333,23 +336,23 @@ watch(() => localModel, () => {
 
 // Validación del código al perder el foco
 const validateCode = async () => {
-  formErrors.pruebaCode = ''
+  formErrors.testCode = ''
   
-  if (!localModel.pruebaCode?.trim()) {
-    formErrors.pruebaCode = 'El código es requerido'
+  if (!localModel.testCode?.trim()) {
+    formErrors.testCode = 'El código es requerido'
     return
   }
   
-  if (!/^[A-Z0-9_-]+$/i.test(localModel.pruebaCode)) {
-    formErrors.pruebaCode = 'Solo letras, números, guiones y guiones bajos'
+  if (!/^[A-Z0-9_-]+$/i.test(localModel.testCode)) {
+    formErrors.testCode = 'Solo letras, números, guiones y guiones bajos'
     return
   }
   
   // Verificar disponibilidad en el backend (excluyendo el código original)
-  const originalCode = originalTestData.value?.pruebaCode
-  await checkCodeAvailability(localModel.pruebaCode, originalCode)
+  const originalCode = originalTestData.value?.testCode
+  await checkCodeAvailability(localModel.testCode, originalCode)
   if (codeValidationError.value) {
-    formErrors.pruebaCode = codeValidationError.value
+    formErrors.testCode = codeValidationError.value
   }
 }
 
@@ -446,8 +449,8 @@ const handleTestUpdated = async (updatedTestData: TestUpdateResponse) => {
   // Emitir evento para compatibilidad con la estructura existente
   emit('usuario-actualizado', {
     ...updatedTestData,
-    nombre: updatedTestData.prueba_name,
-    codigo: updatedTestData.prueba_code,
+    nombre: updatedTestData.name,
+    codigo: updatedTestData.test_code,
     tipo: 'pruebas'
   })
   

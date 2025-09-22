@@ -3,7 +3,7 @@
 import type { UserRole } from '../types/userProfile.types'
 import { PathologistApiService } from './pathologistApiService'
 import { ResidentApiService } from './residentApiService'
-import { AuxiliarApiService } from './auxiliarApiService'
+import { AuxiliarApiService } from './auxiliaryApiService'
 import { BillingApiService } from './billingApiService'
 
 export interface BackendPatologo {

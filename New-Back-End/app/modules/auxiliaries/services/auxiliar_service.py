@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 from app.modules.auxiliaries.schemas.auxiliar import AuxiliarCreate, AuxiliarUpdate, AuxiliarResponse, AuxiliarSearch
 from app.modules.auxiliaries.repositories.auxiliar_repository import AuxiliarRepository
+from app.shared.services.user_management import UserManagementService
 
 class AuxiliarService:
     """Servicio para la lógica de negocio de Auxiliaries"""
@@ -13,6 +14,7 @@ class AuxiliarService:
     def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
         self.repo = AuxiliarRepository(db)
+        self.user_service = UserManagementService(db)
     
     async def create_auxiliar(self, payload: AuxiliarCreate) -> AuxiliarResponse:
         """Crear un nuevo auxiliar"""
@@ -26,8 +28,23 @@ class AuxiliarService:
         if existing_email:
             raise ConflictError("Email already exists")
         
-        # Crear el auxiliar
+        # Crear el auxiliar en la colección auxiliaries
         doc = await self.repo.create(payload)
+        
+        # Crear el usuario en la colección users
+        user_data = await self.user_service.create_user_for_auxiliar(
+            name=payload.auxiliar_name,
+            email=payload.auxiliar_email,
+            password=payload.password,
+            auxiliar_code=payload.auxiliar_code,
+            is_active=payload.is_active
+        )
+        
+        if not user_data:
+            # Si falla la creación del usuario, eliminar el auxiliar creado
+            await self.repo.delete_by_auxiliar_code(payload.auxiliar_code)
+            raise ConflictError("Failed to create user account")
+        
         return self._to_response(doc)
     
     async def get_auxiliar(self, auxiliar_code: str) -> AuxiliarResponse:
@@ -65,6 +82,20 @@ class AuxiliarService:
         updated = await self.repo.update_by_auxiliar_code(auxiliar_code, update_data)
         if not updated:
             raise BadRequestError("Failed to update auxiliar")
+        
+        # Actualizar el usuario correspondiente en la colección users
+        if payload.auxiliar_name or payload.auxiliar_email or payload.is_active is not None or payload.password:
+            user_data = await self.user_service.update_user_for_auxiliar(
+                auxiliar_code=auxiliar_code,
+                name=payload.auxiliar_name,
+                email=payload.auxiliar_email,
+                password=payload.password,
+                is_active=payload.is_active
+            )
+            if not user_data:
+                # Si falla la actualización del usuario, revertir cambios en auxiliar
+                # (opcional: implementar rollback si es crítico)
+                pass
         
         return self._to_response(updated)
     

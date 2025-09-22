@@ -1,13 +1,13 @@
 import { ref, reactive } from 'vue'
-import { facturacionEditService } from '../services/facturacionEditService'
+import { billingEditService } from '../services/billingEditService'
 import type { 
-  FacturacionEditFormModel,
-  FacturacionEditFormValidation,
-  FacturacionEditionState
-} from '../types/facturacion.types'
+  BillingEditFormModel,
+  BillingEditFormValidation,
+  BillingEditionState
+} from '../types/billing.types'
 
-export const useFacturacionEdition = () => {
-  const state = reactive<FacturacionEditionState>({
+export const useBillingEdition = () => {
+  const state = reactive<BillingEditionState>({
     isLoading: false,
     isSuccess: false,
     error: '',
@@ -15,10 +15,10 @@ export const useFacturacionEdition = () => {
   })
 
   const emailValidationError = ref('')
-  const originalData = ref<FacturacionEditFormModel | null>(null)
+  const originalData = ref<BillingEditFormModel | null>(null)
 
-  const validateForm = (form: FacturacionEditFormModel): FacturacionEditFormValidation => {
-    const errors: FacturacionEditFormValidation['errors'] = {}
+  const validateForm = (form: BillingEditFormModel): BillingEditFormValidation => {
+    const errors: BillingEditFormValidation['errors'] = {}
 
     if (!form.facturacionName?.trim()) {
       errors.facturacionName = 'El nombre es requerido'
@@ -38,13 +38,22 @@ export const useFacturacionEdition = () => {
       errors.observaciones = 'Las observaciones no pueden exceder 500 caracteres'
     }
 
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors
+    if (form.password && form.password.trim().length > 0) {
+      if (form.password.length < 6) {
+        errors.password = 'La contraseña debe tener al menos 6 caracteres'
+      } else if (form.password.length > 128) {
+        errors.password = 'La contraseña no puede exceder 128 caracteres'
+      }
+      
+      if (form.passwordConfirm && form.password !== form.passwordConfirm) {
+        errors.passwordConfirm = 'Las contraseñas no coinciden'
+      }
     }
+
+    return { isValid: Object.keys(errors).length === 0, errors }
   }
 
-  const update = async (form: FacturacionEditFormModel) => {
+  const update = async (form: BillingEditFormModel) => {
     state.isLoading = true
     state.error = ''
     state.successMessage = ''
@@ -56,8 +65,8 @@ export const useFacturacionEdition = () => {
         return { success: false }
       }
 
-      const updateData = facturacionEditService.prepareUpdateData(form)
-      const result = await facturacionEditService.updateByCode(form.facturacionCode, updateData)
+      const updateData = billingEditService.prepareUpdateData(form)
+      const result = await billingEditService.updateByCode(form.facturacionCode, updateData)
 
       if (result.success) {
         state.isSuccess = true
@@ -69,14 +78,15 @@ export const useFacturacionEdition = () => {
       }
     } catch (error: any) {
       console.error('Error updating facturacion:', error)
-      state.error = error.message || 'Error al actualizar el usuario de facturación'
-      return { success: false }
+      const errorMessage = error.response?.data?.detail || error.message || 'Error al actualizar el usuario de facturación'
+      state.error = errorMessage
+      return { success: false, error: errorMessage }
     } finally {
       state.isLoading = false
     }
   }
 
-  const setInitialData = (data: FacturacionEditFormModel) => { 
+  const setInitialData = (data: BillingEditFormModel) => { 
     originalData.value = { ...data } 
   }
   
@@ -86,7 +96,7 @@ export const useFacturacionEdition = () => {
     emailValidationError.value = '' 
   }
 
-  const createHasChanges = (current: FacturacionEditFormModel) => {
+  const createHasChanges = (current: BillingEditFormModel) => {
     if (!originalData.value) return false
     
     return (

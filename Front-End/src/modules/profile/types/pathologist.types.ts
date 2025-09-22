@@ -21,14 +21,14 @@ export interface PathologistFormModel {
  * Request para crear un nuevo patólogo (colección patólogos)
  */
 export interface PathologistCreateRequest {
-  patologo_name: string
-  iniciales_patologo: string
-  patologo_code: string
-  patologo_email: string
-  registro_medico: string
+  pathologist_name: string
+  initials: string
+  pathologist_code: string
+  pathologist_email: string
+  medical_license: string
   password: string // Contraseña para crear el usuario asociado
-  firma: string
-  observaciones: string
+  signature: string
+  observations: string
   is_active: boolean
 }
 
@@ -48,16 +48,16 @@ export interface UserCreateRequest {
  */
 export interface PathologistCreateResponse {
   id: string
-  patologo_name: string
-  iniciales_patologo: string
-  patologo_code: string
-  patologo_email: string
-  registro_medico: string
-  firma: string
-  observaciones: string
+  pathologist_name: string
+  initials: string
+  pathologist_code: string
+  pathologist_email: string
+  medical_license: string
+  signature: string
+  observations: string
   is_active: boolean
-  fecha_creacion: string
-  fecha_actualizacion?: string
+  created_at: string
+  updated_at?: string
 }
 
 /**
@@ -113,24 +113,24 @@ export interface PathologistEditFormModel {
 }
 
 export interface PathologistUpdateRequest {
-  patologo_name: string
-  iniciales_patologo: string
-  patologo_email: string
-  registro_medico: string
-  observaciones: string
+  pathologist_name: string
+  initials: string
+  pathologist_email: string
+  medical_license: string
+  observations: string
   is_active: boolean
   password?: string
 }
 
 export interface PathologistUpdateResponse {
   id: string
-  patologo_name: string
-  iniciales_patologo: string
-  patologo_code: string
-  patologo_email: string
-  registro_medico: string
-  observaciones: string
+  pathologist_name: string
+  initials: string
+  pathologist_code: string
+  pathologist_email: string
+  medical_license: string
+  observations: string
   is_active: boolean
-  fecha_creacion: string
-  fecha_actualizacion: string
+  created_at: string
+  updated_at: string
 }

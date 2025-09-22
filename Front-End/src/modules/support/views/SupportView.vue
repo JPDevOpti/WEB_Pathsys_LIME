@@ -63,7 +63,7 @@ const onTicketCreated = (newTicket: SupportTicket) => {
 const onTicketStatusChanged = (ticketCode: string, newStatus: string) => {
   const ticket = tickets.value.find(t => t.ticket_code === ticketCode)
   if (ticket) {
-    ticket.estado = newStatus as any
+    ticket.status = newStatus as any
   }
 }
 

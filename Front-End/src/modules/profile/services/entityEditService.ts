@@ -6,24 +6,24 @@ class EntityEditService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.ENTITIES
 
   async getByCode(code: string): Promise<EntityEditFormModel> {
-    const response = await apiClient.get<EntityUpdateResponse>(`${this.endpoint}/code/${code}`)
+    const response = await apiClient.get<EntityUpdateResponse>(`${this.endpoint}/${code}`)
     return {
       id: response.id,
-      EntidadName: response.entidad_name,
-      EntidadCode: response.entidad_code,
-      observaciones: response.observaciones,
+      entityName: response.name,
+      entityCode: response.entity_code,
+      notes: response.notes,
       isActive: response.is_active
     }
   }
 
   async updateByCode(originalCode: string, data: EntityUpdateRequest): Promise<EntityUpdateResponse> {
-    return await apiClient.put<EntityUpdateResponse>(`${this.endpoint}/code/${originalCode}`, data)
+    return await apiClient.put<EntityUpdateResponse>(`${this.endpoint}/${originalCode}`, data)
   }
 
   async checkCodeExists(code: string, originalCode?: string): Promise<boolean> {
     if (originalCode && code === originalCode) return false
     try {
-      await apiClient.get(`${this.endpoint}/code/${code}`)
+      await apiClient.get(`${this.endpoint}/${code}`)
       return true
     } catch (error: any) {
       if (error.response?.status === 404) return false

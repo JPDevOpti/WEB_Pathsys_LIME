@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 from app.modules.residents.schemas.resident import ResidentCreate, ResidentUpdate, ResidentResponse, ResidentSearch
 from app.modules.residents.repositories.resident_repository import ResidentRepository
+from app.shared.services.user_management import UserManagementService
 
 class ResidentService:
     """Servicio para la lógica de negocio de Residents"""
@@ -13,6 +14,7 @@ class ResidentService:
     def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
         self.repo = ResidentRepository(db)
+        self.user_service = UserManagementService(db)
     
     async def create_resident(self, payload: ResidentCreate) -> ResidentResponse:
         """Crear un nuevo residente"""
@@ -31,8 +33,23 @@ class ResidentService:
         if existing_license:
             raise ConflictError("Medical license already exists")
         
-        # Crear el residente
+        # Crear el residente en la colección residents
         doc = await self.repo.create(payload)
+        
+        # Crear el usuario en la colección users
+        user_data = await self.user_service.create_user_for_resident(
+            name=payload.resident_name,
+            email=payload.resident_email,
+            password=payload.password,
+            resident_code=payload.resident_code,
+            is_active=payload.is_active
+        )
+        
+        if not user_data:
+            # Si falla la creación del usuario, eliminar el residente creado
+            await self.repo.delete_by_resident_code(payload.resident_code)
+            raise ConflictError("Failed to create user account")
+        
         return self._to_response(doc)
     
     async def get_resident(self, resident_code: str) -> ResidentResponse:
@@ -76,6 +93,20 @@ class ResidentService:
         updated = await self.repo.update_by_resident_code(resident_code, update_data)
         if not updated:
             raise BadRequestError("Failed to update resident")
+        
+        # Actualizar el usuario correspondiente en la colección users
+        if payload.resident_name or payload.resident_email or payload.is_active is not None or payload.password:
+            user_data = await self.user_service.update_user_for_resident(
+                resident_code=resident_code,
+                name=payload.resident_name,
+                email=payload.resident_email,
+                password=payload.password,
+                is_active=payload.is_active
+            )
+            if not user_data:
+                # Si falla la actualización del usuario, revertir cambios en resident
+                # (opcional: implementar rollback si es crítico)
+                pass
         
         return self._to_response(updated)
     

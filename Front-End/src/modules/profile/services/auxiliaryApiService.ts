@@ -42,7 +42,7 @@ class AuxiliarApiService {
     try {
       console.log('🔍 AuxiliarApiService.getByEmail - Buscando auxiliar para:', email)
       const auxiliaries = await apiClient.get<AuxiliarResponse[]>(`${this.BASE_URL}/search`, {
-        params: { auxiliar_email: email, limit: 1 }
+        params: { q: email, limit: 1 }
       })
       
       console.log('📋 AuxiliarApiService.getByEmail - Respuesta completa:', auxiliaries)

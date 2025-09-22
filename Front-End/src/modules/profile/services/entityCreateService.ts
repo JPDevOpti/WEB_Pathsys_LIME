@@ -51,9 +51,9 @@ class EntityCreateService {
   /**
    * Verificar si un código de entidad ya existe
    */
-  async checkCodeExists(entidadCode: string): Promise<boolean> {
+  async checkCodeExists(entityCode: string): Promise<boolean> {
     try {
-      await apiClient.get(`${this.endpoint}/code/${entidadCode}`)
+      await apiClient.get(`${this.endpoint}/${entityCode}`)
       return true // Si no lanza error, el código existe
     } catch (error: any) {
       if (error.response?.status === 404) {

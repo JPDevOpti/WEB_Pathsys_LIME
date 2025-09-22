@@ -92,30 +92,15 @@ class AuxiliaryCreateService {
     }
   }
 
-  /**
-   * Verificar si un código de auxiliar ya existe
-   */
-  async checkCodeExists(auxiliarCode: string): Promise<boolean> {
-    try {
-      await apiClient.get(`${this.auxiliaryEndpoint}/${auxiliarCode}`)
-      return true // Si no lanza error, el código existe
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        return false // Código no existe, está disponible
-      }
-      // Para otros errores, asumir que existe para evitar duplicados
-      return true
-    }
-  }
 
   /**
    * Verificar si un email ya existe (usando búsqueda de auxiliares)
    */
   async checkEmailExists(email: string): Promise<boolean> {
     try {
-      const response = await apiClient.get(`${this.auxiliaryEndpoint}/search?AuxiliarEmail=${email}`)
+      const response = await apiClient.get(`${this.auxiliaryEndpoint}/search?auxiliar_email=${email}`)
       // Si encuentra resultados, el email existe
-      return response.auxiliares && response.auxiliares.length > 0
+      return response && response.length > 0
     } catch (error: any) {
       if (error.response?.status === 404) {
         return false // Email no existe, está disponible

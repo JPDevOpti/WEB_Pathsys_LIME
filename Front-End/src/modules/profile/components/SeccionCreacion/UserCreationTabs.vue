@@ -24,17 +24,17 @@
     </div>
 
     <!-- Contenido: formulario a ancho completo -->
-    <FormAuxiliar
+    <FormAuxiliary
       v-if="selectedType === 'auxiliar'"
       v-model="formAuxiliar"
       @usuario-creado="forwardCreated('auxiliar', $event)"
     />
-    <FormFacturacion
+    <FormBilling
       v-else-if="selectedType === 'facturacion'"
       v-model="formFacturacion"
       @usuario-creado="forwardCreated('facturacion', $event)"
     />
-    <FormPatologo
+    <FormPathologist
       v-else-if="selectedType === 'patologo'"
       v-model="formPatologo"
       @usuario-creado="forwardCreated('patologo', $event)"
@@ -44,12 +44,12 @@
       v-model="formResident"
       @usuario-creado="forwardCreated('residente', $event)"
     />
-    <FormEntidad
+    <FormEntity
       v-else-if="selectedType === 'entidad'"
       v-model="formEntidad"
       @usuario-creado="forwardCreated('entidad', $event)"
     />
-    <FormPruebas
+    <FormTests
       v-else-if="selectedType === 'pruebas'"
       v-model="formPruebas"
       @usuario-creado="forwardCreated('pruebas', $event)"
@@ -60,12 +60,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
-import FormAuxiliar from './FormAuxiliar.vue'
-import FormFacturacion from './FormFacturacion.vue'
-import FormPatologo from './FormPatologo.vue'
+import FormAuxiliary from './FormAuxiliary.vue'
+import FormBilling from './FormBilling.vue'
+import FormPathologist from './FormPathologist.vue'
 import FormResident from './FormResident.vue'
-import FormEntidad from './FormEntidad.vue'
-import FormPruebas from './FormPruebas.vue'
+import FormEntity from './FormEntity.vue'
+import FormTests from './FormTests.vue'
 
 type UserType = 'auxiliar' | 'facturacion' | 'patologo' | 'residente' | 'entidad' | 'pruebas'
 
@@ -90,8 +90,8 @@ const formAuxiliar = ref({ auxiliarName: '', auxiliarCode: '', AuxiliarEmail: ''
 const formFacturacion = ref({ facturacionName: '', facturacionCode: '', FacturacionEmail: '', password: '', observaciones: '', isActive: true })
 const formPatologo = ref({ patologoName: '', InicialesPatologo: '', patologoCode: '', PatologoEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true, firma: '' })
 const formResident = ref({ residenteName: '', InicialesResidente: '', residenteCode: '', ResidenteEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true })
-const formEntidad = ref({ EntidadName: '', EntidadCode: '', observaciones: '', isActive: true })
-const formPruebas = ref({ pruebaCode: '', pruebasName: '', pruebasDescription: '', tiempo: 1, isActive: true })
+const formEntidad = ref({ entityName: '', entityCode: '', notes: '', isActive: true })
+const formPruebas = ref({ testCode: '', testName: '', testDescription: '', timeDays: 1, price: 0, isActive: true })
 
 // Labels por tipo (reserva para futuros encabezados contextuales)
 // Nota: reservado por si se muestra encabezado contextual en el futuro
@@ -108,8 +108,8 @@ const forwardCreated = (tipo: UserType, data: any) => {
   if (tipo === 'facturacion') formFacturacion.value = { facturacionName: '', facturacionCode: '', FacturacionEmail: '', password: '', observaciones: '', isActive: true }
   if (tipo === 'patologo') formPatologo.value = { patologoName: '', InicialesPatologo: '', patologoCode: '', PatologoEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true, firma: '' }
   if (tipo === 'residente') formResident.value = { residenteName: '', InicialesResidente: '', residenteCode: '', ResidenteEmail: '', registro_medico: '', password: '', observaciones: '', isActive: true }
-  if (tipo === 'entidad') formEntidad.value = { EntidadName: '', EntidadCode: '', observaciones: '', isActive: true }
-  if (tipo === 'pruebas') formPruebas.value = { pruebaCode: '', pruebasName: '', pruebasDescription: '', tiempo: 1, isActive: true }
+  if (tipo === 'entidad') formEntidad.value = { entityName: '', entityCode: '', notes: '', isActive: true }
+  if (tipo === 'pruebas') formPruebas.value = { testCode: '', testName: '', testDescription: '', timeDays: 1, price: 0, isActive: true }
 }
 </script>
 

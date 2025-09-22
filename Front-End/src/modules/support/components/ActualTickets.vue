@@ -18,7 +18,7 @@
           </div>
           <div class="w-40">
             <FormSelect
-              v-model="filters.estado"
+              v-model="filters.status"
               :options="statusOptions"
               placeholder="Estado"
             />
@@ -26,7 +26,7 @@
           
           <div class="w-44">
             <FormSelect
-              v-model="filters.categoria"
+              v-model="filters.category"
               :options="categoryOptions"
               placeholder="Categoría"
             />
@@ -59,21 +59,21 @@
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
-                <h3 class="font-medium text-gray-900">{{ ticket.titulo }}</h3>
-                <span :class="getStatusBadgeClass(ticket.estado)" class="text-xs font-medium px-2 py-1 rounded-full">
-                  {{ getStatusLabel(ticket.estado) }}
+                <h3 class="font-medium text-gray-900">{{ ticket.title }}</h3>
+                <span :class="getStatusBadgeClass(ticket.status)" class="text-xs font-medium px-2 py-1 rounded-full">
+                  {{ getStatusLabel(ticket.status) }}
                 </span>
                 <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                  {{ getCategoryLabel(ticket.categoria) }}
+                  {{ getCategoryLabel(ticket.category) }}
                 </span>
               </div>
-              <div v-if="ticket.descripcion" class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2">
-                <p class="text-sm text-gray-700 whitespace-pre-line">{{ ticket.descripcion }}</p>
+              <div v-if="ticket.description" class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2">
+                <p class="text-sm text-gray-700 whitespace-pre-line">{{ ticket.description }}</p>
               </div>
               <div class="flex items-center gap-4 text-xs text-gray-500">
                 <span>Ticket {{ ticket.ticket_code }}</span>
-                <span>{{ ticket.fecha_ticket ? formatDate(ticket.fecha_ticket) : '' }}</span>
-                <span v-if="ticket.imagen">1 imagen adjunta</span>
+                <span>{{ ticket.ticket_date ? formatDate(ticket.ticket_date) : '' }}</span>
+                <span v-if="ticket.image">1 imagen adjunta</span>
               </div>
               
               <!-- Controles de administración (solo para administradores) -->
@@ -82,7 +82,7 @@
                 <!-- Cambiar estado -->
                 <div class="w-40">
                   <FormSelect
-                    :modelValue="ticket.estado"
+                    :modelValue="ticket.status"
                     @update:modelValue="changeTicketStatus(ticket.ticket_code, $event)"
                     :options="statusOptionsForAdmin"
                   />
@@ -168,8 +168,8 @@ const showError = (msg: string) => error('generic', 'Error', msg, 5000)
 
 // Filtros
 const filters = reactive<TicketFilters>({
-  estado: 'all',
-  categoria: 'all',
+  status: 'all',
+  category: 'all',
   search: ''
 })
 
@@ -204,19 +204,19 @@ const filteredTickets = computed(() => {
     .filter(ticket => !!ticket && typeof ticket === 'object')
     .map(t => ({
       ticket_code: (t as any).ticket_code ?? (t as any).id ?? '',
-      titulo: (t as any).titulo ?? (t as any).title ?? '',
-      categoria: (t as any).categoria ?? (t as any).category ?? '',
-      descripcion: (t as any).descripcion ?? (t as any).description ?? '',
-      imagen: (t as any).imagen ?? (Array.isArray((t as any).attachments) && (t as any).attachments.length ? (t as any).attachments[0]?.previewUrl : undefined),
-      fecha_ticket: (t as any).fecha_ticket ?? (t as any).createdAt ?? '',
-      estado: (t as any).estado ?? (t as any).status ?? 'open'
+      title: (t as any).title ?? (t as any).titulo ?? '',
+      category: (t as any).category ?? (t as any).categoria ?? '',
+      description: (t as any).description ?? (t as any).descripcion ?? '',
+      image: (t as any).image ?? (t as any).imagen ?? (Array.isArray((t as any).attachments) && (t as any).attachments.length ? (t as any).attachments[0]?.previewUrl : undefined),
+      ticket_date: (t as any).ticket_date ?? (t as any).fecha_ticket ?? (t as any).createdAt ?? '',
+      status: (t as any).status ?? (t as any).estado ?? 'open'
     }))
     .filter(ticket => {
-    const matchesStatus = filters.estado === 'all' || ticket.estado === filters.estado
-    const matchesCategory = filters.categoria === 'all' || ticket.categoria === filters.categoria
+    const matchesStatus = filters.status === 'all' || ticket.status === filters.status
+    const matchesCategory = filters.category === 'all' || ticket.category === filters.category
     const matchesSearch = filters.search === '' || 
-      ticket.titulo.toLowerCase().includes(filters.search.toLowerCase()) ||
-      ticket.descripcion.toLowerCase().includes(filters.search.toLowerCase())
+      ticket.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+      ticket.description.toLowerCase().includes(filters.search.toLowerCase())
     
     return matchesStatus && matchesCategory && matchesSearch
   })

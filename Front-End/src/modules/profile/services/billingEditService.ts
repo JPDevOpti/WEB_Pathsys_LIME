@@ -1,24 +1,24 @@
 import { apiClient } from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 import type { AxiosResponse } from 'axios'
-import type { 
-  FacturacionEditFormModel,
-  FacturacionUpdateRequest,
-  FacturacionUpdateResponse
-} from '../types/facturacion.types'
+import type {
+  BillingEditFormModel,
+  BillingUpdateRequest,
+  BillingUpdateResponse
+} from '../types/billing.types'
 
 export interface FacturacionEditResult {
   success: boolean
-  data?: FacturacionUpdateResponse
+  data?: BillingUpdateResponse
   error?: string
 }
 
-class FacturacionEditService {
+class BillingEditService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.FACTURACION
 
   async getByCode(code: string): Promise<FacturacionEditResult> {
     try {
-      const response: AxiosResponse<FacturacionUpdateResponse> = await apiClient.get<FacturacionUpdateResponse>(`${this.endpoint}/${code}`)
+      const response: AxiosResponse<BillingUpdateResponse> = await apiClient.get<BillingUpdateResponse>(`${this.endpoint}/${code}`)
       return { success: true, data: response.data }
     } catch (error: any) {
       return { 
@@ -28,9 +28,9 @@ class FacturacionEditService {
     }
   }
 
-  async updateByCode(code: string, data: FacturacionUpdateRequest): Promise<FacturacionEditResult> {
+  async updateByCode(code: string, data: BillingUpdateRequest): Promise<FacturacionEditResult> {
     try {
-      const response: AxiosResponse<FacturacionUpdateResponse> = await apiClient.put<FacturacionUpdateResponse>(`${this.endpoint}/${code}`, data)
+      const response: AxiosResponse<BillingUpdateResponse> = await apiClient.put<BillingUpdateResponse>(`${this.endpoint}/${code}`, data)
       return { success: true, data: response.data }
     } catch (error: any) {
       return { 
@@ -40,16 +40,15 @@ class FacturacionEditService {
     }
   }
 
-  prepareUpdateData(formModel: FacturacionEditFormModel): FacturacionUpdateRequest {
+  prepareUpdateData(formModel: BillingEditFormModel): BillingUpdateRequest {
     return {
-      facturacion_name: formModel.facturacionName,
-      facturacion_email: formModel.FacturacionEmail,
-      observaciones: formModel.observaciones,
+      billing_name: formModel.facturacionName,
+      billing_email: formModel.FacturacionEmail,
+      observations: formModel.observaciones,
       is_active: formModel.isActive,
       password: formModel.password || undefined
     }
   }
-
 }
 
-export const facturacionEditService = new FacturacionEditService()
+export const billingEditService = new BillingEditService()

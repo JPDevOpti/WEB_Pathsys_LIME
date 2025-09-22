@@ -24,7 +24,7 @@ export class TicketsService {
   async getTickets(
     skip: number = 0,
     limit: number = 20,
-    sortBy: string = 'fecha_ticket',
+    sortBy: string = 'ticket_date',
     sortOrder: string = 'desc'
   ): Promise<SupportTicket[]> {
     const params = { skip, limit, sort_by: sortBy, sort_order: sortOrder }
@@ -44,11 +44,11 @@ export class TicketsService {
    * Crear nuevo ticket
    */
   async createTicket(data: NewTicketForm): Promise<SupportTicket> {
-    // Preparar datos para envío
+    // Preparar datos para envío (campos en inglés para nuevo backend)
     const ticketData = {
-      titulo: data.titulo,
-      categoria: data.categoria,
-      descripcion: data.descripcion,
+      title: data.title,
+      category: data.category,
+      description: data.description,
       // No enviar imagen en la creación inicial, se sube por separado
     }
 
@@ -56,9 +56,9 @@ export class TicketsService {
     const newTicket = response
 
     // Si hay imagen, subirla después
-    if (data.imagen) {
+    if (data.image) {
       try {
-        await this.uploadImage(newTicket.ticket_code, data.imagen)
+        await this.uploadImage(newTicket.ticket_code, data.image)
         // Obtener ticket actualizado con imagen
         return await this.getTicketByCode(newTicket.ticket_code)
       } catch (error) {
@@ -77,9 +77,9 @@ export class TicketsService {
   async updateTicket(ticketCode: string, data: Partial<NewTicketForm>): Promise<SupportTicket> {
     const updateData: any = {}
     
-    if (data.titulo !== undefined) updateData.titulo = data.titulo
-    if (data.categoria !== undefined) updateData.categoria = data.categoria
-    if (data.descripcion !== undefined) updateData.descripcion = data.descripcion
+    if (data.title !== undefined) updateData.title = data.title
+    if (data.category !== undefined) updateData.category = data.category
+    if (data.description !== undefined) updateData.description = data.description
 
     const response = await apiClient.put(`${this.baseURL}/${ticketCode}`, updateData)
     return response
@@ -95,8 +95,8 @@ export class TicketsService {
   /**
    * Cambiar estado de ticket (solo administradores)
    */
-  async changeStatus(ticketCode: string, estado: TicketStatusEnum): Promise<SupportTicket> {
-    const response = await apiClient.patch(`${this.baseURL}/${ticketCode}/status`, { estado })
+  async changeStatus(ticketCode: string, status: TicketStatusEnum): Promise<SupportTicket> {
+    const response = await apiClient.patch(`${this.baseURL}/${ticketCode}/status`, { status })
     return response
   }
 
@@ -182,12 +182,12 @@ export class TicketsService {
   private convertFiltersToSearch(filters: TicketFilters): TicketSearch {
     const search: TicketSearch = {}
     
-    if (filters.estado && filters.estado !== 'all') {
-      search.estado = filters.estado
+    if (filters.status && filters.status !== 'all') {
+      search.status = filters.status
     }
     
-    if (filters.categoria && filters.categoria !== 'all') {
-      search.categoria = filters.categoria
+    if (filters.category && filters.category !== 'all') {
+      search.category = filters.category
     }
     
     if (filters.search && filters.search.trim()) {

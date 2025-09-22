@@ -17,9 +17,9 @@ export function useEntityEdition() {
 
   const validateForm = (formData: EntityEditFormModel): EntityEditFormValidation => {
     const errors: EntityEditFormValidation['errors'] = {}
-    if (!formData.EntidadName?.trim()) errors.EntidadName = 'El nombre es requerido'
-    if (!formData.EntidadCode?.trim()) errors.EntidadCode = 'El código es requerido'
-    if (formData.observaciones && formData.observaciones.length > 500) errors.observaciones = 'Máximo 500 caracteres'
+    if (!formData.entityName?.trim()) errors.entityName = 'El nombre es requerido'
+    if (!formData.entityCode?.trim()) errors.entityCode = 'El código es requerido'
+    if (formData.notes && formData.notes.length > 500) errors.notes = 'Máximo 500 caracteres'
     return { isValid: Object.keys(errors).length === 0, errors }
   }
 
@@ -60,9 +60,9 @@ export function useEntityEdition() {
   const hasChangesFactory = (current: EntityEditFormModel) => {
     if (!originalEntityData.value) return false
     return (
-      originalEntityData.value.EntidadName !== current.EntidadName ||
-      originalEntityData.value.EntidadCode !== current.EntidadCode ||
-      originalEntityData.value.observaciones !== current.observaciones ||
+      originalEntityData.value.entityName !== current.entityName ||
+      originalEntityData.value.entityCode !== current.entityCode ||
+      originalEntityData.value.notes !== current.notes ||
       originalEntityData.value.isActive !== current.isActive
     )
   }
@@ -72,9 +72,9 @@ export function useEntityEdition() {
    */
   const normalizeEntityData = (formData: EntityEditFormModel) => {
     return {
-      entidad_name: formData.EntidadName?.trim() || '',
-      entidad_code: formData.EntidadCode?.trim().toUpperCase() || '',
-      observaciones: formData.observaciones?.trim() || '',
+      name: formData.entityName?.trim() || '',
+      entity_code: formData.entityCode?.trim().toUpperCase() || '',
+      notes: formData.notes?.trim() || '',
       is_active: formData.isActive ?? true
     }
   }
@@ -94,8 +94,8 @@ export function useEntityEdition() {
       return { success: false }
     }
 
-    if (formData.EntidadCode !== originalEntityData.value.EntidadCode) {
-      const available = await checkCodeAvailability(formData.EntidadCode, originalEntityData.value.EntidadCode)
+    if (formData.entityCode !== originalEntityData.value.entityCode) {
+      const available = await checkCodeAvailability(formData.entityCode, originalEntityData.value.entityCode)
       if (!available) {
         state.error = codeValidationError.value || 'Código no disponible'
         return { success: false }

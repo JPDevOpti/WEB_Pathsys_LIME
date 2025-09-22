@@ -338,7 +338,9 @@ const normalizeResident = (raw: any): ResidentEditFormModel | null => {
     ResidenteEmail: String(email),
     registro_medico: String(registro),
     observaciones: String(obs),
-    isActive: !!active
+    isActive: !!active,
+    password: '',
+    passwordConfirm: ''
   }
 }
 
@@ -479,10 +481,20 @@ const submit = async () => {
     const result = await updateResident(localModel)
     if ((result as any).success && (result as any).data) {
       const data = (result as any).data
-      updatedResident.value = data
+      // Normalizar datos del backend (snake_case) para mostrar en la interfaz
+      updatedResident.value = {
+        residenteName: data.resident_name,
+        residenteCode: data.resident_code,
+        InicialesResidente: data.initials,
+        ResidenteEmail: data.resident_email,
+        registro_medico: data.medical_license,
+        observaciones: data.observations,
+        isActive: data.is_active,
+        fecha_actualizacion: data.updated_at
+      }
       showNotification('success', '¡Residente Actualizado Exitosamente!', '')
       await scrollToNotification()
-      emit('usuario-actualizado', { ...data, nombre: data.residenteName, codigo: data.residenteCode, tipo: 'residente' })
+      emit('usuario-actualizado', { ...data, nombre: data.resident_name, codigo: data.resident_code, tipo: 'residente' })
     } else {
       showNotification('error', 'Error al Actualizar Residente', 'No se pudo actualizar el residente')
     }

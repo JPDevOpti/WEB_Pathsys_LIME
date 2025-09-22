@@ -36,8 +36,8 @@ export interface AuxiliaryCreateResponse {
   auxiliar_email: string
   observaciones: string
   is_active: boolean
-  fecha_creacion: string
-  fecha_actualizacion?: string
+  created_at: string
+  updated_at?: string
 }
 
 /**
@@ -99,8 +99,8 @@ export interface AuxiliaryUpdateResponse {
   auxiliar_email: string
   observaciones: string
   is_active: boolean
-  fecha_creacion: string
-  fecha_actualizacion: string
+  created_at: string
+  updated_at: string
 }
 
 /**
@@ -113,5 +113,17 @@ export interface AuxiliaryEditFormValidation {
     auxiliarCode?: string
     AuxiliarEmail?: string
     observaciones?: string
+    password?: string
+    passwordConfirm?: string
   }
+}
+
+/**
+ * Estado de la operación de edición
+ */
+export interface AuxiliaryEditionState {
+  isLoading: boolean
+  isSuccess: boolean
+  error: string
+  successMessage: string
 }

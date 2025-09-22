@@ -42,7 +42,7 @@ class BillingApiService {
     try {
       console.log('🔍 BillingApiService.getByEmail - Buscando usuario de facturación para:', email)
       const billingUsers = await apiClient.get<BillingResponse[]>(`${this.BASE_URL}/search`, {
-        params: { billing_email: email, limit: 1 }
+        params: { q: email, limit: 1 }
       })
       
       console.log('📋 BillingApiService.getByEmail - Respuesta completa:', billingUsers)

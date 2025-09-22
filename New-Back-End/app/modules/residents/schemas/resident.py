@@ -19,7 +19,7 @@ class ResidentBase(BaseModel):
 
 class ResidentCreate(ResidentBase):
     """Esquema para crear un nuevo residente"""
-    pass
+    password: str = Field(..., min_length=6, max_length=128, description="Contraseña del residente")
 
 class ResidentUpdate(BaseModel):
     """Esquema para actualizar un residente existente"""
@@ -29,6 +29,7 @@ class ResidentUpdate(BaseModel):
     medical_license: Optional[str] = Field(None, max_length=50, description="Número de licencia médica única")
     is_active: Optional[bool] = Field(None, description="Estado activo/inactivo del residente")
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
+    password: Optional[str] = Field(None, min_length=6, max_length=128, description="Nueva contraseña del residente")
 
     class Config:
         populate_by_name = True

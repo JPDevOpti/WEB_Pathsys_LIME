@@ -17,7 +17,7 @@ class AuxiliarBase(BaseModel):
 
 class AuxiliarCreate(AuxiliarBase):
     """Esquema para crear un nuevo auxiliar"""
-    pass
+    password: str = Field(..., min_length=6, max_length=128, description="Contraseña del auxiliar")
 
 class AuxiliarUpdate(BaseModel):
     """Esquema para actualizar un auxiliar existente"""
@@ -25,6 +25,7 @@ class AuxiliarUpdate(BaseModel):
     auxiliar_email: Optional[EmailStr] = Field(None, description="Email único del auxiliar")
     is_active: Optional[bool] = Field(None, description="Estado activo/inactivo del auxiliar")
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
+    password: Optional[str] = Field(None, min_length=6, max_length=128, description="Nueva contraseña del auxiliar")
 
     class Config:
         populate_by_name = True

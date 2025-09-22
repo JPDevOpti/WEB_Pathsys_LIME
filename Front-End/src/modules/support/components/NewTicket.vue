@@ -13,7 +13,7 @@
     <div class="p-6 space-y-4">
       <!-- Título -->
       <FormInputField
-        v-model="formData.titulo"
+        v-model="formData.title"
         label="Título del ticket"
         placeholder="Describe brevemente el problema..."
         :required="true"
@@ -23,7 +23,7 @@
 
       <!-- Categoría -->
       <FormSelect
-        v-model="formData.categoria"
+        v-model="formData.category"
         label="Categoría"
         placeholder="Selecciona una categoría"
         :required="true"
@@ -32,7 +32,7 @@
 
       <!-- Descripción -->
       <FormTextarea
-        v-model="formData.descripcion"
+        v-model="formData.description"
         label="Descripción"
         placeholder="Describe detalladamente el problema, pasos para reproducirlo, comportamiento esperado, etc..."
         :required="true"
@@ -71,7 +71,7 @@
       </div>
 
       <!-- Imagen seleccionada -->
-      <div v-if="formData.imagen || imagePreview" class="space-y-2">
+      <div v-if="formData.image || imagePreview" class="space-y-2">
         <h4 class="text-sm font-medium text-gray-700">Imagen seleccionada:</h4>
         <div class="flex items-center justify-between p-3 bg-gray-50 rounded border">
           <div class="flex items-center">
@@ -82,9 +82,9 @@
               class="w-12 h-12 object-cover rounded mr-3"
             />
             <div>
-              <span class="text-sm text-gray-700">{{ formData.imagen?.name || 'Imagen' }}</span>
-              <span v-if="formData.imagen" class="text-xs text-gray-500 block">
-                ({{ (formData.imagen.size / 1024).toFixed(1) }} KB)
+              <span class="text-sm text-gray-700">{{ formData.image?.name || 'Imagen' }}</span>
+              <span v-if="formData.image" class="text-xs text-gray-500 block">
+                ({{ (formData.image.size / 1024).toFixed(1) }} KB)
               </span>
             </div>
           </div>
@@ -134,10 +134,10 @@ const emit = defineEmits<{
 
 // Estado del formulario
 const formData = reactive<NewTicketForm>({
-  titulo: '',
-  categoria: '' as TicketCategoryEnum,
-  descripcion: '',
-  imagen: undefined
+  title: '',
+  category: '' as TicketCategoryEnum,
+  description: '',
+  image: undefined
 })
 
 // Estado adicional para preview de imagen
@@ -162,9 +162,9 @@ const fileInput = ref<HTMLInputElement>()
 
 // Computed para validación del formulario
 const isFormValid = computed(() => {
-  return formData.titulo.trim() !== '' && 
-         formData.categoria !== '' && 
-         formData.descripcion.trim() !== '' &&
+  return formData.title.trim() !== '' && 
+         formData.category !== '' as TicketCategoryEnum && 
+         formData.description.trim() !== '' &&
          !isSubmitting.value
 })
 
@@ -182,7 +182,7 @@ const handleImageUpload = (event: Event) => {
       return
     }
 
-    formData.imagen = file
+    formData.image = file
     
     // Crear preview
     const reader = new FileReader()
@@ -198,16 +198,16 @@ const handleImageUpload = (event: Event) => {
 
 // Función para remover imagen
 const removeImage = () => {
-  formData.imagen = undefined
+  formData.image = undefined
   imagePreview.value = null
 }
 
 // Función para limpiar el formulario
 const clearForm = () => {
-  formData.titulo = ''
-  formData.categoria = '' as TicketCategoryEnum
-  formData.descripcion = ''
-  formData.imagen = undefined
+  formData.title = ''
+  formData.category = '' as TicketCategoryEnum
+  formData.description = ''
+  formData.image = undefined
   imagePreview.value = null
 }
 

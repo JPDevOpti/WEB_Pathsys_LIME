@@ -106,10 +106,10 @@
             <div class="space-y-4">
               <!-- Información principal del residente -->
               <div class="mb-4 pb-3 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdResident.residente_name }}</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdResident.resident_name }}</h3>
                 <p class="text-gray-600">
                   <span class="font-medium">Código:</span> 
-                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdResident.residente_code }}</span>
+                  <span class="font-mono font-bold text-gray-800 ml-1">{{ createdResident.resident_code }}</span>
                 </p>
               </div>
               
@@ -117,11 +117,11 @@
               <div class="space-y-4 text-sm">
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Email:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdResident.residente_email }}</p>
+                  <p class="text-gray-800 font-semibold">{{ createdResident.resident_email }}</p>
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Registro médico:</span>
-                  <p class="text-gray-800 font-semibold">{{ createdResident.registro_medico }}</p>
+                  <p class="text-gray-800 font-semibold">{{ createdResident.medical_license }}</p>
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Estado:</span>
@@ -132,14 +132,14 @@
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Fecha de creación:</span>
-                  <p class="text-gray-800 font-semibold">{{ formatDate(createdResident.fecha_creacion) }}</p>
+                  <p class="text-gray-800 font-semibold">{{ formatDate(createdResident.created_at) }}</p>
                 </div>
               </div>
               
               <!-- Observaciones -->
-              <div v-if="createdResident.observaciones">
+              <div v-if="createdResident.observations">
                 <span class="text-gray-500 font-medium block mb-2">Observaciones:</span>
-                <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ createdResident.observaciones }}</p>
+                <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ createdResident.observations }}</p>
               </div>
             </div>
           </div>
@@ -362,9 +362,31 @@ const closeNotification = () => {
 }
 
 // Función para formatear fecha
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString: string | undefined): string => {
+  if (!dateString) return 'Fecha no disponible'
+  
   try {
-    const date = new Date(dateString)
+    // Manejar diferentes formatos de fecha del backend
+    let date: Date
+    
+    // Si es un string ISO o timestamp
+    if (typeof dateString === 'string') {
+      // Si contiene 'T' es ISO string
+      if (dateString.includes('T')) {
+        date = new Date(dateString)
+      } else {
+        // Si es solo fecha, agregar hora
+        date = new Date(dateString + 'T00:00:00.000Z')
+      }
+    } else {
+      date = new Date(dateString)
+    }
+    
+    // Verificar si la fecha es válida
+    if (isNaN(date.getTime())) {
+      return 'Fecha no disponible'
+    }
+    
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',

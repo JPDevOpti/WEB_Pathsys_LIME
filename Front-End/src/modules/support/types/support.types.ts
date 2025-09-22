@@ -13,37 +13,37 @@ export enum TicketStatusEnum {
   CLOSED = 'closed'
 }
 
-// ✅ NUEVA INTERFAZ principal con campos en español
+// ✅ NUEVA INTERFAZ principal con campos en inglés (nuevo backend)
 export interface SupportTicket {
-  ticket_code: string                    // ✅ NUEVO - Identificador principal (T-YYYY-NNN)
-  titulo: string                         // ✅ Renombrado de "title"
-  categoria: TicketCategoryEnum          // ✅ Renombrado + enum
-  descripcion: string                    // ✅ Renombrado de "description"  
-  imagen?: string                        // ✅ NUEVO - Single image URL
-  fecha_ticket: string                   // ✅ Renombrado de "createdAt"
-  estado: TicketStatusEnum               // ✅ Renombrado + enum
-  created_by?: string                    // ✅ NUEVO - ID del creador
+  ticket_code: string                    // ✅ Identificador principal (T-YYYY-NNN)
+  title: string                          // ✅ Campo en inglés del nuevo backend
+  category: TicketCategoryEnum           // ✅ Campo en inglés del nuevo backend
+  description: string                    // ✅ Campo en inglés del nuevo backend
+  image?: string                         // ✅ Campo en inglés del nuevo backend
+  ticket_date: string                    // ✅ Campo en inglés del nuevo backend
+  status: TicketStatusEnum               // ✅ Campo en inglés del nuevo backend
+  created_by?: string                    // ✅ ID del creador
 }
 
-// ✅ NUEVO FORMULARIO simplificado
+// ✅ NUEVO FORMULARIO simplificado (campos en inglés para nuevo backend)
 export interface NewTicketForm {
-  titulo: string                         // ✅ Renombrado de "title"
-  categoria: TicketCategoryEnum          // ✅ Renombrado + enum
-  descripcion: string                    // ✅ Renombrado de "description"
-  imagen?: File                          // ✅ Simplificado - un solo archivo
+  title: string                          // ✅ Campo en inglés del nuevo backend
+  category: TicketCategoryEnum           // ✅ Campo en inglés del nuevo backend
+  description: string                    // ✅ Campo en inglés del nuevo backend
+  image?: File                           // ✅ Campo en inglés del nuevo backend
 }
 
-// ✅ FILTROS actualizados
+// ✅ FILTROS actualizados (campos en inglés para nuevo backend)
 export interface TicketFilters {
-  estado: TicketStatusEnum | 'all'       // ✅ Renombrado de "status"
-  categoria: TicketCategoryEnum | 'all'  // ✅ Renombrado de "category"
+  status: TicketStatusEnum | 'all'       // ✅ Campo en inglés del nuevo backend
+  category: TicketCategoryEnum | 'all'   // ✅ Campo en inglés del nuevo backend
   search: string
 }
 
-// ✅ INTERFACES adicionales para API
+// ✅ INTERFACES adicionales para API (campos en inglés para nuevo backend)
 export interface TicketSearch {
-  estado?: TicketStatusEnum
-  categoria?: TicketCategoryEnum
+  status?: TicketStatusEnum
+  category?: TicketCategoryEnum
   created_by?: string
   search_text?: string
   date_from?: string
@@ -51,7 +51,7 @@ export interface TicketSearch {
 }
 
 export interface TicketStatusUpdate {
-  estado: TicketStatusEnum
+  status: TicketStatusEnum
 }
 
 export interface ImageUploadResponse {

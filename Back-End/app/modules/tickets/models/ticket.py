@@ -3,7 +3,7 @@
 from typing import Optional
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from app.shared.models.base import PyObjectId
 
 
@@ -28,31 +28,34 @@ class Ticket(BaseModel):
     
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     ticket_code: str = Field(..., max_length=50, description="Código único del ticket (T-YYYY-NNN)")
-    titulo: str = Field(..., max_length=100, min_length=1, description="Título del ticket")
-    categoria: TicketCategoryEnum = Field(..., description="Categoría del ticket")
-    descripcion: str = Field(..., max_length=500, min_length=1, description="Descripción detallada")
-    imagen: Optional[str] = Field(None, description="URL de la imagen adjunta")
-    fecha_ticket: datetime = Field(default_factory=datetime.utcnow, description="Fecha de creación del ticket")
-    estado: TicketStatusEnum = Field(default=TicketStatusEnum.OPEN, description="Estado actual del ticket")
+    title: str = Field(..., max_length=100, min_length=1, description="Título del ticket")
+    category: TicketCategoryEnum = Field(..., description="Categoría del ticket")
+    description: str = Field(..., max_length=500, min_length=1, description="Descripción detallada")
+    image: Optional[str] = Field(None, description="URL de la imagen adjunta")
+    ticket_date: datetime = Field(default_factory=datetime.utcnow, description="Fecha de creación del ticket")
+    status: TicketStatusEnum = Field(default=TicketStatusEnum.OPEN, description="Estado actual del ticket")
     created_by: str = Field(..., description="ID del usuario que creó el ticket")
-    fecha_creacion: datetime = Field(default_factory=datetime.utcnow)
-    fecha_actualizacion: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
     
-    @validator('titulo', pre=True)
-    def validate_titulo(cls, v):
+    @field_validator('title', mode='before')
+    @classmethod
+    def validate_title(cls, v):
         """Validar y limpiar título."""
         if not v or not v.strip():
             raise ValueError('El título no puede estar vacío')
         return v.strip()
     
-    @validator('descripcion', pre=True)
-    def validate_descripcion(cls, v):
+    @field_validator('description', mode='before')
+    @classmethod
+    def validate_description(cls, v):
         """Validar y limpiar descripción."""
         if not v or not v.strip():
             raise ValueError('La descripción no puede estar vacía')
         return v.strip()
     
-    @validator('ticket_code')
+    @field_validator('ticket_code')
+    @classmethod
     def validate_ticket_code(cls, v):
         """Validar formato del código de ticket (T-YYYY-NNN)."""
         if not v:

@@ -43,10 +43,10 @@
             <div class="space-y-4">
               <!-- Información principal de la entidad -->
               <div class="mb-4 pb-3 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedEntity.entidad_name }}</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedEntity.name }}</h3>
                 <p class="text-gray-600">
                   <span class="font-medium">Código:</span>
-                  <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedEntity.entidad_code }}</span>
+                  <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedEntity.entity_code }}</span>
                 </p>
               </div>
 
@@ -61,14 +61,14 @@
                 </div>
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Última actualización:</span>
-                  <p class="text-gray-800 font-semibold">{{ formatDate(updatedEntity.fecha_actualizacion) }}</p>
+                  <p class="text-gray-800 font-semibold">{{ formatDate(updatedEntity.updated_at) }}</p>
                 </div>
               </div>
 
               <!-- Observaciones -->
-              <div v-if="updatedEntity.observaciones">
+              <div v-if="updatedEntity.notes">
                 <span class="text-gray-500 font-medium block mb-2">Observaciones:</span>
-                <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ updatedEntity.observaciones }}</p>
+                <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ updatedEntity.notes }}</p>
               </div>
             </div>
           </div>
@@ -201,7 +201,7 @@ const submit = async () => {
   updatedEntity.value = result.data as EntityUpdateResponse
       showNotification('success', '¡Entidad Actualizada Exitosamente!', '')
       await scrollToNotification()
-      emit('usuario-actualizado', { ...result.data, nombre: result.data.entidad_name, codigo: result.data.entidad_code, tipo: 'entidad' })
+      emit('usuario-actualizado', { ...result.data, nombre: result.data.name, codigo: result.data.entity_code, tipo: 'entidad' })
     } else {
       showNotification('error', 'Error al Actualizar Entidad', 'No se pudo actualizar la entidad')
     }

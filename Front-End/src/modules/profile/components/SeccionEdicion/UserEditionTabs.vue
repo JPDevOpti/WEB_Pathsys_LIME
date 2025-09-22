@@ -23,13 +23,13 @@
     <!-- Contenido: buscador, resultados y formulario de edición -->
     <div class="space-y-3 md:space-y-4">
       <div>
-        <BuscadorUsuarios :busqueda="searchQuery" :tipo-busqueda="selectedType" :esta-buscando="isSearching"
+        <UserSearch :busqueda="searchQuery" :tipo-busqueda="selectedType" :esta-buscando="isSearching"
           :error="searchError" @buscar="onSearch" @limpiar="onClearSearch" />
       </div>
 
       <!-- Resultados -->
       <div>
-        <ResultadosBusqueda :resultados="filteredResults" :busqueda-realizada="searchPerformed" :esta-buscando="isSearching"
+        <SearchResults :resultados="filteredResults" :busqueda-realizada="searchPerformed" :esta-buscando="isSearching"
           :selected-id="selectedUser?.id || ''" @usuario-seleccionado="onSelectUserToEdit" />
       </div>
 
@@ -40,22 +40,22 @@
             Editando: {{ selectedUser.nombre }}
           </h5>
 
-          <FormEdicionAuxiliar v-if="selectedUser.tipo === 'auxiliar'" :usuario="selectedUser"
+          <FormEditAuxiliary v-if="selectedUser.tipo === 'auxiliar'" :usuario="selectedUser"
             :usuario-actualizado="userUpdated" :mensaje-exito="updateSuccessMessage" @usuario-actualizado="onUpdateUser" />
 
-          <FormEdicionFacturacion v-else-if="selectedUser.tipo === 'facturacion'" v-model="selectedUser"
+          <FormEditBilling v-else-if="selectedUser.tipo === 'facturacion'" v-model="selectedUser"
             @usuario-actualizado="onUpdateUser" />
 
-          <FormEdicionPatologo v-else-if="selectedUser.tipo === 'patologo'" :usuario="selectedUser"
+          <FormEditPathologist v-else-if="selectedUser.tipo === 'patologo'" :usuario="selectedUser"
             :usuario-actualizado="userUpdated" :mensaje-exito="updateSuccessMessage" @usuario-actualizado="onUpdateUser" />
 
-          <FormEdicionResident v-else-if="selectedUser.tipo === 'residente'" :usuario="selectedUser"
+          <FormEditResident v-else-if="selectedUser.tipo === 'residente'" :usuario="selectedUser"
             :usuario-actualizado="userUpdated" :mensaje-exito="updateSuccessMessage" @usuario-actualizado="onUpdateUser" />
 
-          <FormEdicionEntidad v-else-if="selectedUser.tipo === 'entidad'" :usuario="selectedUser"
+          <FormEditEntity v-else-if="selectedUser.tipo === 'entidad'" :usuario="selectedUser"
             :usuario-actualizado="userUpdated" :mensaje-exito="updateSuccessMessage" @usuario-actualizado="onUpdateUser" />
 
-          <FormEdicionPruebas v-else-if="selectedUser.tipo === 'pruebas'" :usuario="selectedUser"
+          <FormEditTests v-else-if="selectedUser.tipo === 'pruebas'" :usuario="selectedUser"
             :usuario-actualizado="userUpdated" :mensaje-exito="updateSuccessMessage" @usuario-actualizado="onUpdateUser" />
         </div>
 
@@ -73,14 +73,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
-import BuscadorUsuarios from './BuscadorUsuarios.vue'
-import ResultadosBusqueda from './ResultadosBusqueda.vue'
-import FormEdicionAuxiliar from './FormEdicionAuxiliar.vue'
-import FormEdicionFacturacion from './FormEdicionFacturacion.vue'
-import FormEdicionPatologo from './FormEdicionPatologo.vue'
-import FormEdicionResident from './FormEdicionResident.vue'
-import FormEdicionEntidad from './FormEdicionEntidad.vue'
-import FormEdicionPruebas from './FormEdicionPruebas.vue'
+import UserSearch from './UserSearch.vue'
+import SearchResults from './SearchResults.vue'
+import FormEditAuxiliary from './FormEditAuxiliary.vue'
+import FormEditBilling from './FormEditBilling.vue'
+import FormEditPathologist from './FormEditPathologist.vue'
+import FormEditResident from './FormEditResident.vue'
+import FormEditEntity from './FormEditEntity.vue'
+import FormEditTests from './FormEditTests.vue'
 import { testSearchService } from '../../services/testSearchService'
 import { entitySearchService } from '../../services/entitySearchService'
 
@@ -187,14 +187,14 @@ const onSelectUserToEdit = (item: any) => {
       tipo: item.tipo,
       codigo: item.codigo,
       activo: item.activo,
-      // Campos específicos para pruebas (estructura del FormEdicionPruebas)
-      pruebaCode: item.codigo,
-      pruebasName: item.nombre,
-      pruebasDescription: item.descripcion || '',
-      tiempo: item.tiempo || 1,
-      isActive: item.activo,
-      fecha_creacion: item.fecha_creacion,
-      fecha_actualizacion: item.fecha_actualizacion
+      // Campos específicos para pruebas (estructura del FormEditTests)
+      pruebaCode: item.test_code || item.codigo,
+      pruebasName: item.name || item.nombre,
+      pruebasDescription: item.description || item.descripcion || '',
+      tiempo: item.time || item.tiempo || 1,
+      isActive: item.is_active !== undefined ? item.is_active : item.activo,
+      fecha_creacion: item.created_at || item.fecha_creacion,
+      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
     }
   } else if (item.tipo === 'entidad') {
     // Mapeo específico para entidades con estructura del formulario de edición
@@ -205,12 +205,12 @@ const onSelectUserToEdit = (item: any) => {
       codigo: item.codigo,
       activo: item.activo,
       // Campos específicos para entidades
-      EntidadName: item.nombre,
-      EntidadCode: item.codigo,
-      observaciones: item.observaciones || '',
-      isActive: item.activo,
-      fecha_creacion: item.fecha_creacion,
-      fecha_actualizacion: item.fecha_actualizacion
+      EntidadName: item.name || item.nombre,
+      EntidadCode: item.entity_code || item.codigo,
+      observaciones: item.notes || item.observaciones || '',
+      isActive: item.is_active !== undefined ? item.is_active : item.activo,
+      fecha_creacion: item.created_at || item.fecha_creacion,
+      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
     }
   } else if (item.tipo === 'facturacion') {
     // Mapeo específico para facturación con estructura del formulario de edición
@@ -221,14 +221,14 @@ const onSelectUserToEdit = (item: any) => {
       codigo: item.codigo,
       activo: item.activo,
       email: item.email,
-      // Campos específicos para facturación (estructura del FormEdicionFacturacion)
-      facturacionName: item.facturacionName || item.nombre,
-      facturacionCode: item.facturacionCode || item.codigo,
-      FacturacionEmail: item.FacturacionEmail || item.email,
-      observaciones: item.observaciones || '',
-      isActive: item.isActive !== undefined ? item.isActive : item.activo,
-      fecha_creacion: item.fecha_creacion,
-      fecha_actualizacion: item.fecha_actualizacion
+      // Campos específicos para facturación (estructura del FormEditBilling)
+      facturacionName: item.billing_name || item.facturacionName || item.nombre,
+      facturacionCode: item.billing_code || item.facturacionCode || item.codigo,
+      FacturacionEmail: item.billing_email || item.FacturacionEmail || item.email,
+      observaciones: item.observations || item.observaciones || '',
+      isActive: item.is_active !== undefined ? item.is_active : (item.isActive !== undefined ? item.isActive : item.activo),
+      fecha_creacion: item.created_at || item.fecha_creacion,
+      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
     }
   } else if (item.tipo === 'residente') {
     // Mapeo específico para residentes con estructura del formulario de edición
@@ -240,15 +240,15 @@ const onSelectUserToEdit = (item: any) => {
       activo: item.activo,
       email: item.email,
       // Campos específicos para residentes
-      residenteName: item.residenteName || item.nombre,
-      residenteCode: item.residenteCode || item.codigo,
-      InicialesResidente: item.InicialesResidente || '',
-      ResidenteEmail: item.ResidenteEmail || item.email,
-      registro_medico: item.registro_medico || '',
-      observaciones: item.observaciones || '',
-      isActive: item.isActive !== undefined ? item.isActive : item.activo,
-      fecha_creacion: item.fecha_creacion,
-      fecha_actualizacion: item.fecha_actualizacion
+      residenteName: item.resident_name || item.residenteName || item.nombre,
+      residenteCode: item.resident_code || item.residenteCode || item.codigo,
+      InicialesResidente: item.initials || item.InicialesResidente || '',
+      ResidenteEmail: item.resident_email || item.ResidenteEmail || item.email,
+      registro_medico: item.medical_license || item.registro_medico || '',
+      observaciones: item.observations || item.observaciones || '',
+      isActive: item.is_active !== undefined ? item.is_active : (item.isActive !== undefined ? item.isActive : item.activo),
+      fecha_creacion: item.created_at || item.fecha_creacion,
+      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
     }
   } else if (item.tipo === 'patologo') {
     // Mapeo específico para patólogos con estructura del formulario de edición
@@ -260,15 +260,15 @@ const onSelectUserToEdit = (item: any) => {
       activo: item.activo,
       email: item.email,
       // Campos específicos
-      patologoName: item.patologoName || item.nombre,
-      InicialesPatologo: item.InicialesPatologo || '',
-      patologoCode: item.patologoCode || item.codigo,
-      PatologoEmail: item.PatologoEmail || item.email,
-      registro_medico: item.registro_medico || '',
-      observaciones: item.observaciones || '',
-      isActive: item.isActive !== undefined ? item.isActive : item.activo,
-      fecha_creacion: item.fecha_creacion,
-      fecha_actualizacion: item.fecha_actualizacion
+      patologoName: item.pathologist_name || item.patologoName || item.nombre,
+      InicialesPatologo: item.initials || item.InicialesPatologo || '',
+      patologoCode: item.pathologist_code || item.patologoCode || item.codigo,
+      PatologoEmail: item.pathologist_email || item.PatologoEmail || item.email,
+      registro_medico: item.medical_license || item.registro_medico || '',
+      observaciones: item.observations || item.observaciones || '',
+      isActive: item.is_active !== undefined ? item.is_active : (item.isActive !== undefined ? item.isActive : item.activo),
+      fecha_creacion: item.created_at || item.fecha_creacion,
+      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
     }
   } else if (item.tipo === 'auxiliar') {
     // Mapeo específico para auxiliares con estructura del formulario de edición
@@ -279,13 +279,13 @@ const onSelectUserToEdit = (item: any) => {
       codigo: item.codigo,
       activo: item.activo,
       email: item.email,
-      auxiliarName: item.auxiliarName || item.nombre,
-      auxiliarCode: item.auxiliarCode || item.codigo,
-      AuxiliarEmail: item.AuxiliarEmail || item.email,
-      observaciones: item.observaciones || '',
-      isActive: item.isActive !== undefined ? item.isActive : item.activo,
-      fecha_creacion: item.fecha_creacion,
-      fecha_actualizacion: item.fecha_actualizacion
+      auxiliarName: item.auxiliar_name || item.auxiliarName || item.nombre,
+      auxiliarCode: item.auxiliar_code || item.auxiliarCode || item.codigo,
+      AuxiliarEmail: item.auxiliar_email || item.AuxiliarEmail || item.email,
+      observaciones: item.observations || item.observaciones || '',
+      isActive: item.is_active !== undefined ? item.is_active : (item.isActive !== undefined ? item.isActive : item.activo),
+      fecha_creacion: item.created_at || item.fecha_creacion,
+      fecha_actualizacion: item.updated_at || item.fecha_actualizacion
     }
   } else if (item.tipo === 'facturacion') {
     // Mapeo específico para usuarios de facturación con estructura del formulario de edición

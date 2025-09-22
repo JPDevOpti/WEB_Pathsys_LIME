@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 from app.modules.pathologists.schemas.pathologist import PathologistCreate, PathologistUpdate, PathologistResponse, PathologistSearch
 from app.modules.pathologists.repositories.pathologist_repository import PathologistRepository
+from app.shared.services.user_management import UserManagementService
 
 class PathologistService:
     """Servicio para la lógica de negocio de Pathologists"""
@@ -13,6 +14,7 @@ class PathologistService:
     def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
         self.repo = PathologistRepository(db)
+        self.user_service = UserManagementService(db)
     
     async def create_pathologist(self, payload: PathologistCreate) -> PathologistResponse:
         """Crear un nuevo patólogo"""
@@ -31,8 +33,23 @@ class PathologistService:
         if existing_license:
             raise ConflictError("Medical license already exists")
         
-        # Crear el patólogo
+        # Crear el patólogo en la colección pathologists
         doc = await self.repo.create(payload)
+        
+        # Crear el usuario en la colección users
+        user_data = await self.user_service.create_user_for_pathologist(
+            name=payload.pathologist_name,
+            email=payload.pathologist_email,
+            password=payload.password,
+            pathologist_code=payload.pathologist_code,
+            is_active=payload.is_active
+        )
+        
+        if not user_data:
+            # Si falla la creación del usuario, eliminar el patólogo creado
+            await self.repo.delete_by_pathologist_code(payload.pathologist_code)
+            raise ConflictError("Failed to create user account")
+        
         return self._to_response(doc)
     
     async def get_pathologist(self, pathologist_code: str) -> PathologistResponse:
@@ -76,6 +93,20 @@ class PathologistService:
         updated = await self.repo.update_by_pathologist_code(pathologist_code, update_data)
         if not updated:
             raise BadRequestError("Failed to update pathologist")
+        
+        # Actualizar el usuario correspondiente en la colección users
+        if payload.pathologist_name or payload.pathologist_email or payload.is_active is not None or payload.password:
+            user_data = await self.user_service.update_user_for_pathologist(
+                pathologist_code=pathologist_code,
+                name=payload.pathologist_name,
+                email=payload.pathologist_email,
+                password=payload.password,
+                is_active=payload.is_active
+            )
+            if not user_data:
+                # Si falla la actualización del usuario, revertir cambios en pathologist
+                # (opcional: implementar rollback si es crítico)
+                pass
         
         return self._to_response(updated)
     

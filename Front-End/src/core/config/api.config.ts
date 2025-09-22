@@ -24,7 +24,8 @@ export const API_CONFIG = {
     PATIENTS: '/patients',
     RESIDENTS: '/residents',  
     AUXILIARIES: '/auxiliaries',
-    FACTURACION: '/billing', 
+    FACTURACION: '/billing',
+    TICKETS: '/tickets',
     AUTH: {
       LOGIN: '/auth/login',
       LOGOUT: '/auth/logout',

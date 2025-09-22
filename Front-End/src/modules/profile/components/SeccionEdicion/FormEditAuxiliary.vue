@@ -6,26 +6,20 @@
         <p class="text-sm text-gray-500 mt-1">Modifica los datos del auxiliar</p>
       </div>
 
-      <!-- Código y Nombre -->
       <FormInputField class="md:col-span-6" label="Código del auxiliar" :disabled="true" v-model="localModel.auxiliarCode" />
       <FormInputField class="md:col-span-6" label="Nombre completo" v-model="localModel.auxiliarName" :error="formErrors.auxiliarName" />
 
-      <!-- Email -->
       <FormInputField class="md:col-span-6" label="Email" type="email" v-model="localModel.AuxiliarEmail" :error="formErrors.AuxiliarEmail" autocomplete="email" />
 
-      <!-- Contraseña y Confirmación -->
       <FormInputField class="md:col-span-6" label="Nueva contraseña (opcional)" type="password" placeholder="••••••••" :model-value="localModel.password || ''" @update:model-value="val => (localModel.password = val)" :error="formErrors.password" autocomplete="new-password" />
       <FormInputField class="md:col-span-6" label="Confirmar contraseña" type="password" placeholder="••••••••" :model-value="localModel.passwordConfirm || ''" @update:model-value="val => (localModel.passwordConfirm = val)" :error="formErrors.passwordConfirm" autocomplete="new-password" />
 
-      <!-- Observaciones -->
       <FormTextarea class="col-span-full" label="Observaciones" v-model="localModel.observaciones" :rows="3" :error="formErrors.observaciones" />
 
-      <!-- Estado -->
       <div class="md:col-span-6 flex items-center pt-3">
         <FormCheckbox label="Activo" v-model="localModel.isActive" />
       </div>
 
-      <!-- Botones -->
       <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
         <ClearButton type="button" @click="onReset" :disabled="isLoading || !hasChanges" variant="secondary" :text="'Reiniciar'" :icon="'reset'">
           <template #icon>
@@ -35,7 +29,6 @@
         <SaveButton text="Actualizar Auxiliar" type="submit" :disabled="!canSubmitButton || isLoading || !hasChanges" :loading="isLoading" />
       </div>
 
-      <!-- Notificación -->
       <div v-if="notification.visible" ref="notificationContainer" class="col-span-full">
         <Notification
           :visible="true"
@@ -82,14 +75,12 @@
         </Notification>
       </div>
 
-      <!-- Alerta de Validación -->
       <ValidationAlert :visible="validationState.showValidationError && validationState.hasAttemptedSubmit" :errors="validationErrors" />
     </form>
   </div>
   <div v-else class="text-center py-8">
     <p class="text-gray-500">No se pudieron cargar los datos del auxiliar para edición.</p>
   </div>
-  
 </template>
 
 <script setup lang="ts">
@@ -101,11 +92,9 @@ import { useAuxiliaryEdition } from '../../composables/useAuxiliaryEdition'
 import type { AuxiliaryEditFormModel } from '../../types/auxiliary.types'
 import { RefreshIcon } from '@/assets/icons'
 
-// Ampliamos el tipo para contemplar posibles renombres del backend
 type UsuarioAux = {
   id: string
   tipo: string
-  // Variantes antiguas
   nombre?: string
   codigo?: string
   email?: string
@@ -113,7 +102,6 @@ type UsuarioAux = {
   auxiliarName?: string
   auxiliarCode?: string
   AuxiliarEmail?: string
-  // Variantes nuevas/alternativas (hipotéticas tras refactor backend)
   name?: string
   code?: string
   auxiliar_email?: string
@@ -145,6 +133,7 @@ const showNotification = (type: typeof notification.type, title: string, message
   notification.message = message
   notification.visible = true
 }
+
 const scrollToNotification = async () => {
   await nextTick()
   if (notificationContainer.value) {
@@ -152,7 +141,8 @@ const scrollToNotification = async () => {
   }
 }
 
-const { isLoading, canSubmit, validateForm, update, setInitialData, resetToOriginal, clearMessages, createHasChanges } = useAuxiliaryEdition()
+const { state, canSubmit, validateForm, update, setInitialData, resetToOriginal, clearMessages, createHasChanges } = useAuxiliaryEdition()
+const isLoading = computed(() => state.isLoading)
 
 const localModel = reactive<AuxiliaryEditFormModel>({
   id: '', auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '', isActive: true, password: '', passwordConfirm: ''
@@ -183,34 +173,13 @@ const validationErrors = computed(() => {
   return errs
 })
 
-// Normalizador robusto que intenta múltiples variantes de nombres de campo
 const normalizeAuxUser = (u: UsuarioAux | undefined | null): AuxiliaryEditFormModel | null => {
   if (!u) return null
-  const auxiliarName =
-    u.auxiliarName ||
-    (u as any).auxiliar_name ||
-    u.nombre ||
-    u.name ||
-    ''
-  const auxiliarCode =
-    u.auxiliarCode ||
-    (u as any).auxiliar_code ||
-    u.codigo ||
-    u.code ||
-    ''
-  const auxiliarEmail =
-    u.AuxiliarEmail ||
-    (u as any).auxiliarEmail ||
-    (u as any).auxiliar_email ||
-    (u as any).auxiliar_emailAddress ||
-    u.email ||
-    ''
-  const observaciones =
-    u.observaciones ||
-    (u as any).observations ||
-    ''
-  const isActive =
-    (u as any).isActive !== undefined ? (u as any).isActive :
+  const auxiliarName = u.auxiliarName || (u as any).auxiliar_name || u.nombre || u.name || ''
+  const auxiliarCode = u.auxiliarCode || (u as any).auxiliar_code || u.codigo || u.code || ''
+  const auxiliarEmail = u.AuxiliarEmail || (u as any).auxiliarEmail || (u as any).auxiliar_email || (u as any).auxiliar_emailAddress || u.email || ''
+  const observaciones = u.observaciones || (u as any).observations || ''
+  const isActive = (u as any).isActive !== undefined ? (u as any).isActive :
     (u as any).is_active !== undefined ? (u as any).is_active :
     (u as any).activo !== undefined ? (u as any).activo : true
 
@@ -220,22 +189,22 @@ const normalizeAuxUser = (u: UsuarioAux | undefined | null): AuxiliaryEditFormMo
     auxiliarCode: (auxiliarCode || '').toString(),
     AuxiliarEmail: (auxiliarEmail || '').toString(),
     observaciones: (observaciones || '').toString(),
-    isActive: !!isActive
+    isActive: !!isActive,
+    password: '',
+    passwordConfirm: ''
   }
 }
 
-watch(
-  () => props.usuario,
-  (u) => {
-    const mapped = normalizeAuxUser(u)
-    if (!mapped) return
-    Object.assign(localModel, mapped)
-    setInitialData(mapped)
-  },
-  { immediate: true, deep: true }
-)
+watch(() => props.usuario, (u) => {
+  const mapped = normalizeAuxUser(u)
+  if (!mapped) return
+  Object.assign(localModel, mapped)
+  setInitialData(mapped)
+}, { immediate: true, deep: true })
 
-watch(() => localModel, () => { if (validationState.hasAttemptedSubmit) clearMessages() }, { deep: true })
+watch(() => localModel, () => { 
+  if (validationState.hasAttemptedSubmit) clearMessages() 
+}, { deep: true })
 
 const onReset = () => {
   const original = resetToOriginal()
@@ -253,7 +222,6 @@ const submit = async () => {
   validationState.hasAttemptedSubmit = true
   Object.assign(formErrors, { auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', observaciones: '', password: '', passwordConfirm: '' })
 
-  // Validar contraseñas
   if (localModel.password && localModel.password.trim().length > 0) {
     if (localModel.password.trim().length < 6) {
       formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
@@ -278,14 +246,13 @@ const submit = async () => {
   const result = await update(localModel)
   if ((result as any).success && (result as any).data) {
     const data = (result as any).data
-    // Normalizar datos del backend (snake_case) para mostrar en la interfaz
     updatedAuxiliary.value = {
       auxiliarName: data.auxiliar_name,
       auxiliarCode: data.auxiliar_code,
       AuxiliarEmail: data.auxiliar_email,
-      observaciones: data.observaciones,
+      observaciones: data.observations,
       isActive: data.is_active,
-      fecha_actualizacion: data.fecha_actualizacion
+      fecha_actualizacion: data.updated_at
     }
     showNotification('success', '¡Auxiliar Actualizado Exitosamente!', '')
     await scrollToNotification()
@@ -301,7 +268,6 @@ const submit = async () => {
   }
 }
 
-// Formateo de fechas
 const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString)

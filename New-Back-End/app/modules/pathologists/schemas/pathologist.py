@@ -20,7 +20,7 @@ class PathologistBase(BaseModel):
 
 class PathologistCreate(PathologistBase):
     """Esquema para crear un nuevo patólogo"""
-    pass
+    password: str = Field(..., min_length=6, max_length=128, description="Contraseña del patólogo")
 
 class PathologistUpdate(BaseModel):
     """Esquema para actualizar un patólogo existente"""
@@ -31,6 +31,7 @@ class PathologistUpdate(BaseModel):
     is_active: Optional[bool] = Field(None, description="Estado activo/inactivo del patólogo")
     signature: Optional[str] = Field(None, description="URL de firma digital")
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
+    password: Optional[str] = Field(None, min_length=6, max_length=128, description="Nueva contraseña del patólogo")
 
     class Config:
         populate_by_name = True

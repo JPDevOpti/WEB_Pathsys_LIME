@@ -46,7 +46,7 @@ class ResidentApiService {
     try {
       console.log('🔍 ResidentApiService.getByEmail - Buscando residente para:', email)
       const residents = await apiClient.get<ResidentResponse[]>(`${this.BASE_URL}/search`, {
-        params: { resident_email: email, limit: 1 }
+        params: { q: email, limit: 1 }
       })
       
       console.log('📋 ResidentApiService.getByEmail - Respuesta completa:', residents)

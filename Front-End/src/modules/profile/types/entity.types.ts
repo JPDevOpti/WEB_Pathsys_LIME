@@ -6,9 +6,9 @@
  * Modelo del formulario de creación de entidades
  */
 export interface EntityFormModel {
-  EntidadName: string
-  EntidadCode: string
-  observaciones: string
+  entityName: string
+  entityCode: string
+  notes: string
   isActive: boolean
 }
 
@@ -16,9 +16,9 @@ export interface EntityFormModel {
  * Request para crear una nueva entidad
  */
 export interface EntityCreateRequest {
-  entidad_name: string
-  entidad_code: string
-  observaciones: string
+  name: string
+  entity_code: string
+  notes: string
   is_active: boolean
 }
 
@@ -27,12 +27,12 @@ export interface EntityCreateRequest {
  */
 export interface EntityCreateResponse {
   id: string
-  entidad_name: string
-  entidad_code: string
-  observaciones: string
+  name: string
+  entity_code: string
+  notes: string
   is_active: boolean
-  fecha_creacion: string
-  fecha_actualizacion?: string
+  created_at: string
+  updated_at?: string
 }
 
 /**
@@ -51,9 +51,9 @@ export interface EntityCreationState {
 export interface EntityFormValidation {
   isValid: boolean
   errors: {
-    EntidadName?: string
-    EntidadCode?: string
-    observaciones?: string
+    entityName?: string
+    entityCode?: string
+    notes?: string
   }
 }
 
@@ -62,9 +62,9 @@ export interface EntityFormValidation {
  */
 export interface EntityEditFormModel {
   id: string
-  EntidadName: string
-  EntidadCode: string
-  observaciones: string
+  entityName: string
+  entityCode: string
+  notes: string
   isActive: boolean
 }
 
@@ -72,9 +72,9 @@ export interface EntityEditFormModel {
  * Request para actualizar una entidad
  */
 export interface EntityUpdateRequest {
-  entidad_name?: string
-  entidad_code?: string
-  observaciones?: string
+  name?: string
+  entity_code?: string
+  notes?: string
   is_active?: boolean
 }
 
@@ -83,12 +83,12 @@ export interface EntityUpdateRequest {
  */
 export interface EntityUpdateResponse {
   id: string
-  entidad_name: string
-  entidad_code: string
-  observaciones: string
+  name: string
+  entity_code: string
+  notes: string
   is_active: boolean
-  fecha_creacion: string
-  fecha_actualizacion: string
+  created_at: string
+  updated_at: string
 }
 
 /**
@@ -107,8 +107,8 @@ export interface EntityEditionState {
 export interface EntityEditFormValidation {
   isValid: boolean
   errors: {
-    EntidadName?: string
-    EntidadCode?: string
-    observaciones?: string
+    entityName?: string
+    entityCode?: string
+    notes?: string
   }
 }
