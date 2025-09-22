@@ -110,13 +110,13 @@ The module includes an import script that allows loading diseases from Excel fil
 **Example usage of the script:**
 ```bash
 # Dry-run mode (preview only)
-python New-Back-End/scripts/import_diseases.py --dry-run
+python Back-End/scripts/import_diseases.py --dry-run
 
 # Real import
-python New-Back-End/scripts/import_diseases.py
+python Back-End/scripts/import_diseases.py
 
 # Specify file directly
-python New-Back-End/scripts/import_diseases.py --file "path/to/file.xlsx"
+python Back-End/scripts/import_diseases.py --file "path/to/file.xlsx"
 ```
 
 ### 2. Disease Search for Diagnoses

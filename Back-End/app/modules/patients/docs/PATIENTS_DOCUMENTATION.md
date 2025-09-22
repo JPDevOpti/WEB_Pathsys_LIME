@@ -35,7 +35,7 @@ patients/
 
 ### Start Server
 ```bash
-cd New-Back-End
+cd Back-End
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 

@@ -37,8 +37,8 @@ function setup() {
     exit 1
   fi
   
-  echo "🐍 Configurando entorno virtual para New-Back-End..."
-  if cd New-Back-End; then
+  echo "🐍 Configurando entorno virtual para Back-End..."
+  if cd Back-End; then
     if [ ! -d "venv" ]; then
       echo "  • Creando entorno virtual..."
       python3 -m venv venv
@@ -50,9 +50,9 @@ function setup() {
       pip install -r requirements.txt
     fi
     cd ..
-    echo "✅ Dependencias New-Back-End instaladas en entorno virtual"
+    echo "✅ Dependencias Back-End instaladas en entorno virtual"
   else
-    echo "❌ Error accediendo al directorio New-Back-End"
+    echo "❌ Error accediendo al directorio Back-End"
     exit 1
   fi
   
@@ -193,16 +193,16 @@ EOF
 }
 
 function start_local() {
-  echo "🚀 Iniciando sistema completo en LOCAL (Frontend + New-Back-End + MongoDB Local)..."
+  echo "🚀 Iniciando sistema completo en LOCAL (Frontend + Back-End + MongoDB Local)..."
   
   # LIMPIAR TODOS los archivos de configuración previos
   echo "🧹 Limpiando archivos de configuración previos..."
-  rm -f New-Back-End/.env New-Back-End/.env.example New-Back-End/.env.development New-Back-End/.env.production
+  rm -f Back-End/.env Back-End/.env.example Back-End/.env.development Back-End/.env.production
   rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
   
   # Crear UN SOLO archivo .env para Back-End LOCAL
-  echo "🔧 Configurando New-Back-End LOCAL..."
-  cat > New-Back-End/.env << EOF
+  echo "🔧 Configurando Back-End LOCAL..."
+  cat > Back-End/.env << EOF
 MONGODB_URL=mongodb://localhost:27017
 DATABASE_NAME=lime_pathsys
 ENVIRONMENT=development
@@ -210,7 +210,7 @@ DEBUG=True
 SECRET_KEY=dev-secret-key-please-change-in-prod-32-chars-min
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 EOF
-  echo "✅ New-Back-End/.env creado para LOCAL"
+  echo "✅ Back-End/.env creado para LOCAL"
   
   # Crear UN SOLO archivo .env para Front-End LOCAL
   echo "🔧 Configurando Front-End LOCAL..."
@@ -235,9 +235,9 @@ EOF
   fi
   
   # Verificar dependencias del backend
-  if [ ! -d "New-Back-End/venv" ]; then
-    echo "🐍 Configurando entorno virtual para New-Back-End..."
-    cd New-Back-End
+  if [ ! -d "Back-End/venv" ]; then
+    echo "🐍 Configurando entorno virtual para Back-End..."
+    cd Back-End
     python3 -m venv venv
     source venv/bin/activate
     pip install -r requirements.txt
@@ -266,8 +266,8 @@ EOF
   fi
   
   # Iniciar backend local
-  echo "🔧 Iniciando Backend (New-Back-End) en puerto 8000..."
-  cd New-Back-End
+  echo "🔧 Iniciando Backend (Back-End) en puerto 8000..."
+  cd Back-End
   source venv/bin/activate
   python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
   BACKEND_PID=$!
@@ -328,14 +328,14 @@ EOF
 }
 
 function start_local_new() {
-  echo "🚀 Iniciando sistema con BACKEND NUEVO (Frontend + New-Back-End + MongoDB Local)..."
+  echo "🚀 Iniciando sistema con BACKEND NUEVO (Frontend + Back-End + MongoDB Local)..."
 
   echo "🧹 Limpiando archivos de configuración previos..."
-  rm -f New-Back-End/.env
+  rm -f Back-End/.env
   rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
 
-  echo "🔧 Configurando New-Back-End LOCAL..."
-  cat > New-Back-End/.env << EOF
+  echo "🔧 Configurando Back-End LOCAL..."
+  cat > Back-End/.env << EOF
 MONGODB_URL=mongodb://localhost:27017
 DATABASE_NAME=lime_pathsys
 ENVIRONMENT=development
@@ -343,7 +343,7 @@ DEBUG=True
 SECRET_KEY=dev-secret-key-please-change-in-prod-32-chars-min
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 EOF
-  echo "✅ New-Back-End/.env creado para LOCAL"
+  echo "✅ Back-End/.env creado para LOCAL"
 
   echo "🔧 Configurando Front-End LOCAL (apuntando a puerto 8001)..."
   cat > Front-End/.env << EOF
@@ -364,15 +364,15 @@ EOF
     cd Front-End && npm install && cd ..
   fi
 
-  if [ ! -d "New-Back-End/venv" ]; then
-    echo "🐍 Configurando entorno virtual para New-Back-End..."
-    cd New-Back-End
+  if [ ! -d "Back-End/venv" ]; then
+    echo "🐍 Configurando entorno virtual para Back-End..."
+    cd Back-End
     python3 -m venv venv
     source venv/bin/activate
     if [ -f requirements.txt ]; then
       pip install -r requirements.txt
     else
-      echo "⚠️  requirements.txt no encontrado en New-Back-End; omitiendo instalación"
+      echo "⚠️  requirements.txt no encontrado en Back-End; omitiendo instalación"
     fi
     cd ..
   fi
@@ -393,12 +393,12 @@ EOF
   fi
 
   echo "🔧 Iniciando Backend nuevo en puerto 8001..."
-  cd New-Back-End
+  cd Back-End
   source venv/bin/activate
   if [ -f app/main.py ]; then
     python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8001 &
   else
-    echo "❌ No se encontró app/main.py en New-Back-End"
+    echo "❌ No se encontró app/main.py en Back-End"
   fi
   cd ..
 
@@ -470,11 +470,11 @@ function status() {
   
   
   # Verificar configuración de base de datos
-  if [ -f "New-Back-End/.env" ]; then
+  if [ -f "Back-End/.env" ]; then
     echo "✅ Base de datos: Configurada (.env)"
-    if grep -q "mongodb://localhost:27017" New-Back-End/.env; then
+    if grep -q "mongodb://localhost:27017" Back-End/.env; then
       echo "   └─ Tipo: LOCAL (MongoDB local)"
-    elif grep -q "mongodb+srv://" New-Back-End/.env; then
+    elif grep -q "mongodb+srv://" Back-End/.env; then
       echo "   └─ Tipo: ATLAS (MongoDB cloud)"
     else
       echo "   └─ Tipo: DESCONOCIDO"
@@ -501,7 +501,7 @@ function status() {
   fi
   
   # Verificar archivos de configuración adicionales
-  if [ -f "New-Back-End/config.atlas.env" ]; then
+  if [ -f "Back-End/config.atlas.env" ]; then
     echo "✅ MongoDB Atlas: Archivo de referencia disponible"
   else
     echo "❌ MongoDB Atlas: Archivo de referencia no disponible"
@@ -539,7 +539,7 @@ function stop() {
   
   # Limpiar archivos de configuración
   echo "  • Limpiando archivos de configuración..."
-  rm -f New-Back-End/.env New-Back-End/.env.example New-Back-End/.env.development New-Back-End/.env.production
+  rm -f Back-End/.env Back-End/.env.example Back-End/.env.development Back-End/.env.production
   rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
   
   echo "✅ Todos los procesos detenidos."
@@ -628,9 +628,9 @@ case "$1" in
   debug)
     echo "🔍 Debug: Mostrando configuración de archivos .env..."
     echo ""
-    echo "📁 New-Back-End/.env:"
-    if [ -f "New-Back-End/.env" ]; then
-      cat New-Back-End/.env
+    echo "📁 Back-End/.env:"
+    if [ -f "Back-End/.env" ]; then
+      cat Back-End/.env
     else
       echo "❌ No existe"
     fi
