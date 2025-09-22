@@ -169,6 +169,8 @@ const validationErrors = computed(() => {
   if (!localModel.auxiliarName?.trim() || formErrors.auxiliarName) errs.push('Nombre completo válido requerido')
   if (!localModel.auxiliarCode?.trim() || formErrors.auxiliarCode) errs.push('Código de auxiliar válido requerido')
   if (!localModel.AuxiliarEmail?.trim() || formErrors.AuxiliarEmail) errs.push('Email válido requerido')
+  if (formErrors.password) errs.push(formErrors.password)
+  if (formErrors.passwordConfirm) errs.push(formErrors.passwordConfirm)
   if (formErrors.observaciones) errs.push('Observaciones válidas requeridas')
   return errs
 })

@@ -1,3 +1,4 @@
+// Composable to edit auxiliaries: validation, update call, and UI state
 import { ref, reactive, computed } from 'vue'
 import { auxiliaryEditService } from '../services/auxiliaryEditService'
 import type {
@@ -7,6 +8,7 @@ import type {
 } from '../types/auxiliary.types'
 
 export const useAuxiliaryEdition = () => {
+  // UI state for request lifecycle and feedback
   const state = reactive<AuxiliaryEditionState>({
     isLoading: false,
     isSuccess: false,
@@ -17,8 +19,10 @@ export const useAuxiliaryEdition = () => {
   const emailValidationError = ref('')
   const originalData = ref<AuxiliaryEditFormModel | null>(null)
 
+  // Enable submit when there is no email validation error
   const canSubmit = computed(() => !emailValidationError.value)
 
+  // Validate edition form (sync)
   const validateForm = (form: AuxiliaryEditFormModel): AuxiliaryEditFormValidation => {
     const errors: AuxiliaryEditFormValidation['errors'] = {}
 
@@ -48,17 +52,21 @@ export const useAuxiliaryEdition = () => {
       errors.observaciones = 'Las observaciones no pueden exceder 500 caracteres'
     }
 
-    // Validación de contraseña si se proporciona
-    if (form.password && form.password.trim().length > 0) {
-      if (form.password.length < 6) {
+    // Password validation: handle optional password+confirm coherently
+    const pwd = form.password?.trim() || ''
+    const pwdConfirm = form.passwordConfirm?.trim() || ''
+    if (pwd) {
+      if (pwd.length < 6) {
         errors.password = 'La contraseña debe tener al menos 6 caracteres'
-      } else if (form.password.length > 128) {
+      } else if (pwd.length > 128) {
         errors.password = 'La contraseña no puede exceder 128 caracteres'
       }
-      
-      if (form.passwordConfirm && form.password !== form.passwordConfirm) {
+      if (pwdConfirm && pwd !== pwdConfirm) {
         errors.passwordConfirm = 'Las contraseñas no coinciden'
       }
+    } else if (pwdConfirm) {
+      // If user entered confirmation but no password
+      errors.password = 'La contraseña es requerida'
     }
 
     return {
@@ -67,6 +75,7 @@ export const useAuxiliaryEdition = () => {
     }
   }
 
+  // Submit update to backend after validation
   const update = async (form: AuxiliaryEditFormModel) => {
     state.isLoading = true
     state.error = ''
@@ -75,8 +84,10 @@ export const useAuxiliaryEdition = () => {
     try {
       const validation = validateForm(form)
       if (!validation.isValid) {
-        state.error = 'Por favor, corrija los errores en el formulario'
-        return { success: false }
+        // Surface specific messages (e.g., "Las contraseñas no coinciden")
+        const detailed = Object.values(validation.errors).filter(Boolean).join(', ')
+        state.error = detailed || 'Por favor, corrija los errores en el formulario'
+        return { success: false, error: state.error, errors: validation.errors }
       }
 
       const data = auxiliaryEditService.prepareUpdateData(form)
@@ -86,7 +97,7 @@ export const useAuxiliaryEdition = () => {
         state.isSuccess = true
         state.successMessage = 'Auxiliar actualizado exitosamente'
         
-        // Actualizar datos originales
+        // Refresh original snapshot after successful update
         originalData.value = {
           id: result.data.id,
           auxiliarName: result.data.auxiliar_name,
@@ -104,7 +115,6 @@ export const useAuxiliaryEdition = () => {
         return { success: false }
       }
     } catch (error: any) {
-      console.error('Error updating auxiliary:', error)
       const errorMessage = error.response?.data?.detail || error.message || 'Error al actualizar el auxiliar'
       state.error = errorMessage
       return { success: false, error: errorMessage }
@@ -113,18 +123,14 @@ export const useAuxiliaryEdition = () => {
     }
   }
 
-  const setInitialData = (data: AuxiliaryEditFormModel) => { 
-    originalData.value = { ...data } 
-  }
+  // Save initial snapshot to detect changes later
+  const setInitialData = (data: AuxiliaryEditFormModel) => { originalData.value = { ...data } }
   
+  // Return a copy of the original snapshot
   const resetToOriginal = () => (originalData.value ? { ...originalData.value } : null)
   
-  const clearMessages = () => { 
-    emailValidationError.value = ''
-    state.error = ''
-    state.successMessage = ''
-    state.isSuccess = false
-  }
+  // Clear transient messages
+  const clearMessages = () => { emailValidationError.value = ''; state.error = ''; state.successMessage = ''; state.isSuccess = false }
 
   const clearState = () => {
     state.isLoading = false
@@ -134,6 +140,7 @@ export const useAuxiliaryEdition = () => {
     emailValidationError.value = ''
   }
 
+  // Diff current form vs original snapshot
   const createHasChanges = (current: AuxiliaryEditFormModel) => {
     if (!originalData.value) return false
     const passwordChanged = !!current.password && current.password.trim().length >= 6

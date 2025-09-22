@@ -1,3 +1,9 @@
+// Composable that encapsulates auxiliary creation flow:
+// - Local loading/success/error state
+// - Synchronous form validation
+// - Email availability check
+// - Payload normalization and API call
+// Returns helpers to be used by the form component.
 import { ref, reactive, computed } from 'vue'
 import { auxiliaryCreateService } from '../services/auxiliaryCreateService'
 import type { 
@@ -8,6 +14,7 @@ import type {
 } from '../types/auxiliary.types'
 
 export function useAuxiliaryCreation() {
+  // UI state for request and feedback
   const state = reactive<AuxiliaryCreationState>({
     isLoading: false,
     isSuccess: false,
@@ -15,13 +22,16 @@ export function useAuxiliaryCreation() {
     successMessage: ''
   })
 
+  // Async validators flags and messages
   const isCheckingCode = ref(false)
   const isCheckingEmail = ref(false)
   const codeValidationError = ref('')
   const emailValidationError = ref('')
 
+  // Left for API symmetry/future rules (always true for now)
   const canSubmit = computed(() => true)
 
+  // Synchronous field validation – returns errors map
   const validateForm = (formData: AuxiliaryFormModel): AuxiliaryFormValidation => {
     const errors: AuxiliaryFormValidation['errors'] = {}
 
@@ -63,6 +73,7 @@ export function useAuxiliaryCreation() {
   }
 
 
+  // Check if email is syntactically valid and not already used
   const checkEmailAvailability = async (email: string): Promise<boolean> => {
     if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return true
     isCheckingEmail.value = true
@@ -82,6 +93,7 @@ export function useAuxiliaryCreation() {
     }
   }
 
+  // Map UI model to backend request payload
   const normalizeAuxiliaryData = (formData: AuxiliaryFormModel): AuxiliaryCreateRequest => ({
     auxiliar_name: formData.auxiliarName?.trim() || '',
     auxiliar_code: formData.auxiliarCode?.trim().toUpperCase() || '',
@@ -91,6 +103,7 @@ export function useAuxiliaryCreation() {
     is_active: formData.isActive ?? true
   })
 
+  // Validate → send to API → set feedback state
   const createAuxiliary = async (formData: AuxiliaryFormModel): Promise<{ success: boolean; data?: any }> => {
     state.error = ''
     state.isSuccess = false
@@ -113,8 +126,7 @@ export function useAuxiliaryCreation() {
 
       return { success: true, data: response }
     } catch (err: any) {
-      console.error('Error creating auxiliary:', err)
-      
+      // Prefer backend detail/message when available
       let errorMessage = 'Error al crear el auxiliar'
       
       if (err.response?.data?.detail) {
@@ -139,6 +151,7 @@ export function useAuxiliaryCreation() {
     }
   }
 
+  // Reset all UI flags and validator messages
   const clearState = () => {
     state.isLoading = false
     state.isSuccess = false
@@ -150,6 +163,7 @@ export function useAuxiliaryCreation() {
     emailValidationError.value = ''
   }
 
+  // Clear transient messages without altering loading
   const clearMessages = () => {
     state.error = ''
     state.successMessage = ''

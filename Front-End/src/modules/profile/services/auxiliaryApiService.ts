@@ -1,3 +1,4 @@
+// Minimal API client wrapper for auxiliary endpoints
 import apiClient from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 
@@ -21,57 +22,44 @@ export interface AuxiliarUpdate {
 
 class AuxiliarApiService {
   private static readonly BASE_URL = `${API_CONFIG.BASE_URL}${API_CONFIG.VERSION}/auxiliaries`
+  
+  // Internal GET helper with consistent error handling
+  private static async getJson<T>(url: string, params?: Record<string, any>): Promise<T | null> {
+    try {
+      return await apiClient.get<T>(url, { params })
+    } catch {
+      return null
+    }
+  }
 
-  /**
-   * Obtener auxiliar por código
-   */
+  // Internal PUT helper with consistent error handling
+  private static async putJson<T>(url: string, data: unknown): Promise<T | null> {
+    try {
+      return await apiClient.put<T>(url, data)
+    } catch {
+      return null
+    }
+  }
+
+  // Fetch auxiliary by unique code
   static async getByCode(code: string): Promise<AuxiliarResponse | null> {
-    try {
-      const auxiliar = await apiClient.get<AuxiliarResponse>(`${this.BASE_URL}/${code}`)
-      return auxiliar
-    } catch (error) {
-      console.error('Error al obtener auxiliar:', error)
-      return null
-    }
+    return this.getJson<AuxiliarResponse>(`${this.BASE_URL}/${code}`)
   }
 
-  /**
-   * Buscar auxiliar por email
-   */
+  // Find first auxiliary by email (API returns an array)
   static async getByEmail(email: string): Promise<AuxiliarResponse | null> {
-    try {
-      console.log('🔍 AuxiliarApiService.getByEmail - Buscando auxiliar para:', email)
-      const auxiliaries = await apiClient.get<AuxiliarResponse[]>(`${this.BASE_URL}/search`, {
-        params: { q: email, limit: 1 }
-      })
-      
-      console.log('📋 AuxiliarApiService.getByEmail - Respuesta completa:', auxiliaries)
-      
-      // El endpoint devuelve un array directamente
-      if (Array.isArray(auxiliaries) && auxiliaries.length > 0) {
-        console.log('✅ AuxiliarApiService.getByEmail - Auxiliar encontrado:', auxiliaries[0])
-        return auxiliaries[0] as AuxiliarResponse
-      }
-      
-      console.log('❌ AuxiliarApiService.getByEmail - No se encontraron auxiliares')
-      return null
-    } catch (error) {
-      console.error('❌ AuxiliarApiService.getByEmail - Error al buscar auxiliar por email:', error)
-      return null
-    }
+    const result = await this.getJson<AuxiliarResponse[] | { results?: AuxiliarResponse[] }>(
+      `${this.BASE_URL}/search`,
+      { q: email, limit: 1 }
+    )
+    if (!result) return null
+    const list = Array.isArray(result) ? result : (result.results ?? [])
+    return list.length ? list[0] : null
   }
 
-  /**
-   * Actualizar auxiliar
-   */
+  // Update basic auxiliary fields by code
   static async update(code: string, data: AuxiliarUpdate): Promise<AuxiliarResponse | null> {
-    try {
-      const auxiliar = await apiClient.put<AuxiliarResponse>(`${this.BASE_URL}/${code}`, data)
-      return auxiliar
-    } catch (error) {
-      console.error('Error al actualizar auxiliar:', error)
-      return null
-    }
+    return this.putJson<AuxiliarResponse>(`${this.BASE_URL}/${code}`, data)
   }
 }
 

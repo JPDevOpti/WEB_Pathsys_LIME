@@ -43,6 +43,17 @@
       autocomplete="new-password" 
     />
 
+    <FormInputField 
+      class="col-span-full md:col-span-6" 
+      label="Confirmar contraseña" 
+      type="password" 
+      placeholder="••••••••" 
+      :model-value="(localModel as any).passwordConfirm || ''"
+      @update:model-value="val => ((localModel as any).passwordConfirm = val)"
+      :error="(formErrors as any).passwordConfirm"
+      autocomplete="new-password" 
+    />
+
     <FormTextarea 
       class="col-span-full" 
       label="Observaciones" 
@@ -58,12 +69,7 @@
 
     <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
       <ClearButton type="button" @click="onClear" :disabled="isLoading" />
-      <SaveButton 
-        text="Guardar Auxiliar" 
-        type="submit" 
-        :disabled="!canSubmit || isLoading"
-        :loading="isLoading"
-      />
+      <SaveButton text="Guardar Auxiliar" type="submit" :disabled="isLoading" :loading="isLoading" />
     </div>
 
     <div ref="notificationContainer" class="col-span-full">
@@ -147,36 +153,29 @@ const validationState = reactive({
   hasAttemptedSubmit: false
 })
 
-const {
-  state,
-  codeValidationError,
-  emailValidationError,
-  canSubmit: canSubmitFromComposable,
-  validateForm,
-  checkEmailAvailability,
-  createAuxiliary,
-  clearState,
-  clearMessages
-} = useAuxiliaryCreation()
+const { state, emailValidationError, validateForm, checkEmailAvailability, createAuxiliary, clearState, clearMessages } = useAuxiliaryCreation()
 
 const localModel = reactive<AuxiliaryFormModel>({ ...modelValue.value })
+;(localModel as any).passwordConfirm = ''
 
 const formErrors = reactive({
   auxiliarName: '',
   auxiliarCode: '',
   AuxiliarEmail: '',
   password: '',
+  passwordConfirm: '',
   observaciones: ''
 })
 
 const validationErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
   const validation = validateForm(localModel)
-  if (!validation.isValid) return Object.values(validation.errors)
-  return []
+  const baseErrors = validation.isValid ? [] : Object.values(validation.errors)
+  const extra: string[] = []
+  if ((formErrors as any).password) extra.push((formErrors as any).password)
+  if ((formErrors as any).passwordConfirm) extra.push((formErrors as any).passwordConfirm)
+  return [...baseErrors, ...extra]
 })
-
-const canSubmit = computed(() => true)
 
 watch(() => modelValue.value, (newValue) => {
   Object.assign(localModel, newValue)
@@ -191,34 +190,19 @@ watch(() => localModel, () => {
 
 const validateCode = async () => {
   formErrors.auxiliarCode = ''
-  if (!localModel.auxiliarCode?.trim()) {
-    formErrors.auxiliarCode = 'El código es requerido'
-    return
-  }
-  if (localModel.auxiliarCode.length < 3) {
-    formErrors.auxiliarCode = 'Mínimo 3 caracteres'
-    return
-  }
-  if (localModel.auxiliarCode.length > 20) {
-    formErrors.auxiliarCode = 'Máximo 20 caracteres'
-    return
-  }
+  const code = (localModel.auxiliarCode || '').trim()
+  if (!code) { formErrors.auxiliarCode = 'El código es requerido'; return }
+  if (code.length < 3) { formErrors.auxiliarCode = 'Mínimo 3 caracteres'; return }
+  if (code.length > 20) { formErrors.auxiliarCode = 'Máximo 20 caracteres'; return }
 }
 
 const validateEmail = async () => {
   formErrors.AuxiliarEmail = ''
-  if (!localModel.AuxiliarEmail?.trim()) {
-    formErrors.AuxiliarEmail = 'El email es requerido'
-    return
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(localModel.AuxiliarEmail)) {
-    formErrors.AuxiliarEmail = 'Formato de email inválido'
-    return
-  }
-  await checkEmailAvailability(localModel.AuxiliarEmail)
-  if (emailValidationError.value) {
-    formErrors.AuxiliarEmail = emailValidationError.value
-  }
+  const email = (localModel.AuxiliarEmail || '').trim()
+  if (!email) { formErrors.AuxiliarEmail = 'El email es requerido'; return }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { formErrors.AuxiliarEmail = 'Formato de email inválido'; return }
+  await checkEmailAvailability(email)
+  if (emailValidationError.value) formErrors.AuxiliarEmail = emailValidationError.value
 }
 
 const clearFormErrors = () => {
@@ -273,6 +257,24 @@ const submit = async () => {
   clearFormErrors()
   clearNotification()
   
+  // Local password confirmation validation
+  const pwd = (localModel.password || '').trim()
+  const pwdConfirm = (((localModel as any).passwordConfirm as string) || '').trim()
+  if (!pwd) {
+    formErrors.password = 'La contraseña es requerida'
+  } else if (pwd.length < 6) {
+    formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+  }
+  if (pwdConfirm && pwd !== pwdConfirm) {
+    ;(formErrors as any).passwordConfirm = 'Las contraseñas no coinciden'
+  } else if (!pwdConfirm) {
+    ;(formErrors as any).passwordConfirm = 'La confirmación de contraseña es requerida'
+  }
+  if (formErrors.password || (formErrors as any).passwordConfirm) {
+    validationState.showValidationError = true
+    return
+  }
+
   const validation = validateForm(localModel)
   if (!validation.isValid) {
     validationState.showValidationError = true
@@ -305,8 +307,6 @@ const handleAuxiliaryCreated = async (createdAuxiliaryData: any) => {
 }
 
 const handleAuxiliaryCreationError = async (error: any) => {
-  console.error('Error al guardar auxiliar:', error)
-  
   let errorMessage = 'No se pudo guardar el auxiliar. Por favor, inténtelo nuevamente.'
   let errorTitle = 'Error al Guardar Auxiliar'
   
@@ -343,6 +343,7 @@ const clearForm = () => {
   Object.assign(localModel, { 
     auxiliarName: '', auxiliarCode: '', AuxiliarEmail: '', password: '', observaciones: '', isActive: true
   })
+  ;(localModel as any).passwordConfirm = ''
 }
 
 const onClear = () => {

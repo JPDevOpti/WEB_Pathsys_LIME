@@ -1,10 +1,6 @@
-/**
- * Tipos específicos para la gestión de auxiliares en el módulo profile
- */
+// Types for auxiliary management in Profile module
 
-/**
- * Modelo del formulario de creación de auxiliares
- */
+// UI form model (camelCase for Vue forms)
 export interface AuxiliaryFormModel {
   auxiliarName: string
   auxiliarCode: string
@@ -14,9 +10,7 @@ export interface AuxiliaryFormModel {
   isActive: boolean
 }
 
-/**
- * Request para crear un nuevo auxiliar (colección auxiliares)
- */
+// Backend request (snake_case)
 export interface AuxiliaryCreateRequest {
   auxiliar_name: string
   auxiliar_code: string
@@ -26,9 +20,7 @@ export interface AuxiliaryCreateRequest {
   is_active: boolean
 }
 
-/**
- * Response de creación de auxiliar
- */
+// Backend creation response (snake_case)
 export interface AuxiliaryCreateResponse {
   id: string
   auxiliar_name: string
@@ -40,9 +32,7 @@ export interface AuxiliaryCreateResponse {
   updated_at?: string
 }
 
-/**
- * Estado de la operación de creación
- */
+// UI state for create flow
 export interface AuxiliaryCreationState {
   isLoading: boolean
   isSuccess: boolean
@@ -50,9 +40,7 @@ export interface AuxiliaryCreationState {
   successMessage: string
 }
 
-/**
- * Resultado de validación del formulario
- */
+// Validation result for create form
 export interface AuxiliaryFormValidation {
   isValid: boolean
   errors: {
@@ -64,9 +52,7 @@ export interface AuxiliaryFormValidation {
   }
 }
 
-/**
- * Modelo del formulario de edición de auxiliares
- */
+// UI form model for edition
 export interface AuxiliaryEditFormModel {
   id: string
   auxiliarName: string
@@ -78,9 +64,7 @@ export interface AuxiliaryEditFormModel {
   passwordConfirm?: string
 }
 
-/**
- * Request para actualizar un auxiliar (backend snake_case)
- */
+// Backend update request (snake_case)
 export interface AuxiliaryUpdateRequest {
   auxiliar_name: string
   auxiliar_email: string
@@ -89,9 +73,7 @@ export interface AuxiliaryUpdateRequest {
   password?: string
 }
 
-/**
- * Response de actualización de auxiliar (backend snake_case)
- */
+// Backend update response (snake_case)
 export interface AuxiliaryUpdateResponse {
   id: string
   auxiliar_name: string
@@ -103,9 +85,7 @@ export interface AuxiliaryUpdateResponse {
   updated_at: string
 }
 
-/**
- * Resultado de validación del formulario de edición
- */
+// Validation result for edition form
 export interface AuxiliaryEditFormValidation {
   isValid: boolean
   errors: {
@@ -118,9 +98,7 @@ export interface AuxiliaryEditFormValidation {
   }
 }
 
-/**
- * Estado de la operación de edición
- */
+// UI state for edition flow
 export interface AuxiliaryEditionState {
   isLoading: boolean
   isSuccess: boolean

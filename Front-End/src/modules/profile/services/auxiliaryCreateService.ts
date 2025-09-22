@@ -5,161 +5,98 @@ import type {
   AuxiliaryCreateResponse
 } from '../types/auxiliary.types'
 
-/**
- * Servicio para la creación y gestión de auxiliares
- */
+// Service to create and validate auxiliaries
 class AuxiliaryCreateService {
   private readonly auxiliaryEndpoint = API_CONFIG.ENDPOINTS.AUXILIARIES
 
-  /**
-   * Crear un nuevo auxiliar (colección auxiliares + usuario)
-   */
+  // Small helper to map backend validation errors to readable Spanish
+  private mapValidationErrors(detail: any[]): string {
+    return detail.map((err: any) => {
+      const field = err.loc?.[err.loc.length - 1] || 'campo'
+      let fieldName = field
+      switch (field) {
+        case 'auxiliar_code': fieldName = 'Código del auxiliar'; break
+        case 'auxiliar_name': fieldName = 'Nombre del auxiliar'; break
+        case 'auxiliar_email': fieldName = 'Email'; break
+        case 'password': fieldName = 'Contraseña'; break
+        case 'observaciones': fieldName = 'Observaciones'; break
+      }
+      let message = err.msg
+      if (message.includes('String should have at most')) {
+        const maxChars = message.match(/\d+/)?.[0]
+        message = `debe tener máximo ${maxChars} caracteres`
+      } else if (message.includes('String should have at least')) {
+        const minChars = message.match(/\d+/)?.[0]
+        message = `debe tener mínimo ${minChars} caracteres`
+      } else if (message.includes('field required')) {
+        message = 'es requerido'
+      } else if (message.includes('value is not a valid email')) {
+        message = 'debe tener un formato de email válido'
+      }
+      return `${fieldName} ${message}`
+    }).join(', ')
+  }
+
+  // Create auxiliary (also creates user under the hood)
   async createAuxiliary(auxiliaryData: AuxiliaryCreateRequest): Promise<AuxiliaryCreateResponse> {
     try {
-      // Crear el auxiliar en la colección auxiliares (incluye creación de usuario automáticamente)
-      const response = await apiClient.post<AuxiliaryCreateResponse>(
-        `${this.auxiliaryEndpoint}/`,
-        auxiliaryData
-      )
-
-      return response  // ✅ CORREGIDO: El cliente axios ya retorna response.data
+      const response = await apiClient.post<AuxiliaryCreateResponse>(`${this.auxiliaryEndpoint}/`, auxiliaryData)
+      return response
     } catch (error: any) {
-      // Manejo específico de errores del backend
+      // Prefer precise backend messages when available
       if (error.response?.status === 409) {
-        // Error de datos duplicados (Conflict)
         const errorMessage = error.response.data?.detail || error.message || 'Datos duplicados'
         const customError = new Error(errorMessage) as any
-        customError.response = error.response // Preservar la respuesta original
+        customError.response = error.response
         throw customError
-      } else if (error.response?.status === 400) {
-        // Error de datos duplicados (Bad Request)
-        if (error.message?.includes('email')) {
-          throw new Error('Ya existe un auxiliar con este email')
-        } else if (error.message?.includes('código') || error.message?.includes('code')) {
-          throw new Error('Ya existe un auxiliar con este código')
-        }
-        throw new Error(error.message || 'Datos duplicados')
-      } else if (error.response?.status === 422) {
-        // Error de validación
-        const validationErrors = error.response.data?.detail
-        if (Array.isArray(validationErrors)) {
-          const errorMessages = validationErrors.map((err: any) => {
-            const field = err.loc?.[err.loc.length - 1] || 'campo'
-            let fieldName = field
-            
-            // Traducir nombres de campos
-            switch (field) {
-              case 'auxiliarCode':
-                fieldName = 'Código del auxiliar'
-                break
-              case 'auxiliarName':
-                fieldName = 'Nombre del auxiliar'
-                break
-              case 'AuxiliarEmail':
-                fieldName = 'Email'
-                break
-              case 'password':
-                fieldName = 'Contraseña'
-                break
-              case 'observaciones':
-                fieldName = 'Observaciones'
-                break
-            }
-            
-            // Traducir mensajes de error
-            let message = err.msg
-            if (message.includes('String should have at most')) {
-              const maxChars = message.match(/\d+/)?.[0]
-              message = `debe tener máximo ${maxChars} caracteres`
-            } else if (message.includes('String should have at least')) {
-              const minChars = message.match(/\d+/)?.[0]
-              message = `debe tener mínimo ${minChars} caracteres`
-            } else if (message.includes('field required')) {
-              message = 'es requerido'
-            } else if (message.includes('value is not a valid email')) {
-              message = 'debe tener un formato de email válido'
-            }
-            
-            return `${fieldName} ${message}`
-          }).join(', ')
-          throw new Error(errorMessages)
-        }
-        throw new Error('Datos inválidos en el formulario')
-      } else {
-        // Error genérico
-        throw new Error(error.message || 'Error al crear el auxiliar')
       }
+      if (error.response?.status === 400) {
+        if (error.message?.includes('email')) throw new Error('Ya existe un auxiliar con este email')
+        if (error.message?.includes('código') || error.message?.includes('code')) throw new Error('Ya existe un auxiliar con este código')
+        throw new Error(error.message || 'Datos duplicados')
+      }
+      if (error.response?.status === 422) {
+        const validationErrors = error.response.data?.detail
+        if (Array.isArray(validationErrors)) throw new Error(this.mapValidationErrors(validationErrors))
+        throw new Error('Datos inválidos en el formulario')
+      }
+      throw new Error(error.message || 'Error al crear el auxiliar')
     }
   }
 
-
-  /**
-   * Verificar si un email ya existe (usando búsqueda de auxiliares)
-   */
+  // Check if email already exists via search endpoint
   async checkEmailExists(email: string): Promise<boolean> {
     try {
       const response = await apiClient.get(`${this.auxiliaryEndpoint}/search?auxiliar_email=${email}`)
-      // Si encuentra resultados, el email existe
-      return response && response.length > 0
+      return Array.isArray(response) && response.length > 0
     } catch (error: any) {
-      if (error.response?.status === 404) {
-        return false // Email no existe, está disponible
-      }
-      // Para otros errores, asumir que NO existe para permitir continuar
+      if (error.response?.status === 404) return false
       return false
     }
   }
 
-  /**
-   * Validar datos del formulario antes de enviar
-   */
+  // Synchronous pre-submit validation for UI
   validateAuxiliaryData(data: AuxiliaryCreateRequest): { isValid: boolean; errors: string[] } {
     const errors: string[] = []
+    if (!data.auxiliar_name?.trim()) errors.push('El nombre del auxiliar es requerido')
+    else if (data.auxiliar_name.length < 2) errors.push('El nombre debe tener al menos 2 caracteres')
+    else if (data.auxiliar_name.length > 100) errors.push('El nombre no puede tener más de 100 caracteres')
 
-    // Validar nombre del auxiliar
-    if (!data.auxiliarName?.trim()) {
-      errors.push('El nombre del auxiliar es requerido')
-    } else if (data.auxiliarName.length < 2) {
-      errors.push('El nombre debe tener al menos 2 caracteres')
-    } else if (data.auxiliarName.length > 100) {
-      errors.push('El nombre no puede tener más de 100 caracteres')
-    }
+    if (!data.auxiliar_code?.trim()) errors.push('El código del auxiliar es requerido')
+    else if (data.auxiliar_code.length < 3) errors.push('El código debe tener al menos 3 caracteres')
+    else if (data.auxiliar_code.length > 20) errors.push('El código no puede tener más de 20 caracteres')
 
-    // Validar código del auxiliar
-    if (!data.auxiliarCode?.trim()) {
-      errors.push('El código del auxiliar es requerido')
-    } else if (data.auxiliarCode.length < 3) {
-      errors.push('El código debe tener al menos 3 caracteres')
-    } else if (data.auxiliarCode.length > 20) {
-      errors.push('El código no puede tener más de 20 caracteres')
-    }
+    if (!data.auxiliar_email?.trim()) errors.push('El email es requerido')
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.auxiliar_email)) errors.push('El email debe tener un formato válido')
 
-    // Validar email
-    if (!data.AuxiliarEmail?.trim()) {
-      errors.push('El email es requerido')
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.AuxiliarEmail)) {
-      errors.push('El email debe tener un formato válido')
-    }
+    if (!data.password?.trim()) errors.push('La contraseña es requerida')
+    else if (data.password.length < 6) errors.push('La contraseña debe tener al menos 6 caracteres')
 
-    // Validar contraseña
-    if (!data.password?.trim()) {
-      errors.push('La contraseña es requerida')
-    } else if (data.password.length < 6) {
-      errors.push('La contraseña debe tener al menos 6 caracteres')
-    }
+    if (data.observaciones && data.observaciones.length > 500) errors.push('Las observaciones no pueden tener más de 500 caracteres')
 
-    // Validar observaciones (opcional pero con límite)
-    if (data.observaciones && data.observaciones.length > 500) {
-      errors.push('Las observaciones no pueden tener más de 500 caracteres')
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    }
+    return { isValid: errors.length === 0, errors }
   }
 }
 
-// Exportar instancia singleton
 export const auxiliaryCreateService = new AuxiliaryCreateService()
 export default auxiliaryCreateService
