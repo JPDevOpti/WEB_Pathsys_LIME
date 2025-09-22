@@ -9,6 +9,8 @@ from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 # Importar las rutas de resultado y firma
 from .result_routes import router as result_router
 from .sign_routes import router as sign_router
+# Importar las rutas de estadísticas
+from .statistics.statistics_router import router as statistics_router
 
 
 router = APIRouter()
@@ -16,6 +18,8 @@ router = APIRouter()
 # Incluir las rutas de resultado y firma
 router.include_router(result_router)
 router.include_router(sign_router)
+# Incluir las rutas de estadísticas
+router.include_router(statistics_router)
 
 
 def get_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> CaseService:
