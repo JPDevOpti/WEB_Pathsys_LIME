@@ -268,8 +268,15 @@ EOF
   # Iniciar backend local
   echo "🔧 Iniciando Backend (Back-End) en puerto 8000..."
   cd Back-End
-  source venv/bin/activate
-  python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
+  if [ ! -d "venv" ]; then
+    echo "  • Creando entorno virtual..."
+    python3 -m venv venv
+  fi
+  if [ -f requirements.txt ]; then
+    echo "  • Asegurando dependencias en venv..."
+    ./venv/bin/python -m pip install -r requirements.txt >/dev/null 2>&1 || ./venv/bin/python -m pip install -r requirements.txt
+  fi
+  ./venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
   BACKEND_PID=$!
   cd ..
   
@@ -394,9 +401,16 @@ EOF
 
   echo "🔧 Iniciando Backend nuevo en puerto 8001..."
   cd Back-End
-  source venv/bin/activate
+  if [ ! -d "venv" ]; then
+    echo "  • Creando entorno virtual..."
+    python3 -m venv venv
+  fi
+  if [ -f requirements.txt ]; then
+    echo "  • Asegurando dependencias en venv..."
+    ./venv/bin/python -m pip install -r requirements.txt >/dev/null 2>&1 || ./venv/bin/python -m pip install -r requirements.txt
+  fi
   if [ -f app/main.py ]; then
-    python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8001 &
+    ./venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8001 &
   else
     echo "❌ No se encontró app/main.py en Back-End"
   fi
