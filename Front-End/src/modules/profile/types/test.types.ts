@@ -1,49 +1,32 @@
-/**
- * Tipos específicos para la gestión de pruebas en el módulo profile
- */
 
-/**
- * Modelo del formulario de creación de pruebas
- */
 export interface TestFormModel {
   testCode: string
   testName: string
   testDescription: string
-  timeDays: number // Tiempo en días
-  price: number // Precio de la prueba
+  timeDays: number 
+  price: number
   isActive: boolean
 }
 
-/**
- * Request para crear una nueva prueba
- */
 export interface TestCreateRequest {
   test_code: string
   name: string
   description: string
-  time: number // Tiempo en días
-  price: number // Precio de la prueba
+  time: number 
+  price: number 
   is_active: boolean
 }
-
-/**
- * Response de creación de prueba
- */
 export interface TestCreateResponse {
   _id: string
   test_code: string
   name: string
   description: string
-  time: number // Tiempo en días
-  price: number // Precio de la prueba
+  time: number 
+  price: number
   is_active: boolean
   created_at: string
   updated_at?: string
 }
-
-/**
- * Estado de la operación de creación
- */
 export interface TestCreationState {
   isLoading: boolean
   isSuccess: boolean
@@ -51,9 +34,6 @@ export interface TestCreationState {
   successMessage: string
 }
 
-/**
- * Resultado de validación del formulario
- */
 export interface TestFormValidation {
   isValid: boolean
   errors: {
@@ -65,49 +45,37 @@ export interface TestFormValidation {
   }
 }
 
-/**
- * Modelo del formulario de edición de pruebas
- */
 export interface TestEditFormModel {
   id: string
   testCode: string
   testName: string
   testDescription: string
-  timeDays: number // Tiempo en días
-  price: number // Precio de la prueba
+  timeDays: number 
+  price: number 
   isActive: boolean
 }
 
-/**
- * Request para actualizar una prueba existente
- */
 export interface TestUpdateRequest {
   test_code?: string
   name?: string
   description?: string
-  time?: number // Tiempo en minutos
-  price?: number // Precio de la prueba
+  time?: number 
+  price?: number 
   is_active?: boolean
 }
 
-/**
- * Response de actualización de prueba
- */
 export interface TestUpdateResponse {
   _id: string
   test_code: string
   name: string
   description: string
-  time: number // Tiempo en días
-  price: number // Precio de la prueba
+  time: number 
+  price: number 
   is_active: boolean
   created_at: string
   updated_at: string
 }
 
-/**
- * Estado de la operación de edición
- */
 export interface TestEditionState {
   isLoading: boolean
   isSuccess: boolean
@@ -115,9 +83,6 @@ export interface TestEditionState {
   successMessage: string
 }
 
-/**
- * Resultado de validación del formulario de edición
- */
 export interface TestEditFormValidation {
   isValid: boolean
   errors: {
@@ -128,8 +93,3 @@ export interface TestEditFormValidation {
     price?: string
   }
 }
-
-/**
- * Nota: El campo tiempo se maneja en días para coincidir con el backend
- * El backend valida que el tiempo esté entre 1 y 365 días
- */

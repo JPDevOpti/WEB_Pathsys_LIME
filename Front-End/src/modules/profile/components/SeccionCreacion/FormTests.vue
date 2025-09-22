@@ -4,7 +4,6 @@
       <h4 class="text-base font-semibold text-gray-800">Formulario de Pruebas</h4>
     </div>
 
-    <!-- Nombre y Código -->
     <FormInputField 
       class="col-span-full md:col-span-6" 
       label="Nombre de la prueba" 
@@ -21,7 +20,6 @@
       @blur="validateCode"
     />
 
-    <!-- Tiempo estimado y Precio -->
     <FormInputField 
       class="col-span-full md:col-span-6" 
       label="Tiempo estimado (días)" 
@@ -43,7 +41,6 @@
       step="100"
     />
 
-    <!-- Descripción -->
     <FormTextarea 
       class="col-span-full" 
       label="Descripción" 
@@ -53,12 +50,10 @@
       :error="formErrors.testDescription"
     />
 
-    <!-- Estado activo -->
-    <div class="col-span-full flex items-center justify-center pt-4">
+    <div class="col-span-full flex items-center justify-start pt-4">
       <FormCheckbox label="Activo" v-model="localModel.isActive" />
     </div>
 
-    <!-- Botones de acción -->
     <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
       <ClearButton type="button" @click="onClear" :disabled="isLoading" />
       <SaveButton 
@@ -69,7 +64,6 @@
       />
     </div>
 
-    <!-- Notificación -->
     <div ref="notificationContainer" class="col-span-full">
       <Notification
         :visible="notification.visible"
@@ -83,7 +77,6 @@
         <template v-if="notification.type === 'success' && createdTest" #content>
           <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
             <div class="space-y-4">
-              <!-- Información principal de la prueba -->
               <div class="mb-4 pb-3 border-b border-gray-100">
                 <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdTest.name }}</h3>
                 <p class="text-gray-600">
@@ -92,7 +85,6 @@
                 </p>
               </div>
               
-              <!-- Detalles de la prueba en vertical -->
               <div class="space-y-4 text-sm">
                 <div>
                   <span class="text-gray-500 font-medium block mb-1">Tiempo estimado:</span>
@@ -115,7 +107,6 @@
                 </div>
               </div>
               
-              <!-- Descripción -->
               <div v-if="createdTest.description">
                 <span class="text-gray-500 font-medium block mb-2">Descripción:</span>
                 <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ createdTest.description }}</p>
@@ -126,7 +117,6 @@
       </Notification>
     </div>
 
-    <!-- Alerta de Validación -->
     <ValidationAlert
       :visible="validationState.showValidationError && validationState.hasAttemptedSubmit"
       :errors="validationErrors"
@@ -142,19 +132,15 @@ import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useTestCreation } from '../../composables/useTestCreation'
 import type { TestFormModel, TestCreateResponse } from '../../types/test.types'
 
-// Props y emits
+// Props and emits
 const modelValue = defineModel<TestFormModel>({ required: true })
-const emit = defineEmits<{ 
-  (e: 'usuario-creado', payload: TestFormModel): void 
-}>()
+const emit = defineEmits<{ (e: 'usuario-creado', payload: TestFormModel): void }>()
 
-// Referencias
+// Refs and reactive state
 const notificationContainer = ref<HTMLElement | null>(null)
-
-// Estado de la prueba creada
 const createdTest = ref<TestCreateResponse | null>(null)
+const isLoading = ref(false)
 
-// Estado de notificación
 const notification = reactive({
   visible: false,
   type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -162,13 +148,12 @@ const notification = reactive({
   message: ''
 })
 
-// Estado de validación
 const validationState = reactive({
   showValidationError: false,
   hasAttemptedSubmit: false
 })
 
-// Composable para manejo de backend
+// Composable for backend operations
 const {
   state,
   codeValidationError,
@@ -179,17 +164,14 @@ const {
   clearMessages
 } = useTestCreation()
 
-// Estado de loading local
-const isLoading = ref(false)
-
-// Modelo local del formulario
+// Local form model
 const localModel = reactive<TestFormModel>({ 
   ...modelValue.value,
   timeDays: modelValue.value.timeDays || 1,
   price: modelValue.value.price || 0
 })
 
-// Errores del formulario
+// Form validation errors
 const formErrors = reactive({
   testCode: '',
   testName: '',
@@ -198,63 +180,39 @@ const formErrors = reactive({
   price: ''
 })
 
-// Lista de errores de validación para mostrar en la alerta
+// Computed properties
 const validationErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
-  
   const validation = validateForm(localModel)
   return validation.isValid ? [] : Object.values(validation.errors)
 })
 
-// Computed para verificar si se puede enviar
 const canSubmit = computed(() => true)
 
-// Watchers
-watch(() => modelValue.value, (newValue) => {
-  Object.assign(localModel, {
-    ...newValue,
-    timeDays: newValue.timeDays || 1,
-    price: newValue.price || 0
-  })
-}, { deep: true })
-
-// Watcher para detectar cambios en el modelo
-watch(() => localModel, () => {
-  if (validationState.hasAttemptedSubmit && !notification.visible) {
-    clearMessages()
-    clearFormErrors()
-  }
-}, { deep: true })
-
-// Validación del código al perder el foco
+// Validation functions
 const validateCode = async () => {
   formErrors.testCode = ''
-  
   if (!localModel.testCode?.trim()) {
     formErrors.testCode = 'El código es requerido'
     return
   }
-  
   if (!/^[A-Z0-9_-]+$/i.test(localModel.testCode)) {
     formErrors.testCode = 'Solo letras, números, guiones y guiones bajos'
     return
   }
-  
-  // Verificar disponibilidad en el backend
   await checkCodeAvailability(localModel.testCode)
   if (codeValidationError.value) {
     formErrors.testCode = codeValidationError.value
   }
 }
 
-// Limpiar errores del formulario
+// Helper functions
 const clearFormErrors = () => {
   Object.keys(formErrors).forEach(key => {
     formErrors[key as keyof typeof formErrors] = ''
   })
 }
 
-// Funciones de notificación
 const showNotification = (type: typeof notification.type, title: string, message: string) => {
   notification.type = type
   notification.title = title
@@ -262,7 +220,6 @@ const showNotification = (type: typeof notification.type, title: string, message
   notification.visible = true
 }
 
-// Función para limpiar solo la notificación
 const clearNotification = () => {
   notification.visible = false
   notification.title = ''
@@ -272,7 +229,6 @@ const clearNotification = () => {
 
 const closeNotification = () => onClear()
 
-// Función para formatear fecha
 const formatDate = (dateString: string): string => {
   try {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -287,7 +243,6 @@ const formatDate = (dateString: string): string => {
   }
 }
 
-// Hacer scroll a la notificación
 const scrollToNotification = async () => {
   await nextTick()
   notificationContainer.value?.scrollIntoView({
@@ -296,13 +251,12 @@ const scrollToNotification = async () => {
   })
 }
 
-// Envío del formulario
+// Form submission
 const submit = async () => {
   validationState.hasAttemptedSubmit = true
   clearFormErrors()
   clearNotification()
   
-  // Validación local primero
   const validation = validateForm(localModel)
   if (!validation.isValid) {
     validationState.showValidationError = true
@@ -313,9 +267,7 @@ const submit = async () => {
   isLoading.value = true
   
   try {
-    // Enviar al backend
     const result = await createTest(localModel)
-    
     if (result.success && result.data) {
       await handleTestCreated(result.data)
     } else {
@@ -328,7 +280,7 @@ const submit = async () => {
   }
 }
 
-// Manejar la creación exitosa de la prueba
+// Success handler
 const handleTestCreated = async (createdTestData: TestCreateResponse) => {
   createdTest.value = createdTestData
   showNotification('success', '¡Prueba Registrada Exitosamente!', '')
@@ -336,7 +288,7 @@ const handleTestCreated = async (createdTestData: TestCreateResponse) => {
   await scrollToNotification()
 }
 
-// Manejar errores durante la creación
+// Error handler with HTTP status code mapping
 const handleTestCreationError = async (error: any) => {
   console.error('Error al guardar prueba:', error)
   
@@ -371,13 +323,12 @@ const handleTestCreationError = async (error: any) => {
   await scrollToNotification()
 }
 
-// Función para limpiar solo el formulario
+// Form reset functions
 const clearForm = () => {
   validationState.hasAttemptedSubmit = false
   validationState.showValidationError = false
   clearFormErrors()
   clearState()
-  
   Object.assign(localModel, { 
     testCode: '', 
     testName: '', 
@@ -388,13 +339,27 @@ const clearForm = () => {
   })
 }
 
-// Limpiar formulario (función pública para el botón Limpiar)
 const onClear = () => {
   clearForm()
   clearNotification()
 }
 
-// Watcher para hacer scroll cuando aparece la notificación
+// Watchers
+watch(() => modelValue.value, (newValue) => {
+  Object.assign(localModel, {
+    ...newValue,
+    timeDays: newValue.timeDays || 1,
+    price: newValue.price || 0
+  })
+}, { deep: true })
+
+watch(() => localModel, () => {
+  if (validationState.hasAttemptedSubmit && !notification.visible) {
+    clearMessages()
+    clearFormErrors()
+  }
+}, { deep: true })
+
 watch(() => notification.visible, (newValue) => {
   if (newValue) scrollToNotification()
 })

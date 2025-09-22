@@ -7,11 +7,7 @@ import type {
   TestFormValidation 
 } from '../types/test.types'
 
-/**
- * Composable para manejar la creación de pruebas médicas
- */
 export function useTestCreation() {
-  // Estado reactivo
   const state = reactive<TestCreationState>({
     isLoading: false,
     isSuccess: false,
@@ -19,49 +15,34 @@ export function useTestCreation() {
     successMessage: ''
   })
 
-  // Estados adicionales
   const isCheckingCode = ref(false)
   const codeValidationError = ref('')
 
-  /**
-   * Estado computed para verificar si se puede enviar el formulario
-   */
-  const canSubmit = computed(() => {
-    // ✅ SIEMPRE HABILITADO: El botón de guardar nunca se bloquea
-    return true
-  })
+  const canSubmit = computed(() => true)
 
-  /**
-   * Validar formulario en el cliente
-   */
   const validateForm = (formData: TestFormModel): TestFormValidation => {
     const errors: TestFormValidation['errors'] = {}
 
-    // Validar código
     if (!formData.testCode?.trim()) {
       errors.testCode = 'El código es requerido'
     } else if (!/^[A-Z0-9_-]+$/i.test(formData.testCode)) {
       errors.testCode = 'Solo letras, números, guiones y guiones bajos'
     }
 
-    // Validar nombre
     if (!formData.testName?.trim()) {
       errors.testName = 'El nombre es requerido'
     }
 
-    // Validar descripción
     if (!formData.testDescription?.trim()) {
       errors.testDescription = 'La descripción es requerida'
     }
 
-    // Validar tiempo (en días)
     if (!formData.timeDays || formData.timeDays <= 0) {
       errors.timeDays = 'Ingresa un tiempo válido en días'
     } else if (formData.timeDays > 365) {
       errors.timeDays = 'Máximo 365 días'
     }
 
-    // Validar precio
     if (formData.price === undefined || formData.price === null) {
       errors.price = 'El precio es requerido'
     } else if (formData.price < 0) {
@@ -74,9 +55,6 @@ export function useTestCreation() {
     }
   }
 
-  /**
-   * Verificar si un código ya existe
-   */
   const checkCodeAvailability = async (code: string): Promise<boolean> => {
     if (!code?.trim()) return true
 
@@ -98,9 +76,6 @@ export function useTestCreation() {
     }
   }
 
-  /**
-   * Normalizar datos del formulario para que sean compatibles con el backend
-   */
   const normalizeTestData = (formData: TestFormModel): TestCreateRequest => {
     return {
       test_code: formData.testCode?.trim().toUpperCase() || '',
@@ -112,16 +87,11 @@ export function useTestCreation() {
     }
   }
 
-  /**
-   * Crear una nueva prueba
-   */
   const createTest = async (formData: TestFormModel): Promise<{ success: boolean; data?: any }> => {
-    // Limpiar estados previos
     state.error = ''
     state.isSuccess = false
     state.successMessage = ''
 
-    // Validar formulario
     const validation = validateForm(formData)
     if (!validation.isValid) {
       const errorMessages = Object.values(validation.errors).filter(Boolean)
@@ -129,21 +99,14 @@ export function useTestCreation() {
       return { success: false }
     }
 
-    // ✅ REMOVIDO: Verificación de disponibilidad de datos únicos
-    // Ahora permitimos que el usuario envíe el formulario y vea el error específico del backend
-
     state.isLoading = true
 
     try {
-      // Preparar datos para envío normalizados al formato del backend
       const requestData = normalizeTestData(formData)
-
-      // Enviar al backend
       const response = await testCreateService.createTest(requestData)
 
-      // Manejar éxito
       state.isSuccess = true
-      state.successMessage = `Prueba "${response.prueba_name}" (${response.prueba_code}) creada exitosamente como ${response.is_active ? 'ACTIVA' : 'INACTIVA'}`
+      state.successMessage = `Prueba "${response.name}" (${response.test_code}) creada exitosamente como ${response.is_active ? 'ACTIVA' : 'INACTIVA'}`
 
       return { 
         success: true, 
@@ -151,33 +114,20 @@ export function useTestCreation() {
       }
 
     } catch (error: any) {
-      // Manejar error con mensajes más específicos
       let errorMessage = 'Error al crear la prueba'
       
       if (error.message) {
-        // Usar el mensaje específico del backend si está disponible
         errorMessage = error.message
       } else if (error.response?.data?.detail) {
-        // Usar el detalle de la respuesta si está disponible
         errorMessage = error.response.data.detail
       } else if (error.response?.status) {
-        // Mensajes específicos por código de estado
-        switch (error.response.status) {
-          case 409:
-            errorMessage = 'Ya existe una prueba con los datos proporcionados'
-            break
-          case 422:
-            errorMessage = 'Los datos proporcionados no son válidos'
-            break
-          case 400:
-            errorMessage = 'Datos incorrectos o incompletos'
-            break
-          case 500:
-            errorMessage = 'Error interno del servidor. Inténtelo más tarde'
-            break
-          default:
-            errorMessage = `Error del servidor (${error.response.status})`
+        const statusMessages = {
+          409: 'Ya existe una prueba con los datos proporcionados',
+          422: 'Los datos proporcionados no son válidos',
+          400: 'Datos incorrectos o incompletos',
+          500: 'Error interno del servidor. Inténtelo más tarde'
         }
+        errorMessage = statusMessages[error.response.status as keyof typeof statusMessages] || `Error del servidor (${error.response.status})`
       }
       
       state.error = errorMessage
@@ -188,9 +138,6 @@ export function useTestCreation() {
     }
   }
 
-  /**
-   * Limpiar todos los estados
-   */
   const clearState = () => {
     state.isLoading = false
     state.isSuccess = false
@@ -200,9 +147,6 @@ export function useTestCreation() {
     codeValidationError.value = ''
   }
 
-  /**
-   * Limpiar solo mensajes (mantener loading states)
-   */
   const clearMessages = () => {
     state.error = ''
     state.successMessage = ''
@@ -211,13 +155,10 @@ export function useTestCreation() {
   }
 
   return {
-    // Estado
     state,
     isCheckingCode: readonly(isCheckingCode),
     codeValidationError: readonly(codeValidationError),
     canSubmit,
-
-    // Métodos
     validateForm,
     checkCodeAvailability,
     createTest,
@@ -226,7 +167,6 @@ export function useTestCreation() {
   }
 }
 
-// Helper para readonly refs
 function readonly<T>(ref: import('vue').Ref<T>) {
   return computed(() => ref.value)
 }

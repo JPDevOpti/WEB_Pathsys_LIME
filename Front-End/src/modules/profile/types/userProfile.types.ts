@@ -3,7 +3,6 @@ export type UserRole = 'admin' | 'patologo' | 'residente' | 'auxiliar' | 'factur
 export type DocumentType = 'CC' | 'CE' | 'PP'
 
 export interface RoleSpecificData {
-  // Campos clínicos alineados al backend
   iniciales?: string
   registroMedico?: string
   firmaUrl?: string

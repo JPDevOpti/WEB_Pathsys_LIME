@@ -1,115 +1,116 @@
 import { apiClient } from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 
-/**
- * Servicio para búsqueda de pruebas médicas
- */
 class TestSearchService {
   private readonly endpoint = API_CONFIG.ENDPOINTS.TESTS
 
-  /**
-   * Buscar pruebas por nombre o código
-   */
   async searchTests(query: string, includeInactive: boolean = false): Promise<any[]> {
     try {
-      if (!query?.trim()) {
-        return []
+      const q = query?.trim()
+      if (!q) return []
+
+      const results: any[] = []
+
+      // 1) Exact match by code
+      const byCode = await this.getTestByCode(q)
+      if (byCode) results.push(byCode)
+
+      // 2) Direct fetch by id (if looks like ObjectId or UUID)
+      if (this.looksLikeId(q)) {
+        try {
+          const byIdResp = await apiClient.get(`${this.endpoint}/${q}`)
+          if (byIdResp) results.push(this.normalizeTest(byIdResp))
+        } catch {}
       }
 
-      let endpoint: string
-      
-      if (includeInactive) {
-        endpoint = `${this.endpoint}/all-including-inactive`
-      } else {
-        endpoint = `${this.endpoint}/active`
+      // 3) Name/code contains search (active or including inactive)
+      const endpoint = includeInactive 
+        ? `${this.endpoint}/inactive`
+        : `${this.endpoint}/`
+      const params = { query: q, limit: 50 }
+      try {
+        const response = await apiClient.get(endpoint, { params })
+        const list = Array.isArray(response) ? response : []
+        results.push(...list.map((t: any) => this.normalizeTest(t)))
+      } catch (e: any) {
+        if (e?.response?.status !== 404) throw e
       }
 
-      // Construir parámetros de búsqueda
-      const params: any = {
-        query: query.trim(),
-        limit: 50 // Límite de resultados
+      // 4) Deduplicate by code/id and prioritize exact code or exact name matches
+      const seen = new Set<string>()
+      const deduped: any[] = []
+      for (const item of results) {
+        const key = (item.codigo || '') + '|' + (item.id || '')
+        if (!seen.has(key)) {
+          seen.add(key)
+          deduped.push(item)
+        }
       }
 
-      console.log('🔍 Parámetros de búsqueda pruebas:', params, 'Endpoint:', endpoint)
+      deduped.sort((a, b) => {
+        const aExactCode = a.codigo?.toUpperCase() === q.toUpperCase() ? 1 : 0
+        const bExactCode = b.codigo?.toUpperCase() === q.toUpperCase() ? 1 : 0
+        if (aExactCode !== bExactCode) return bExactCode - aExactCode
+        const aExactName = a.nombre?.toLowerCase() === q.toLowerCase() ? 1 : 0
+        const bExactName = b.nombre?.toLowerCase() === q.toLowerCase() ? 1 : 0
+        return bExactName - aExactName
+      })
 
-      // Búsqueda por nombre de prueba o código
-      const response = await apiClient.get(endpoint, { params })
-
-      // Mapear respuesta del backend al formato esperado por el frontend
-      if (response.pruebas && Array.isArray(response.pruebas)) {
-        return response.pruebas.map((prueba: any) => {
-          // Mapeo correcto según documentación del backend
-          const nombre = prueba.prueba_name || prueba.pruebasName || prueba.nombre || prueba.name || ''
-          const codigo = prueba.prueba_code || prueba.pruebaCode || prueba.codigo || prueba.code || ''
-          const descripcion = prueba.prueba_description || prueba.pruebasDescription || prueba.descripcion || prueba.description || ''
-          const activo = prueba.is_active !== undefined ? prueba.is_active : (prueba.isActive !== undefined ? prueba.isActive : prueba.activo)
-          return {
-            id: prueba.id || prueba._id,
-            nombre,
-            codigo,
-            descripcion,
-            tiempo: prueba.tiempo,
-            activo,
-            tipo: 'pruebas',
-            fecha_creacion: prueba.fecha_creacion,
-            fecha_actualizacion: prueba.fecha_actualizacion
-          }
-        })
-      }
-
-      return []
+      return deduped
     } catch (error: any) {
-      console.error('Error al buscar pruebas:', error)
-      
-      // Si no hay resultados, devolver array vacío
       if (error.response?.status === 404) {
         return []
       }
-      
-      // Para otros errores, lanzar excepción
       throw new Error(error.message || 'Error al buscar pruebas')
     }
   }
 
-  /**
-   * Obtener una prueba específica por código para edición
-   */
   async getTestByCode(code: string): Promise<any | null> {
     try {
-      const response = await apiClient.get(`${this.endpoint}/code/${code}`)
+      const response = await apiClient.get(`${this.endpoint}/${code}`)
       
       if (response) {
-        // Mapeo correcto según documentación del backend
-        const nombre = response.prueba_name || response.pruebasName || response.nombre || response.name || ''
-        const codigo = response.prueba_code || response.pruebaCode || response.codigo || response.code || ''
-        const descripcion = response.prueba_description || response.pruebasDescription || response.descripcion || response.description || ''
-        const activo = response.is_active !== undefined ? response.is_active : (response.isActive !== undefined ? response.isActive : response.activo)
-        return {
-          id: response.id,
-          nombre,
-          codigo,
-          descripcion,
-          tiempo: response.tiempo,
-          activo,
-          tipo: 'pruebas',
-          fecha_creacion: response.fecha_creacion,
-          fecha_actualizacion: response.fecha_actualizacion
-        }
+        return this.normalizeTest(response)
       }
 
       return null
     } catch (error: any) {
-      console.error('Error al obtener prueba por código:', error)
-      
       if (error.response?.status === 404) {
         return null
       }
-      
       throw new Error(error.message || 'Error al obtener la prueba')
+    }
+  }
+
+  private looksLikeId(value: string): boolean {
+    const v = value.trim()
+    const isHex24 = /^[a-fA-F0-9]{24}$/.test(v)
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(v)
+    return isHex24 || isUuid
+  }
+
+  private normalizeTest(test: any) {
+    const name = test.name || test.test_name || test.prueba_name || test.pruebasName || test.nombre || ''
+    const code = test.test_code || test.prueba_code || test.pruebaCode || test.codigo || test.code || ''
+    const description = test.description || test.test_description || test.prueba_description || test.pruebasDescription || test.descripcion || ''
+    const time = test.time || test.tiempo || 1
+    const price = test.price || test.precio || 0
+    const isActive = test.is_active !== undefined ? test.is_active : (test.isActive !== undefined ? test.isActive : test.activo)
+    
+    return {
+      id: test._id || test.id,
+      nombre: name,
+      codigo: code,
+      descripcion: description,
+      tiempo: time,
+      precio: price,
+      activo: isActive,
+      tipo: 'pruebas',
+      fecha_creacion: test.created_at || test.fecha_creacion,
+      fecha_actualizacion: test.updated_at || test.fecha_actualizacion
     }
   }
 }
 
-// Exportar instancia singleton
 export const testSearchService = new TestSearchService()
 export default testSearchService

@@ -5,7 +5,6 @@
       <p class="text-sm text-gray-600 mt-1">Modifica los datos de la prueba médica</p>
     </div>
 
-    <!-- Loading state inicial -->
     <div v-if="isLoadingTest" class="col-span-full flex justify-center items-center py-8">
       <div class="flex items-center space-x-2">
         <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
@@ -13,9 +12,7 @@
       </div>
     </div>
 
-    <!-- Formulario de edición -->
     <template v-else-if="localModel.testCode">
-      <!-- Nombre y Código -->
       <FormInputField 
         class="col-span-full md:col-span-6" 
         label="Nombre de la prueba" 
@@ -33,7 +30,6 @@
         :disabled="true"
       />
 
-      <!-- Tiempo estimado y Precio -->
       <FormInputField 
         class="col-span-full md:col-span-6" 
         label="Tiempo estimado (días)" 
@@ -55,7 +51,6 @@
         step="100"
       />
 
-      <!-- Descripción -->
       <FormTextarea 
         class="col-span-full" 
         label="Descripción" 
@@ -65,12 +60,10 @@
         :error="formErrors.testDescription"
       />
 
-      <!-- Estado activo -->
-      <div class="col-span-full flex items-center justify-center pt-4">
+      <div class="col-span-full flex items-center justify-start pt-4">
         <FormCheckbox label="Activo" v-model="localModel.isActive" />
       </div>
 
-      <!-- Botones de acción -->
       <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
         <ClearButton 
           type="button" 
@@ -92,7 +85,6 @@
         />
       </div>
 
-      <!-- Notificación -->
       <div ref="notificationContainer" class="col-span-full">
         <Notification
           :visible="notification.visible"
@@ -106,7 +98,6 @@
           <template v-if="notification.type === 'success' && updatedTest" #content>
             <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div class="space-y-4">
-                <!-- Información principal de la prueba -->
                 <div class="mb-4 pb-3 border-b border-gray-100">
                   <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedTest.name }}</h3>
                   <p class="text-gray-600">
@@ -115,7 +106,6 @@
                   </p>
                 </div>
                 
-                <!-- Detalles de la prueba en vertical -->
                 <div class="space-y-4 text-sm">
                   <div>
                     <span class="text-gray-500 font-medium block mb-1">Tiempo estimado:</span>
@@ -138,7 +128,6 @@
                   </div>
                 </div>
                 
-                <!-- Descripción -->
                 <div v-if="updatedTest.description">
                   <span class="text-gray-500 font-medium block mb-2">Descripción:</span>
                   <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ updatedTest.description }}</p>
@@ -149,14 +138,12 @@
         </Notification>
       </div>
 
-      <!-- Alerta de Validación -->
       <ValidationAlert
         :visible="validationState.showValidationError && validationState.hasAttemptedSubmit"
         :errors="validationErrors"
       />
     </template>
 
-    <!-- Estado de error al cargar (solo mostrar si hay datos pero faltan campos críticos) -->
     <div v-else-if="!isLoadingTest && props.usuario && !localModel.testCode" class="col-span-full">
       <div class="text-center py-8">
         <div class="text-red-600 mb-2">
@@ -167,11 +154,9 @@
         <h3 class="text-lg font-medium text-gray-900 mb-1">Error al cargar la prueba</h3>
         <p class="text-gray-600">No se pudieron cargar los datos de la prueba para edición.</p>
         <p class="text-sm text-gray-500 mt-2">Falta el código de la prueba.</p>
-
       </div>
     </div>
 
-    <!-- Estado sin selección (cuando no hay usuario seleccionado) -->
     <div v-else-if="!props.usuario" class="col-span-full">
       <div class="text-center py-8">
         <div class="text-gray-400 mb-2">
@@ -195,9 +180,9 @@ import { useTestEdition } from '../../composables/useTestEdition'
 import type { TestEditFormModel, TestUpdateResponse } from '../../types/test.types'
 import { RefreshIcon } from '@/assets/icons'
 
-// Props y emits
+// Props and emits
 const props = defineProps<{ 
-  usuario: any // Objeto con datos de la prueba a editar
+  usuario: any
   usuarioActualizado: boolean
   mensajeExito: string
 }>()
@@ -207,13 +192,10 @@ const emit = defineEmits<{
   (e: 'cancelar'): void 
 }>()
 
-// Referencias
+// Refs and reactive state
 const notificationContainer = ref<HTMLElement | null>(null)
-
-// Estado de la prueba actualizada
 const updatedTest = ref<TestUpdateResponse | null>(null)
 
-// Estado de notificación
 const notification = reactive({
   visible: false,
   type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -221,22 +203,19 @@ const notification = reactive({
   message: ''
 })
 
-// Estado de validación
 const validationState = reactive({
   showValidationError: false,
   hasAttemptedSubmit: false
 })
 
-// Composable para manejo de backend
+// Composable for backend operations
 const {
   state,
-  // isCheckingCode, // No usado en el template actual
   isLoadingTest,
   codeValidationError,
   originalTestData,
   canSubmit,
   validateForm,
-  // loadTestForEdition, // No usado porque cargamos desde props
   checkCodeAvailability,
   updateTest,
   setInitialData,
@@ -246,15 +225,14 @@ const {
   createHasChanges
 } = useTestEdition()
 
-// Estado de loading local
+// Computed properties
 const isLoading = computed(() => state.isLoading)
 
-// Computed para detectar cambios en el formulario
 const hasChanges = computed(() => {
   return createHasChanges(localModel)
 })
 
-// Modelo local del formulario
+// Local form model
 const localModel = reactive<TestEditFormModel>({
   id: '',
   testCode: '',
@@ -265,7 +243,7 @@ const localModel = reactive<TestEditFormModel>({
   isActive: true
 })
 
-// Errores del formulario
+// Form validation errors
 const formErrors = reactive({
   testCode: '',
   testName: '',
@@ -274,25 +252,13 @@ const formErrors = reactive({
   price: ''
 })
 
-// Lista de errores de validación para mostrar en la alerta
 const validationErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
-  
   const validation = validateForm(localModel)
   return validation.isValid ? [] : Object.values(validation.errors)
 })
 
-
-
-// Cargar datos iniciales
-onMounted(() => {
-  if (props.usuario) {
-    loadInitialData()
-  }
-})
-
-// Función para cargar datos iniciales
-// Normalizador de campos para pruebas (pruebas -> test, etc.)
+// Data normalization for backend compatibility
 const normalizeTest = (raw: any): TestEditFormModel | null => {
   if (!raw) return null
   const code = raw.testCode || raw.pruebaCode || raw.codigo || raw.code || ''
@@ -313,6 +279,7 @@ const normalizeTest = (raw: any): TestEditFormModel | null => {
   }
 }
 
+// Initial data loading
 const loadInitialData = () => {
   try {
     const mappedData = normalizeTest(props.usuario)
@@ -325,30 +292,17 @@ const loadInitialData = () => {
   }
 }
 
-// Watcher para detectar cambios en el modelo solo cuando el usuario está escribiendo
-watch(() => localModel, () => {
-  // Solo reaccionar a cambios si el usuario ya intentó enviar Y hay una notificación activa
-  if (validationState.hasAttemptedSubmit && !notification.visible) {
-    clearMessages()
-    clearFormErrors()
-  }
-}, { deep: true })
-
-// Validación del código al perder el foco
+// Validation functions
 const validateCode = async () => {
   formErrors.testCode = ''
-  
   if (!localModel.testCode?.trim()) {
     formErrors.testCode = 'El código es requerido'
     return
   }
-  
   if (!/^[A-Z0-9_-]+$/i.test(localModel.testCode)) {
     formErrors.testCode = 'Solo letras, números, guiones y guiones bajos'
     return
   }
-  
-  // Verificar disponibilidad en el backend (excluyendo el código original)
   const originalCode = originalTestData.value?.testCode
   await checkCodeAvailability(localModel.testCode, originalCode)
   if (codeValidationError.value) {
@@ -356,14 +310,13 @@ const validateCode = async () => {
   }
 }
 
-// Limpiar errores del formulario
+// Helper functions
 const clearFormErrors = () => {
   Object.keys(formErrors).forEach(key => {
     formErrors[key as keyof typeof formErrors] = ''
   })
 }
 
-// Funciones de notificación
 const showNotification = (type: typeof notification.type, title: string, message: string) => {
   notification.type = type
   notification.title = title
@@ -371,7 +324,6 @@ const showNotification = (type: typeof notification.type, title: string, message
   notification.visible = true
 }
 
-// Función para limpiar solo la notificación
 const clearNotification = () => {
   notification.visible = false
   notification.title = ''
@@ -379,9 +331,6 @@ const clearNotification = () => {
   updatedTest.value = null
 }
 
-
-
-// Función para formatear fecha
 const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString)
@@ -397,7 +346,6 @@ const formatDate = (dateString: string): string => {
   }
 }
 
-// Hacer scroll a la notificación
 const scrollToNotification = async () => {
   await nextTick()
   if (notificationContainer.value) {
@@ -408,13 +356,12 @@ const scrollToNotification = async () => {
   }
 }
 
-// Envío del formulario
+// Form submission
 const submit = async () => {
   validationState.hasAttemptedSubmit = true
   clearFormErrors()
   clearNotification()
   
-  // Validación local primero
   const validation = validateForm(localModel)
   if (!validation.isValid) {
     Object.assign(formErrors, validation.errors)
@@ -425,9 +372,7 @@ const submit = async () => {
   validationState.showValidationError = false
   
   try {
-    // Enviar al backend
     const result = await updateTest(localModel)
-    
     if (result.success && result.data) {
       await handleTestUpdated(result.data)
     } else {
@@ -438,42 +383,28 @@ const submit = async () => {
   }
 }
 
-// Manejar la actualización exitosa de la prueba
+// Success handler
 const handleTestUpdated = async (updatedTestData: TestUpdateResponse) => {
-  // Almacenar información de la prueba actualizada
   updatedTest.value = updatedTestData
-  
-  // Mostrar notificación de éxito
   showNotification('success', '¡Prueba Actualizada Exitosamente!', '')
-  
-  // Emitir evento para compatibilidad con la estructura existente
   emit('usuario-actualizado', {
     ...updatedTestData,
     nombre: updatedTestData.name,
     codigo: updatedTestData.test_code,
     tipo: 'pruebas'
   })
-  
-  // Hacer scroll a la notificación
   await scrollToNotification()
 }
 
-// Manejar errores durante la actualización
+// Error handler
 const handleTestUpdateError = async (error: any) => {
   console.error('Error al actualizar prueba:', error)
-  
   const errorMessage = error.message || 'No se pudo actualizar la prueba. Por favor, inténtelo nuevamente.'
-  
-  showNotification(
-    'error',
-    'Error al Actualizar Prueba',
-    errorMessage
-  )
-  
+  showNotification('error', 'Error al Actualizar Prueba', errorMessage)
   await scrollToNotification()
 }
 
-// Restablecer formulario a los datos originales
+// Form reset functions
 const onReset = () => {
   const original = resetToOriginal()
   if (original) {
@@ -485,21 +416,25 @@ const onReset = () => {
   }
 }
 
-
-
-// Watcher para hacer scroll cuando aparece la notificación
-watch(
-  () => notification.visible,
-  (newValue) => {
-    if (newValue) {
-      scrollToNotification()
-    }
+// Lifecycle hooks
+onMounted(() => {
+  if (props.usuario) {
+    loadInitialData()
   }
-)
+})
 
+// Watchers
+watch(() => localModel, () => {
+  if (validationState.hasAttemptedSubmit && !notification.visible) {
+    clearMessages()
+    clearFormErrors()
+  }
+}, { deep: true })
 
+watch(() => notification.visible, (newValue) => {
+  if (newValue) scrollToNotification()
+})
 
-// Watcher para cambios en el usuario seleccionado
 watch(() => props.usuario, (newUsuario) => {
   if (newUsuario && newUsuario.id !== localModel.id) {
     clearState()
@@ -507,7 +442,6 @@ watch(() => props.usuario, (newUsuario) => {
   }
 }, { deep: true })
 
-// Watcher para mostrar mensaje de éxito externo
 watch(() => props.usuarioActualizado, (isUpdated) => {
   if (isUpdated && props.mensajeExito) {
     showNotification('success', '¡Actualización Exitosa!', props.mensajeExito)
