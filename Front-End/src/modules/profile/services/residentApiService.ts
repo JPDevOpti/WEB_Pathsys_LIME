@@ -1,3 +1,4 @@
+// Resident API service: handles CRUD operations for residents
 import apiClient from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 
@@ -25,55 +26,40 @@ export interface ResidentUpdate {
 
 class ResidentApiService {
   private static readonly BASE_URL = `${API_CONFIG.BASE_URL}${API_CONFIG.VERSION}/residents`
+  private static readonly logPrefix = '[ResidentApiService]'
 
-  /**
-   * Obtener residente por código
-   */
+  // Get resident by code
   static async getByCode(code: string): Promise<ResidentResponse | null> {
     try {
-      const resident = await apiClient.get<ResidentResponse>(`${this.BASE_URL}/${code}`)
-      return resident
+      const response = await apiClient.get<ResidentResponse>(`${this.BASE_URL}/${code}`)
+      return (response as any).data ?? response
     } catch (error) {
-      console.error('Error al obtener residente:', error)
+      console.error(`${this.logPrefix} Error getting resident by code:`, error)
       return null
     }
   }
 
-  /**
-   * Buscar residente por email
-   */
+  // Search resident by email
   static async getByEmail(email: string): Promise<ResidentResponse | null> {
     try {
-      console.log('🔍 ResidentApiService.getByEmail - Buscando residente para:', email)
-      const residents = await apiClient.get<ResidentResponse[]>(`${this.BASE_URL}/search`, {
+      const response = await apiClient.get<ResidentResponse[]>(`${this.BASE_URL}/search`, {
         params: { q: email, limit: 1 }
       })
-      
-      console.log('📋 ResidentApiService.getByEmail - Respuesta completa:', residents)
-      
-      // El endpoint devuelve un array directamente
-      if (Array.isArray(residents) && residents.length > 0) {
-        console.log('✅ ResidentApiService.getByEmail - Residente encontrado:', residents[0])
-        return residents[0] as ResidentResponse
-      }
-      
-      console.log('❌ ResidentApiService.getByEmail - No se encontraron residentes')
-      return null
+      const residents = (response as any).data ?? response
+      return Array.isArray(residents) && residents.length > 0 ? residents[0] : null
     } catch (error) {
-      console.error('❌ ResidentApiService.getByEmail - Error al buscar residente por email:', error)
+      console.error(`${this.logPrefix} Error searching resident by email:`, error)
       return null
     }
   }
 
-  /**
-   * Actualizar residente
-   */
+  // Update resident
   static async update(code: string, data: ResidentUpdate): Promise<ResidentResponse | null> {
     try {
-      const resident = await apiClient.put<ResidentResponse>(`${this.BASE_URL}/${code}`, data)
-      return resident
+      const response = await apiClient.put<ResidentResponse>(`${this.BASE_URL}/${code}`, data)
+      return (response as any).data ?? response
     } catch (error) {
-      console.error('Error al actualizar residente:', error)
+      console.error(`${this.logPrefix} Error updating resident:`, error)
       return null
     }
   }

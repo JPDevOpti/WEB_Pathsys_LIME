@@ -1,16 +1,17 @@
 <template>
   <div v-if="localModel.residenteCode" class="space-y-6">
     <form @submit.prevent="submit" class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4">
+      <!-- Header Section -->
       <div class="col-span-full">
-        <h4 class="text-base font-semibold text-gray-800">Editar Residente</h4>
-        <p class="text-sm text-gray-500 mt-1">Modifica los datos del residente médico</p>
+        <h4 class="text-base font-semibold text-gray-800">Edit Resident</h4>
+        <p class="text-sm text-gray-500 mt-1">Modify the medical resident's data</p>
       </div>
 
-      <!-- Código y Nombre -->
+      <!-- Code and Name Fields -->
       <FormInputField 
         class="col-span-full md:col-span-6" 
-        label="Código del residente" 
-        placeholder="Ejemplo: 12345678" 
+        label="Resident Code" 
+        placeholder="Example: 12345678" 
         v-model="localModel.residenteCode"
         :error="formErrors.residenteCode || codeValidationError"
         :disabled="true"
@@ -18,18 +19,18 @@
       />
       <FormInputField 
         class="col-span-full md:col-span-6" 
-        label="Nombre completo" 
-        placeholder="Ejemplo: María Elena Rodríguez" 
+        label="Full Name" 
+        placeholder="Example: María Elena Rodríguez" 
         v-model="localModel.residenteName"
         :error="formErrors.residenteName"
         autocomplete="name" 
       />
 
-      <!-- Iniciales y Email -->
+      <!-- Initials and Email Fields -->
       <FormInputField 
         class="col-span-full md:col-span-6" 
-        label="Iniciales del residente" 
-        placeholder="Ejemplo: MER" 
+        label="Resident Initials" 
+        placeholder="Example: MER" 
         v-model="localModel.InicialesResidente"
         :error="formErrors.InicialesResidente"
         autocomplete="off"
@@ -46,20 +47,20 @@
         autocomplete="email" 
       />
 
-      <!-- Registro médico -->
+      <!-- Medical License Field -->
       <FormInputField 
         class="col-span-full md:col-span-6" 
-        label="Registro médico" 
-        placeholder="Ejemplo: RM-2024-001" 
+        label="Medical License" 
+        placeholder="Example: RM-2024-001" 
         v-model="localModel.registro_medico"
         :error="formErrors.registro_medico || licenseValidationError"
         @blur="validateMedicalLicense"
       />
 
-      <!-- Contraseña y Confirmación -->
+      <!-- Password and Confirmation Fields -->
       <FormInputField 
         class="col-span-full md:col-span-6" 
-        label="Nueva contraseña (opcional)" 
+        label="New Password (optional)" 
         type="password" 
         placeholder="••••••••" 
         :model-value="localModel.password || ''"
@@ -69,7 +70,7 @@
       />
       <FormInputField 
         class="col-span-full md:col-span-6" 
-        label="Confirmar contraseña" 
+        label="Confirm Password" 
         type="password" 
         placeholder="••••••••" 
         :model-value="localModel.passwordConfirm || ''"
@@ -78,32 +79,44 @@
         autocomplete="new-password"
       />
 
-      <!-- Observaciones -->
+      <!-- Observations Field -->
       <FormTextarea 
         class="col-span-full" 
-        label="Observaciones" 
-        placeholder="Notas adicionales sobre el residente (opcional)" 
+        label="Observations" 
+        placeholder="Additional notes about the resident (optional)" 
         v-model="localModel.observaciones" 
         :rows="3"
         :error="formErrors.observaciones"
       />
 
-      <!-- Estado activo -->
+      <!-- Active Status -->
       <div class="col-span-full md:col-span-6 flex items-center pt-3">
-        <FormCheckbox label="Activo" v-model="localModel.isActive" />
+        <FormCheckbox label="Active" v-model="localModel.isActive" />
       </div>
 
-      <!-- Botones de acción -->
+      <!-- Action Buttons -->
       <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
-        <ClearButton type="button" @click="onReset" :disabled="isLoading || !hasChanges" variant="secondary" :text="'Reiniciar'" :icon="'reset'">
+        <ClearButton 
+          type="button" 
+          @click="onReset" 
+          :disabled="isLoading || !hasChanges" 
+          variant="secondary" 
+          :text="'Reset'" 
+          :icon="'reset'"
+        >
           <template #icon>
             <RefreshIcon class="w-4 h-4 mr-2" />
           </template>
         </ClearButton>
-        <SaveButton text="Actualizar Residente" type="submit" :disabled="!canSubmit || isLoading || !hasChanges" :loading="isLoading" />
+        <SaveButton 
+          text="Update Resident" 
+          type="submit" 
+          :disabled="!canSubmit || isLoading || !hasChanges" 
+          :loading="isLoading" 
+        />
       </div>
 
-      <!-- Notificación -->
+      <!-- Success Notification -->
       <div v-if="notification.visible" ref="notificationContainer" class="col-span-full">
         <Notification
           :visible="true"
@@ -117,19 +130,19 @@
           <template v-if="notification.type === 'success' && updatedResident" #content>
             <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div class="space-y-4">
-                <!-- Información principal del residente -->
+                <!-- Resident main info -->
                 <div class="mb-4 pb-3 border-b border-gray-100">
                   <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedResident.residenteName }}</h3>
                   <p class="text-gray-600">
-                    <span class="font-medium">Código:</span> 
+                    <span class="font-medium">Code:</span> 
                     <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedResident.residenteCode }}</span>
                   </p>
                 </div>
                 
-                <!-- Detalles del residente en vertical -->
+                <!-- Resident details -->
                 <div class="space-y-4 text-sm">
                   <div>
-                    <span class="text-gray-500 font-medium block mb-1">Iniciales:</span>
+                    <span class="text-gray-500 font-medium block mb-1">Initials:</span>
                     <p class="text-gray-800 font-semibold">{{ updatedResident.InicialesResidente }}</p>
                   </div>
                   <div>
@@ -137,25 +150,25 @@
                     <p class="text-gray-800 font-semibold">{{ updatedResident.ResidenteEmail }}</p>
                   </div>
                   <div>
-                    <span class="text-gray-500 font-medium block mb-1">Registro médico:</span>
+                    <span class="text-gray-500 font-medium block mb-1">Medical License:</span>
                     <p class="text-gray-800 font-semibold">{{ updatedResident.registro_medico }}</p>
                   </div>
                   <div>
-                    <span class="text-gray-500 font-medium block mb-1">Estado:</span>
+                    <span class="text-gray-500 font-medium block mb-1">Status:</span>
                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
                       :class="updatedResident.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                      {{ updatedResident.isActive ? 'Activo' : 'Inactivo' }}
+                      {{ updatedResident.isActive ? 'Active' : 'Inactive' }}
                     </span>
                   </div>
                   <div>
-                    <span class="text-gray-500 font-medium block mb-1">Fecha de actualización:</span>
+                    <span class="text-gray-500 font-medium block mb-1">Update Date:</span>
                     <p class="text-gray-800 font-semibold">{{ formatDate(updatedResident.fecha_actualizacion) }}</p>
                   </div>
                 </div>
                 
-                <!-- Observaciones -->
+                <!-- Observations -->
                 <div v-if="updatedResident.observaciones">
-                  <span class="text-gray-500 font-medium block mb-2">Observaciones:</span>
+                  <span class="text-gray-500 font-medium block mb-2">Observations:</span>
                   <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ updatedResident.observaciones }}</p>
                 </div>
               </div>
@@ -164,7 +177,7 @@
         </Notification>
       </div>
 
-      <!-- Alerta de Validación -->
+      <!-- Validation Alert -->
       <ValidationAlert
         :visible="validationState.showValidationError && validationState.hasAttemptedSubmit"
         :errors="validationErrors"
@@ -172,8 +185,8 @@
     </form>
   </div>
   <div v-else class="text-center py-8">
-    <p class="text-gray-500">No se pudieron cargar los datos del residente para edición.</p>
-    <p class="text-sm text-gray-400 mt-2">Faltan datos críticos: ID o código del residente.</p>
+    <p class="text-gray-500">Could not load resident data for editing.</p>
+    <p class="text-sm text-gray-400 mt-2">Missing critical data: ID or resident code.</p>
   </div>
 </template>
 
@@ -183,9 +196,10 @@ import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useResidentEdition } from '../../composables/useResidentEdition'
-import type { ResidentEditFormModel, ResidentUpdateResponse } from '../../types/resident.types'
+import type { ResidentEditFormModel } from '../../types/resident.types'
 import { RefreshIcon } from '@/assets/icons'
 
+// Types
 type Usuario = {
   id: string;
   residenteName?: string;
@@ -203,7 +217,7 @@ type Usuario = {
   isActive?: boolean;
 }
 
-// Props y emits
+// Props and emits
 const props = defineProps<{
   usuario: Usuario;
 }>()
@@ -212,13 +226,11 @@ const emit = defineEmits<{
   (e: 'usuario-actualizado', data: any): void;
 }>()
 
-// Referencias
+// Refs
 const notificationContainer = ref<HTMLElement | null>(null)
+const updatedResident = ref<any>(null)
 
-// Estado del residente actualizado
-const updatedResident = ref<ResidentUpdateResponse | null>(null)
-
-// Estado de notificación
+// Notification state
 const notification = reactive({
   visible: false,
   type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -226,13 +238,13 @@ const notification = reactive({
   message: ''
 })
 
-// Estado de validación
+// Validation state
 const validationState = reactive({
   showValidationError: false,
   hasAttemptedSubmit: false
 })
 
-// Composable para manejo de backend
+// Composable for backend handling
 const {
   isLoading,
   codeValidationError,
@@ -249,7 +261,7 @@ const {
   createHasChanges
 } = useResidentEdition()
 
-// Modelo local del formulario
+// Local form model
 const localModel = reactive<ResidentEditFormModel>({
   id: '',
   residenteName: '',
@@ -263,7 +275,7 @@ const localModel = reactive<ResidentEditFormModel>({
   passwordConfirm: ''
 })
 
-// Errores del formulario
+// Form errors
 const formErrors = reactive({
   residenteName: '',
   InicialesResidente: '',
@@ -275,10 +287,9 @@ const formErrors = reactive({
   passwordConfirm: ''
 })
 
-// Computed para detectar cambios
+// Computed properties
 const hasChanges = computed(() => createHasChanges(localModel))
 
-// Computed para verificar si se puede enviar
 const canSubmit = computed(() => {
   const passwordOnlyValid = !!localModel.password && localModel.password.trim().length >= 6
   const baseValid = canSubmitFromComposable.value && 
@@ -288,41 +299,40 @@ const canSubmit = computed(() => {
     localModel.ResidenteEmail?.trim().length > 0 &&
     localModel.registro_medico?.trim().length >= 3
 
-  // Permitir envío si solo cambia contraseña válida
   return baseValid || passwordOnlyValid
 })
 
-// Lista de errores de validación
 const validationErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return []
   
   const errors: string[] = []
   
   if (!localModel.residenteName || formErrors.residenteName) {
-    errors.push('Nombre completo válido requerido')
+    errors.push('Valid full name required')
   }
   if (!localModel.InicialesResidente || formErrors.InicialesResidente) {
-    errors.push('Iniciales válidas requeridas')
+    errors.push('Valid initials required')
   }
   if (!localModel.residenteCode || formErrors.residenteCode) {
-    errors.push('Código de residente válido requerido')
+    errors.push('Valid resident code required')
   }
   if (!localModel.ResidenteEmail || formErrors.ResidenteEmail) {
-    errors.push('Email válido requerido')
+    errors.push('Valid email required')
   }
   if (!localModel.registro_medico || formErrors.registro_medico) {
-    errors.push('Registro médico válido requerido')
+    errors.push('Valid medical license required')
   }
   if (formErrors.observaciones) {
-    errors.push('Observaciones válidas requeridas')
+    errors.push('Valid observations required')
   }
   
   return errors
 })
 
-// Normalizador robusto de campos (residente -> resident, etc.)
+// Helper functions
 const normalizeResident = (raw: any): ResidentEditFormModel | null => {
   if (!raw) return null
+  
   const name = raw.residenteName || raw.residentName || raw.nombre || raw.name || ''
   const code = raw.residenteCode || raw.residentCode || raw.codigo || raw.code || raw.documento || ''
   const initials = raw.InicialesResidente || raw.inicialesResidente || raw.initials || ''
@@ -330,6 +340,7 @@ const normalizeResident = (raw: any): ResidentEditFormModel | null => {
   const registro = raw.registro_medico || raw.medicalLicense || raw.medical_license || ''
   const obs = raw.observaciones || raw.observations || raw.notes || ''
   const active = raw.isActive !== undefined ? raw.isActive : (raw.is_active !== undefined ? raw.is_active : (raw.activo !== undefined ? raw.activo : true))
+  
   return {
     id: raw.id || raw._id || code,
     residenteName: String(name),
@@ -344,7 +355,6 @@ const normalizeResident = (raw: any): ResidentEditFormModel | null => {
   }
 }
 
-// Función para cargar datos iniciales
 const loadInitialData = () => {
   const mappedData = normalizeResident(props.usuario)
   if (!mappedData) return
@@ -352,73 +362,12 @@ const loadInitialData = () => {
   setInitialData(mappedData)
 }
 
-// Watcher para cargar datos cuando cambia el usuario
-watch(() => props.usuario, () => {
-  if (props.usuario) {
-    loadInitialData()
-  }
-}, { immediate: true, deep: true })
-
-// Watcher para limpiar errores cuando el usuario está escribiendo
-watch(() => localModel, () => {
-  if (validationState.hasAttemptedSubmit && !notification.visible) {
-    clearMessages()
-    clearFormErrors()
-  }
-}, { deep: true })
-
-// Funciones de validación
-const validateEmail = async () => {
-  formErrors.ResidenteEmail = ''
-  
-  if (!localModel.ResidenteEmail?.trim()) {
-    formErrors.ResidenteEmail = 'El email es requerido'
-    return
-  }
-  
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(localModel.ResidenteEmail)) {
-    formErrors.ResidenteEmail = 'Formato de email inválido'
-    return
-  }
-  
-  await checkEmailAvailability(localModel.ResidenteEmail)
-  if (emailValidationError.value) {
-    formErrors.ResidenteEmail = emailValidationError.value
-  }
-}
-
-const validateMedicalLicense = async () => {
-  formErrors.registro_medico = ''
-  
-  if (!localModel.registro_medico?.trim()) {
-    formErrors.registro_medico = 'El registro médico es requerido'
-    return
-  }
-  
-  if (localModel.registro_medico.length < 3) {
-    formErrors.registro_medico = 'Mínimo 3 caracteres'
-    return
-  }
-  
-  if (localModel.registro_medico.length > 50) {
-    formErrors.registro_medico = 'Máximo 50 caracteres'
-    return
-  }
-  
-  await checkLicenseAvailability(localModel.registro_medico)
-  if (licenseValidationError.value) {
-    formErrors.registro_medico = licenseValidationError.value
-  }
-}
-
-// Limpiar errores del formulario
 const clearFormErrors = () => {
   Object.keys(formErrors).forEach(key => {
     formErrors[key as keyof typeof formErrors] = ''
   })
 }
 
-// Funciones de notificación
 const showNotification = (type: typeof notification.type, title: string, message: string) => {
   notification.type = type
   notification.title = title
@@ -433,10 +382,26 @@ const scrollToNotification = async () => {
   }
 }
 
-// Función para formatear fecha
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString: string | undefined): string => {
+  if (!dateString) return 'Date not available'
+  
   try {
-    const date = new Date(dateString)
+    let date: Date
+    
+    if (typeof dateString === 'string') {
+      if (dateString.includes('T')) {
+        date = new Date(dateString)
+      } else {
+        date = new Date(dateString + 'T00:00:00.000Z')
+      }
+    } else {
+      date = new Date(dateString)
+    }
+    
+    if (isNaN(date.getTime())) {
+      return 'Date not available'
+    }
+    
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
@@ -445,24 +410,68 @@ const formatDate = (dateString: string): string => {
       minute: '2-digit'
     })
   } catch {
-    return 'Fecha no disponible'
+    return 'Date not available'
   }
 }
 
-// Envío del formulario
+// Validation functions
+const validateEmail = async () => {
+  formErrors.ResidenteEmail = ''
+  
+  if (!localModel.ResidenteEmail?.trim()) {
+    formErrors.ResidenteEmail = 'Email is required'
+    return
+  }
+  
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(localModel.ResidenteEmail)) {
+    formErrors.ResidenteEmail = 'Invalid email format'
+    return
+  }
+  
+  await checkEmailAvailability(localModel.ResidenteEmail)
+  if (emailValidationError.value) {
+    formErrors.ResidenteEmail = emailValidationError.value
+  }
+}
+
+const validateMedicalLicense = async () => {
+  formErrors.registro_medico = ''
+  
+  if (!localModel.registro_medico?.trim()) {
+    formErrors.registro_medico = 'Medical license is required'
+    return
+  }
+  
+  if (localModel.registro_medico.length < 3) {
+    formErrors.registro_medico = 'Minimum 3 characters'
+    return
+  }
+  
+  if (localModel.registro_medico.length > 50) {
+    formErrors.registro_medico = 'Maximum 50 characters'
+    return
+  }
+  
+  await checkLicenseAvailability(localModel.registro_medico)
+  if (licenseValidationError.value) {
+    formErrors.registro_medico = licenseValidationError.value
+  }
+}
+
+// Form submission
 const submit = async () => {
   validationState.hasAttemptedSubmit = true
   clearFormErrors()
   
-  // Validar contraseñas
+  // Validate passwords
   if (localModel.password && localModel.password.trim().length > 0) {
     if (localModel.password.trim().length < 6) {
-      formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+      formErrors.password = 'Password must be at least 6 characters'
       validationState.showValidationError = true
       return
     }
     if (localModel.password !== localModel.passwordConfirm) {
-      formErrors.passwordConfirm = 'Las contraseñas no coinciden'
+      formErrors.passwordConfirm = 'Passwords do not match'
       validationState.showValidationError = true
       return
     }
@@ -481,25 +490,18 @@ const submit = async () => {
     const result = await updateResident(localModel)
     if ((result as any).success && (result as any).data) {
       const data = (result as any).data
-      // Normalizar datos del backend (snake_case) para mostrar en la interfaz
-      updatedResident.value = {
-        residenteName: data.resident_name,
-        residenteCode: data.resident_code,
-        InicialesResidente: data.initials,
-        ResidenteEmail: data.resident_email,
-        registro_medico: data.medical_license,
-        observaciones: data.observations,
-        isActive: data.is_active,
-        fecha_actualizacion: data.updated_at
-      }
-      showNotification('success', '¡Residente Actualizado Exitosamente!', '')
+      console.log('🔍 Backend response data:', data)
+      console.log('🔍 Normalized data from composable:', data)
+      
+      updatedResident.value = data
+      showNotification('success', 'Resident Updated Successfully!', '')
       await scrollToNotification()
-      emit('usuario-actualizado', { ...data, nombre: data.resident_name, codigo: data.resident_code, tipo: 'residente' })
+      emit('usuario-actualizado', { ...data, nombre: data.residenteName, codigo: data.residenteCode, tipo: 'residente' })
     } else {
-      showNotification('error', 'Error al Actualizar Residente', 'No se pudo actualizar el residente')
+      showNotification('error', 'Error Updating Resident', 'Could not update the resident')
     }
   } catch (error: any) {
-    showNotification('error', 'Error al Actualizar Residente', error.message || 'Error inesperado')
+    showNotification('error', 'Error Updating Resident', error.message || 'Unexpected error')
   }
 }
 
@@ -515,5 +517,17 @@ const onReset = () => {
   }
 }
 
+// Watchers
+watch(() => props.usuario, () => {
+  if (props.usuario) {
+    loadInitialData()
+  }
+}, { immediate: true, deep: true })
 
+watch(() => localModel, () => {
+  if (validationState.hasAttemptedSubmit && !notification.visible) {
+    clearMessages()
+    clearFormErrors()
+  }
+}, { deep: true })
 </script>

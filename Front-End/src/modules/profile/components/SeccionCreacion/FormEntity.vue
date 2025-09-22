@@ -1,53 +1,48 @@
 <template>
   <form @submit.prevent="submit" class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4">
     <div class="col-span-full">
-      <h4 class="text-base font-semibold text-gray-800">Formulario de Entidad</h4>
+      <h4 class="text-base font-semibold text-gray-800">Entity Form</h4>
     </div>
 
-    <!-- Nombre y Código -->
     <FormInputField 
       class="col-span-full md:col-span-6" 
-      label="Nombre de entidad" 
-      placeholder="Ejemplo: Clínica Norte" 
+      label="Entity Name" 
+      placeholder="Example: North Clinic" 
       v-model="localModel.entityName"
       :error="formErrors.entityName"
     />
     <FormInputField 
       class="col-span-full md:col-span-6" 
-      label="Código de entidad" 
-      placeholder="Ejemplo: CLINICA001" 
+      label="Entity Code" 
+      placeholder="Example: CLINIC001" 
       v-model="localModel.entityCode"
       :error="formErrors.entityCode"
       @blur="validateCode"
     />
 
-    <!-- Observaciones -->
     <FormTextarea 
       class="col-span-full" 
-      label="Observaciones" 
-      placeholder="Notas u observaciones relevantes (opcional)" 
+      label="Observations" 
+      placeholder="Relevant notes or observations (optional)" 
       v-model="localModel.notes" 
       :rows="3"
       :error="formErrors.notes"
     />
 
-    <!-- Estado activo -->
     <div class="col-span-full md:col-span-6 flex items-center pt-3">
-      <FormCheckbox label="Activo" v-model="localModel.isActive" />
+      <FormCheckbox label="Active" v-model="localModel.isActive" />
     </div>
 
-    <!-- Botones de acción -->
     <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
       <ClearButton type="button" @click="onClear" :disabled="isLoading" />
       <SaveButton 
-        text="Guardar Entidad" 
+        text="Save Entity" 
         type="submit" 
         :disabled="!canSubmit || isLoading"
         :loading="isLoading"
       />
     </div>
 
-    <!-- Notificación -->
     <div ref="notificationContainer" class="col-span-full">
       <Notification
         :visible="notification.visible"
@@ -61,33 +56,30 @@
         <template v-if="notification.type === 'success' && createdEntity" #content>
           <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
             <div class="space-y-4">
-              <!-- Información principal de la entidad -->
               <div class="mb-4 pb-3 border-b border-gray-100">
                 <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdEntity.name }}</h3>
                 <p class="text-gray-600">
-                  <span class="font-medium">Código:</span> 
+                  <span class="font-medium">Code:</span> 
                   <span class="font-mono font-bold text-gray-800 ml-1">{{ createdEntity.entity_code }}</span>
                 </p>
               </div>
               
-              <!-- Detalles de la entidad en vertical -->
               <div class="space-y-4 text-sm">
                 <div>
-                  <span class="text-gray-500 font-medium block mb-1">Estado:</span>
+                  <span class="text-gray-500 font-medium block mb-1">Status:</span>
                   <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
                     :class="createdEntity.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                    {{ createdEntity.is_active ? 'Activo' : 'Inactivo' }}
+                    {{ createdEntity.is_active ? 'Active' : 'Inactive' }}
                   </span>
                 </div>
                 <div>
-                  <span class="text-gray-500 font-medium block mb-1">Fecha de creación:</span>
+                  <span class="text-gray-500 font-medium block mb-1">Creation Date:</span>
                   <p class="text-gray-800 font-semibold">{{ formatDate(createdEntity.created_at) }}</p>
                 </div>
               </div>
               
-              <!-- Observaciones -->
               <div v-if="createdEntity.notes">
-                <span class="text-gray-500 font-medium block mb-2">Observaciones:</span>
+                <span class="text-gray-500 font-medium block mb-2">Observations:</span>
                 <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ createdEntity.notes }}</p>
               </div>
             </div>
@@ -96,7 +88,6 @@
       </Notification>
     </div>
 
-    <!-- Alerta de Validación -->
     <ValidationAlert
       :visible="validationState.showValidationError && validationState.hasAttemptedSubmit"
       :errors="validationErrors"
@@ -112,19 +103,17 @@ import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { useEntityCreation } from '../../composables/useEntityCreation'
 import type { EntityFormModel, EntityCreateResponse } from '../../types/entity.types'
 
-// Props y emits
+// Props and emits
 const modelValue = defineModel<EntityFormModel>({ required: true })
 const emit = defineEmits<{ 
   (e: 'usuario-creado', payload: EntityFormModel): void 
 }>()
 
-// Referencias
+// Refs and reactive state
 const notificationContainer = ref<HTMLElement | null>(null)
-
-// Estado de la entidad creada
 const createdEntity = ref<EntityCreateResponse | null>(null)
+const isLoading = ref(false)
 
-// Estado de notificación
 const notification = reactive({
   visible: false,
   type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -132,13 +121,12 @@ const notification = reactive({
   message: ''
 })
 
-// Estado de validación
 const validationState = reactive({
   showValidationError: false,
   hasAttemptedSubmit: false
 })
 
-// Composable para manejo de backend
+// Composable for backend operations
 const {
   state,
   codeValidationError,
@@ -149,91 +137,59 @@ const {
   clearMessages
 } = useEntityCreation()
 
-// Estado de loading local
-const isLoading = ref(false)
-
-// Modelo local del formulario
+// Local form model
 const localModel = reactive<EntityFormModel>({ 
   ...modelValue.value
 })
 
-// Errores del formulario
+// Form validation errors
 const formErrors = reactive({
   entityName: '',
   entityCode: '',
   notes: ''
 })
 
-// Lista de errores de validación para mostrar en la alerta
+// Computed properties
 const validationErrors = computed(() => {
-  // Solo mostrar errores si se ha intentado enviar el formulario
-  if (!validationState.hasAttemptedSubmit) {
-    return []
-  }
-  
-  // ✅ Usar la validación del composable para obtener errores estándar
+  if (!validationState.hasAttemptedSubmit) return []
   const validation = validateForm(localModel)
-  if (!validation.isValid) {
-    return Object.values(validation.errors)
-  }
-  
-  return []
+  return validation.isValid ? [] : Object.values(validation.errors)
 })
 
-// Computed para verificar si se puede enviar
-const canSubmit = computed(() => {
-  // ✅ SIEMPRE HABILITADO: El botón de guardar nunca se bloquea
-  return true
-})
+const canSubmit = computed(() => true)
 
-// Watchers
-watch(() => modelValue.value, (newValue) => {
-  Object.assign(localModel, newValue)
-}, { deep: true })
-
-// Watcher para detectar cambios en el modelo solo cuando el usuario está escribiendo
-watch(() => localModel, () => {
-  // Solo reaccionar a cambios si el usuario ya intentó enviar Y hay una notificación activa
-  if (validationState.hasAttemptedSubmit && !notification.visible) {
-    clearMessages()
-    clearFormErrors()
-  }
-}, { deep: true })
-
-// Validación del código al perder el foco
+// Validation functions
 const validateCode = async () => {
   formErrors.entityCode = ''
   
   if (!localModel.entityCode?.trim()) {
-    formErrors.entityCode = 'El código es requerido'
+    formErrors.entityCode = 'Code is required'
     return
   }
   
   if (localModel.entityCode.length > 20) {
-    formErrors.entityCode = 'Máximo 20 caracteres'
+    formErrors.entityCode = 'Maximum 20 characters'
     return
   }
   
   if (!/^[A-Z0-9_-]+$/i.test(localModel.entityCode)) {
-    formErrors.entityCode = 'Solo letras, números, guiones y guiones bajos'
+    formErrors.entityCode = 'Only letters, numbers, hyphens and underscores'
     return
   }
   
-  // Verificar disponibilidad en el backend
   await checkCodeAvailability(localModel.entityCode)
   if (codeValidationError.value) {
     formErrors.entityCode = codeValidationError.value
   }
 }
 
-// Limpiar errores del formulario
+// Helper functions
 const clearFormErrors = () => {
   Object.keys(formErrors).forEach(key => {
     formErrors[key as keyof typeof formErrors] = ''
   })
 }
 
-// Funciones de notificación
 const showNotification = (type: typeof notification.type, title: string, message: string) => {
   notification.type = type
   notification.title = title
@@ -241,7 +197,6 @@ const showNotification = (type: typeof notification.type, title: string, message
   notification.visible = true
 }
 
-// Función para limpiar solo la notificación
 const clearNotification = () => {
   notification.visible = false
   notification.title = ''
@@ -249,12 +204,8 @@ const clearNotification = () => {
   createdEntity.value = null
 }
 
-const closeNotification = () => {
-  // Usar exactamente la misma función que el botón Limpiar
-  onClear()
-}
+const closeNotification = () => onClear()
 
-// Función para formatear fecha
 const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString)
@@ -266,11 +217,10 @@ const formatDate = (dateString: string): string => {
       minute: '2-digit'
     })
   } catch {
-    return 'Fecha no disponible'
+    return 'Date not available'
   }
 }
 
-// Hacer scroll a la notificación
 const scrollToNotification = async () => {
   await nextTick()
   if (notificationContainer.value) {
@@ -281,16 +231,14 @@ const scrollToNotification = async () => {
   }
 }
 
-// Envío del formulario
+// Form submission
 const submit = async () => {
   validationState.hasAttemptedSubmit = true
   clearFormErrors()
   clearNotification()
   
-  // Validación local primero
   const validation = validateForm(localModel)
   if (!validation.isValid) {
-    // ✅ SOLO usar la validación estándar, no mostrar errores en campos individuales
     validationState.showValidationError = true
     return
   }
@@ -299,15 +247,12 @@ const submit = async () => {
   isLoading.value = true
   
   try {
-    // Enviar al backend
     const result = await createEntity(localModel)
     
     if (result.success && result.data) {
       await handleEntityCreated(result.data)
     } else {
-      // ✅ El composable ya maneja los errores y los coloca en state.error
-      // Solo necesitamos mostrar el error que ya está en el estado
-      const errorMessage = state.error || 'Error desconocido al crear la entidad'
+      const errorMessage = state.error || 'Unknown error creating entity'
       throw new Error(errorMessage)
     }
   } catch (error: any) {
@@ -317,80 +262,52 @@ const submit = async () => {
   }
 }
 
-// Manejar la creación exitosa de la entidad
+// Success handler
 const handleEntityCreated = async (createdEntityData: EntityCreateResponse) => {
-  // Almacenar información de la entidad creada
   createdEntity.value = createdEntityData
-  
-  // Mostrar notificación de éxito
-  showNotification(
-    'success',
-    '¡Entidad Registrada Exitosamente!',
-    ''
-  )
-  
-  // Emitir evento para compatibilidad
+  showNotification('success', 'Entity Registered Successfully!', '')
   emit('usuario-creado', { ...localModel })
-  
-  // Hacer scroll a la notificación
   await scrollToNotification()
 }
 
-// Manejar errores durante la creación
+// Error handler with HTTP status code mapping
 const handleEntityCreationError = async (error: any) => {
-  console.error('Error al guardar entidad:', error)
+  console.error('Error saving entity:', error)
   
-  let errorMessage = 'No se pudo guardar la entidad. Por favor, inténtelo nuevamente.'
-  let errorTitle = 'Error al Guardar Entidad'
+  let errorMessage = 'Could not save entity. Please try again.'
+  let errorTitle = 'Error Saving Entity'
   
-  // Determinar el tipo de error y mostrar mensaje específico
   if (error.message) {
     errorMessage = error.message
-    
-    // Personalizar el título según el tipo de error
-    if (error.message.includes('código')) {
-      errorTitle = 'Datos Duplicados'
-    } else if (error.message.includes('válido') || error.message.includes('requerido')) {
-      errorTitle = 'Datos Inválidos'
-    } else if (error.message.includes('servidor')) {
-      errorTitle = 'Error del Servidor'
+    if (error.message.includes('code')) {
+      errorTitle = 'Duplicate Data'
+    } else if (error.message.includes('valid') || error.message.includes('required')) {
+      errorTitle = 'Invalid Data'
+    } else if (error.message.includes('server')) {
+      errorTitle = 'Server Error'
     }
   } else if (error.response?.data?.detail) {
     errorMessage = error.response.data.detail
   } else if (error.response?.status) {
-    switch (error.response.status) {
-      case 409:
-        errorTitle = 'Datos Duplicados'
-        errorMessage = 'Ya existe una entidad con los datos proporcionados'
-        break
-      case 422:
-        errorTitle = 'Datos Inválidos'
-        errorMessage = 'Los datos proporcionados no son válidos'
-        break
-      case 400:
-        errorTitle = 'Datos Incorrectos'
-        errorMessage = 'Datos incorrectos o incompletos'
-        break
-      case 500:
-        errorTitle = 'Error del Servidor'
-        errorMessage = 'Error interno del servidor. Inténtelo más tarde'
-        break
-      default:
-        errorTitle = `Error del Servidor (${error.response.status})`
-        errorMessage = 'Ha ocurrido un error inesperado'
+    const errorMap: Record<number, { title: string; message: string }> = {
+      409: { title: 'Duplicate Data', message: 'An entity with the provided data already exists' },
+      422: { title: 'Invalid Data', message: 'The provided data is not valid' },
+      400: { title: 'Incorrect Data', message: 'Incorrect or incomplete data' },
+      500: { title: 'Server Error', message: 'Internal server error. Please try later' }
     }
+    const errorInfo = errorMap[error.response.status] || { 
+      title: `Server Error (${error.response.status})`, 
+      message: 'An unexpected error occurred' 
+    }
+    errorTitle = errorInfo.title
+    errorMessage = errorInfo.message
   }
   
-  showNotification(
-    'error',
-    errorTitle,
-    errorMessage
-  )
-  
+  showNotification('error', errorTitle, errorMessage)
   await scrollToNotification()
 }
 
-// Función para limpiar solo el formulario (para uso interno)
+// Form reset functions
 const clearForm = () => {
   validationState.hasAttemptedSubmit = false
   validationState.showValidationError = false
@@ -405,21 +322,26 @@ const clearForm = () => {
   })
 }
 
-// Limpiar formulario (función pública para el botón Limpiar)
 const onClear = () => {
   clearForm()
   clearNotification()
 }
 
-// Watcher para hacer scroll cuando aparece la notificación
-watch(
-  () => notification.visible,
-  (newValue) => {
-    if (newValue) {
-      scrollToNotification()
-    }
+// Watchers
+watch(() => modelValue.value, (newValue) => {
+  Object.assign(localModel, newValue)
+}, { deep: true })
+
+watch(() => localModel, () => {
+  if (validationState.hasAttemptedSubmit && !notification.visible) {
+    clearMessages()
+    clearFormErrors()
   }
-)
+}, { deep: true })
+
+watch(() => notification.visible, (newValue) => {
+  if (newValue) scrollToNotification()
+})
 </script>
 
 

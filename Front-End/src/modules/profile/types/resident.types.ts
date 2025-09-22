@@ -1,10 +1,6 @@
-/**
- * Tipos específicos para la gestión de residentes en el módulo profile
- */
+// Resident types: form models, API requests/responses, validation, and state management
 
-/**
- * Modelo del formulario de creación de residentes
- */
+// Frontend form model for resident creation
 export interface ResidentFormModel {
   residenteName: string
   InicialesResidente: string
@@ -16,23 +12,19 @@ export interface ResidentFormModel {
   isActive: boolean
 }
 
-/**
- * Request para crear un nuevo residente (colección residentes)
- */
+// Backend API request for creating a new resident
 export interface ResidentCreateRequest {
   resident_name: string
   initials: string
   resident_code: string
   resident_email: string
   medical_license: string
-  password: string // Contraseña para crear el usuario asociado
+  password: string
   observations: string
   is_active: boolean
 }
 
-/**
- * Response de creación de residente
- */
+// Backend API response for resident creation
 export interface ResidentCreateResponse {
   id: string
   resident_name: string
@@ -46,9 +38,7 @@ export interface ResidentCreateResponse {
   updated_at?: string
 }
 
-/**
- * Estado de la operación de creación
- */
+// State management for resident creation operations
 export interface ResidentCreationState {
   isLoading: boolean
   isSuccess: boolean
@@ -56,9 +46,7 @@ export interface ResidentCreationState {
   successMessage: string
 }
 
-/**
- * Resultado de validación del formulario
- */
+// Form validation result for resident creation
 export interface ResidentFormValidation {
   isValid: boolean
   errors: {
@@ -72,9 +60,7 @@ export interface ResidentFormValidation {
   }
 }
 
-/**
- * Modelo del formulario de edición de residentes
- */
+// Frontend form model for resident editing
 export interface ResidentEditFormModel {
   id: string
   residenteName: string
@@ -88,9 +74,7 @@ export interface ResidentEditFormModel {
   passwordConfirm?: string
 }
 
-/**
- * Request para actualizar un residente
- */
+// Backend API request for updating a resident
 export interface ResidentUpdateRequest {
   resident_name: string
   initials: string
@@ -101,9 +85,7 @@ export interface ResidentUpdateRequest {
   password?: string
 }
 
-/**
- * Response de actualización de residente
- */
+// Backend API response for resident update
 export interface ResidentUpdateResponse {
   id: string
   resident_name: string
@@ -117,9 +99,7 @@ export interface ResidentUpdateResponse {
   updated_at: string
 }
 
-/**
- * Estado de la edición de residentes
- */
+// State management for resident editing operations
 export interface ResidentEditionState {
   isLoading: boolean
   isSuccess: boolean
@@ -127,9 +107,7 @@ export interface ResidentEditionState {
   successMessage: string
 }
 
-/**
- * Resultado de validación del formulario de edición
- */
+// Form validation result for resident editing
 export interface ResidentEditFormValidation {
   isValid: boolean
   errors: {
