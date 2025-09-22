@@ -105,9 +105,7 @@ import type { EntityFormModel, EntityCreateResponse } from '../../types/entity.t
 
 // Props and emits
 const modelValue = defineModel<EntityFormModel>({ required: true })
-const emit = defineEmits<{ 
-  (e: 'usuario-creado', payload: EntityFormModel): void 
-}>()
+const emit = defineEmits<{ (e: 'usuario-creado', payload: EntityFormModel): void }>()
 
 // Refs and reactive state
 const notificationContainer = ref<HTMLElement | null>(null)
@@ -138,9 +136,7 @@ const {
 } = useEntityCreation()
 
 // Local form model
-const localModel = reactive<EntityFormModel>({ 
-  ...modelValue.value
-})
+const localModel = reactive<EntityFormModel>({ ...modelValue.value })
 
 // Form validation errors
 const formErrors = reactive({
@@ -161,34 +157,15 @@ const canSubmit = computed(() => true)
 // Validation functions
 const validateCode = async () => {
   formErrors.entityCode = ''
-  
-  if (!localModel.entityCode?.trim()) {
-    formErrors.entityCode = 'Code is required'
-    return
-  }
-  
-  if (localModel.entityCode.length > 20) {
-    formErrors.entityCode = 'Maximum 20 characters'
-    return
-  }
-  
-  if (!/^[A-Z0-9_-]+$/i.test(localModel.entityCode)) {
-    formErrors.entityCode = 'Only letters, numbers, hyphens and underscores'
-    return
-  }
-  
+  if (!localModel.entityCode?.trim()) { formErrors.entityCode = 'Code is required'; return }
+  if (localModel.entityCode.length > 20) { formErrors.entityCode = 'Maximum 20 characters'; return }
+  if (!/^[A-Z0-9_-]+$/i.test(localModel.entityCode)) { formErrors.entityCode = 'Only letters, numbers, hyphens and underscores'; return }
   await checkCodeAvailability(localModel.entityCode)
-  if (codeValidationError.value) {
-    formErrors.entityCode = codeValidationError.value
-  }
+  if (codeValidationError.value) formErrors.entityCode = codeValidationError.value
 }
 
 // Helper functions
-const clearFormErrors = () => {
-  Object.keys(formErrors).forEach(key => {
-    formErrors[key as keyof typeof formErrors] = ''
-  })
-}
+const clearFormErrors = () => Object.keys(formErrors).forEach(key => formErrors[key as keyof typeof formErrors] = '')
 
 const showNotification = (type: typeof notification.type, title: string, message: string) => {
   notification.type = type
@@ -208,26 +185,16 @@ const closeNotification = () => onClear()
 
 const formatDate = (dateString: string): string => {
   try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     })
-  } catch {
-    return 'Date not available'
-  }
+  } catch { return 'Date not available' }
 }
 
 const scrollToNotification = async () => {
   await nextTick()
   if (notificationContainer.value) {
-    notificationContainer.value.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    })
+    notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 }
 
@@ -238,22 +205,17 @@ const submit = async () => {
   clearNotification()
   
   const validation = validateForm(localModel)
-  if (!validation.isValid) {
-    validationState.showValidationError = true
-    return
-  }
+  if (!validation.isValid) { validationState.showValidationError = true; return }
   
   validationState.showValidationError = false
   isLoading.value = true
   
   try {
     const result = await createEntity(localModel)
-    
     if (result.success && result.data) {
       await handleEntityCreated(result.data)
     } else {
-      const errorMessage = state.error || 'Unknown error creating entity'
-      throw new Error(errorMessage)
+      throw new Error(state.error || 'Unknown error creating entity')
     }
   } catch (error: any) {
     await handleEntityCreationError(error)
@@ -279,13 +241,9 @@ const handleEntityCreationError = async (error: any) => {
   
   if (error.message) {
     errorMessage = error.message
-    if (error.message.includes('code')) {
-      errorTitle = 'Duplicate Data'
-    } else if (error.message.includes('valid') || error.message.includes('required')) {
-      errorTitle = 'Invalid Data'
-    } else if (error.message.includes('server')) {
-      errorTitle = 'Server Error'
-    }
+    if (error.message.includes('code')) errorTitle = 'Duplicate Data'
+    else if (error.message.includes('valid') || error.message.includes('required')) errorTitle = 'Invalid Data'
+    else if (error.message.includes('server')) errorTitle = 'Server Error'
   } else if (error.response?.data?.detail) {
     errorMessage = error.response.data.detail
   } else if (error.response?.status) {
@@ -313,24 +271,13 @@ const clearForm = () => {
   validationState.showValidationError = false
   clearFormErrors()
   clearState()
-  
-  Object.assign(localModel, { 
-    entityName: '', 
-    entityCode: '', 
-    notes: '', 
-    isActive: true 
-  })
+  Object.assign(localModel, { entityName: '', entityCode: '', notes: '', isActive: true })
 }
 
-const onClear = () => {
-  clearForm()
-  clearNotification()
-}
+const onClear = () => { clearForm(); clearNotification() }
 
 // Watchers
-watch(() => modelValue.value, (newValue) => {
-  Object.assign(localModel, newValue)
-}, { deep: true })
+watch(() => modelValue.value, (newValue) => Object.assign(localModel, newValue), { deep: true })
 
 watch(() => localModel, () => {
   if (validationState.hasAttemptedSubmit && !notification.visible) {
@@ -339,9 +286,7 @@ watch(() => localModel, () => {
   }
 }, { deep: true })
 
-watch(() => notification.visible, (newValue) => {
-  if (newValue) scrollToNotification()
-})
+watch(() => notification.visible, (newValue) => { if (newValue) scrollToNotification() })
 </script>
 
 

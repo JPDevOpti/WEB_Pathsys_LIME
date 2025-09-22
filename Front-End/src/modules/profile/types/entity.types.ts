@@ -1,10 +1,3 @@
-/**
- * Tipos específicos para la gestión de entidades en el módulo profile
- */
-
-/**
- * Modelo del formulario de creación de entidades
- */
 export interface EntityFormModel {
   entityName: string
   entityCode: string
@@ -12,9 +5,6 @@ export interface EntityFormModel {
   isActive: boolean
 }
 
-/**
- * Request para crear una nueva entidad
- */
 export interface EntityCreateRequest {
   name: string
   entity_code: string
@@ -22,9 +12,6 @@ export interface EntityCreateRequest {
   is_active: boolean
 }
 
-/**
- * Response de creación de entidad
- */
 export interface EntityCreateResponse {
   id: string
   name: string
@@ -35,9 +22,6 @@ export interface EntityCreateResponse {
   updated_at?: string
 }
 
-/**
- * Estado de la operación de creación
- */
 export interface EntityCreationState {
   isLoading: boolean
   isSuccess: boolean
@@ -45,9 +29,6 @@ export interface EntityCreationState {
   successMessage: string
 }
 
-/**
- * Resultado de validación del formulario
- */
 export interface EntityFormValidation {
   isValid: boolean
   errors: {
@@ -57,9 +38,6 @@ export interface EntityFormValidation {
   }
 }
 
-/**
- * Modelo de edición de entidad
- */
 export interface EntityEditFormModel {
   id: string
   entityName: string
@@ -68,9 +46,6 @@ export interface EntityEditFormModel {
   isActive: boolean
 }
 
-/**
- * Request para actualizar una entidad
- */
 export interface EntityUpdateRequest {
   name?: string
   entity_code?: string
@@ -78,9 +53,6 @@ export interface EntityUpdateRequest {
   is_active?: boolean
 }
 
-/**
- * Response de actualización de entidad
- */
 export interface EntityUpdateResponse {
   id: string
   name: string
@@ -91,9 +63,6 @@ export interface EntityUpdateResponse {
   updated_at: string
 }
 
-/**
- * Estado de edición de entidad
- */
 export interface EntityEditionState {
   isLoading: boolean
   isSuccess: boolean
@@ -101,9 +70,6 @@ export interface EntityEditionState {
   successMessage: string
 }
 
-/**
- * Validación del formulario de edición de entidad
- */
 export interface EntityEditFormValidation {
   isValid: boolean
   errors: {

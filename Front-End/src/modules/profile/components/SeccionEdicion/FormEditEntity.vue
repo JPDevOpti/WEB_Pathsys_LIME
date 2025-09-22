@@ -1,33 +1,58 @@
 <template>
   <form @submit.prevent="submit" class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4">
     <div class="col-span-full">
-      <h4 class="text-base font-semibold text-gray-800">Editar Entidad</h4>
-      <p class="text-sm text-gray-600 mt-1">Modifica los datos de la entidad</p>
+      <h4 class="text-base font-semibold text-gray-800">Edit Entity</h4>
+      <p class="text-sm text-gray-600 mt-1">Modify entity data</p>
     </div>
 
-    <!-- Código y Nombre (código SIEMPRE a la izquierda) -->
-    <FormInputField class="col-span-full md:col-span-6" label="Código de entidad" v-model="localModel.EntidadCode" :error="formErrors.EntidadCode" @blur="validateCode" :disabled="true" />
-    <FormInputField class="col-span-full md:col-span-6" label="Nombre de entidad" v-model="localModel.EntidadName" :error="formErrors.EntidadName" />
+    <FormInputField 
+      class="col-span-full md:col-span-6" 
+      label="Entity Code" 
+      v-model="localModel.entityCode" 
+      :error="formErrors.entityCode" 
+      @blur="validateCode" 
+      :disabled="true" 
+    />
+    <FormInputField 
+      class="col-span-full md:col-span-6" 
+      label="Entity Name" 
+      v-model="localModel.entityName" 
+      :error="formErrors.entityName" 
+    />
 
-    <!-- Observaciones -->
-  <FormTextarea class="col-span-full" label="Observaciones" v-model="localModel.observaciones" :rows="3" :error="formErrors.observaciones" />
+    <FormTextarea 
+      class="col-span-full" 
+      label="Observations" 
+      v-model="localModel.notes" 
+      :rows="3" 
+      :error="formErrors.notes" 
+    />
 
-    <!-- Estado activo -->
     <div class="col-span-full md:col-span-6 flex items-center pt-3">
-      <FormCheckbox label="Activo" v-model="localModel.isActive" />
+      <FormCheckbox label="Active" v-model="localModel.isActive" />
     </div>
 
-    <!-- Botones de acción -->
     <div class="col-span-full flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end pt-4 border-t border-gray-200">
-      <ClearButton type="button" @click="onReset" :disabled="isLoading || !hasChanges" variant="secondary" :text="'Reiniciar'" :icon="'reset'">
+      <ClearButton 
+        type="button" 
+        @click="onReset" 
+        :disabled="isLoading || !hasChanges" 
+        variant="secondary" 
+        :text="'Reset'" 
+        :icon="'reset'"
+      >
         <template #icon>
           <RefreshIcon class="w-4 h-4 mr-2" />
         </template>
       </ClearButton>
-      <SaveButton text="Actualizar Entidad" type="submit" :disabled="!canSubmit || isLoading || !hasChanges" :loading="isLoading" />
+      <SaveButton 
+        text="Update Entity" 
+        type="submit" 
+        :disabled="!canSubmit || isLoading || !hasChanges" 
+        :loading="isLoading" 
+      />
     </div>
 
-    <!-- Notificación -->
     <div v-if="notification.visible" ref="notificationContainer" class="col-span-full">
       <Notification
         :visible="true"
@@ -41,33 +66,30 @@
         <template v-if="notification.type === 'success' && updatedEntity" #content>
           <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
             <div class="space-y-4">
-              <!-- Información principal de la entidad -->
               <div class="mb-4 pb-3 border-b border-gray-100">
                 <h3 class="text-xl font-bold text-gray-900 mb-2">{{ updatedEntity.name }}</h3>
                 <p class="text-gray-600">
-                  <span class="font-medium">Código:</span>
+                  <span class="font-medium">Code:</span>
                   <span class="font-mono font-bold text-gray-800 ml-1">{{ updatedEntity.entity_code }}</span>
                 </p>
               </div>
 
-              <!-- Detalles en vertical -->
               <div class="space-y-4 text-sm">
                 <div>
-                  <span class="text-gray-500 font-medium block mb-1">Estado:</span>
+                  <span class="text-gray-500 font-medium block mb-1">Status:</span>
                   <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
                     :class="updatedEntity.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                    {{ updatedEntity.is_active ? 'Activo' : 'Inactivo' }}
+                    {{ updatedEntity.is_active ? 'Active' : 'Inactive' }}
                   </span>
                 </div>
                 <div>
-                  <span class="text-gray-500 font-medium block mb-1">Última actualización:</span>
+                  <span class="text-gray-500 font-medium block mb-1">Last Update:</span>
                   <p class="text-gray-800 font-semibold">{{ formatDate(updatedEntity.updated_at) }}</p>
                 </div>
               </div>
 
-              <!-- Observaciones -->
               <div v-if="updatedEntity.notes">
-                <span class="text-gray-500 font-medium block mb-2">Observaciones:</span>
+                <span class="text-gray-500 font-medium block mb-2">Observations:</span>
                 <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ updatedEntity.notes }}</p>
               </div>
             </div>
@@ -76,10 +98,12 @@
       </Notification>
     </div>
 
-    <!-- Alerta de Validación -->
-    <ValidationAlert :visible="validationState.showValidationError && validationState.hasAttemptedSubmit" :errors="validationErrors" />
+    <ValidationAlert 
+      :visible="validationState.showValidationError && validationState.hasAttemptedSubmit" 
+      :errors="validationErrors" 
+    />
   </form>
- </template>
+</template>
 
 <script setup lang="ts">
 import { reactive, computed, watch, ref, nextTick } from 'vue'
@@ -90,12 +114,13 @@ import { useEntityEdition } from '../../composables/useEntityEdition'
 import type { EntityEditFormModel, EntityUpdateResponse } from '../../types/entity.types'
 import { RefreshIcon } from '@/assets/icons'
 
+// Props and emits
 const props = defineProps<{ usuario: any; usuarioActualizado: boolean; mensajeExito: string }>()
 const emit = defineEmits<{ (e: 'usuario-actualizado', payload: any): void; (e: 'cancelar'): void }>()
 
+// Composable for backend operations
 const {
   state,
-  // isLoadingEntity, // eliminado: no se usa directamente
   codeValidationError,
   originalEntityData,
   canSubmit,
@@ -105,27 +130,60 @@ const {
   setInitialData,
   resetToOriginal,
   clearState,
-  // clearMessages, // eliminado: no usado aquí
   hasChangesFactory
 } = useEntityEdition()
 
+// Refs and reactive state
 const isLoading = computed(() => state.isLoading)
-
-// Notificación
 const notificationContainer = ref<HTMLElement | null>(null)
+const updatedEntity = ref<EntityUpdateResponse | null>(null)
+
 const notification = reactive({
   visible: false,
   type: 'success' as 'success' | 'error' | 'warning' | 'info',
   title: '',
   message: ''
 })
-const updatedEntity = ref<EntityUpdateResponse | null>(null)
+
+const localModel = reactive<EntityEditFormModel>({
+  id: '',
+  entityName: '',
+  entityCode: '',
+  notes: '',
+  isActive: true
+})
+
+const formErrors = reactive({
+  entityName: '',
+  entityCode: '',
+  notes: ''
+})
+
+const validationState = reactive({ 
+  showValidationError: false, 
+  hasAttemptedSubmit: false 
+})
+
+// Computed properties
+const validationErrors = computed(() => {
+  if (!validationState.hasAttemptedSubmit) return []
+  const errors: string[] = []
+  if (!localModel.entityName || formErrors.entityName) errors.push('Valid name required')
+  if (!localModel.entityCode || formErrors.entityCode) errors.push('Valid code required')
+  if (formErrors.notes) errors.push('Valid observations required')
+  return errors
+})
+
+const hasChanges = computed(() => hasChangesFactory(localModel))
+
+// Helper functions
 const showNotification = (type: typeof notification.type, title: string, message: string) => {
   notification.type = type
   notification.title = title
   notification.message = message
   notification.visible = true
 }
+
 const scrollToNotification = async () => {
   await nextTick()
   if (notificationContainer.value) {
@@ -133,110 +191,89 @@ const scrollToNotification = async () => {
   }
 }
 
-// Función para formatear fecha
 const formatDate = (dateString: string): string => {
   try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     })
-  } catch {
-    return 'Fecha no disponible'
-  }
+  } catch { return 'Date not available' }
 }
 
-const localModel = reactive<EntityEditFormModel>({
-  id: '',
-  EntidadName: '',
-  EntidadCode: '',
-  observaciones: '',
-  isActive: true
-})
+const clearFormErrors = () => Object.keys(formErrors).forEach(k => (formErrors as any)[k] = '')
 
-const formErrors = reactive({
-  EntidadName: '',
-  EntidadCode: '',
-  observaciones: ''
-})
-
-const validationState = reactive({ showValidationError: false, hasAttemptedSubmit: false })
-
-const validationErrors = computed(() => {
-  if (!validationState.hasAttemptedSubmit) return []
-  const errors: string[] = []
-  if (!localModel.EntidadName || formErrors.EntidadName) errors.push('Nombre válido requerido')
-  if (!localModel.EntidadCode || formErrors.EntidadCode) errors.push('Código válido requerido')
-  if (formErrors.observaciones) errors.push('Observaciones válidas requeridas')
-  return errors
-})
-
-const hasChanges = computed(() => hasChangesFactory(localModel))
-
+// Validation functions
 const validateCode = async () => {
-  formErrors.EntidadCode = ''
-  if (!localModel.EntidadCode?.trim()) { formErrors.EntidadCode = 'El código es requerido'; return }
-  if (localModel.EntidadCode.length > 20) { formErrors.EntidadCode = 'Máximo 20 caracteres'; return }
-  if (!/^[A-Z0-9_-]+$/i.test(localModel.EntidadCode)) { formErrors.EntidadCode = 'Solo letras, números, guiones y guiones bajos'; return }
-  const originalCode = originalEntityData.value?.EntidadCode
-  await checkCodeAvailability(localModel.EntidadCode, originalCode)
-  if (codeValidationError.value) formErrors.EntidadCode = codeValidationError.value
+  formErrors.entityCode = ''
+  if (!localModel.entityCode?.trim()) { formErrors.entityCode = 'Code is required'; return }
+  if (localModel.entityCode.length > 20) { formErrors.entityCode = 'Maximum 20 characters'; return }
+  if (!/^[A-Z0-9_-]+$/i.test(localModel.entityCode)) { formErrors.entityCode = 'Only letters, numbers, hyphens and underscores'; return }
+  const originalCode = originalEntityData.value?.entityCode
+  await checkCodeAvailability(localModel.entityCode, originalCode)
+  if (codeValidationError.value) formErrors.entityCode = codeValidationError.value
 }
 
-const clearFormErrors = () => { Object.keys(formErrors).forEach(k => { (formErrors as any)[k] = '' }) }
-
+// Form submission
 const submit = async () => {
   validationState.hasAttemptedSubmit = true
   clearFormErrors()
   const validation = validateForm(localModel)
-  if (!validation.isValid) { Object.assign(formErrors, validation.errors); validationState.showValidationError = true; return }
+  if (!validation.isValid) { 
+    Object.assign(formErrors, validation.errors)
+    validationState.showValidationError = true
+    return 
+  }
   validationState.showValidationError = false
   try {
     const result = await updateEntity(localModel)
     if (result.success && result.data) {
-  // result.data viene del servicio de actualización (EntityUpdateResponse)
-  updatedEntity.value = result.data as EntityUpdateResponse
-      showNotification('success', '¡Entidad Actualizada Exitosamente!', '')
+      updatedEntity.value = result.data as EntityUpdateResponse
+      showNotification('success', 'Entity Updated Successfully!', '')
       await scrollToNotification()
-      emit('usuario-actualizado', { ...result.data, nombre: result.data.name, codigo: result.data.entity_code, tipo: 'entidad' })
+      emit('usuario-actualizado', { 
+        ...result.data, 
+        nombre: result.data.name, 
+        codigo: result.data.entity_code, 
+        tipo: 'entidad' 
+      })
     } else {
-      showNotification('error', 'Error al Actualizar Entidad', 'No se pudo actualizar la entidad')
+      showNotification('error', 'Error Updating Entity', 'Could not update entity')
     }
   } catch (error: any) {
-    showNotification('error', 'Error al Actualizar Entidad', error.message || 'Error inesperado')
+    showNotification('error', 'Error Updating Entity', error.message || 'Unexpected error')
   }
 }
 
+// Form reset functions
 const onReset = () => {
   const original = resetToOriginal()
-  if (original) { Object.assign(localModel, original); clearFormErrors(); validationState.hasAttemptedSubmit = false; validationState.showValidationError = false }
+  if (original) { 
+    Object.assign(localModel, original)
+    clearFormErrors()
+    validationState.hasAttemptedSubmit = false
+    validationState.showValidationError = false 
+  }
 }
 
-
-
-// Normalizador para tolerar cambios de naming en backend
+// Data normalization for backend compatibility
 const normalizeEntity = (raw: any): EntityEditFormModel | null => {
   if (!raw) return null
-  const EntidadName = raw.EntidadName || raw.entidadName || raw.nombre || raw.name || ''
-  const EntidadCode = raw.EntidadCode || raw.entidadCode || raw.codigo || raw.code || ''
-  const observaciones = raw.observaciones || raw.observations || raw.notes || ''
-  const isActive =
-    raw.isActive !== undefined ? raw.isActive :
+  const entityName = raw.EntidadName || raw.entidadName || raw.nombre || raw.name || ''
+  const entityCode = raw.EntidadCode || raw.entidadCode || raw.codigo || raw.code || ''
+  const notes = raw.observaciones || raw.observations || raw.notes || ''
+  const isActive = raw.isActive !== undefined ? raw.isActive :
     raw.is_active !== undefined ? raw.is_active :
     raw.activo !== undefined ? raw.activo : true
-  const id = raw.id || raw._id || EntidadCode
+  const id = raw.id || raw._id || entityCode
   return {
     id: id,
-    EntidadName: String(EntidadName),
-    EntidadCode: String(EntidadCode),
-    observaciones: String(observaciones),
+    entityName: String(entityName),
+    entityCode: String(entityCode),
+    notes: String(notes),
     isActive: !!isActive
   }
 }
 
+// Watchers
 watch(
   () => props.usuario,
   (u) => {

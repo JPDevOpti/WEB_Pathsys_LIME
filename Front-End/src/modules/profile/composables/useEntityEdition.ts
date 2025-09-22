@@ -3,26 +3,37 @@ import { entityEditService } from '../services/entityEditService'
 import type {
   EntityEditFormModel,
   EntityEditionState,
-  EntityEditFormValidation
+  EntityEditFormValidation,
+  EntityUpdateResponse
 } from '../types/entity.types'
 
 export function useEntityEdition() {
-  const state = reactive<EntityEditionState>({ isLoading: false, isSuccess: false, error: '', successMessage: '' })
+  // Reactive state
+  const state = reactive<EntityEditionState>({ 
+    isLoading: false, 
+    isSuccess: false, 
+    error: '', 
+    successMessage: '' 
+  })
+  
   const isCheckingCode = ref(false)
   const isLoadingEntity = ref(false)
   const codeValidationError = ref('')
   const originalEntityData = ref<EntityEditFormModel | null>(null)
 
+  // Computed properties
   const canSubmit = computed(() => !state.isLoading && !isCheckingCode.value && !isLoadingEntity.value)
 
+  // Form validation
   const validateForm = (formData: EntityEditFormModel): EntityEditFormValidation => {
     const errors: EntityEditFormValidation['errors'] = {}
-    if (!formData.entityName?.trim()) errors.entityName = 'El nombre es requerido'
-    if (!formData.entityCode?.trim()) errors.entityCode = 'El código es requerido'
-    if (formData.notes && formData.notes.length > 500) errors.notes = 'Máximo 500 caracteres'
+    if (!formData.entityName?.trim()) errors.entityName = 'Name is required'
+    if (!formData.entityCode?.trim()) errors.entityCode = 'Code is required'
+    if (formData.notes && formData.notes.length > 500) errors.notes = 'Maximum 500 characters'
     return { isValid: Object.keys(errors).length === 0, errors }
   }
 
+  // Load entity for editing
   const loadEntityForEdition = async (code: string) => {
     isLoadingEntity.value = true
     state.error = ''
@@ -31,13 +42,14 @@ export function useEntityEdition() {
       originalEntityData.value = { ...data }
       return { success: true, data }
     } catch (e: any) {
-      state.error = e.message || 'Error al cargar la entidad'
+      state.error = e.message || 'Error loading entity'
       return { success: false }
     } finally {
       isLoadingEntity.value = false
     }
   }
 
+  // Code availability check
   const checkCodeAvailability = async (code: string, originalCode?: string) => {
     if (!code?.trim()) return true
     isCheckingCode.value = true
@@ -45,18 +57,19 @@ export function useEntityEdition() {
     try {
       const exists = await entityEditService.checkCodeExists(code.trim(), originalCode)
       if (exists) {
-        codeValidationError.value = 'Este código ya está en uso'
+        codeValidationError.value = 'This code is already in use'
         return false
       }
       return true
     } catch {
-      codeValidationError.value = 'Error al verificar el código'
+      codeValidationError.value = 'Error checking code availability'
       return false
     } finally {
       isCheckingCode.value = false
     }
   }
 
+  // Check for changes
   const hasChangesFactory = (current: EntityEditFormModel) => {
     if (!originalEntityData.value) return false
     return (
@@ -67,9 +80,7 @@ export function useEntityEdition() {
     )
   }
 
-  /**
-   * Normalizar datos del formulario para que sean compatibles con el backend (snake_case)
-   */
+  // Data normalization for backend compatibility
   const normalizeEntityData = (formData: EntityEditFormModel) => {
     return {
       name: formData.entityName?.trim() || '',
@@ -79,9 +90,10 @@ export function useEntityEdition() {
     }
   }
 
+  // Entity update
   const updateEntity = async (formData: EntityEditFormModel) => {
     if (!originalEntityData.value) {
-      state.error = 'No se han cargado los datos originales'
+      state.error = 'Original data not loaded'
       return { success: false }
     }
     state.error = ''
@@ -97,41 +109,61 @@ export function useEntityEdition() {
     if (formData.entityCode !== originalEntityData.value.entityCode) {
       const available = await checkCodeAvailability(formData.entityCode, originalEntityData.value.entityCode)
       if (!available) {
-        state.error = codeValidationError.value || 'Código no disponible'
+        state.error = codeValidationError.value || 'Code not available'
         return { success: false }
       }
     }
 
     state.isLoading = true
     try {
-      // Preparar datos para actualización normalizados al formato del backend
       const updateData = normalizeEntityData(formData)
+      const response = await entityEditService.updateByCode(originalEntityData.value.entityCode, updateData)
       
-      // Enviar al backend usando el código original
-      const response = await entityEditService.updateByCode(originalEntityData.value.EntidadCode, updateData)
-      
+      // Update original data with response
       originalEntityData.value = {
         id: response.id,
-        EntidadName: response.entidad_name,
-        EntidadCode: response.entidad_code,
-        observaciones: response.observaciones,
+        entityName: response.name,
+        entityCode: response.entity_code,
+        notes: response.notes,
         isActive: response.is_active
       }
+      
       state.isSuccess = true
-      state.successMessage = `Entidad "${response.entidad_name}" actualizada exitosamente`
+      state.successMessage = `Entity "${response.name}" updated successfully`
       return { success: true, data: response }
     } catch (e: any) {
-      state.error = e.message || 'Error al actualizar la entidad'
+      state.error = e.message || 'Error updating entity'
       return { success: false }
     } finally {
       state.isLoading = false
     }
   }
 
-  const setInitialData = (data: EntityEditFormModel) => { originalEntityData.value = { ...data } }
-  const resetToOriginal = (): EntityEditFormModel | null => originalEntityData.value ? { ...originalEntityData.value } : null
-  const clearState = () => { state.isLoading = false; state.isSuccess = false; state.error = ''; state.successMessage=''; isCheckingCode.value=false; isLoadingEntity.value=false; codeValidationError.value=''; originalEntityData.value=null }
-  const clearMessages = () => { state.error=''; state.successMessage=''; state.isSuccess=false; codeValidationError.value='' }
+  // State management
+  const setInitialData = (data: EntityEditFormModel) => { 
+    originalEntityData.value = { ...data } 
+  }
+  
+  const resetToOriginal = (): EntityEditFormModel | null => 
+    originalEntityData.value ? { ...originalEntityData.value } : null
+  
+  const clearState = () => { 
+    state.isLoading = false
+    state.isSuccess = false
+    state.error = ''
+    state.successMessage = ''
+    isCheckingCode.value = false
+    isLoadingEntity.value = false
+    codeValidationError.value = ''
+    originalEntityData.value = null
+  }
+  
+  const clearMessages = () => { 
+    state.error = ''
+    state.successMessage = ''
+    state.isSuccess = false
+    codeValidationError.value = ''
+  }
 
   return {
     state,
@@ -140,7 +172,6 @@ export function useEntityEdition() {
     codeValidationError: readonly(codeValidationError),
     originalEntityData: readonly(originalEntityData),
     canSubmit,
-
     validateForm,
     loadEntityForEdition,
     checkCodeAvailability,
@@ -153,6 +184,9 @@ export function useEntityEdition() {
   }
 }
 
-function readonly<T>(ref: import('vue').Ref<T>) { return computed(() => ref.value) }
+// Helper for readonly refs
+function readonly<T>(ref: import('vue').Ref<T>) { 
+  return computed(() => ref.value) 
+}
 
 
