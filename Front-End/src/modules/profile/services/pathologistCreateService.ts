@@ -1,38 +1,40 @@
 import { apiClient } from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
-import type { 
-  PathologistCreateRequest, 
-  PathologistCreateResponse
-} from '../types/pathologist.types'
+import type { PathologistCreateRequest, PathologistCreateResponse } from '../types/pathologist.types'
 
-/**
- * Servicio para la creación y gestión de patólogos
- */
+// Service responsible for creating pathologists and performing simple availability checks
 class PathologistCreateService {
   private readonly pathologistEndpoint = API_CONFIG.ENDPOINTS.PATHOLOGISTS
+  // Shared helpers
+  private readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  private trimOrEmpty = (v?: string) => (v ?? '').toString().trim()
+  private isEmailValid = (email: string) => this.EMAIL_REGEX.test(email)
 
-  /**
-   * Crear un nuevo patólogo (solo colección patólogos por ahora)
-   */
+  // Create a pathologist (backend returns response.data already via apiClient)
   async createPathologist(pathologistData: PathologistCreateRequest): Promise<PathologistCreateResponse> {
     try {
-      // Crear el patólogo en la colección patólogos
-      const response = await apiClient.post<PathologistCreateResponse>(
-        `${this.pathologistEndpoint}/`,
-        pathologistData
-      )
-
-      return response  // ✅ El apiClient ya devuelve response.data
+      // Normalize payload to expected backend format
+      const payload: PathologistCreateRequest = {
+        pathologist_name: this.trimOrEmpty(pathologistData.pathologist_name),
+        initials: this.trimOrEmpty(pathologistData.initials).toUpperCase(),
+        pathologist_code: this.trimOrEmpty(pathologistData.pathologist_code).toUpperCase(),
+        pathologist_email: this.trimOrEmpty(pathologistData.pathologist_email),
+        medical_license: this.trimOrEmpty(pathologistData.medical_license),
+        password: this.trimOrEmpty(pathologistData.password),
+        signature: this.trimOrEmpty(pathologistData.signature),
+        observations: this.trimOrEmpty(pathologistData.observations),
+        is_active: !!pathologistData.is_active
+      }
+      const response = await apiClient.post<PathologistCreateResponse>(`${this.pathologistEndpoint}/`, payload)
+      return response
     } catch (error: any) {
-      // Manejo específico de errores del backend
+      // Map common server errors to user-friendly messages
       if (error.response?.status === 409) {
-        // Error de datos duplicados (Conflict)
         const errorMessage = error.response.data?.detail || error.message || 'Datos duplicados'
         const customError = new Error(errorMessage) as any
-        customError.response = error.response // Preservar la respuesta original
+        customError.response = error.response
         throw customError
       } else if (error.response?.status === 400) {
-        // Error de datos duplicados (Bad Request)
         if (error.message?.includes('email')) {
           throw new Error('Ya existe un patólogo con este email')
         } else if (error.message?.includes('código') || error.message?.includes('code')) {
@@ -42,33 +44,19 @@ class PathologistCreateService {
         }
         throw new Error(error.message || 'Datos duplicados')
       } else if (error.response?.status === 422) {
-        // Error de validación
         const validationErrors = error.response.data?.detail
         if (Array.isArray(validationErrors)) {
+          // Build a single, readable validation error message
           const errorMessages = validationErrors.map((err: any) => {
             const field = err.loc?.[err.loc.length - 1] || 'campo'
             let fieldName = field
-            
-            // Traducir nombres de campos
             switch (field) {
-              case 'patologoCode':
-                fieldName = 'Código del patólogo'
-                break
-              case 'patologoName':
-                fieldName = 'Nombre del patólogo'
-                break
-              case 'PatologoEmail':
-                fieldName = 'Email'
-                break
-              case 'registro_medico':
-                fieldName = 'Registro médico'
-                break
-              case 'InicialesPatologo':
-                fieldName = 'Iniciales'
-                break
+              case 'pathologist_code': fieldName = 'Código del patólogo'; break
+              case 'pathologist_name': fieldName = 'Nombre del patólogo'; break
+              case 'pathologist_email': fieldName = 'Email'; break
+              case 'medical_license': fieldName = 'Registro médico'; break
+              case 'initials': fieldName = 'Iniciales'; break
             }
-            
-            // Traducir mensajes de error
             let message = err.msg
             if (message.includes('String should have at most')) {
               const maxChars = message.match(/\d+/)?.[0]
@@ -81,124 +69,96 @@ class PathologistCreateService {
             } else if (message.includes('value is not a valid email')) {
               message = 'debe tener un formato de email válido'
             }
-            
             return `${fieldName} ${message}`
           }).join(', ')
           throw new Error(errorMessages)
         }
         throw new Error('Datos inválidos en el formulario')
       } else {
-        // Error genérico
         throw new Error(error.message || 'Error al crear el patólogo')
       }
     }
   }
 
-  /**
-   * Verificar si un código de patólogo ya existe
-   */
+  // Existence checks (simple best-effort calls used for UX prevalidation)
   async checkCodeExists(patologoCode: string): Promise<boolean> {
     try {
-      await apiClient.get(`${this.pathologistEndpoint}/${patologoCode}`)
-      return true // Si no lanza error, el código existe
+      const code = this.trimOrEmpty(patologoCode)
+      if (!code) return false
+      await apiClient.get(`${this.pathologistEndpoint}/${code}`)
+      return true
     } catch (error: any) {
       if (error.response?.status === 404) {
-        return false // Código no existe, está disponible
+        return false
       }
-      // Para otros errores, asumir que existe para evitar duplicados
       return true
     }
   }
 
-  /**
-   * Verificar si un email ya existe (usando búsqueda de patólogos)
-   */
   async checkEmailExists(email: string): Promise<boolean> {
     try {
-      const response = await apiClient.get(`${this.pathologistEndpoint}/search?q=${email}`)
-      // Si encuentra resultados, el email existe
-      return response.patologos && response.patologos.length > 0
+      const normalized = this.trimOrEmpty(email)
+      if (!normalized || !this.isEmailValid(normalized)) return false
+      const response: any = await apiClient.get(`${this.pathologistEndpoint}/search`, { params: { q: normalized, limit: 1 } })
+      const list = Array.isArray(response) ? response : response?.data
+      return Array.isArray(list) && list.length > 0
     } catch (error: any) {
       if (error.response?.status === 404) {
-        return false // Email no existe, está disponible
+        return false
       }
-      // Para otros errores, asumir que NO existe para permitir continuar
       return false
     }
   }
 
-  /**
-   * Verificar si un registro médico ya existe
-   */
   async checkMedicalLicenseExists(registro_medico: string): Promise<boolean> {
     try {
-      const response = await apiClient.get(`${this.pathologistEndpoint}/search?q=${registro_medico}`)
-      // Si encuentra resultados, el registro existe
-      return response.patologos && response.patologos.length > 0
+      const license = this.trimOrEmpty(registro_medico)
+      if (!license) return false
+      const response: any = await apiClient.get(`${this.pathologistEndpoint}/search`, { params: { q: license, limit: 1 } })
+      const list = Array.isArray(response) ? response : response?.data
+      return Array.isArray(list) && list.length > 0
     } catch (error: any) {
       if (error.response?.status === 404) {
-        return false // Registro no existe, está disponible
+        return false
       }
-      // Para otros errores, asumir que NO existe para permitir continuar
       return false
     }
   }
 
-  /**
-   * Validar datos del formulario antes de enviar
-   */
+  // Client-side data validation used before sending to the API
   validatePathologistData(data: PathologistCreateRequest): { isValid: boolean; errors: string[] } {
     const errors: string[] = []
-
-    // Validar nombre del patólogo
-    if (!data.patologo_name?.trim()) {
+    if (!data.pathologist_name?.trim()) {
       errors.push('El nombre del patólogo es requerido')
-    } else if (data.patologo_name.length > 200) {
+    } else if (data.pathologist_name.length > 200) {
       errors.push('El nombre no puede tener más de 200 caracteres')
     }
-
-    // Validar iniciales
-    if (!data.iniciales_patologo?.trim()) {
+    if (!data.initials?.trim()) {
       errors.push('Las iniciales son requeridas')
-    } else if (data.iniciales_patologo.length > 10) {
+    } else if (data.initials.length > 10) {
       errors.push('Las iniciales no pueden tener más de 10 caracteres')
     }
-
-    // Validar código del patólogo
-    if (!data.patologo_code?.trim()) {
+    if (!data.pathologist_code?.trim()) {
       errors.push('El código del patólogo es requerido')
-    } else if (data.patologo_code.length > 10) {
+    } else if (data.pathologist_code.length > 10) {
       errors.push('El código no puede tener más de 10 caracteres')
     }
-
-    // Validar email
-    if (!data.patologo_email?.trim()) {
+    if (!data.pathologist_email?.trim()) {
       errors.push('El email es requerido')
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.patologo_email)) {
+    } else if (!this.isEmailValid(data.pathologist_email)) {
       errors.push('El email debe tener un formato válido')
     }
-
-    // Validar registro médico
-    if (!data.registro_medico?.trim()) {
+    if (!data.medical_license?.trim()) {
       errors.push('El registro médico es requerido')
-    } else if (data.registro_medico.length > 50) {
+    } else if (data.medical_license.length > 50) {
       errors.push('El registro médico no puede tener más de 50 caracteres')
     }
-
-    // La contraseña será validada en el frontend
-
-    // Validar observaciones (opcional pero con límite)
-    if (data.observaciones && data.observaciones.length > 500) {
+    if (data.observations && data.observations.length > 500) {
       errors.push('Las observaciones no pueden tener más de 500 caracteres')
     }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    }
+    return { isValid: errors.length === 0, errors }
   }
 }
 
-// Exportar instancia singleton
 export const pathologistCreateService = new PathologistCreateService()
 export default pathologistCreateService

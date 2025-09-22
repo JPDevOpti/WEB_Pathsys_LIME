@@ -1,10 +1,6 @@
-/**
- * Tipos específicos para la gestión de patólogos en el módulo profile
- */
+// Pathologist-specific types for the profile module
 
-/**
- * Modelo del formulario de creación de patólogos
- */
+// Creation form model (frontend camelCase)
 export interface PathologistFormModel {
   patologoName: string
   InicialesPatologo: string
@@ -14,27 +10,23 @@ export interface PathologistFormModel {
   password: string
   observaciones: string
   isActive: boolean
-  firma: string // Por defecto vacío
+  firma: string // Default empty
 }
 
-/**
- * Request para crear un nuevo patólogo (colección patólogos)
- */
+// Backend request to create a pathologist (snake_case)
 export interface PathologistCreateRequest {
   pathologist_name: string
   initials: string
   pathologist_code: string
   pathologist_email: string
   medical_license: string
-  password: string // Contraseña para crear el usuario asociado
+  password: string // Associated user password
   signature: string
   observations: string
   is_active: boolean
 }
 
-/**
- * Request para crear un usuario (colección auth)
- */
+// Backend request to create an auth user
 export interface UserCreateRequest {
   email: string
   password: string
@@ -43,9 +35,7 @@ export interface UserCreateRequest {
   activo: boolean
 }
 
-/**
- * Response de creación de patólogo
- */
+// Backend response after creating a pathologist
 export interface PathologistCreateResponse {
   id: string
   pathologist_name: string
@@ -60,9 +50,7 @@ export interface PathologistCreateResponse {
   updated_at?: string
 }
 
-/**
- * Response de creación de usuario
- */
+// Backend response after creating an auth user
 export interface UserCreateResponse {
   id: string
   email: string
@@ -72,9 +60,7 @@ export interface UserCreateResponse {
   fecha_creacion?: string
 }
 
-/**
- * Estado de la operación de creación
- */
+// Creation operation state (UI feedback)
 export interface PathologistCreationState {
   isLoading: boolean
   isSuccess: boolean
@@ -82,9 +68,7 @@ export interface PathologistCreationState {
   successMessage: string
 }
 
-/**
- * Resultado de validación del formulario
- */
+// Client-side form validation result
 export interface PathologistFormValidation {
   isValid: boolean
   errors: {
@@ -98,7 +82,7 @@ export interface PathologistFormValidation {
   }
 }
 
-// Edición
+// Edition (frontend edit form model)
 export interface PathologistEditFormModel {
   id: string
   patologoName: string

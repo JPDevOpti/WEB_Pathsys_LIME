@@ -2,48 +2,59 @@ import { apiClient } from '@/core/config/axios.config'
 import { API_CONFIG } from '@/core/config/api.config'
 import type { PathologistEditFormModel, PathologistUpdateRequest, PathologistUpdateResponse } from '../types/pathologist.types'
 
+// Result wrapper used by edit calls
 export interface PathologistEditResult {
   success: boolean
   data?: PathologistUpdateResponse
   error?: string
 }
 
+const trimOrEmpty = (v?: string) => (v ?? '').toString().trim()
+const unwrap = <T>(res: any): T => (res?.data ?? res)
+
 export const pathologistEditService = {
+  // Fetch pathologist by code
   async getByCode(code: string): Promise<PathologistEditResult> {
     try {
-      const res = await apiClient.get(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`)
-      // Normalizar la respuesta del backend (snake_case) al frontend (camelCase)
-      const normalizedData = this.normalizePathologistData(res)
+      const normalized = trimOrEmpty(code)
+      if (!normalized) return { success: false, error: 'Invalid code' }
+      const res = await apiClient.get(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${normalized}`)
+      const data = unwrap<PathologistUpdateResponse>(res)
+      const normalizedData = this.normalizePathologistData(data)
       return { success: true, data: normalizedData }
     } catch (e: any) {
       return { success: false, error: e.response?.data?.detail || e.message }
     }
   },
 
+  // Update pathologist by code
   async update(code: string, data: PathologistUpdateRequest): Promise<PathologistEditResult> {
     try {
-      const res = await apiClient.put(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${code}`, data)
-      // Normalizar la respuesta del backend (snake_case) al frontend (camelCase)
-      const normalizedData = this.normalizePathologistData(res)
+      const normalized = trimOrEmpty(code)
+      if (!normalized) return { success: false, error: 'Invalid code' }
+      const res = await apiClient.put(`${API_CONFIG.ENDPOINTS.PATHOLOGISTS}/${normalized}`, data)
+      const payload = unwrap<PathologistUpdateResponse>(res)
+      const normalizedData = this.normalizePathologistData(payload)
       return { success: true, data: normalizedData }
     } catch (e: any) {
       return { success: false, error: e.response?.data?.detail || e.message }
     }
   },
 
+  // Build backend payload from edit form (camelCase -> snake_case)
   prepareUpdateData(form: PathologistEditFormModel): PathologistUpdateRequest {
     return {
-      pathologist_name: form.patologoName.trim(),
-      initials: form.InicialesPatologo.trim(),
-      pathologist_email: form.PatologoEmail.trim(),
-      medical_license: form.registro_medico.trim(),
-      observations: form.observaciones?.trim() || '',
-      is_active: form.isActive,
-      ...(form.password && form.password.trim().length >= 6 ? { password: form.password } : {})
+      pathologist_name: trimOrEmpty(form.patologoName),
+      initials: trimOrEmpty(form.InicialesPatologo),
+      pathologist_email: trimOrEmpty(form.PatologoEmail),
+      medical_license: trimOrEmpty(form.registro_medico),
+      observations: trimOrEmpty(form.observaciones),
+      is_active: !!form.isActive,
+      ...(form.password && form.password.trim().length >= 6 ? { password: trimOrEmpty(form.password) } : {})
     }
   },
 
-  // Función para normalizar datos del backend (snake_case) al frontend (camelCase)
+  // Normalize backend response (snake_case) into our typed response
   normalizePathologistData(backendData: any): PathologistUpdateResponse {
     return {
       id: backendData.id || backendData._id,

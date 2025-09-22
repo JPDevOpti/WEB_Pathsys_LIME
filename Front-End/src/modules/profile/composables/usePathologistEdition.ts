@@ -1,21 +1,29 @@
 import { ref, computed } from 'vue'
 import pathologistEditService from '../services/pathologistEditService'
-import type { PathologistEditFormModel, PathologistUpdateResponse } from '../types/pathologist.types'
+import type { PathologistEditFormModel } from '../types/pathologist.types'
 
 export const usePathologistEdition = () => {
   const isLoading = ref(false)
   const original = ref<PathologistEditFormModel | null>(null)
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const isEmailValid = (email: string) => EMAIL_REGEX.test(email)
+  const trimOrEmpty = (v?: string) => (v ?? '').toString().trim()
 
   // Habilitar envío como en residentes: o validación completa, o solo contraseña válida
   const canSubmit = computed(() => true)
 
   const validateForm = (form: PathologistEditFormModel) => {
     const errors: Record<string, string> = {}
-    if (!form.patologoName?.trim()) errors.patologoName = 'El nombre es requerido'
-    if (!form.InicialesPatologo?.trim() || form.InicialesPatologo.trim().length < 2) errors.InicialesPatologo = 'Iniciales válidas requeridas'
-    if (!form.PatologoEmail?.trim()) errors.PatologoEmail = 'Email requerido'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.PatologoEmail)) errors.PatologoEmail = 'Email inválido'
-    if (!form.registro_medico?.trim()) errors.registro_medico = 'Registro médico requerido'
+    const name = trimOrEmpty(form.patologoName)
+    const initials = trimOrEmpty(form.InicialesPatologo)
+    const email = trimOrEmpty(form.PatologoEmail)
+    const license = trimOrEmpty(form.registro_medico)
+
+    if (!name) errors.patologoName = 'El nombre es requerido'
+    if (!initials || initials.length < 2) errors.InicialesPatologo = 'Iniciales válidas requeridas'
+    if (!email) errors.PatologoEmail = 'Email requerido'
+    else if (!isEmailValid(email)) errors.PatologoEmail = 'Email inválido'
+    if (!license) errors.registro_medico = 'Registro médico requerido'
     return { isValid: Object.keys(errors).length === 0, errors }
   }
 
@@ -23,17 +31,17 @@ export const usePathologistEdition = () => {
     isLoading.value = true
     try {
       const data = pathologistEditService.prepareUpdateData(form)
-      const res = await pathologistEditService.update(form.patologoCode, data)
+      const code = trimOrEmpty(form.patologoCode)
+      const res = await pathologistEditService.update(code, data)
       if (res.success && res.data) {
-        // Los datos ya vienen normalizados del servicio, convertir snake_case a camelCase para el frontend
         original.value = {
           id: res.data.id,
-          patologoName: res.data.patologo_name,
-          InicialesPatologo: res.data.iniciales_patologo || '',
-          patologoCode: res.data.patologo_code,
-          PatologoEmail: res.data.patologo_email,
-          registro_medico: res.data.registro_medico,
-          observaciones: res.data.observaciones || '',
+          patologoName: res.data.pathologist_name,
+          InicialesPatologo: res.data.initials || '',
+          patologoCode: res.data.pathologist_code,
+          PatologoEmail: res.data.pathologist_email,
+          registro_medico: res.data.medical_license,
+          observaciones: res.data.observations || '',
           isActive: res.data.is_active
         }
       }

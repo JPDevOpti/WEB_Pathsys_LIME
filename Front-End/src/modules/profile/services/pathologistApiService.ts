@@ -35,16 +35,20 @@ export interface PathologistUpdate {
 
 export class PathologistApiService {
   private static readonly BASE_URL = `${API_CONFIG.BASE_URL}${API_CONFIG.VERSION}/pathologists`
+  private static readonly logPrefix = '[PathologistApiService]'
+  private static trimOrEmpty(value?: string) { return (value ?? '').toString().trim() }
 
   /**
    * Obtener patólogo por código
    */
   static async getByCode(code: string): Promise<PathologistResponse | null> {
     try {
-      const pathologist = await apiClient.get<PathologistResponse>(`${this.BASE_URL}/${code}`)
-      return pathologist
+      const normalized = this.trimOrEmpty(code)
+      if (!normalized) return null
+      const res: any = await apiClient.get<PathologistResponse>(`${this.BASE_URL}/${normalized}`)
+      return res?.data ?? res ?? null
     } catch (error) {
-      console.error('Error al obtener patólogo:', error)
+      console.error(`${this.logPrefix} getByCode error:`, error)
       return null
     }
   }
@@ -54,23 +58,15 @@ export class PathologistApiService {
    */
   static async getByEmail(email: string): Promise<PathologistResponse | null> {
     try {
-      console.log('🔍 PathologistApiService.getByEmail - Buscando patólogo para:', email)
-      const pathologists = await apiClient.get<PathologistResponse[]>(`${this.BASE_URL}/search`, {
-        params: { q: email, limit: 1 }
+      const normalized = this.trimOrEmpty(email)
+      if (!normalized) return null
+      const res: any = await apiClient.get<PathologistResponse[]>(`${this.BASE_URL}/search`, {
+        params: { q: normalized, limit: 1 }
       })
-      
-      console.log('📋 PathologistApiService.getByEmail - Respuesta completa:', pathologists)
-      
-      // El endpoint devuelve un array directamente
-      if (Array.isArray(pathologists) && pathologists.length > 0) {
-        console.log('✅ PathologistApiService.getByEmail - Patólogo encontrado:', pathologists[0])
-        return pathologists[0] as PathologistResponse
-      }
-      
-      console.log('❌ PathologistApiService.getByEmail - No se encontraron patólogos')
-      return null
+      const list = Array.isArray(res) ? res : res?.data
+      return Array.isArray(list) && list.length > 0 ? list[0] : null
     } catch (error) {
-      console.error('❌ PathologistApiService.getByEmail - Error al buscar patólogo por email:', error)
+      console.error(`${this.logPrefix} getByEmail error:`, error)
       return null
     }
   }
@@ -80,10 +76,12 @@ export class PathologistApiService {
    */
   static async update(code: string, data: PathologistUpdate): Promise<PathologistResponse | null> {
     try {
-      const pathologist = await apiClient.put<PathologistResponse>(`${this.BASE_URL}/${code}`, data)
-      return pathologist
+      const normalized = this.trimOrEmpty(code)
+      if (!normalized) return null
+      const res: any = await apiClient.put<PathologistResponse>(`${this.BASE_URL}/${normalized}`, data)
+      return res?.data ?? res ?? null
     } catch (error) {
-      console.error('Error al actualizar patólogo:', error)
+      console.error(`${this.logPrefix} update error:`, error)
       throw error
     }
   }
@@ -93,10 +91,12 @@ export class PathologistApiService {
    */
   static async getSignature(code: string): Promise<SignatureResponse | null> {
     try {
-      const signature = await apiClient.get<SignatureResponse>(`${this.BASE_URL}/${code}/signature`)
-      return signature
+      const normalized = this.trimOrEmpty(code)
+      if (!normalized) return null
+      const res: any = await apiClient.get<SignatureResponse>(`${this.BASE_URL}/${normalized}/signature`)
+      return res?.data ?? res ?? null
     } catch (error) {
-      console.error('Error al obtener firma:', error)
+      console.error(`${this.logPrefix} getSignature error:`, error)
       return null
     }
   }
@@ -106,12 +106,13 @@ export class PathologistApiService {
    */
   static async updateSignature(code: string, signatureUrl: string): Promise<PathologistResponse | null> {
     try {
-      const pathologist = await apiClient.put<PathologistResponse>(`${this.BASE_URL}/${code}/signature`, {
-        signature: signatureUrl
-      })
-      return pathologist
+      const normalized = this.trimOrEmpty(code)
+      const sig = this.trimOrEmpty(signatureUrl)
+      if (!normalized || !sig) return null
+      const res: any = await apiClient.put<PathologistResponse>(`${this.BASE_URL}/${normalized}/signature`, { signature: sig })
+      return res?.data ?? res ?? null
     } catch (error) {
-      console.error('Error al actualizar firma:', error)
+      console.error(`${this.logPrefix} updateSignature error:`, error)
       throw error
     }
   }
@@ -121,21 +122,19 @@ export class PathologistApiService {
    */
   static async uploadSignature(code: string, file: File): Promise<PathologistResponse | null> {
     try {
+      const normalized = this.trimOrEmpty(code)
+      if (!normalized || !file) return null
       const formData = new FormData()
       formData.append('file', file)
 
-      const pathologist = await apiClient.put<PathologistResponse>(
-        `${this.BASE_URL}/${code}/upload-signature`,
+      const res: any = await apiClient.put<PathologistResponse>(
+        `${this.BASE_URL}/${normalized}/upload-signature`,
         formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       )
-      return pathologist
+      return res?.data ?? res ?? null
     } catch (error) {
-      console.error('Error al subir firma:', error)
+      console.error(`${this.logPrefix} uploadSignature error:`, error)
       throw error
     }
   }

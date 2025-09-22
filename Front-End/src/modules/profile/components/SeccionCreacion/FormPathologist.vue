@@ -62,6 +62,16 @@
       :error="formErrors.password"
       autocomplete="new-password" 
     />
+    <FormInputField 
+      class="col-span-full md:col-span-6" 
+      label="Confirmar contraseña" 
+      type="password" 
+      placeholder="••••••••" 
+      :model-value="(localModel as any).passwordConfirm || ''"
+      @update:model-value="val => ((localModel as any).passwordConfirm = val)"
+      :error="(formErrors as any).passwordConfirm"
+      autocomplete="new-password" 
+    />
 
     <!-- Observaciones -->
     <FormTextarea 
@@ -159,6 +169,7 @@
 </template>
 
 <script setup lang="ts">
+// Pathologist creation form: validates inputs, submits to API, and shows inline notifications
 import { reactive, computed, watch, nextTick, ref } from 'vue'
 import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
@@ -166,19 +177,19 @@ import { Notification, ValidationAlert } from '@/shared/components/feedback'
 import { usePathologistCreation } from '../../composables/usePathologistCreation'
 import type { PathologistFormModel, PathologistCreateResponse } from '../../types/pathologist.types'
 
-// Props y emits
+// Props and emits
 const modelValue = defineModel<PathologistFormModel>({ required: true })
 const emit = defineEmits<{ 
   (e: 'usuario-creado', payload: PathologistFormModel): void 
 }>()
 
-// Referencias
+// Refs
 const notificationContainer = ref<HTMLElement | null>(null)
 
-// Estado del patólogo creado
+// Created pathologist state
 const createdPathologist = ref<PathologistCreateResponse | null>(null)
 
-// Estado de notificación
+// Inline notification state
 const notification = reactive({
   visible: false,
   type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -186,13 +197,13 @@ const notification = reactive({
   message: ''
 })
 
-// Estado de validación
+// Validation state
 const validationState = reactive({
   showValidationError: false,
   hasAttemptedSubmit: false
 })
 
-// Composable para manejo de backend
+// Backend composable for validations and API calls
 const {
   state,
   codeValidationError,
@@ -207,15 +218,16 @@ const {
   clearMessages
 } = usePathologistCreation()
 
-// Estado de loading local
+// Local loading state
 const isLoading = ref(false)
 
-// Modelo local del formulario
+// Local form model
 const localModel = reactive<PathologistFormModel>({ 
   ...modelValue.value
 })
+;(localModel as any).passwordConfirm = ''
 
-// Errores del formulario
+// Field-level errors
 const formErrors = reactive({
   patologoName: '',
   InicialesPatologo: '',
@@ -223,46 +235,42 @@ const formErrors = reactive({
   PatologoEmail: '',
   registro_medico: '',
   password: '',
+  passwordConfirm: '',
   observaciones: ''
 })
 
-// Lista de errores de validación para mostrar en la alerta
+// Aggregated banner errors from composable validation
 const validationErrors = computed(() => {
-  // Solo mostrar errores si se ha intentado enviar el formulario
   if (!validationState.hasAttemptedSubmit) {
     return []
   }
-  
-  // ✅ Usar la validación del composable para obtener errores estándar
   const validation = validateForm(localModel)
-  if (!validation.isValid) {
-    return Object.values(validation.errors)
-  }
-  
-  return []
+  const base = validation.isValid ? [] : Object.values(validation.errors)
+  const extra: string[] = []
+  if ((formErrors as any).password) extra.push((formErrors as any).password)
+  if ((formErrors as any).passwordConfirm) extra.push((formErrors as any).passwordConfirm)
+  return [...base, ...extra]
 })
 
-// Computed para verificar si se puede enviar
+// Submit availability (kept always enabled by product decision)
 const canSubmit = computed(() => {
-  // ✅ SIEMPRE HABILITADO: El botón de guardar nunca se bloquea
   return true
 })
 
-// Watchers
+// Sync incoming v-model into local model
 watch(() => modelValue.value, (newValue) => {
   Object.assign(localModel, newValue)
 }, { deep: true })
 
-// Watcher para detectar cambios en el modelo solo cuando el usuario está escribiendo
+// When user edits after a failed submit, clear previous messages/errors
 watch(() => localModel, () => {
-  // Solo reaccionar a cambios si el usuario ya intentó enviar Y hay una notificación activa
   if (validationState.hasAttemptedSubmit && !notification.visible) {
     clearMessages()
     clearFormErrors()
   }
 }, { deep: true })
 
-// Validación del código al perder el foco
+// Validation: code on blur
 const validateCode = async () => {
   formErrors.patologoCode = ''
   
@@ -276,14 +284,18 @@ const validateCode = async () => {
     return
   }
   
-  // Verificar disponibilidad en el backend
+  // Backend availability check
   await checkCodeAvailability(localModel.patologoCode)
   if (codeValidationError.value) {
     formErrors.patologoCode = codeValidationError.value
   }
 }
 
-// Validación del email al perder el foco
+// Reusable email regex and helpers
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const isEmailValid = (email: string) => EMAIL_REGEX.test(email)
+
+// Validation: email on blur
 const validateEmail = async () => {
   formErrors.PatologoEmail = ''
   
@@ -292,19 +304,19 @@ const validateEmail = async () => {
     return
   }
   
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(localModel.PatologoEmail)) {
+  if (!isEmailValid(localModel.PatologoEmail)) {
     formErrors.PatologoEmail = 'Formato de email inválido'
     return
   }
   
-  // Verificar disponibilidad en el backend
+  // Backend availability check
   await checkEmailAvailability(localModel.PatologoEmail)
   if (emailValidationError.value) {
     formErrors.PatologoEmail = emailValidationError.value
   }
 }
 
-// Validación del registro médico al perder el foco
+// Validation: medical license on blur
 const validateMedicalLicense = async () => {
   formErrors.registro_medico = ''
   
@@ -318,21 +330,21 @@ const validateMedicalLicense = async () => {
     return
   }
   
-  // Verificar disponibilidad en el backend
+  // Backend availability check
   await checkMedicalLicenseAvailability(localModel.registro_medico)
   if (licenseValidationError.value) {
     formErrors.registro_medico = licenseValidationError.value
   }
 }
 
-// Limpiar errores del formulario
+// Clear all field errors
 const clearFormErrors = () => {
   Object.keys(formErrors).forEach(key => {
     formErrors[key as keyof typeof formErrors] = ''
   })
 }
 
-// Funciones de notificación
+// Inline notification helpers
 const showNotification = (type: typeof notification.type, title: string, message: string) => {
   notification.type = type
   notification.title = title
@@ -340,7 +352,7 @@ const showNotification = (type: typeof notification.type, title: string, message
   notification.visible = true
 }
 
-// Función para limpiar solo la notificación
+// Clear only notification content
 const clearNotification = () => {
   notification.visible = false
   notification.title = ''
@@ -349,32 +361,27 @@ const clearNotification = () => {
 }
 
 const closeNotification = () => {
-  // Usar exactamente la misma función que el botón Limpiar
+  // Reuse same behavior as the Clear button
   onClear()
 }
 
-// Función para formatear fecha
+// Format a date string into a friendly Spanish representation
 const formatDate = (dateString: string | undefined): string => {
   if (!dateString) return 'Fecha no disponible'
   
   try {
-    // Manejar diferentes formatos de fecha del backend
     let date: Date
     
-    // Si es un string ISO o timestamp
     if (typeof dateString === 'string') {
-      // Si contiene 'T' es ISO string
       if (dateString.includes('T')) {
         date = new Date(dateString)
       } else {
-        // Si es solo fecha, agregar hora
         date = new Date(dateString + 'T00:00:00.000Z')
       }
     } else {
       date = new Date(dateString)
     }
     
-    // Verificar si la fecha es válida
     if (isNaN(date.getTime())) {
       return 'Fecha no disponible'
     }
@@ -391,7 +398,7 @@ const formatDate = (dateString: string | undefined): string => {
   }
 }
 
-// Hacer scroll a la notificación
+// Scroll helper to bring notification into view
 const scrollToNotification = async () => {
   await nextTick()
   if (notificationContainer.value) {
@@ -402,16 +409,33 @@ const scrollToNotification = async () => {
   }
 }
 
-// Envío del formulario
+// Submit handler: runs validation, calls API, and routes success/error to inline notification
 const submit = async () => {
   validationState.hasAttemptedSubmit = true
   clearFormErrors()
   clearNotification()
   
-  // Validación local primero
+  // Local password confirmation validation
+  const pwd = (localModel.password || '').trim()
+  const pwdConfirm = (((localModel as any).passwordConfirm as string) || '').trim()
+  if (!pwd) {
+    formErrors.password = 'La contraseña es requerida'
+  } else if (pwd.length < 6) {
+    formErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+  }
+  if (pwdConfirm && pwd !== pwdConfirm) {
+    ;(formErrors as any).passwordConfirm = 'Las contraseñas no coinciden'
+  } else if (!pwdConfirm) {
+    ;(formErrors as any).passwordConfirm = 'La confirmación de contraseña es requerida'
+  }
+  if (formErrors.password || (formErrors as any).passwordConfirm) {
+    validationState.showValidationError = true
+    return
+  }
+  
+  // Schema-level validation first
   const validation = validateForm(localModel)
   if (!validation.isValid) {
-    // ✅ SOLO usar la validación estándar, no mostrar errores en campos individuales
     validationState.showValidationError = true
     return
   }
@@ -420,14 +444,12 @@ const submit = async () => {
   isLoading.value = true
   
   try {
-    // Enviar al backend
+    // Create via backend
     const result = await createPathologist(localModel)
     
     if (result.success && result.data) {
       await handlePathologistCreated(result.data)
     } else {
-      // ✅ El composable ya maneja los errores y los coloca en state.error
-      // Solo necesitamos mostrar el error que ya está en el estado
       const errorMessage = state.error || 'Error desconocido al crear el patólogo'
       throw new Error(errorMessage)
     }
@@ -438,37 +460,28 @@ const submit = async () => {
   }
 }
 
-// Manejar la creación exitosa del patólogo
+// Handle success response
 const handlePathologistCreated = async (createdPathologistData: any) => {
-  // Almacenar información del patólogo creado
   createdPathologist.value = createdPathologistData
-  
-  // Mostrar notificación de éxito
   showNotification(
     'success',
     '¡Patólogo Registrado Exitosamente!',
     ''
   )
-  
-  // Emitir evento para compatibilidad
   emit('usuario-creado', { ...localModel })
-  
-  // Hacer scroll a la notificación
+  ;(localModel as any).passwordConfirm = ''
   await scrollToNotification()
 }
 
-// Manejar errores durante la creación
+// Handle API errors
 const handlePathologistCreationError = async (error: any) => {
   console.error('Error al guardar patólogo:', error)
   
   let errorMessage = 'No se pudo guardar el patólogo. Por favor, inténtelo nuevamente.'
   let errorTitle = 'Error al Guardar Patólogo'
   
-  // Determinar el tipo de error y mostrar mensaje específico
   if (error.message) {
     errorMessage = error.message
-    
-    // Personalizar el título según el tipo de error
     if (error.message.includes('email') || error.message.includes('código') || error.message.includes('registro')) {
       errorTitle = 'Datos Duplicados'
     } else if (error.message.includes('válido') || error.message.includes('requerido')) {
@@ -511,7 +524,7 @@ const handlePathologistCreationError = async (error: any) => {
   await scrollToNotification()
 }
 
-// Función para limpiar solo el formulario (para uso interno)
+// Reset only the form (internal use)
 const clearForm = () => {
   validationState.hasAttemptedSubmit = false
   validationState.showValidationError = false
@@ -529,15 +542,16 @@ const clearForm = () => {
     isActive: true,
     firma: ''
   })
+  ;(localModel as any).passwordConfirm = ''
 }
 
-// Limpiar formulario (función pública para el botón Limpiar)
+// Public Clear action (button)
 const onClear = () => {
   clearForm()
   clearNotification()
 }
 
-// Watcher para hacer scroll cuando aparece la notificación
+// Auto-scroll when notification becomes visible
 watch(
   () => notification.visible,
   (newValue) => {
