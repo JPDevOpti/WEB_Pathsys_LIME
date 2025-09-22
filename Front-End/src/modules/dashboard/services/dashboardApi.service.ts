@@ -14,16 +14,24 @@ class DashboardApiService {
 
 
   async getMetricasDashboard(): Promise<DashboardMetrics> {
-    return this._getMetricas(`${this.baseUrl.CASES}/estadisticas/mes-actual`, { no_cache: true })
+    return this._getMetricas(`${this.baseUrl.CASES}/statistics/metrics/general`, { no_cache: true })
   }
 
   async getMetricasPatologo(): Promise<DashboardMetrics> {
     try {
       const { useAuthStore } = await import('@/stores/auth.store')
       const authStore = useAuthStore()
-      const code = (authStore.user as any)?.patologo_code || ''
-      return this._getMetricas(`${this.baseUrl.CASES}/estadisticas/mes-actual/patologo`, { patologo_codigo: code, no_cache: true })
-    } catch {
+      const code = authStore.user?.pathologist_code || ''
+      
+      if (!code) {
+        // Si no hay código de patólogo, usar endpoint general
+        return this.getMetricasDashboard()
+      }
+      
+      // Usar endpoint específico de patólogo
+      return this._getMetricas(`${this.baseUrl.CASES}/statistics/metrics/pathologist/${code}`, { no_cache: true })
+    } catch (error) {
+      console.error('[Dashboard API] Error en getMetricasPatologo:', error)
       return this.getMetricasDashboard()
     }
   }
@@ -50,16 +58,27 @@ class DashboardApiService {
   }
 
   async getCasosPorMes(año?: number): Promise<CasosPorMesResponse> {
-    return this._getCasosPorMes(`${this.baseUrl.CASES}/estadisticas/por-mes/${año || new Date().getFullYear()}`, { no_cache: true })
+    // Usar nuevo endpoint de estadísticas
+    return this._getCasosPorMes(`${this.baseUrl.CASES}/statistics/dashboard/cases-by-month/${año || new Date().getFullYear()}`, { no_cache: true })
   }
 
   async getCasosPorMesPatologo(año?: number): Promise<CasosPorMesResponse> {
     try {
       const { useAuthStore } = await import('@/stores/auth.store')
       const authStore = useAuthStore()
-      const code = (authStore.user as any)?.patologo_code || ''
-      return this._getCasosPorMes(`${this.baseUrl.CASES}/estadisticas/por-mes/patologo/${año || new Date().getFullYear()}`, { patologo_codigo: code, no_cache: true })
-    } catch {
+      const code = authStore.user?.pathologist_code || ''
+      
+      if (!code) {
+        // Si no hay código de patólogo, usar endpoint general
+        return this.getCasosPorMes(año)
+      }
+      // Usar nuevo endpoint de estadísticas por patólogo
+      return this._getCasosPorMes(`${this.baseUrl.CASES}/statistics/dashboard/cases-by-month/pathologist/${año || new Date().getFullYear()}`, { 
+        pathologist_code: code, 
+        no_cache: true 
+      })
+    } catch (error) {
+      console.error('[Dashboard API] Error en getCasosPorMesPatologo:', error)
       return this.getCasosPorMes(año)
     }
   }
@@ -74,10 +93,19 @@ class DashboardApiService {
       const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
       const data = response?.data ?? response
       
-      if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) return defaultResponse
+      // Validar que la respuesta tenga la estructura esperada
+      if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) {
+        return defaultResponse
+      }
       
-      return { datos: data.datos, total: data.total || 0, año: data.año || añoActual }
-    } catch {
+      // Los nuevos endpoints ya retornan la estructura correcta
+      return { 
+        datos: data.datos, 
+        total: data.total || 0, 
+        año: data.año || añoActual,
+        meses: data.meses || ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+      }
+    } catch (error) {
       return defaultResponse
     }
   }
@@ -102,16 +130,24 @@ class DashboardApiService {
 
 
   async getEstadisticasOportunidad(): Promise<EstadisticasOportunidad> {
-    return this._getEstadisticasOportunidad(`${this.baseUrl.CASES}/estadisticas/oportunidad/mes-anterior`)
+    return this._getEstadisticasOportunidad(`${this.baseUrl.CASES}/statistics/opportunity/general`, { no_cache: true })
   }
 
   async getEstadisticasOportunidadPatologo(): Promise<EstadisticasOportunidad> {
     try {
       const { useAuthStore } = await import('@/stores/auth.store')
       const authStore = useAuthStore()
-      const patCode = (authStore.user as any)?.patologo_code || ''
-      return this._getEstadisticasOportunidad(`${this.baseUrl.CASES}/estadisticas/oportunidad/mes-anterior/patologo`, { patologo_codigo: patCode })
-    } catch {
+      const code = authStore.user?.pathologist_code || ''
+
+      if (!code) {
+        // Si no hay código de patólogo, usar endpoint general
+        return this.getEstadisticasOportunidad()
+      }
+
+      // Usar endpoint específico de patólogo
+      return this._getEstadisticasOportunidad(`${this.baseUrl.CASES}/statistics/opportunity/pathologist/${code}`, { no_cache: true })
+    } catch (error) {
+      console.error('[Dashboard API] Error en getEstadisticasOportunidadPatologo:', error)
       return this.getEstadisticasOportunidad()
     }
   }
@@ -127,17 +163,20 @@ class DashboardApiService {
       const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
       const data = response?.data ?? response
       
+      // La nueva estructura del backend tiene los datos dentro de 'oportunity'
+      const opportunityData = data?.oportunity || data
+      
       return {
-        porcentaje_oportunidad: typeof data?.porcentaje_oportunidad === 'number' ? data.porcentaje_oportunidad : 0,
-        cambio_porcentual: typeof data?.cambio_porcentual === 'number' ? data.cambio_porcentual : 0,
-        tiempo_promedio: typeof data?.tiempo_promedio === 'number' ? data.tiempo_promedio : 0,
-        casos_dentro_oportunidad: typeof data?.casos_dentro_oportunidad === 'number' ? data.casos_dentro_oportunidad : 0,
-        casos_fuera_oportunidad: typeof data?.casos_fuera_oportunidad === 'number' ? data.casos_fuera_oportunidad : 0,
-        total_casos_mes_anterior: typeof data?.total_casos_mes_anterior === 'number' ? data.total_casos_mes_anterior : 0,
+        porcentaje_oportunidad: typeof opportunityData?.porcentaje_oportunidad === 'number' ? opportunityData.porcentaje_oportunidad : 0,
+        cambio_porcentual: typeof opportunityData?.cambio_porcentual === 'number' ? opportunityData.cambio_porcentual : 0,
+        tiempo_promedio: typeof opportunityData?.tiempo_promedio === 'number' ? opportunityData.tiempo_promedio : 0,
+        casos_dentro_oportunidad: typeof opportunityData?.casos_dentro_oportunidad === 'number' ? opportunityData.casos_dentro_oportunidad : 0,
+        casos_fuera_oportunidad: typeof opportunityData?.casos_fuera_oportunidad === 'number' ? opportunityData.casos_fuera_oportunidad : 0,
+        total_casos_mes_anterior: typeof opportunityData?.total_casos_mes_anterior === 'number' ? opportunityData.total_casos_mes_anterior : 0,
         mes_anterior: {
-          nombre: data?.mes_anterior?.nombre || 'Mes anterior',
-          inicio: data?.mes_anterior?.inicio || '',
-          fin: data?.mes_anterior?.fin || ''
+          nombre: opportunityData?.mes_anterior?.nombre || 'Mes anterior',
+          inicio: opportunityData?.mes_anterior?.inicio || '',
+          fin: opportunityData?.mes_anterior?.fin || ''
         }
       }
     } catch {

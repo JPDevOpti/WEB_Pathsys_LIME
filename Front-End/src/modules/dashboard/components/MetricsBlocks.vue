@@ -9,7 +9,7 @@
         </div>
         <div>
           <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
-            {{ esPatologo ? 'Pacientes tratados este mes' : 'Pacientes ingresados el mes actual' }}
+            {{ esPatologo ? 'Pacientes atendidos este mes' : 'Pacientes ingresados este mes' }}
           </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
             {{ isLoading ? '...' : formatearNumero(pacientesMesActual) }}
@@ -32,7 +32,7 @@
         </div>
         <div>
           <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
-            {{ esPatologo ? 'Casos asignados este mes' : 'Casos ingresados mes el actual' }}
+            {{ esPatologo ? 'Casos asignados este mes' : 'Casos ingresados este mes' }}
           </span>
           <h4 class="mt-1 font-bold text-gray-800 text-lg transition-colors duration-300 group-hover:text-blue-600">
             {{ isLoading ? '...' : formatearNumero(casosMesActual) }}
@@ -66,7 +66,7 @@ import { useAuthStore } from '@/stores/auth.store'
 const authStore = useAuthStore()
 const { metricas, casosPorMes, loadingMetricas: isLoading, error, cargarMetricas, cargarCasosPorMes } = useDashboard()
 
-const esPatologo = computed(() => authStore.user?.rol === 'patologo' && authStore.userRole !== 'administrador')
+const esPatologo = computed(() => authStore.user?.role === 'pathologist' && authStore.userRole !== 'administrator')
 const pacientesMesActual = computed(() => Number(metricas.value?.pacientes?.mes_actual ?? 0))
 const pacientesCambio = computed(() => {
   const mesAnt = Number(metricas.value?.pacientes?.mes_anterior ?? 0)
@@ -79,37 +79,29 @@ const pacientesCambio = computed(() => {
 })
 
 const casosMesActual = computed(() => {
-  if (esPatologo.value) return Number(metricas.value?.casos?.mes_actual ?? 0)
-  const serie = casosPorMes.value?.datos
-  if (Array.isArray(serie) && serie.length === 12) {
-    const now = new Date()
-    const m = now.getMonth()
-    return serie[m] || 0
-  }
+  // Ahora siempre usamos las métricas del backend, ya que incluyen la lógica de patólogo
   return Number(metricas.value?.casos?.mes_actual ?? 0)
 })
 
 const casosCambio = computed(() => {
-  const backendCambio = Number(metricas.value?.casos?.cambio_porcentual ?? 0)
-  if (esPatologo.value) return backendCambio
-  if (backendCambio !== 0) return backendCambio
-  const serie = casosPorMes.value?.datos
-  if (Array.isArray(serie) && serie.length === 12) {
-    const now = new Date()
-    const m = now.getMonth()
-    if (m >= 2) {
-      const mesAnterior = serie[m - 1] || 0
-      const mesAnteriorAnterior = serie[m - 2] || 0
-      const denom = mesAnteriorAnterior === 0 ? 1 : mesAnteriorAnterior
-      return Math.round(((mesAnterior - mesAnteriorAnterior) / denom) * 100)
-    }
-  }
-  return backendCambio
+  // Ahora siempre usamos el cambio porcentual del backend
+  return Number(metricas.value?.casos?.cambio_porcentual ?? 0)
 })
 
 const cargarEstadisticas = async () => {
   if (!authStore.user) return
+  
+  // DEBUG: Log información del usuario
+  console.log('[MetricsBlocks] Usuario:', {
+    role: authStore.user?.role,
+    pathologist_code: authStore.user?.pathologist_code,
+    esPatologo: esPatologo.value
+  })
+  
   await Promise.all([cargarMetricas(esPatologo.value), cargarCasosPorMes(undefined, esPatologo.value)])
+  
+  // DEBUG: Log métricas recibidas
+  console.log('[MetricsBlocks] Métricas cargadas:', metricas.value)
 }
 
 watch(() => authStore.user, (newUser) => { if (newUser) cargarEstadisticas() }, { immediate: true })

@@ -138,7 +138,8 @@ const {
 } = useDashboard()
 
 const authStore = useAuthStore()
-const esPatologo = computed(() => authStore.user?.rol === 'patologo' && authStore.userRole !== 'administrador')
+// Alinear con el resto de la app: role === 'pathologist' y userRole !== 'administrator'
+const esPatologo = computed(() => authStore.user?.role === 'pathologist' && authStore.userRole !== 'administrator')
 
 const datosOportunidad = estadisticasOportunidad
 const chartReady = ref(false)
@@ -157,8 +158,13 @@ watch(datosOportunidad, (nuevosDatos) => {
 
 const cargarDatos = async () => {
   // Resolver rol antes de cargar
-  await cargarEstadisticasOportunidad(!!esPatologo.value)
+  await cargarEstadisticasOportunidad(esPatologo.value)
   await nextTick()
+  // DEBUG: Log de datos recibidos del backend
+  try {
+    // eslint-disable-next-line no-console
+    console.log('[OportunityPercentage] esPatologo:', esPatologo.value, 'datos:', estadisticasOportunidad.value)
+  } catch {}
   chartReady.value = true
 }
 

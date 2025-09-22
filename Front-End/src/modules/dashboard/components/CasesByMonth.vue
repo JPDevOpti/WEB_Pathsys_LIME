@@ -1,9 +1,14 @@
 <template>
   <Card class="overflow-hidden px-5 pt-5 sm:px-6 sm:pt-6">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-semibold text-gray-800">
-        {{ esPatologo ? 'Casos asignados por mes' : 'Casos ingresados por mes' }} ({{ anioActual }})
-      </h3>
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800">
+          {{ esPatologo ? 'Casos asignados por mes' : 'Casos ingresados por mes' }} ({{ anioActual }})
+        </h3>
+        <p class="text-xs text-gray-500 mt-1">
+          {{ esPatologo ? 'Datos específicos del patólogo' : 'Datos generales del laboratorio' }}
+        </p>
+      </div>
       <button @click="cargarEstadisticas(true)" :disabled="isLoading" class="p-2 text-gray-500 hover:text-blue-600 disabled:opacity-50 rounded-lg hover:bg-gray-100 transition-colors" title="Actualizar datos" aria-label="Actualizar datos">
         <svg class="w-4 h-4" :class="{ 'animate-spin': isLoading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -18,7 +23,12 @@
         <svg class="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
-        <p class="text-sm text-red-500">{{ localError }}</p>
+        <div class="text-center">
+          <p class="text-sm text-red-500">{{ localError }}</p>
+          <p class="text-xs text-gray-400 mt-1">
+            {{ esPatologo ? 'Endpoint: /statistics/dashboard/cases-by-month/pathologist' : 'Endpoint: /statistics/dashboard/cases-by-month' }}
+          </p>
+        </div>
         <button @click="cargarEstadisticas(true)" class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Intentar nuevamente</button>
       </div>
     </div>
@@ -62,7 +72,7 @@ const chartKey = ref(0)
 const loadingMessage = ref('Cargando estadísticas...')
 const localError = ref<string | null>(null)
 
-const esPatologo = computed(() => authStore.user?.rol === 'patologo' && authStore.userRole !== 'administrador')
+const esPatologo = computed(() => authStore.user?.role === 'pathologist' && authStore.userRole !== 'administrator')
 
 const series = computed(() => [{
   name: esPatologo.value ? 'Casos asignados' : 'Casos',
@@ -88,18 +98,15 @@ const cargarEstadisticas = async () => {
     localError.value = null
     loadingMessage.value = esPatologo.value ? 'Cargando casos asignados...' : 'Cargando casos del laboratorio...'
     chartReady.value = false
+    
+    
     await cargarCasosPorMes(anioActual.value, esPatologo.value)
-    // Log de depuración: datos crudos desde el backend y serie calculada
-    try {
-      // eslint-disable-next-line no-console
-      console.log('[Dashboard][CasesByMonth] casosPorMes:', JSON.stringify(casosPorMes.value))
-      // eslint-disable-next-line no-console
-      console.log('[Dashboard][CasesByMonth] series:', JSON.stringify(series.value))
-    } catch {}
+    
     await nextTick()
     chartReady.value = true
     chartKey.value++
   } catch (e: any) {
+    console.error('[CasesByMonth] Error al cargar estadísticas:', e)
     localError.value = e?.message || 'Error al cargar estadísticas de casos por mes'
     chartReady.value = false
   }

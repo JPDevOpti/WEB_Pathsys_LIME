@@ -26,6 +26,7 @@ from app.modules.cases.schemas.case import (
     CaseState
 )
 from app.modules.cases.services.case_service import CaseService
+from app.modules.cases.repositories.case_repository import CaseRepository
 from app.modules.patients.services.patient_service import PatientService
 from app.modules.entities.services.entity_service import EntityService
 from app.modules.pathologists.services.pathologist_service import PathologistService
@@ -467,13 +468,28 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
             try:
                 # Crear el caso usando el servicio
                 created_case = await case_service.create_case(case_create)
-                
+
+                # Ajustar la fecha de creación para distribuir los casos a lo largo del año
+                # Nota: El repositorio permite actualizar 'created_at' directamente
+                repo = CaseRepository(db)
+                await repo.update_by_case_code(created_case.case_code, {"created_at": fecha_creacion})
+
                 # Si el caso tiene patólogo asignado, actualizarlo
                 if assigned_pathologist:
                     from app.modules.cases.schemas.case import CaseUpdate
                     case_update = CaseUpdate(assigned_pathologist=assigned_pathologist)
                     await case_service.update_case(created_case.case_code, case_update)
-                
+
+                # Asignar fecha de firma para casos Por entregar o Completados
+                if estado_final in [CaseState.POR_ENTREGAR, CaseState.COMPLETADO]:
+                    # Diferencia aleatoria entre 1 y 10 días respecto a la fecha de creación
+                    dias_para_firma = random.randint(1, 10)
+                    fecha_firma = fecha_creacion + timedelta(days=dias_para_firma)
+                    if fecha_firma > today:
+                        fecha_firma = today
+                    # Actualizar directamente via repositorio para permitir signed_at
+                    await repo.update_by_case_code(created_case.case_code, {"signed_at": fecha_firma})
+
                 created += 1
                 medico_txt = requesting_physician if requesting_physician else 'sin médico'
                 reciente_txt = "RECIENTE" if es_caso_reciente else "ANTIGUO"

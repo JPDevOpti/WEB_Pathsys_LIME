@@ -14,6 +14,7 @@ class CaseRepository:
         await self.collection.create_index("state")
         await self.collection.create_index("created_at")
         await self.collection.create_index("assigned_pathologist.name")
+        await self.collection.create_index("assigned_pathologist.id")
         await self.collection.create_index("patient_info.entity_info.name")
         await self.collection.create_index("samples.tests.id")
         # Índice compuesto para búsquedas comunes

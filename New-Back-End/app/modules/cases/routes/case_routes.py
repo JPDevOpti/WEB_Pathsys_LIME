@@ -5,6 +5,7 @@ from app.config.database import get_database
 from app.modules.cases.schemas.case import CaseCreate, CaseUpdate, CaseResponse
 from app.modules.cases.services.case_service import CaseService
 from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
+from app.modules.auth.routes.auth_routes import get_current_user_id
 
 # Importar las rutas de resultado y firma
 from .result_routes import router as result_router
@@ -71,7 +72,8 @@ async def list_cases(
     test: Optional[str] = Query(None, description="Filtrar por prueba específica"),
     date_from: Optional[str] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
-    service: CaseService = Depends(get_service)
+    service: CaseService = Depends(get_service),
+    current_user_id: Optional[str] = Depends(get_current_user_id)
 ):
     try:
         return await service.list_cases(
@@ -83,7 +85,8 @@ async def list_cases(
             state=state,
             test=test,
             date_from=date_from,
-            date_to=date_to
+            date_to=date_to,
+            current_user_id=current_user_id
         )
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))

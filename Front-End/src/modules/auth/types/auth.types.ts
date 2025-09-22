@@ -21,6 +21,10 @@ export interface User {
   is_active: boolean
   name?: string
   administrator_code?: string
+  pathologist_code?: string
+  resident_code?: string
+  auxiliary_code?: string
+  billing_code?: string
   last_access?: string
 }
 

@@ -41,23 +41,24 @@ export function useDashboard() {
     }
   }
 
-  const cargarCasosPorMes = async (año?: number, esPatologo: boolean = false) => {
-    try {
-      loadingCasosPorMes.value = true
-      error.value = null
-      
-      if (esPatologo) {
-        casosPorMes.value = await dashboardApiService.getCasosPorMesPatologo(año)
-      } else {
-        casosPorMes.value = await dashboardApiService.getCasosPorMes(año)
-      }
-    } catch (err: any) {
-      error.value = err.message || 'Error al cargar estadísticas de casos por mes'
-      throw err
-    } finally {
-      loadingCasosPorMes.value = false
+const cargarCasosPorMes = async (año?: number, esPatologo: boolean = false) => {
+  try {
+    loadingCasosPorMes.value = true
+    error.value = null
+    
+    if (esPatologo) {
+      casosPorMes.value = await dashboardApiService.getCasosPorMesPatologo(año)
+    } else {
+      casosPorMes.value = await dashboardApiService.getCasosPorMes(año)
     }
+  } catch (err: any) {
+    console.error('[Dashboard] Error al cargar casos por mes:', err)
+    error.value = err.message || 'Error al cargar estadísticas de casos por mes'
+    throw err
+  } finally {
+    loadingCasosPorMes.value = false
   }
+}
 
   const cargarCasosUrgentes = async (filtros: FiltrosCasosUrgentes = {}) => {
     try {

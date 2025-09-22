@@ -337,26 +337,41 @@ const buscarPatologoUsuario = () => {
   const puedeTenerPatologo = isPatologo.value || authStore.userRole === 'administrador'
 
   if (puedeTenerPatologo && authStore.user && !selectedPathologist.value) {
-    // Usar solo el nombre disponible en el usuario
-    const nombreUsuario = authStore.user.nombre || ''
+    // 1) Preferir seleccionar por código si el usuario lo tiene
+    const codigoPatologoUsuario = (authStore.user as any).pathologist_code || (authStore.user as any).patologo_code
+    if (codigoPatologoUsuario && pathologists.value.length > 0) {
+      const porCodigo = pathologists.value.find(p => p.patologo_code === codigoPatologoUsuario)
+      if (porCodigo) {
+        selectedPathologist.value = porCodigo.patologo_code
+        emit('update:modelValue', porCodigo.patologo_code)
+        emit('pathologist-selected', porCodigo)
+        return
+      }
+    }
+
+    // 2) Si no hay código o no coincide, intentar por nombre con múltiples campos
+    const nombreUsuario =
+      (authStore.user as any).name ||
+      (authStore.user as any).username ||
+      (authStore.user as any).nombre ||
+      (authStore.user as any).nombres ||
+      (authStore.user as any).nombre_completo ||
+      (authStore.user as any).full_name ||
+      ''
 
     if (nombreUsuario && pathologists.value.length > 0) {
-      // Buscar patólogo que coincida con el nombre del usuario (búsqueda más flexible)
-      const nombreUsuarioLower = nombreUsuario.toLowerCase()
+      const nombreUsuarioLower = String(nombreUsuario).toLowerCase()
       const patologoEncontrado = pathologists.value.find(p => {
-        if (!p.nombre) return false
-        
+        if (!p?.nombre) return false
         const nombrePatologo = p.nombre.toLowerCase()
-        
-        // Buscar coincidencias exactas o parciales
-        return nombrePatologo.includes(nombreUsuarioLower) || 
-               nombreUsuarioLower.includes(nombrePatologo) ||
-               // Buscar por iniciales si están disponibles
-               (p.iniciales && p.iniciales.toLowerCase().includes(nombreUsuarioLower))
+        return (
+          nombrePatologo.includes(nombreUsuarioLower) ||
+          nombreUsuarioLower.includes(nombrePatologo) ||
+          (p.iniciales && p.iniciales.toLowerCase().includes(nombreUsuarioLower))
+        )
       })
 
       if (patologoEncontrado) {
-        // Establecer automáticamente el patólogo encontrado
         selectedPathologist.value = patologoEncontrado.patologo_code
         emit('update:modelValue', patologoEncontrado.patologo_code)
         emit('pathologist-selected', patologoEncontrado)

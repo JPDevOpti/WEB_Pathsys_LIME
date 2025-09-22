@@ -120,10 +120,12 @@ const entityCode = ref<string>('')
 // Computed para obtener el nombre del patólogo logueado
 const currentPathologistName = computed(() => {
   if (!isPatologo.value || !authStore.user) return null
-  
-  // Para patólogos, comparamos por NOMBRE
-  let userName = (authStore.user as any).username || // username tiene el nombre completo
-    authStore.user.nombre ||
+
+  // Para patólogos, comparamos por NOMBRE (priorizar campos del backend nuevo)
+  let userName =
+    (authStore.user as any).name ||
+    (authStore.user as any).username ||
+    (authStore.user as any).nombre ||
     (authStore.user as any).nombres ||
     (authStore.user as any).nombre_completo ||
     (authStore.user as any).full_name ||

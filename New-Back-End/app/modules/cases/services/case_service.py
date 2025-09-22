@@ -5,6 +5,7 @@ from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 from app.modules.cases.schemas.case import CaseCreate, CaseUpdate, CaseResponse
 from app.modules.cases.repositories.case_repository import CaseRepository
 from app.modules.cases.repositories.consecutive_repository import CaseConsecutiveRepository
+from bson import ObjectId
 
 
 class CaseService:
@@ -63,7 +64,8 @@ class CaseService:
         state: Optional[str] = None,
         test: Optional[str] = None,
         date_from: Optional[str] = None,
-        date_to: Optional[str] = None
+        date_to: Optional[str] = None,
+        current_user_id: Optional[str] = None
     ) -> List[CaseResponse]:
         """Listar casos con filtros opcionales"""
         await self.init_indexes()
@@ -80,9 +82,26 @@ class CaseService:
                 {"patient_info.patient_code": search_regex}
             ]
         
-        # Filtro por patólogo
+        # Filtro por patólogo explícito
         if pathologist:
             filters["assigned_pathologist.name"] = {"$regex": pathologist, "$options": "i"}
+        else:
+            # Si no se envía filtro de patólogo y el usuario autenticado es patólogo,
+            # restringir por defecto a sus últimos casos (100 por defecto en limit)
+            if current_user_id:
+                # Obtener usuario para conocer rol y pathologist_code (convertir a ObjectId)
+                try:
+                    oid = ObjectId(current_user_id)
+                except Exception:
+                    oid = None
+                user_doc = None
+                if oid is not None:
+                    user_doc = await self.db.users.find_one({"_id": oid, "is_active": True})
+                if user_doc and str(user_doc.get("role", "")).lower() == "pathologist":
+                    pathologist_code = user_doc.get("pathologist_code")
+                    if pathologist_code:
+                        # Filtrar por código de patólogo asignado
+                        filters["assigned_pathologist.id"] = pathologist_code
         
         # Filtro por entidad
         if entity:

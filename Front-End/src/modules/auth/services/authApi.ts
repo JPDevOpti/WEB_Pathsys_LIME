@@ -44,7 +44,11 @@ export class AuthApiService {
         role: backendUser.role,
         is_active: backendUser.is_active ?? true,
         name: backendUser.name,
-        administrator_code: backendUser.administrator_code
+        administrator_code: backendUser.administrator_code,
+        pathologist_code: backendUser.pathologist_code,
+        resident_code: backendUser.resident_code,
+        auxiliary_code: backendUser.auxiliary_code,
+        billing_code: backendUser.billing_code
       }
       return {
         access_token: backendToken.access_token,
@@ -85,7 +89,11 @@ export class AuthApiService {
         role: data.role,
         is_active: data.is_active ?? true,
         name: data.name,
-        administrator_code: data.administrator_code
+        administrator_code: data.administrator_code,
+        pathologist_code: data.pathologist_code,
+        resident_code: data.resident_code,
+        auxiliary_code: data.auxiliary_code,
+        billing_code: data.billing_code
       }
       return mapped
     } catch (error) {

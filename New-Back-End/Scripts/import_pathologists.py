@@ -121,14 +121,15 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                 skipped += 1
                 continue
             
+            # Generate default password for user creation
+            default_password = generate_default_password(raw_code, initials)
+            
             print(f"  [DRY-RUN] Would create pathologist: {raw_name}")
             print(f"    - Code: {raw_code}")
             print(f"    - Email: {email}")
             print(f"    - Initials: {initials}")
             print(f"    - Medical License: {registro_medico}")
-            
-            # Generate default password for user creation
-            default_password = generate_default_password(raw_code, initials)
+            print(f"    - Password: {default_password}")
             print(f"  [DRY-RUN] Would create user account: {raw_name}")
             print(f"    - Email: {email}")
             print(f"    - Role: pathologist")
@@ -183,6 +184,7 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                     continue
 
                 # Create payload using validation schema
+                default_password = generate_default_password(raw_code, initials)
                 payload = PathologistCreate(
                     pathologist_code=raw_code,
                     pathologist_name=raw_name,
@@ -192,6 +194,7 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                     is_active=True,
                     signature="",
                     observations=None,
+                    password=default_password
                 )
 
                 # Create pathologist

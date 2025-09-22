@@ -34,6 +34,10 @@ class AuthService:
             "role": user.get("role"),
             "is_active": user.get("is_active", True),
             "administrator_code": user.get("administrator_code"),
+            "pathologist_code": user.get("pathologist_code"),
+            "resident_code": user.get("resident_code"),
+            "auxiliary_code": user.get("auxiliary_code"),
+            "billing_code": user.get("billing_code"),
         }
 
         return {
@@ -56,6 +60,10 @@ class AuthService:
             "role": user.get("role"),
             "is_active": user.get("is_active", True),
             "administrator_code": user.get("administrator_code"),
+            "pathologist_code": user.get("pathologist_code"),
+            "resident_code": user.get("resident_code"),
+            "auxiliary_code": user.get("auxiliary_code"),
+            "billing_code": user.get("billing_code"),
         }
 
 

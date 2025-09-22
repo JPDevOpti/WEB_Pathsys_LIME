@@ -1,1 +1,0 @@
-"""Tests de integración para base de datos"""

@@ -1,1 +1,0 @@
-# Shared models for the application

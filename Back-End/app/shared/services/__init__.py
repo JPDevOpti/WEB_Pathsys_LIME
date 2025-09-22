@@ -1,1 +1,0 @@
-# Shared services for the application
