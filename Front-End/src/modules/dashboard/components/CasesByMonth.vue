@@ -1,4 +1,5 @@
 <template>
+  <!-- Monthly cases bar chart with refresh and states -->
   <Card class="overflow-hidden px-5 pt-5 sm:px-6 sm:pt-6">
     <div class="flex items-center justify-between mb-4">
       <div>
@@ -9,15 +10,18 @@
           {{ esPatologo ? 'Datos específicos del patólogo' : 'Datos generales del laboratorio' }}
         </p>
       </div>
-      <button @click="cargarEstadisticas(true)" :disabled="isLoading" class="p-2 text-gray-500 hover:text-blue-600 disabled:opacity-50 rounded-lg hover:bg-gray-100 transition-colors" title="Actualizar datos" aria-label="Actualizar datos">
+      <!-- Manual refresh button -->
+      <button @click="cargarEstadisticas()" :disabled="isLoading" class="p-2 text-gray-500 hover:text-blue-600 disabled:opacity-50 rounded-lg hover:bg-gray-100 transition-colors" title="Actualizar datos" aria-label="Actualizar datos">
         <svg class="w-4 h-4" :class="{ 'animate-spin': isLoading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
       </button>
     </div>
 
+    <!-- Loading state -->
     <OptimizedLoader v-if="isLoading" :message="loadingMessage" :show-pulse="true" size="md" />
 
+    <!-- Error state with retry and helpful endpoint hint -->
     <div v-else-if="localError" class="flex items-center justify-center py-8">
       <div class="flex flex-col items-center space-y-3">
         <svg class="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,10 +33,11 @@
             {{ esPatologo ? 'Endpoint: /statistics/dashboard/cases-by-month/pathologist' : 'Endpoint: /statistics/dashboard/cases-by-month' }}
           </p>
         </div>
-        <button @click="cargarEstadisticas(true)" class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Intentar nuevamente</button>
+        <button @click="cargarEstadisticas()" class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Intentar nuevamente</button>
       </div>
     </div>
 
+    <!-- Chart content or empty state -->
     <div v-else-if="totalCasosAño > 0" class="max-w-full overflow-x-auto custom-scrollbar">
       <div class="-ml-5 min-w-[650px] xl:min-w-full pl-2">
         <VueApexCharts v-if="chartReady" type="bar" height="180" :options="chartOptions" :series="series" :key="chartKey" />
@@ -72,13 +77,16 @@ const chartKey = ref(0)
 const loadingMessage = ref('Cargando estadísticas...')
 const localError = ref<string | null>(null)
 
+// Align with app-wide rule: pathologist role but not administrator
 const esPatologo = computed(() => authStore.user?.role === 'pathologist' && authStore.userRole !== 'administrator')
 
+// Bar series for 12 months
 const series = computed(() => [{
   name: esPatologo.value ? 'Casos asignados' : 'Casos',
   data: Array.isArray(casosPorMes.value?.datos) ? casosPorMes.value.datos : Array(12).fill(0)
 }])
 
+// Apex bar options (minimal toolbar, rounded bars)
 const chartOptions = ref({
   colors: ['#3D8D5B'],
   chart: { fontFamily: 'Outfit, sans-serif', type: 'bar', toolbar: { show: false }, animations: { enabled: true, easing: 'easeinout', speed: 800, animateGradually: { enabled: true, delay: 150 } } },
@@ -93,6 +101,7 @@ const chartOptions = ref({
   tooltip: { x: { show: false }, y: { formatter: (val: any) => val.toString() } }
 })
 
+// Load and render monthly cases chart data
 const cargarEstadisticas = async () => {
   try {
     localError.value = null
@@ -112,19 +121,24 @@ const cargarEstadisticas = async () => {
   }
 }
 
+// Auto-load and refresh when role changes or component is shown
 watch(esPatologo, () => cargarEstadisticas(), { immediate: true })
+
+// Global refresh handlers
+const refresh = () => cargarEstadisticas()
+
 onMounted(() => {
-  cargarEstadisticas()
-  const refresh = () => cargarEstadisticas()
   window.addEventListener('case-created', refresh)
   window.addEventListener('patient-created', refresh)
   window.addEventListener('focus', refresh)
-  onUnmounted(() => {
-    window.removeEventListener('case-created', refresh)
-    window.removeEventListener('patient-created', refresh)
-    window.removeEventListener('focus', refresh)
-  })
 })
+
+onUnmounted(() => {
+  window.removeEventListener('case-created', refresh)
+  window.removeEventListener('patient-created', refresh)
+  window.removeEventListener('focus', refresh)
+})
+
 onActivated(() => cargarEstadisticas())
 </script>
 

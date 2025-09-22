@@ -1,14 +1,17 @@
+// Priority levels for urgent cases
 export enum CasePriority {
   Normal = 'Normal',
   Prioritario = 'Prioritario'
 }
 
+// High-level case status labels used across the dashboard
 export enum CaseStatus {
   EnProceso = 'En proceso',
   PorFirmar = 'Por firmar',
   PorEntregar = 'Por entregar',
   Completado = 'Completado'
 }
+// Minimal shape for an urgent case item shown in the dashboard
 export interface CasoUrgente {
   codigo: string
   paciente: {
@@ -24,6 +27,7 @@ export interface CasoUrgente {
   dias_en_sistema: number
 }
 
+// Aggregated KPI metrics for patients and cases
 export interface DashboardMetrics {
   pacientes: {
     mes_actual: number
@@ -38,6 +42,7 @@ export interface DashboardMetrics {
   }
 }
 
+// SLA opportunity statistics for last month period
 export interface EstadisticasOportunidad {
   porcentaje_oportunidad: number
   cambio_porcentual: number
@@ -52,11 +57,13 @@ export interface EstadisticasOportunidad {
   }
 }
 
+// Optional filters for fetching urgent cases
 export interface FiltrosCasosUrgentes {
   patologo?: string
   limite?: number
 }
 
+// Monthly cases time series response (12 data points)
 export interface CasosPorMesResponse {
   datos: number[]
   total: number

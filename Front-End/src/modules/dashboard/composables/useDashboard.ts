@@ -20,19 +20,32 @@ export function useDashboard() {
   const loadingCasosUrgentes = ref(false)
   const loadingOportunidad = ref(false)
 
+  // Simple caches to avoid duplicate network calls across components
+  const casosPorMesCache = new Map<string, CasosPorMesResponse>()
+  const metricasCache = new Map<string, DashboardMetrics>()
+  const oportunidadCache = new Map<string, EstadisticasOportunidad>()
+
   const totalCasosAño = computed(() => casosPorMes.value?.total || 0)
   const añoActual = computed(() => new Date().getFullYear())
 
+  // Fetch dashboard metrics; cached by role
   const cargarMetricas = async (esPatologo: boolean = false) => {
     try {
+      if (loadingMetricas.value) return
       loadingMetricas.value = true
       error.value = null
-      
+      const cacheKey = esPatologo ? 'pathologist' : 'general'
+      const cached = metricasCache.get(cacheKey)
+      if (cached) {
+        metricas.value = cached
+        return
+      }
       if (esPatologo) {
         metricas.value = await dashboardApiService.getMetricasPatologo()
       } else {
         metricas.value = await dashboardApiService.getMetricasDashboard()
       }
+      if (metricas.value) metricasCache.set(cacheKey, metricas.value)
     } catch (err: any) {
       error.value = err.message || 'Error al cargar las métricas del dashboard'
       throw err
@@ -41,16 +54,25 @@ export function useDashboard() {
     }
   }
 
+// Fetch monthly cases; cached by year and role
 const cargarCasosPorMes = async (año?: number, esPatologo: boolean = false) => {
   try {
+    if (loadingCasosPorMes.value) return
     loadingCasosPorMes.value = true
     error.value = null
-    
-    if (esPatologo) {
-      casosPorMes.value = await dashboardApiService.getCasosPorMesPatologo(año)
-    } else {
-      casosPorMes.value = await dashboardApiService.getCasosPorMes(año)
+    const resolvedYear = año ?? new Date().getFullYear()
+    const cacheKey = `${resolvedYear}-${esPatologo ? 'pathologist' : 'general'}`
+    const cached = casosPorMesCache.get(cacheKey)
+    if (cached) {
+      casosPorMes.value = cached
+      return
     }
+    if (esPatologo) {
+      casosPorMes.value = await dashboardApiService.getCasosPorMesPatologo(resolvedYear)
+    } else {
+      casosPorMes.value = await dashboardApiService.getCasosPorMes(resolvedYear)
+    }
+    if (casosPorMes.value) casosPorMesCache.set(cacheKey, casosPorMes.value)
   } catch (err: any) {
     console.error('[Dashboard] Error al cargar casos por mes:', err)
     error.value = err.message || 'Error al cargar estadísticas de casos por mes'
@@ -84,13 +106,22 @@ const cargarCasosPorMes = async (año?: number, esPatologo: boolean = false) => 
     }
   }
 
+  // Fetch opportunity stats; cached by role
   const cargarEstadisticasOportunidad = async (esPatologo: boolean = false) => {
     try {
+      if (loadingOportunidad.value) return
       loadingOportunidad.value = true
       error.value = null
+      const cacheKey = esPatologo ? 'pathologist' : 'general'
+      const cached = oportunidadCache.get(cacheKey)
+      if (cached) {
+        estadisticasOportunidad.value = cached
+        return
+      }
       estadisticasOportunidad.value = esPatologo
         ? await dashboardApiService.getEstadisticasOportunidadPatologo()
         : await dashboardApiService.getEstadisticasOportunidad()
+      if (estadisticasOportunidad.value) oportunidadCache.set(cacheKey, estadisticasOportunidad.value)
     } catch (err: any) {
       error.value = err.message || 'Error al cargar estadísticas de oportunidad'
       throw err

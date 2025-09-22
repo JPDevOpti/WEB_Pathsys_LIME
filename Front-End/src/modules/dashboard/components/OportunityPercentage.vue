@@ -1,5 +1,6 @@
 <template>
 <Card :class="cardClass">
+    <!-- Card header: title and subtitle -->
     <div class="px-4 pt-2 bg-white shadow-default rounded-2xl pb-0 sm:px-5 sm:pt-3 flex-1 flex flex-col">
       <div class="mb-2 flex-shrink-0">
         <div>
@@ -11,6 +12,7 @@
         </div>
       </div>
 
+      <!-- Loading state -->
       <div v-if="loading" class="flex items-center justify-center flex-1">
         <div class="text-center">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -18,6 +20,7 @@
         </div>
       </div>
 
+      <!-- Error state with retry -->
       <div v-else-if="error" class="flex items-center justify-center flex-1">
         <div class="text-center">
           <svg class="mx-auto h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -33,6 +36,7 @@
         </div>
       </div>
 
+      <!-- Content: radial bar chart and delta badge -->
       <div v-else class="flex-1 flex flex-col justify-center">
         <div class="relative flex-1 flex items-center justify-center min-h-[160px] sm:min-h-[180px] lg:min-h-[200px]">
           <div id="chartTwo" class="h-full w-full flex items-center justify-center">
@@ -47,6 +51,7 @@
               />
             </div>
           </div>
+          <!-- Percentage delta vs previous month -->
           <span
             :class="[
               'absolute left-1/2 top-[65%] -translate-x-1/2 -translate-y-[65%] rounded-full px-2 py-0.5 text-xs font-medium transition-all duration-300',
@@ -60,6 +65,7 @@
             {{ (datosOportunidad?.cambio_porcentual || 0) > 0 ? '+' : '' }}{{ datosOportunidad?.cambio_porcentual || 0 }}%
           </span>
         </div>
+        <!-- Caption below chart -->
         <p class="mx-auto -mt-2 w-full max-w-[320px] text-center text-xs sm:text-sm text-gray-500 transition-colors duration-300 flex-shrink-0 px-2">
           <span class="hidden sm:inline">Progreso en el cumplimiento de tiempos de oportunidad ({{ datosOportunidad?.mes_anterior?.nombre || 'Mes anterior' }})</span>
           <span class="sm:hidden">Cumplimiento de oportunidad ({{ datosOportunidad?.mes_anterior?.nombre || 'Mes anterior' }})</span>
@@ -67,6 +73,7 @@
       </div>
     </div>
 
+    <!-- Footer stats: totals and breakdown -->
     <div v-if="!loading && !error" class="grid grid-cols-2 sm:flex sm:items-center sm:justify-center gap-2 sm:gap-4 px-3 py-2.5 sm:px-5 bg-gray-50 rounded-b-2xl flex-shrink-0">
       <div class="group transition-all duration-300 hover:scale-105 text-center">
         <p class="mb-1 text-gray-500 text-xs transition-colors duration-300 group-hover:text-gray-700">
@@ -124,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, useAttrs, watch } from 'vue'
+import { computed, onMounted, nextTick, useAttrs } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import VueApexCharts from 'vue3-apexcharts'
 import { Card } from '@/shared/components/layout'
@@ -138,11 +145,11 @@ const {
 } = useDashboard()
 
 const authStore = useAuthStore()
-// Alinear con el resto de la app: role === 'pathologist' y userRole !== 'administrator'
+// Align with app-wide rule: pathologist role but not administrator override
 const esPatologo = computed(() => authStore.user?.role === 'pathologist' && authStore.userRole !== 'administrator')
 
 const datosOportunidad = estadisticasOportunidad
-const chartReady = ref(false)
+// Chart renders when data exists; no local ready flag required
 
 const attrs = useAttrs()
 const cardClass = computed(() => {
@@ -150,34 +157,28 @@ const cardClass = computed(() => {
   return ['h-full flex flex-col', extra].filter(Boolean).join(' ')
 })
 
-watch(datosOportunidad, (nuevosDatos) => {
-  if (nuevosDatos) {
-    chartReady.value = true
-  }
-}, { immediate: true })
+// No watcher required; series and props are reactive
 
+// Resolve role and fetch stats
 const cargarDatos = async () => {
-  // Resolver rol antes de cargar
   await cargarEstadisticasOportunidad(esPatologo.value)
   await nextTick()
-  // DEBUG: Log de datos recibidos del backend
-  try {
-    // eslint-disable-next-line no-console
-    console.log('[OportunityPercentage] esPatologo:', esPatologo.value, 'datos:', estadisticasOportunidad.value)
-  } catch {}
-  chartReady.value = true
+  // Apex will update via reactive series/options
 }
 
+// Responsive chart height
 const chartHeight = computed(() => {
   return window.innerWidth < 640 ? 200 : window.innerWidth < 1024 ? 240 : 280
 })
 
+// Single radial value in percentage
 const series = computed(() => {
   if (!datosOportunidad.value) return [0]
   const porcentaje = datosOportunidad.value.porcentaje_oportunidad
   return [typeof porcentaje === 'number' ? porcentaje : 0]
 })
 
+// Apex radial bar configuration
 const chartOptions = {
   colors: ['#3D8D5B'],
   chart: {

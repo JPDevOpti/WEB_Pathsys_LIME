@@ -1,6 +1,8 @@
 <template>
+  <!-- Two KPI cards: patients and cases -->
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
     <Card class="group p-4 md:p-4 relative">
+      <!-- Patients KPI -->
       <div class="flex items-center gap-4">
         <div class="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg transition-colors duration-300 group-hover:bg-blue-50">
           <svg class="fill-gray-800 transition-colors duration-300 group-hover:fill-blue-600" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -16,6 +18,7 @@
           </h4>
         </div>
       </div>
+      <!-- Month-over-month delta badge -->
       <span v-if="!isLoading && metricas?.pacientes" :class="obtenerClasePorcentaje(pacientesCambio)" class="absolute bottom-2 right-2 flex items-center gap-1 rounded-full py-0.5 pl-2 pr-2.5 text-xs font-medium transition-all duration-300">
         <svg class="fill-current animate-bounce" width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path v-if="pacientesCambio >= 0" fill-rule="evenodd" clip-rule="evenodd" d="M5.56462 1.62393C5.70193 1.47072 5.90135 1.37432 6.12329 1.37432C6.1236 1.37432 6.12391 1.37432 6.12422 1.37432C6.31631 1.37415 6.50845 1.44731 6.65505 1.59381L9.65514 4.5918C9.94814 4.88459 9.94831 5.35947 9.65552 5.65246C9.36273 5.94546 8.88785 5.94562 8.59486 5.65283L6.87329 3.93247L6.87329 10.125C6.87329 10.5392 6.53751 10.875 6.12329 10.875C5.70908 10.875 5.37329 10.5392 5.37329 10.125L5.37329 3.93578L3.65516 5.65282C3.36218 5.94562 2.8873 5.94547 2.5945 5.65248C2.3017 5.35949 2.30185 4.88462 2.59484 4.59182L5.56462 1.62393Z" fill=""/>
@@ -26,6 +29,7 @@
     </Card>
 
     <Card class="group p-4 md:p-4 relative">
+      <!-- Cases KPI -->
       <div class="flex items-center gap-4">
         <div class="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg transition-colors duration-300 group-hover:bg-blue-50">
           <MuestraIcon class="w-5 h-5 text-gray-800 transition-colors duration-300 group-hover:text-blue-600" />
@@ -39,6 +43,7 @@
           </h4>
         </div>
       </div>
+      <!-- Month-over-month delta badge -->
       <span v-if="!isLoading && metricas?.casos" :class="obtenerClasePorcentaje(casosCambio)" class="absolute bottom-2 right-2 flex items-center gap-1 rounded-full py-0.5 pl-2 pr-2.5 text-xs font-medium transition-all duration-300">
         <svg class="fill-current animate-bounce" width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path v-if="casosCambio >= 0" fill-rule="evenodd" clip-rule="evenodd" d="M5.56462 1.62393C5.70193 1.47072 5.90135 1.37432 6.12329 1.37432C6.1236 1.37432 6.12391 1.37432 6.12422 1.37432C6.31631 1.37415 6.50845 1.44731 6.65505 1.59381L9.65514 4.5918C9.94814 4.88459 9.94831 5.35947 9.65552 5.65246C9.36273 5.94546 8.88785 5.94562 8.59486 5.65283L6.87329 3.93247L6.87329 10.125C6.87329 10.5392 6.53751 10.875 6.12329 10.875C5.70908 10.875 5.37329 10.5392 5.37329 10.125L5.37329 3.93578L3.65516 5.65282C3.36218 5.94562 2.8873 5.94547 2.5945 5.65248C2.3017 5.35949 2.30185 4.88462 2.59484 4.59182L5.56462 1.62393Z" fill=""/>
@@ -48,6 +53,7 @@
       </span>
     </Card>
 
+    <!-- Error area for any failed loads -->
     <div v-if="error" class="col-span-full p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
       <p class="text-sm"><strong>Error al cargar estadísticas:</strong> {{ error }}</p>
       <button @click="cargarEstadisticas" class="mt-2 text-xs underline hover:no-underline">Reintentar</button>
@@ -64,11 +70,14 @@ import { useDashboard } from '../composables/useDashboard'
 import { useAuthStore } from '@/stores/auth.store'
 
 const authStore = useAuthStore()
-const { metricas, casosPorMes, loadingMetricas: isLoading, error, cargarMetricas, cargarCasosPorMes } = useDashboard()
+const { metricas, loadingMetricas: isLoading, error, cargarMetricas, cargarCasosPorMes } = useDashboard()
 
+// Determine when to scope metrics by pathologist
 const esPatologo = computed(() => authStore.user?.role === 'pathologist' && authStore.userRole !== 'administrator')
+// Patient metrics
 const pacientesMesActual = computed(() => Number(metricas.value?.pacientes?.mes_actual ?? 0))
 const pacientesCambio = computed(() => {
+  // Prefer delta vs previous month-1 when available; fallback to backend percentage
   const mesAnt = Number(metricas.value?.pacientes?.mes_anterior ?? 0)
   const mesAntAnt = (metricas.value as any)?.pacientes?.mes_anterior_anterior
   if (typeof mesAntAnt === 'number') {
@@ -78,34 +87,21 @@ const pacientesCambio = computed(() => {
   return Number(metricas.value?.pacientes?.cambio_porcentual ?? 0)
 })
 
-const casosMesActual = computed(() => {
-  // Ahora siempre usamos las métricas del backend, ya que incluyen la lógica de patólogo
-  return Number(metricas.value?.casos?.mes_actual ?? 0)
-})
+// Case metrics
+const casosMesActual = computed(() => Number(metricas.value?.casos?.mes_actual ?? 0))
 
-const casosCambio = computed(() => {
-  // Ahora siempre usamos el cambio porcentual del backend
-  return Number(metricas.value?.casos?.cambio_porcentual ?? 0)
-})
+const casosCambio = computed(() => Number(metricas.value?.casos?.cambio_porcentual ?? 0))
 
+// Load metrics and monthly cases in parallel
 const cargarEstadisticas = async () => {
   if (!authStore.user) return
   
-  // DEBUG: Log información del usuario
-  console.log('[MetricsBlocks] Usuario:', {
-    role: authStore.user?.role,
-    pathologist_code: authStore.user?.pathologist_code,
-    esPatologo: esPatologo.value
-  })
-  
   await Promise.all([cargarMetricas(esPatologo.value), cargarCasosPorMes(undefined, esPatologo.value)])
-  
-  // DEBUG: Log métricas recibidas
-  console.log('[MetricsBlocks] Métricas cargadas:', metricas.value)
 }
 
+// Initial load and re-load when user changes
 watch(() => authStore.user, (newUser) => { if (newUser) cargarEstadisticas() }, { immediate: true })
-// Refresh helpers
+// Refresh when new cases/patients are created
 const handleCaseCreated = () => cargarEstadisticas()
 const handlePatientCreated = () => cargarEstadisticas()
 

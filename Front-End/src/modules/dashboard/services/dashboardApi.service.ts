@@ -11,6 +11,37 @@ import { CasePriority } from '../types/dashboard.types'
 
 class DashboardApiService {
   private readonly baseUrl = API_CONFIG.ENDPOINTS
+  // Deduplicate in-flight requests by URL+params
+  private readonly inflight = new Map<string, Promise<any>>()
+  // Cached pathologist code to avoid repeated dynamic imports
+  private cachedPathologistCode: string | null = null
+
+  // GET JSON with cache-busting and in-flight dedupe
+  private async _getJson(url: string, params?: Record<string, unknown>): Promise<any> {
+    const key = JSON.stringify({ url, params })
+    const existing = this.inflight.get(key)
+    if (existing) return existing
+    const request = apiClient
+      .get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
+      .then(r => (r?.data ?? r))
+      .finally(() => this.inflight.delete(key))
+    this.inflight.set(key, request)
+    return request
+  }
+
+  // Resolve and memoize the current user's pathologist code
+  private async _getPathologistCode(): Promise<string> {
+    if (this.cachedPathologistCode !== null) return this.cachedPathologistCode
+    try {
+      const { useAuthStore } = await import('@/stores/auth.store')
+      const authStore = useAuthStore()
+      this.cachedPathologistCode = authStore.user?.pathologist_code || ''
+      return this.cachedPathologistCode
+    } catch {
+      this.cachedPathologistCode = ''
+      return ''
+    }
+  }
 
 
   async getMetricasDashboard(): Promise<DashboardMetrics> {
@@ -19,27 +50,20 @@ class DashboardApiService {
 
   async getMetricasPatologo(): Promise<DashboardMetrics> {
     try {
-      const { useAuthStore } = await import('@/stores/auth.store')
-      const authStore = useAuthStore()
-      const code = authStore.user?.pathologist_code || ''
-      
-      if (!code) {
-        // Si no hay código de patólogo, usar endpoint general
-        return this.getMetricasDashboard()
-      }
-      
-      // Usar endpoint específico de patólogo
+      const code = await this._getPathologistCode()
+
+      if (!code) return this.getMetricasDashboard()
+
       return this._getMetricas(`${this.baseUrl.CASES}/statistics/metrics/pathologist/${code}`, { no_cache: true })
     } catch (error) {
-      console.error('[Dashboard API] Error en getMetricasPatologo:', error)
       return this.getMetricasDashboard()
     }
   }
 
+  // Fetch and normalize dashboard metrics
   private async _getMetricas(url: string, params?: any): Promise<DashboardMetrics> {
     try {
-      const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
-      const data = response?.data ?? response
+      const data = await this._getJson(url, params)
       return {
         pacientes: {
           mes_actual: Number(data?.pacientes?.mes_actual ?? 0),
@@ -58,52 +82,40 @@ class DashboardApiService {
   }
 
   async getCasosPorMes(año?: number): Promise<CasosPorMesResponse> {
-    // Usar nuevo endpoint de estadísticas
     return this._getCasosPorMes(`${this.baseUrl.CASES}/statistics/dashboard/cases-by-month/${año || new Date().getFullYear()}`, { no_cache: true })
   }
 
   async getCasosPorMesPatologo(año?: number): Promise<CasosPorMesResponse> {
     try {
-      const { useAuthStore } = await import('@/stores/auth.store')
-      const authStore = useAuthStore()
-      const code = authStore.user?.pathologist_code || ''
-      
-      if (!code) {
-        // Si no hay código de patólogo, usar endpoint general
-        return this.getCasosPorMes(año)
-      }
-      // Usar nuevo endpoint de estadísticas por patólogo
+      const code = await this._getPathologistCode()
+
+      if (!code) return this.getCasosPorMes(año)
+
       return this._getCasosPorMes(`${this.baseUrl.CASES}/statistics/dashboard/cases-by-month/pathologist/${año || new Date().getFullYear()}`, { 
         pathologist_code: code, 
         no_cache: true 
       })
     } catch (error) {
-      console.error('[Dashboard API] Error en getCasosPorMesPatologo:', error)
       return this.getCasosPorMes(año)
     }
   }
 
+  // Fetch monthly cases; ensure 12-length array and numeric totals
   private async _getCasosPorMes(url: string, params?: any): Promise<CasosPorMesResponse> {
     const añoActual = new Date().getFullYear()
-    const defaultResponse = { datos: Array(12).fill(0), total: 0, año: añoActual }
+    const defaultResponse: CasosPorMesResponse = { datos: Array(12).fill(0), total: 0, año: añoActual }
 
     try {
-      if (añoActual < 2020 || añoActual > 2030) return defaultResponse
+      const data = await this._getJson(url, params)
 
-      const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
-      const data = response?.data ?? response
-      
-      // Validar que la respuesta tenga la estructura esperada
       if (!data || !Array.isArray(data.datos) || data.datos.length !== 12) {
         return defaultResponse
       }
-      
-      // Los nuevos endpoints ya retornan la estructura correcta
+
       return { 
         datos: data.datos, 
-        total: data.total || 0, 
-        año: data.año || añoActual,
-        meses: data.meses || ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+        total: typeof data.total === 'number' ? data.total : 0, 
+        año: typeof data.año === 'number' ? data.año : añoActual
       }
     } catch (error) {
       return defaultResponse
@@ -111,18 +123,19 @@ class DashboardApiService {
   }
 
   async getUrgentCasesGeneral(limite: number = 50): Promise<CasoUrgente[]> {
-    return this._getUrgentCases(`${this.baseUrl.CASES}/consulta/urgentes`, { limite })
+    return this._getUrgentCases(`${this.baseUrl.CASES}/urgent`, { limit: limite, min_days: 6 })
   }
 
   async getUrgentCasesByPathologist(patologo_code: string, limite: number = 50): Promise<CasoUrgente[]> {
-    return this._getUrgentCases(`${this.baseUrl.CASES}/consulta/urgentes/patologo`, { patologo_code, limite })
+    return this._getUrgentCases(`${this.baseUrl.CASES}/urgent/pathologist`, { code: patologo_code, limit: limite, min_days: 6 })
   }
 
+  // Fetch urgent cases; support both 'cases' (new) and 'casos' (compat)
   private async _getUrgentCases(url: string, params: any): Promise<CasoUrgente[]> {
     try {
-      const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
-      const data = response?.data ?? response
-      return this.transformarCasosUrgentesOptimizados(data.casos || [])
+      const data = await this._getJson(url, params)
+      const items = Array.isArray(data?.cases) ? data.cases : (Array.isArray(data?.casos) ? data.casos : [])
+      return this.transformarCasosUrgentesOptimizados(items)
     } catch {
       return []
     }
@@ -139,19 +152,15 @@ class DashboardApiService {
       const authStore = useAuthStore()
       const code = authStore.user?.pathologist_code || ''
 
-      if (!code) {
-        // Si no hay código de patólogo, usar endpoint general
-        return this.getEstadisticasOportunidad()
-      }
+      if (!code) return this.getEstadisticasOportunidad()
 
-      // Usar endpoint específico de patólogo
       return this._getEstadisticasOportunidad(`${this.baseUrl.CASES}/statistics/opportunity/pathologist/${code}`, { no_cache: true })
     } catch (error) {
-      console.error('[Dashboard API] Error en getEstadisticasOportunidadPatologo:', error)
       return this.getEstadisticasOportunidad()
     }
   }
 
+  // Fetch opportunity stats; handle nesting under 'oportunity'
   private async _getEstadisticasOportunidad(url: string, params?: any): Promise<EstadisticasOportunidad> {
     const defaultResponse = {
       porcentaje_oportunidad: 0, cambio_porcentual: 0, tiempo_promedio: 0,
@@ -160,12 +169,10 @@ class DashboardApiService {
     }
 
     try {
-      const response = await apiClient.get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
-      const data = response?.data ?? response
-      
-      // La nueva estructura del backend tiene los datos dentro de 'oportunity'
+      const data = await this._getJson(url, params)
+
       const opportunityData = data?.oportunity || data
-      
+
       return {
         porcentaje_oportunidad: typeof opportunityData?.porcentaje_oportunidad === 'number' ? opportunityData.porcentaje_oportunidad : 0,
         cambio_porcentual: typeof opportunityData?.cambio_porcentual === 'number' ? opportunityData.cambio_porcentual : 0,
@@ -184,6 +191,7 @@ class DashboardApiService {
     }
   }
 
+  // Normalize urgent case items into app-friendly shape
   private transformarCasosUrgentesOptimizados(casos: any[]): CasoUrgente[] {
     return casos.map((caso: any) => ({
       codigo: caso.caso_code || 'N/A',

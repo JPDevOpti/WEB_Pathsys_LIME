@@ -1,4 +1,5 @@
 <template>
+  <!-- Urgent cases list with filters, table (desktop) and cards (mobile) -->
   <Card class="overflow-hidden">
     <div class="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200">
       <div class="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -9,6 +10,7 @@
           </p>
         </div>
         <div class="w-full sm:w-auto lg:w-80 flex-shrink-0">
+          <!-- Pathologist filter selector -->
           <PathologistList
             v-model="patologoSeleccionado"
             label="Patólogo"
@@ -21,6 +23,7 @@
     </div>
 
     <div class="p-0">
+      <!-- Loading state -->
       <div v-if="isLoading" class="flex flex-col items-center justify-center space-y-3 sm:space-y-4 py-6 sm:py-8 lg:py-12">
         <div class="relative">
           <svg class="animate-spin h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -34,6 +37,7 @@
         </div>
       </div>
 
+      <!-- Error state with retry -->
       <div v-else-if="errorCarga" class="flex flex-col items-center justify-center space-y-3 sm:space-y-4 py-6 sm:py-8 lg:py-12">
         <div class="relative">
           <svg class="h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,6 +56,7 @@
         </div>
       </div>
 
+      <!-- Content: desktop table and mobile cards -->
       <div v-else class="overflow-hidden bg-white">
         <div class="hidden md:block overflow-x-auto custom-scrollbar">
           <table class="min-w-full text-sm lg:text-base">
@@ -271,6 +276,7 @@
           </div>
         </div>
         
+        <!-- Pagination controls -->
         <div class="px-2 sm:px-4 lg:px-5 py-3 sm:py-4 border-t border-gray-200 bg-gray-50">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div class="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500">
@@ -330,7 +336,7 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 import type { CasoUrgente } from '../types/dashboard.types'
 import type { FormPathologistInfo } from '@/modules/cases/types'
 
-// Definir los eventos que emite el componente
+// Events emitted to parent
 const emit = defineEmits<{
   'show-details': [caso: CasoUrgente]
 }>()
@@ -339,11 +345,13 @@ const { casosUrgentes: casos, loadingCasosUrgentes: isLoading, error, cargarCaso
 const router = useRouter()
 const { isPatologo, isResidente, isFacturacion } = usePermissions()
 
+// Alias for error ref from composable
 const errorCarga = error
 const patologoSeleccionado = ref('')
 const sortKey = ref('codigo')
 const sortOrder = ref('desc')
 
+// Sorted urgent cases according to the selected column and order
 const casosUrgentes = computed(() => {
   return casos.value.slice().sort((a, b) => {
     const getVal = (caso: CasoUrgente) => {
@@ -371,6 +379,7 @@ const casosUrgentes = computed(() => {
   })
 })
 
+// Pagination state and options
 const itemsPerPageOptions = [10, 20, 50, 100]
 const itemsPerPage = ref(10)
 const currentPage = ref(1)
@@ -388,23 +397,29 @@ const updateItemsPerPage = (event: Event) => {
   currentPage.value = 1
 }
 
+// Reset to first page when data size or page size changes
 watch([casosUrgentes, itemsPerPage], () => {
   currentPage.value = 1
 })
 
+// Fetch when pathologist filter changes
 watch(patologoSeleccionado, () => cargarCasosUrgentesConFiltros())
 
+// Load urgent cases with optional pathologist filter
 const cargarCasosUrgentesConFiltros = async () => {
   await cargarCasosUrgentes({ patologo: patologoSeleccionado.value || undefined })
 }
 
+// Handle selection from pathologist picker
 const onPathologistSelected = (pathologist: FormPathologistInfo | null) => {
   patologoSeleccionado.value = pathologist?.documento || ''
   cargarCasosUrgentesConFiltros()
 }
 
+// Swallow load errors from the pathologist list (error UI is above)
 const onPathologistLoadError = () => {}
 
+// Desktop table columns
 const columnasDesktop = [
   { key: 'codigo', label: 'Código', class: 'w-[12%]' },
   { key: 'paciente', label: 'Paciente', class: 'w-[18%]' },
