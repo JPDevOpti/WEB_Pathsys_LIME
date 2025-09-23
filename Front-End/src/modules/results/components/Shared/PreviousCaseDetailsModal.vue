@@ -177,7 +177,13 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <PrintPdfButton text="Imprimir PDF" :caseCode="caseCode" />
+        <PrintPdfButton 
+          text="Imprimir PDF" 
+          :caseCode="caseCode"
+          :caseData="caseItem"
+          @pdf-generated="(pdfBlob) => console.log('PDF generado:', pdfBlob.size, 'bytes')"
+          @error="(error) => console.error('Error PDF:', error)"
+        />
         <CloseButton
           @click="$emit('close')"
           variant="danger-outline"

@@ -220,7 +220,13 @@
     
     <template #footer>
       <div class="flex justify-end gap-2">
-        <PrintPdfButton text="Imprimir PDF" :caseCode="props.caseItem?.caseCode || props.caseItem?.id" />
+        <PrintPdfButton 
+          text="Imprimir PDF" 
+          :caseCode="props.caseItem?.caseCode || props.caseItem?.id"
+          :caseData="props.caseItem"
+          @pdf-generated="handlePdfGenerated"
+          @error="handlePdfError"
+        />
         <button
           v-if="props.caseItem?.status === 'Por entregar' || props.caseItem?.status === 'Completado'"
           @click="showNotesDialog = true"
@@ -326,6 +332,14 @@ const handleNotesConfirm = async (notes: string) => {
 
 const handleNotesCancel = () => {
   showNotesDialog.value = false
+}
+
+const handlePdfGenerated = (pdfBlob: Blob) => {
+  console.log('PDF generado exitosamente:', pdfBlob.size, 'bytes')
+}
+
+const handlePdfError = (error: string) => {
+  console.error('Error al generar PDF:', error)
 }
 
 </script>

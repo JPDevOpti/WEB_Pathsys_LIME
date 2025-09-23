@@ -10,6 +10,7 @@ from app.modules.auth.routes.auth_routes import get_current_user_id
 # Importar las rutas de resultado y firma
 from .result_routes import router as result_router
 from .sign_routes import router as sign_router
+from .pdf_routes import router as pdf_router
 # Importar las rutas de estadísticas
 from .statistics.statistics_router import router as statistics_router
 from .urgent_routes import router as urgent_router
@@ -20,6 +21,7 @@ router = APIRouter()
 # Incluir las rutas de resultado y firma
 router.include_router(result_router)
 router.include_router(sign_router)
+router.include_router(pdf_router)
 # Incluir las rutas de estadísticas
 router.include_router(statistics_router)
 router.include_router(urgent_router)

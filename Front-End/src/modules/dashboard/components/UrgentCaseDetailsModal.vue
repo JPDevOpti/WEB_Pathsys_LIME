@@ -74,7 +74,13 @@
     <!-- Footer actions: print and close -->
     <template #footer>
       <div v-if="caseItem" class="flex justify-end gap-2">
-        <PrintPdfButton text="Imprimir PDF" :caseCode="caseItem.codigo" />
+        <PrintPdfButton 
+          text="Imprimir PDF" 
+          :caseCode="caseItem.codigo"
+          :caseData="caseItem"
+          @pdf-generated="(pdfBlob) => console.log('PDF generado:', pdfBlob.size, 'bytes')"
+          @error="(error) => console.error('Error PDF:', error)"
+        />
         <CloseButton @click="emit('close')" variant="danger-outline" size="md" text="Cerrar" />
       </div>
     </template>
