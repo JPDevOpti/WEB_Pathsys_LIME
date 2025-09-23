@@ -59,6 +59,12 @@ export interface BackendCase {
     date: string
     note: string
   }>
+  complementary_tests?: Array<{
+    code?: string
+    name?: string
+    quantity?: number
+    reason?: string
+  }>
   is_active?: boolean
   actualizado_por?: string
   resultado?: {

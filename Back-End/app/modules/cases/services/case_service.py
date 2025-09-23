@@ -202,6 +202,7 @@ class CaseService:
             "delivered_at": doc.get("delivered_at"),
             "business_days": doc.get("business_days"),
             "additional_notes": doc.get("additional_notes") or [],
+            "complementary_tests": doc.get("complementary_tests") or [],
         }
         return CaseResponse(**doc_out)
 

@@ -64,6 +64,12 @@ export interface Case {
     date: string
     note: string
   }>
+  complementary_tests?: Array<{
+    code?: string
+    name?: string
+    quantity?: number
+    reason?: string
+  }>
 }
 
 export interface Filters {

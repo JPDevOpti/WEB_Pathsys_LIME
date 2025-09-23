@@ -115,6 +115,7 @@
             @details-change="handleDetailsChange"
             @create-approval-request="handleCreateApprovalRequest"
             @sign-with-changes="handleSignWithChanges"
+            @update-original-case="handleUpdateOriginalCase"
           />
 
           <ValidationAlert :visible="!!validationMessage" class="mt-2"
@@ -847,6 +848,32 @@ const handleCreateApprovalRequest = async (payload: { case_code: string; reason:
     }
   } catch (error: any) {
     showError('Error al crear solicitud', error.message || 'No se pudo crear la solicitud de aprobación.', 0)
+  }
+}
+
+// Actualizar el caso original con complementary_tests
+const handleUpdateOriginalCase = async (payload: { complementary_tests: Array<ComplementaryTestInfo | { reason: string }> }) => {
+  try {
+    if (!caseDetails.value?.case_code) {
+      throw new Error('No hay código de caso disponible')
+    }
+    
+    console.log('Actualizando caso original con complementary_tests:', payload.complementary_tests)
+    
+    await casesApiService.updateCase(caseDetails.value.case_code, {
+      complementary_tests: payload.complementary_tests
+    })
+    
+    console.log('Caso original actualizado exitosamente con complementary_tests')
+    
+    // Actualizar el estado local del caso
+    if (caseDetails.value) {
+      (caseDetails.value as any).complementary_tests = payload.complementary_tests
+    }
+    
+  } catch (error: any) {
+    console.error('Error al actualizar caso original:', error)
+    showError('Error al actualizar caso', error.message || 'Error desconocido')
   }
 }
 

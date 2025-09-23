@@ -112,6 +112,7 @@ const emit = defineEmits<{
   (e: 'details-change', value: string): void
   (e: 'create-approval-request', data: { case_code: string; reason: string; complementary_tests: ComplementaryTestInfo[] }): void
   (e: 'sign-with-changes', data: { details: string; tests: ComplementaryTestInfo[] }): void
+  (e: 'update-original-case', data: { complementary_tests: Array<ComplementaryTestInfo | { reason: string }> }): void
 }>()
 
 // Estado local
@@ -245,8 +246,18 @@ const handleSignWithChanges = async () => {
     
     const motivoFinal = complementaryTestsDetails.value.trim()
     
-    // Solo emitir create-approval-request para crear la solicitud
-    // El componente padre manejará la lógica de firma por separado
+    // Preparar datos para actualizar el caso original
+    const complementaryTestsForCase = [
+      ...testsToSend, // Array de {code, name, quantity}
+      { reason: motivoFinal } // Objeto especial con reason
+    ]
+    
+    // Emitir evento para actualizar el caso original
+    emit('update-original-case', {
+      complementary_tests: complementaryTestsForCase
+    })
+    
+    // Emitir evento para crear la solicitud de aprobación
     emit('create-approval-request', {
       case_code: props.casoOriginal,
       reason: motivoFinal,
@@ -258,6 +269,10 @@ const handleSignWithChanges = async () => {
       reason: motivoFinal,
       pruebas_count: testsToSend.length,
       complementary_tests: testsToSend
+    })
+    
+    console.log('Caso original actualizado con:', {
+      complementary_tests: complementaryTestsForCase
     })
     
   } catch (error) {

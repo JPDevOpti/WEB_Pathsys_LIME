@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -77,6 +77,7 @@ class CaseUpdate(BaseModel):
     delivered_at: Optional[datetime] = None
     business_days: Optional[int] = Field(None, ge=0, description="Business days elapsed")
     additional_notes: Optional[List[AdditionalNote]] = None
+    complementary_tests: Optional[List[Dict[str, Any]]] = None
 
 
 class CaseResult(BaseModel):
@@ -112,6 +113,7 @@ class CaseResponse(BaseModel):
     delivered_at: Optional[datetime] = None
     business_days: Optional[int] = None
     additional_notes: Optional[List[AdditionalNote]] = None
+    complementary_tests: Optional[List[Dict[str, Any]]] = None
 
     class Config:
         from_attributes = True

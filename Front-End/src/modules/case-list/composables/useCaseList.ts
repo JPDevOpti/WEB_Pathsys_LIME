@@ -232,6 +232,7 @@ export function useCaseList() {
       },
       subsamples,
       additional_notes: bk.additional_notes || [],
+      complementary_tests: bk.complementary_tests || [],
     }
   }
 
