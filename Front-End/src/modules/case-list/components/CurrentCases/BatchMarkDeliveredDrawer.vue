@@ -102,50 +102,115 @@
 
                     <!-- Submuestras y pruebas -->
                     <div>
-                      <p class="text-[11px] uppercase tracking-wide font-semibold text-gray-500 mb-2">Submuestras</p>
+                      <div class="flex items-center justify-between mb-2">
+                        <p class="text-[11px] uppercase tracking-wide font-semibold text-gray-500">Submuestras</p>
+                        <BaseButton
+                          v-if="!isEditingSamples(c.id)"
+                          variant="outline"
+                          size="xs"
+                          text="Editar"
+                          custom-class="bg-white border-blue-600 text-blue-600 hover:bg-blue-50"
+                          @click="startEditingSamples(c.id)"
+                        />
+                      </div>
+                      
                       <div v-if="c.subsamples && c.subsamples.length" class="space-y-3">
-                        <div
-                          v-for="(s, sIdx) in c.subsamples"
-                          :key="sIdx"
-                          class="relative bg-white border border-gray-200 rounded-lg p-3 shadow-sm group/sub overflow-hidden"
-                          :class="{ 'opacity-60': isSubsampleRemoved(c.id, sIdx) }"
-                        >
-                          <!-- Botón remover submuestra (más grande) -->
-                          <button
-                            type="button"
-                            class="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-red-600 hover:bg-red-100/70 active:scale-95 transition text-sm font-bold border border-transparent hover:border-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
-                            :title="isSubsampleRemoved(c.id, sIdx) ? 'Restaurar submuestra' : 'Marcar submuestra para eliminar'"
-                            @click.stop="toggleRemoveSubsample(c.id, sIdx)"
+                        <!-- Modo visualización -->
+                        <div v-if="!isEditingSamples(c.id)">
+                          <div
+                            v-for="(s, sIdx) in c.subsamples"
+                            :key="sIdx"
+                            class="relative bg-white border border-gray-200 rounded-lg p-3 shadow-sm group/sub overflow-hidden"
+                            :class="{ 'opacity-60': isSubsampleRemoved(c.id, sIdx) }"
                           >
-                            <span v-if="!isSubsampleRemoved(c.id, sIdx)">×</span>
-                            <span v-else class="text-[11px]">↺</span>
-                          </button>
-                          <div class="flex items-center justify-between mb-2 pr-8">
-                            <p class="text-xs font-semibold text-gray-700 max-w-full truncate" :class="{ 'line-through': isSubsampleRemoved(c.id, sIdx) }">
-                              {{ s.bodyRegion || 'Sin región' }}
-                            </p>
-                            <span v-if="isSubsampleRemoved(c.id, sIdx)" class="text-[10px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">Eliminada</span>
-                          </div>
-                          <div class="flex flex-wrap gap-1">
-                            <span
-                              v-for="(t, tIdx) in getExpandedTestsCached(c.id, sIdx, s.tests || [])"
-                              :key="tIdx"
-                              class="relative inline-flex items-center bg-gray-100 text-gray-700 font-mono text-[11px] pl-2 pr-6 py-0.5 rounded border"
-                              :class="{ 'opacity-40 line-through': isTestRemoved(c.id, sIdx, tIdx) || isSubsampleRemoved(c.id, sIdx) }"
-                              :title="t.name && t.name !== t.id ? t.name : ''"
+                            <!-- Botón remover submuestra (más grande) -->
+                            <button
+                              type="button"
+                              class="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-red-600 hover:bg-red-100/70 active:scale-95 transition text-sm font-bold border border-transparent hover:border-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
+                              :title="isSubsampleRemoved(c.id, sIdx) ? 'Restaurar submuestra' : 'Marcar submuestra para eliminar'"
+                              @click.stop="toggleRemoveSubsample(c.id, sIdx)"
                             >
-                              <span class="truncate max-w-[90px]">{{ t.id }}</span>
-                              <button
-                                type="button"
-                                class="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:text-red-600 hover:bg-red-100/80 active:scale-95 transition text-[11px] font-bold border border-transparent hover:border-red-300"
-                                :title="isTestRemoved(c.id, sIdx, tIdx) ? 'Restaurar prueba' : 'Marcar prueba para eliminar'"
-                                @click.stop="toggleRemoveTest(c.id, sIdx, tIdx)"
-                                :disabled="isSubsampleRemoved(c.id, sIdx)"
+                              <span v-if="!isSubsampleRemoved(c.id, sIdx)">×</span>
+                              <span v-else class="text-[11px]">↺</span>
+                            </button>
+                            <div class="flex items-center justify-between mb-2 pr-8">
+                              <p class="text-xs font-semibold text-gray-700 max-w-full truncate" :class="{ 'line-through': isSubsampleRemoved(c.id, sIdx) }">
+                                {{ s.bodyRegion || 'Sin región' }}
+                              </p>
+                              <span v-if="isSubsampleRemoved(c.id, sIdx)" class="text-[10px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">Eliminada</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                              <span
+                                v-for="(t, tIdx) in getExpandedTestsCached(c.id, sIdx, s.tests || [])"
+                                :key="tIdx"
+                                class="inline-flex items-center bg-gray-100 text-gray-700 font-mono text-[11px] px-2 py-0.5 rounded border"
+                                :class="{ 'opacity-40 line-through': isSubsampleRemoved(c.id, sIdx) }"
+                                :title="t.name && t.name !== t.id ? t.name : ''"
                               >
-                                <span v-if="!isTestRemoved(c.id, sIdx, tIdx)">×</span>
-                                <span v-else class="font-bold">↺</span>
-                              </button>
-                            </span>
+                                <span class="truncate max-w-[90px]">{{ t.id }}</span>
+                                <sub v-if="(t.quantity || 1) > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ t.quantity || 1 }}</sub>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Modo edición -->
+                        <div v-else class="space-y-2">
+                          <div
+                            v-for="(s, sIdx) in getEditableSamples(c.id)"
+                            :key="sIdx"
+                            class="bg-white border border-gray-200 rounded-lg p-3"
+                          >
+                            <div class="mb-2">
+                              <p class="text-xs font-semibold text-gray-700">{{ s.bodyRegion || 'Sin región' }}</p>
+                            </div>
+                            <div class="space-y-2">
+                              <div
+                                v-for="(test, tIdx) in s.tests"
+                                :key="tIdx"
+                                class="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded"
+                              >
+                                <div class="flex-1">
+                                  <p class="text-xs font-medium text-gray-900">{{ test.id }} - {{ test.name }}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                  <label class="text-xs text-gray-500">Cantidad:</label>
+                                  <input
+                                    v-model.number="test.quantity"
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    class="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  />
+                                  <button
+                                    @click="removeTestFromSample(c.id, sIdx, tIdx)"
+                                    class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+                                    title="Eliminar prueba"
+                                  >
+                                    <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fill-rule="evenodd" d="M10 8.586l4.95-4.95 1.414 1.414L11.414 10l4.95 4.95-1.414 1.414L10 11.414l-4.95 4.95-1.414-1.414L8.586 10l-4.95-4.95L5.05 3.636 10 8.586z" clip-rule="evenodd" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div class="flex gap-2 pt-2">
+                            <BaseButton
+                              variant="outline"
+                              size="xs"
+                              text="Guardar"
+                              custom-class="bg-white border-green-600 text-green-600 hover:bg-green-50"
+                              @click="saveSamples(c.id)"
+                            />
+                            <BaseButton
+                              variant="outline"
+                              size="xs"
+                              text="Cancelar"
+                              custom-class="bg-white border-gray-600 text-gray-600 hover:bg-gray-50"
+                              @click="cancelEditingSamples(c.id)"
+                            />
                           </div>
                         </div>
                       </div>
@@ -211,7 +276,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void; (e: 'close'): void; (e: 'confirm', ids: string[]): void; (e: 'confirm-removals', summary: any): void; (e: 'completed', result: any[]): void }>()
+const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void; (e: 'close'): void; (e: 'confirm', ids: string[]): void; (e: 'confirm-removals', summary: any): void; (e: 'completed', result: any[]): void; (e: 'update-case', caseId: string, updatedCase: any): void }>()
 
 const visible = computed(() => props.modelValue)
 const cases = computed(() => props.selected || [])
@@ -255,6 +320,12 @@ const removedSubsamples = ref<Record<string, Set<number>>>({})
 // removedTests[caseId] = { [subsampleIndex]: Set<testIndex> }
 const removedTests = ref<Record<string, Record<number, Set<number>>>>({})
 
+// ================= Edición de muestras =================
+// Estados de edición por caso
+const editingSamples = ref<Set<string>>(new Set())
+// Muestras editables por caso
+const editableSamples = ref<Record<string, any[]>>({})
+
 function ensureCaseStructures(caseId: string) {
   if (!removedSubsamples.value[caseId]) removedSubsamples.value[caseId] = new Set()
   if (!removedTests.value[caseId]) removedTests.value[caseId] = {}
@@ -281,37 +352,16 @@ function isSubsampleRemoved(caseId: string, subsampleIndex: number): boolean {
   return !!removedSubsamples.value[caseId]?.has(subsampleIndex)
 }
 
-function toggleRemoveTest(caseId: string, subsampleIndex: number, testIndex: number) {
-  ensureCaseStructures(caseId)
-  if (isSubsampleRemoved(caseId, subsampleIndex)) return // Si submuestra completa marcada, ignorar
-  if (!removedTests.value[caseId][subsampleIndex]) removedTests.value[caseId][subsampleIndex] = new Set()
-  const set = removedTests.value[caseId][subsampleIndex]
-  if (set.has(testIndex)) {
-    set.delete(testIndex)
-  } else {
-    set.add(testIndex)
-  }
-  removedTests.value = { ...removedTests.value }
-}
-
-function isTestRemoved(caseId: string, subsampleIndex: number, testIndex: number): boolean {
-  return !!removedTests.value[caseId]?.[subsampleIndex]?.has(testIndex)
-}
 
 // Construir payload de confirmación incluyendo info de removidos
 function buildRemovalSummary() {
   return cases.value.map(c => {
     const subsRemoved = Array.from(removedSubsamples.value[c.id] || [])
-    const testsRemoved = Object.entries(removedTests.value[c.id] || {}).map(([sIdx, set]) => ({
-      subsampleIndex: Number(sIdx),
-      tests: Array.from(set)
-    }))
     return {
       caseId: c.id,
-      removedSubsamples: subsRemoved,
-      removedTests: testsRemoved
+      removedSubsamples: subsRemoved
     }
-  }).filter(entry => entry.removedSubsamples.length > 0 || entry.removedTests.length > 0)
+  }).filter(entry => entry.removedSubsamples.length > 0)
 }
 
 // Centrado adaptado al ancho del sidebar (igual que CaseDetailsModal)
@@ -346,25 +396,13 @@ function emitConfirm() {
     const subs = c.subsamples || []
     const remaining = subs
       .filter((_, sIdx) => !isSubsampleRemoved(c.id, sIdx))
-      .map((s, sIdx) => {
-        // Expandir pruebas según cantidad para permitir eliminación individual
-        const expanded = getExpandedTestsCached(c.id, sIdx, s.tests || [])
-        const remainingExpanded = expanded.filter((_t, eIdx: number) => !isTestRemoved(c.id, sIdx, eIdx))
-        // Reagrupar por id para enviar payload correcto (cantidad ajustada)
-        const grouped: Record<string, { id: string; nombre: string; cantidad: number }> = {}
-        for (const t of remainingExpanded) {
-          if (!grouped[t.id]) {
-            grouped[t.id] = { id: t.id, nombre: t.name || t.id, cantidad: 1 }
-          } else {
-            grouped[t.id].cantidad += 1
-          }
-        }
+      .map((s) => {
         return {
           body_region: s.bodyRegion,
-          tests: Object.values(grouped).map(test => ({
+          tests: (s.tests || []).map(test => ({
             id: test.id,
-            name: test.nombre,
-            quantity: test.cantidad
+            name: test.name || test.id,
+            quantity: test.quantity || 1
           }))
         }
       })
@@ -413,6 +451,15 @@ function getExpandedTestsCached(caseId: string, subsampleIndex: number, tests: D
   }
   expandedTestsCache.set(key, expanded)
   return expanded
+}
+
+function clearExpandedTestsCache(caseId: string) {
+  // Limpiar todas las entradas del cache que pertenecen a este caso
+  for (const key of expandedTestsCache.keys()) {
+    if (key.startsWith(`${caseId}|`)) {
+      expandedTestsCache.delete(key)
+    }
+  }
 }
 
 // ================= Cálculo de días hábiles para Oportunidad =================
@@ -467,6 +514,62 @@ function calculateBusinessDays(startDate: string, endDate?: string): number {
   
   // Nunca retornar números negativos
   return Math.max(0, businessDays)
+}
+
+// ================= Funciones de edición de muestras =================
+function isEditingSamples(caseId: string): boolean {
+  return editingSamples.value.has(caseId)
+}
+
+function startEditingSamples(caseId: string) {
+  const caseItem = cases.value.find(c => c.id === caseId)
+  if (!caseItem) return
+  
+  // Crear copia editable de las muestras
+  editableSamples.value[caseId] = JSON.parse(JSON.stringify(caseItem.subsamples || []))
+  editingSamples.value.add(caseId)
+}
+
+function cancelEditingSamples(caseId: string) {
+  editingSamples.value.delete(caseId)
+  delete editableSamples.value[caseId]
+}
+
+function getEditableSamples(caseId: string) {
+  return editableSamples.value[caseId] || []
+}
+
+function removeTestFromSample(caseId: string, sampleIndex: number, testIndex: number) {
+  const samples = editableSamples.value[caseId]
+  if (!samples || !samples[sampleIndex]) return
+  
+  samples[sampleIndex].tests.splice(testIndex, 1)
+  
+  // Forzar reactividad
+  editableSamples.value = { ...editableSamples.value }
+}
+
+function saveSamples(caseId: string) {
+  const caseIndex = cases.value.findIndex(c => c.id === caseId)
+  if (caseIndex === -1) return
+  
+  const editableData = getEditableSamples(caseId)
+  if (!editableData) return
+  
+  // Limpiar el cache de expansión para este caso
+  clearExpandedTestsCache(caseId)
+  
+  // Actualizar las muestras del caso con las editadas
+  const updatedCase = {
+    ...cases.value[caseIndex],
+    subsamples: JSON.parse(JSON.stringify(editableData))
+  }
+  
+  // Emitir evento para actualizar el caso en el componente padre
+  emit('update-case', caseId, updatedCase)
+  
+  // Salir del modo edición
+  cancelEditingSamples(caseId)
 }
 </script>
 

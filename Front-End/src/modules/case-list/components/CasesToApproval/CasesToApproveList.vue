@@ -29,9 +29,6 @@
           </div>
         </div>
         <div class="flex gap-3 items-end">
-          <div class="w-64">
-            <PathologistList v-model="selectedPathologist" label="Patólogo" placeholder="Buscar y seleccionar patólogo..." />
-          </div>
           <div class="w-48">
             <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
             <select 
@@ -44,18 +41,6 @@
               <option value="approved">Aprobado</option>
               <option value="rejected">Rechazado</option>
             </select>
-          </div>
-          <div class="flex items-end">
-            <BaseButton 
-              size="sm" 
-              variant="outline" 
-              text="Limpiar" 
-              @click="clearFilters"
-            >
-              <template #icon-left>
-                <TrashIcon class="w-4 h-4 mr-1" />
-              </template>
-            </BaseButton>
           </div>
         </div>
       </div>
@@ -277,7 +262,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { ComponentCard, FormInputField, BaseButton, SearchButton } from '@/shared/components'
-import { TrashIcon } from '@/assets/icons'
 import ConfirmDialog from '@/shared/components/feedback/ConfirmDialog.vue'
 import CaseApprovalDetailsModal from './CaseApprovalDetailsModal.vue'
 import CaseCreatedToast from '../CurrentCases/CaseCreatedToast.vue'
@@ -288,7 +272,7 @@ import type {
   ApprovalState,
   ComplementaryTestInfo
 } from '@/shared/services/approval.service'
-import PathologistList from '@/shared/components/List/PathologistList.vue'
+import { useToasts } from '@/shared/composables/useToasts'
 
 interface CaseToApprove {
   id: string
@@ -314,8 +298,10 @@ const cases = ref<CaseToApprove[]>([])
 const total = ref(0)
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
-const selectedPathologist = ref<string>('')
 const selectedStatus = ref<string>('')
+
+// Notificaciones
+const { success, error: showError } = useToasts()
 
 const mapBackendCase = (c: ApprovalRequestResponse): CaseToApprove => ({
   id: c.id,
@@ -360,7 +346,7 @@ fetchCases()
 
 let searchTimeout: NodeJS.Timeout | null = null
 
-watch([selectedPathologist, selectedStatus], () => {
+watch([selectedStatus], () => {
   currentPage.value = 1
   fetchCases()
 })
@@ -376,24 +362,9 @@ const handleSearch = async () => {
   await fetchCases()
 }
 
-const clearFilters = async () => {
-  searchTerm.value = ''
-  selectedPathologist.value = ''
-  selectedStatus.value = ''
-  currentPage.value = 1
-  await fetchCases()
-}
 
 const filteredCases = computed(() => {
-  let filtered = cases.value
-  
-  if (selectedPathologist.value) {
-    filtered = filtered.filter(caseItem => 
-      caseItem.pathologistId === selectedPathologist.value
-    )
-  }
-  
-  return filtered
+  return cases.value
 })
 const totalPages = computed(() => Math.ceil(total.value / itemsPerPage.value))
 
@@ -586,16 +557,35 @@ const closeModal = () => {
 }
 
 const handleTestsUpdated = async (updatedTests: ComplementaryTestInfo[]) => {
-  if (selectedApprovalCase.value) {
-    selectedApprovalCase.value.complementary_tests = updatedTests
+  if (!selectedApprovalCase.value?.approval_code) {
+    console.error('No hay código de aprobación para actualizar')
+    return
   }
   
-  const caseItem = cases.value.find(c => c.id === selectedApprovalCase.value?.id)
-  if (caseItem) {
-    caseItem.complementaryTests = updatedTests
+  try {
+    // Actualizar en el backend
+    await approvalService.updateApprovalRequest(selectedApprovalCase.value.approval_code, {
+      complementary_tests: updatedTests
+    })
+    
+    // Actualizar estado local
+    if (selectedApprovalCase.value) {
+      selectedApprovalCase.value.complementary_tests = updatedTests
+    }
+    
+    const caseItem = cases.value.find(c => c.approvalCode === selectedApprovalCase.value?.approval_code)
+    if (caseItem) {
+      caseItem.complementaryTests = updatedTests
+    }
+    
+    // Recargar casos para sincronizar con el backend
+    await fetchCases()
+    
+    success('Pruebas actualizadas', 'Las pruebas complementarias se han actualizado exitosamente')
+  } catch (error: any) {
+    console.error('Error al actualizar pruebas:', error)
+    showError('Error al actualizar', error.message || 'No se pudieron actualizar las pruebas complementarias')
   }
-  
-  await fetchCases()
 }
 
 const createdCase = ref<any | null>(null)

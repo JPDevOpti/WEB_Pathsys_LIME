@@ -168,8 +168,41 @@
             </div>
           </div>
 
+          <!-- Sección para pruebas complementarias -->
+          <div v-if="caseItem?.complementary_tests && caseItem.complementary_tests.length > 0" class="bg-yellow-50 rounded-xl p-4 space-y-3">
+            <h5 class="text-sm font-medium text-gray-700">Pruebas Complementarias</h5>
+            
+            <div class="space-y-3">
+              <!-- Mostrar pruebas complementarias -->
+              <div v-for="(test, index) in caseItem.complementary_tests" :key="index">
+                <!-- Pruebas con code, name, quantity -->
+                <div v-if="test.code && test.name && test.quantity" class="border border-gray-200 rounded-lg p-3 bg-white">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {{ test.code }}
+                      </span>
+                      <span class="text-sm font-medium text-gray-900">{{ test.name }}</span>
+                    </div>
+                    <span v-if="test.quantity > 1" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      Cantidad: {{ test.quantity }}
+                    </span>
+                  </div>
+                </div>
+                
+                <!-- Motivo (reason) -->
+                <div v-else-if="test.reason" class="border border-gray-200 rounded-lg p-3 bg-white">
+                  <div class="mb-2">
+                    <p class="text-sm text-gray-600">Motivo de la solicitud</p>
+                  </div>
+                  <p class="text-sm text-gray-800 break-words leading-relaxed">{{ test.reason }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Sección para notas adicionales -->
-          <div v-if="props.caseItem?.status === 'Completado'" class="bg-gray-50 rounded-xl p-4 space-y-3">
+          <div v-if="props.caseItem?.status === 'Completado' && props.caseItem?.additional_notes && props.caseItem.additional_notes.length > 0" class="bg-gray-50 rounded-xl p-4 space-y-3">
             <div class="flex items-center gap-2 mb-3">
               <DocsIcon class="w-4 h-4 text-gray-600" />
               <h5 class="text-sm font-medium text-gray-700">Notas Adicionales</h5>

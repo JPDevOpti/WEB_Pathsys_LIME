@@ -29,7 +29,8 @@
             @toggle-select="toggleSelect" @toggle-select-all="toggleSelectAll" @clear-selection="selectedCaseIds = []"
             @sort="(k: any) => sortBy(k)" @show-details="showDetails" @edit="editCase" @validate="validateCase"
             @perform="performCase" @update-items-per-page="(v: number) => itemsPerPage = v"
-            @prev-page="() => currentPage--" @next-page="() => currentPage++" @refresh="reload" />
+            @prev-page="() => currentPage--" @next-page="() => currentPage++" @refresh="reload"
+            @update-case="handleUpdateCase" />
         </div>
 
         <CaseDetailsModal :case-item="selectedCase" @close="closeDetails" @edit="editCase" @preview="previewCase" @notes="handleNotesUpdate" />
@@ -164,6 +165,19 @@ function handleNotesUpdate(updatedCase: any) {
   // Si el caso actual es el mismo que se actualizó, actualizar solo las notas en selectedCase
   if (selectedCase.value && selectedCase.value.caseCode === caseCode) {
     selectedCase.value.additional_notes = updatedCase.additional_notes
+  }
+}
+
+function handleUpdateCase(caseId: string, updatedCase: any) {
+  // Buscar el caso por ID y actualizarlo
+  const caseIndex = cases.value.findIndex(c => c.id === caseId)
+  if (caseIndex !== -1) {
+    cases.value[caseIndex] = updatedCase
+  }
+  
+  // Si el caso actual es el mismo que se actualizó, actualizar selectedCase también
+  if (selectedCase.value && selectedCase.value.id === caseId) {
+    selectedCase.value = updatedCase
   }
 }
 

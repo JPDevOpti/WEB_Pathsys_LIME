@@ -230,7 +230,7 @@ class ApprovalService:
             raise BadRequestError("Solo se pueden editar las solicitudes en estado 'request_made'")
         
         # Actualizar
-        updated = await self.repository.update_by_approval_code(approval_code, update_data.dict(exclude_unset=True))
+        updated = await self.repository.update_by_approval_code(approval_code, update_data.model_dump(exclude_unset=True))
         return await self.get_approval_by_code(approval_code) if updated else None
 
     async def update_complementary_tests(self, approval_code: str, complementary_tests: list) -> Optional[ApprovalRequestResponse]:

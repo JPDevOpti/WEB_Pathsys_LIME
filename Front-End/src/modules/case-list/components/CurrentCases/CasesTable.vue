@@ -51,6 +51,7 @@
             @close="showMarkDeliveredDrawer = false"
             @confirm="() => {}"
             @completed="handleBatchCompleted"
+            @update-case="handleUpdateCase"
           />
       </div>
     </div>
@@ -492,6 +493,7 @@ const emit = defineEmits<{
   'toggle-select-all': []
   'clear-selection': []
   'refresh': []
+  'update-case': [caseId: string, updatedCase: any]
 }>()
 
 // Router para navegación
@@ -590,6 +592,11 @@ function handleBatchCompleted(_result: any) {
   // Limpiar selección y solicitar refresco al padre
   clearSelection()
   emit('refresh')
+}
+
+function handleUpdateCase(caseId: string, updatedCase: any) {
+  // Emitir evento para actualizar el caso en el componente padre
+  emit('update-case', caseId, updatedCase)
 }
 
 // Handlers de navegación directa
