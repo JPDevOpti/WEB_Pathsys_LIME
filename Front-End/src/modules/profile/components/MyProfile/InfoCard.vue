@@ -31,7 +31,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import {
   UserIcon,
   EnvelopeIcon,
@@ -40,12 +39,8 @@ import {
   UserGroupIcon,
   CheckCircleIcon,
   XCircleIcon,
-  AcademicCapIcon,
   DocumentTextIcon,
-  CalendarIcon,
-  UserCircleIcon,
-  BuildingOfficeIcon,
-  KeyIcon
+  UserCircleIcon
 } from '@heroicons/vue/24/outline'
 
 interface Props {

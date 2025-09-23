@@ -41,7 +41,7 @@ export function roleGuard(
       '/profile',
       '/support'
     ],
-    auxiliary: [
+    auxiliar: [
       '/dashboard',
       '/cases',
       '/results',

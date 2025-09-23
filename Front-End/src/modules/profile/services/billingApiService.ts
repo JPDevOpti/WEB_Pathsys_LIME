@@ -17,6 +17,7 @@ export interface BillingUpdate {
   billing_email?: string
   is_active?: boolean
   observations?: string
+  password?: string
 }
 
 class BillingApiService {

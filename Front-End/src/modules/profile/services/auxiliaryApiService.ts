@@ -18,6 +18,7 @@ export interface AuxiliarUpdate {
   auxiliar_email?: string
   is_active?: boolean
   observations?: string
+  password?: string
 }
 
 class AuxiliarApiService {

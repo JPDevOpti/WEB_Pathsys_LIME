@@ -453,10 +453,11 @@
 import type { Case } from '../../types/case.types'
 import { InfoCircleIcon, SettingsIcon, DocsIcon } from '@/assets/icons'
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import FormCheckbox from '@/shared/components/forms/FormCheckbox.vue'
 import BatchMarkDeliveredDrawer from './BatchMarkDeliveredDrawer.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useToasts } from '@/shared/composables/useToasts'
 
 interface Column { 
   key: string
@@ -499,6 +500,13 @@ const router = useRouter()
 // Permisos del usuario
 const { isPatologo, isResidente, isFacturacion } = usePermissions()
 
+// Toasts
+const { warning } = useToasts()
+
+function showWarningToast(title: string, message: string) {
+  warning('generic', title, message, 5000)
+}
+
 // Funciones para selección - delegar al componente padre (igual que el frontend viejo)
 function toggleSelectAll() {
   emit('toggle-select-all')
@@ -520,6 +528,7 @@ const isCaseSelected = (caseId: string) => {
   const isSelected = props.selectedIds.includes(caseId)
   return isSelected
 }
+
 
 // Funciones de descarga (temporalmente deshabilitadas)
 const exportCasesToExcel = async (_cases: Case[], _type: string) => {}
@@ -562,6 +571,18 @@ async function handleBatchDownloadExcel() {
 
 function handleBatchMarkDelivered() {
   if (isPatologo?.value || isFacturacion?.value) return
+  
+  // Verificar si hay casos en estado diferente a "Por entregar"
+  const selectedCases = props.cases.filter(c => props.selectedIds.includes(c.id))
+  const invalidCases = selectedCases.filter(c => c.status !== 'Por entregar')
+  
+  if (invalidCases.length > 0) {
+    const invalidCodes = invalidCases.map(c => c.caseCode || c.id).join(', ')
+    // Mostrar toast de advertencia
+    showWarningToast('Casos en estado inválido', `Los siguientes casos no están en estado "Por entregar" y no se pueden marcar como entregados: ${invalidCodes}`)
+    return
+  }
+  
   showMarkDeliveredDrawer.value = true
 }
 

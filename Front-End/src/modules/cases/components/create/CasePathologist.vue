@@ -5,7 +5,7 @@
     description="Busque un caso y asigne un patólogo responsable para el análisis."
   >
     <template #icon>
-      <DoctorIcon class="w-5 h-5 mr-2 text-blue-600" />
+      <ResidenteIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
 
     <div class="space-y-6">
@@ -139,7 +139,7 @@ import { FormInputField } from '@/shared/components/forms'
 import { PathologistList } from '@/shared/components/List'
 import { SearchButton, SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
-import { DoctorIcon } from '@/assets/icons'
+import { ResidenteIcon } from '@/assets/icons'
 
 // UI state
 const codigoCaso = ref('')

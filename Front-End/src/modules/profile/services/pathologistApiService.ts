@@ -31,6 +31,7 @@ export interface PathologistUpdate {
   medical_license?: string
   is_active?: boolean
   observations?: string
+  password?: string
 }
 
 export class PathologistApiService {

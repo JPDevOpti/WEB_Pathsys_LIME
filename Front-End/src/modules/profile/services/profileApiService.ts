@@ -222,7 +222,7 @@ export const profileApiService = {
     switch (role) {
       case 'patologo':
         // Usar el nuevo servicio de patólogos
-        const patoPayload = {
+        const patoPayload: any = {
           pathologist_name: payload.patologoName || payload.patologo_name,
           initials: payload.InicialesPatologo || payload.iniciales_patologo || payload.iniciales,
           pathologist_email: payload.PatologoEmail || payload.patologo_email,
@@ -230,10 +230,14 @@ export const profileApiService = {
           observations: payload.observaciones,
           is_active: payload.isActive !== undefined ? payload.isActive : true
         }
+        // Include password if provided
+        if (payload.password && payload.password.trim()) {
+          patoPayload.password = payload.password
+        }
         return PathologistApiService.update(code, patoPayload)
       case 'residente':
         // Usar el nuevo servicio de residentes
-        const resPayload = {
+        const resPayload: any = {
           resident_name: payload.residenteName || payload.residente_name,
           initials: payload.InicialesResidente || payload.iniciales_residente || payload.iniciales,
           resident_email: payload.ResidenteEmail || payload.residente_email,
@@ -241,23 +245,35 @@ export const profileApiService = {
           observations: payload.observaciones,
           is_active: payload.isActive !== undefined ? payload.isActive : true
         }
+        // Include password if provided
+        if (payload.password && payload.password.trim()) {
+          resPayload.password = payload.password
+        }
         return ResidentApiService.update(code, resPayload)
       case 'auxiliar':
         // Usar el nuevo servicio de auxiliares
-        const auxPayload = {
+        const auxPayload: any = {
           auxiliar_name: payload.auxiliarName || payload.auxiliar_name,
           auxiliar_email: payload.AuxiliarEmail || payload.auxiliar_email,
           observations: payload.observaciones,
           is_active: payload.isActive !== undefined ? payload.isActive : true
         }
+        // Include password if provided
+        if (payload.password && payload.password.trim()) {
+          auxPayload.password = payload.password
+        }
         return AuxiliarApiService.update(code, auxPayload)
       case 'facturacion':
         // Usar el nuevo servicio de facturación
-        const factPayload = {
+        const factPayload: any = {
           billing_name: payload.facturacionName || payload.facturacion_name,
           billing_email: payload.FacturacionEmail || payload.facturacion_email,
           observations: payload.observaciones,
           is_active: payload.isActive !== undefined ? payload.isActive : true
+        }
+        // Include password if provided
+        if (payload.password && payload.password.trim()) {
+          factPayload.password = payload.password
         }
         return BillingApiService.update(code, factPayload)
       default:

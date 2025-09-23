@@ -1,9 +1,7 @@
 <template>
   <ComponentCard title="Creación de usuarios" description="Seleciona una pestaña para crear un usuario." :dense="true">
     <template #icon>
-      <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h8m4-7v3m0 0h3m-3 0h-3" />
-      </svg>
+      <NewUserIcon class="w-5 h-5 mr-2" />
     </template>
     <div class="border-b border-gray-200 mb-1">
       <nav class="-mb-px flex flex-wrap gap-1 md:gap-4" aria-label="Tabs">
@@ -58,6 +56,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
+import NewUserIcon from '@/assets/icons/NewUserIcon.vue'
 import FormAuxiliary from './FormAuxiliary.vue'
 import FormBilling from './FormBilling.vue'
 import FormPathologist from './FormPathologist.vue'

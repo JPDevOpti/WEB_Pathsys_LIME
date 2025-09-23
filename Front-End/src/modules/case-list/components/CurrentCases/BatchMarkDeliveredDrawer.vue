@@ -211,7 +211,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void; (e: 'close'): void; (e: 'confirm', ids: string[]): void; (e: 'completed', result: any[]): void }>()
+const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void; (e: 'close'): void; (e: 'confirm', ids: string[]): void; (e: 'confirm-removals', summary: any): void; (e: 'completed', result: any[]): void }>()
 
 const visible = computed(() => props.modelValue)
 const cases = computed(() => props.selected || [])
@@ -333,6 +333,7 @@ function emitConfirm() {
     return
   }
 
+
   const ids = cases.value.map(c => c.id).filter(Boolean)
   // Emitir primero ids (compatibilidad)
   emit('confirm', ids)
@@ -359,8 +360,12 @@ function emitConfirm() {
           }
         }
         return {
-          region_cuerpo: s.bodyRegion,
-          pruebas: Object.values(grouped)
+          body_region: s.bodyRegion,
+          tests: Object.values(grouped).map(test => ({
+            id: test.id,
+            name: test.nombre,
+            quantity: test.cantidad
+          }))
         }
       })
     
@@ -370,9 +375,9 @@ function emitConfirm() {
     return { 
       caseCode: c.caseCode || c.id, 
       remainingSubsamples: remaining,
-      oportunidad: oportunidad, // Campo para registrar días hábiles al completar
-      entregadoA: entregadoA.value.trim(), // Campo para registrar quién recibe
-      fechaEntrega: new Date().toISOString() // Fecha actual de entrega
+      business_days: oportunidad, // Campo para registrar días hábiles al completar
+      delivered_to: entregadoA.value.trim(), // Campo para registrar quién recibe
+      delivered_at: new Date().toISOString() // Fecha actual de entrega
     }
   })
   

@@ -269,8 +269,8 @@ import { profileApiService } from '@/modules/profile/services/profileApiService'
 import type { Disease } from '@/shared/services/disease.service'
 import ResultsActionNotification from '../Shared/ResultsActionNotification.vue'
 import signApiService from '../../services/signApiService'
-import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
-import type { PruebaComplementaria } from '@/modules/results/services/casoAprobacion.service'
+import approvalService from '@/shared/services/approval.service'
+import type { ComplementaryTestInfo } from '@/shared/services/approval.service'
 
 interface Props {
   sampleId: string
@@ -790,32 +790,58 @@ const handleDetailsChange = (value: string) => {
 }
 
 // Estado para almacenar las pruebas complementarias solicitadas para la notificación
-const requestedComplementaryTests = ref<PruebaComplementaria[]>([])
+const requestedComplementaryTests = ref<ComplementaryTestInfo[]>([])
 const requestedComplementaryTestsReason = ref('')
 
 // Crear solicitud de aprobación (sin lógica de firma ni CIE-10 aquí)
-const handleCreateApprovalRequest = async (payload: { caso_original: string; motivo: string; pruebas_complementarias: PruebaComplementaria[] }) => {
+const handleCreateApprovalRequest = async (payload: { case_code: string; reason: string; complementary_tests: ComplementaryTestInfo[] }) => {
   try {
-    if (!payload?.caso_original || !/^[0-9]{4}-[0-9]{5}$/.test(payload.caso_original)) throw new Error('Código de caso inválido')
-    if (!payload?.motivo?.trim()) throw new Error('Motivo requerido')
-    if (!payload?.pruebas_complementarias?.length) throw new Error('Debe seleccionar al menos una prueba')
+    if (!payload?.case_code || !/^[0-9]{4}-[0-9]{5}$/.test(payload.case_code)) throw new Error('Código de caso inválido')
+    if (!payload?.reason?.trim()) throw new Error('Motivo requerido')
+    if (!payload?.complementary_tests?.length) throw new Error('Debe seleccionar al menos una prueba')
     
-    const response = await casoAprobacionService.createCasoAprobacion({
-      caso_original: payload.caso_original,
-      motivo: payload.motivo.trim(),
-      pruebas_complementarias: payload.pruebas_complementarias.map(p => ({ codigo: p.codigo, nombre: p.nombre || p.codigo, cantidad: p.cantidad || 1 }))
+    // Validar que el caso tenga diagnóstico CIE-10 completo
+    const validation = validateDiagnosis()
+    if (!validation.isValid) {
+      throw new Error(`El caso debe tener un diagnóstico CIE-10 completo antes de solicitar pruebas complementarias. Errores: ${validation.errors.join(', ')}`)
+    }
+    
+    // Validar que el caso tenga método, corte macro, micro y diagnósticos completos
+    if (!caseDetails.value?.result?.macro_result?.trim()) {
+      throw new Error('El caso debe tener un resultado macroscópico antes de solicitar pruebas complementarias')
+    }
+    if (!caseDetails.value?.result?.micro_result?.trim()) {
+      throw new Error('El caso debe tener un resultado microscópico antes de solicitar pruebas complementarias')
+    }
+    if (!caseDetails.value?.result?.diagnosis?.trim()) {
+      throw new Error('El caso debe tener un diagnóstico antes de solicitar pruebas complementarias')
+    }
+    
+    const response = await approvalService.createApprovalRequest({
+      original_case_code: payload.case_code,
+      complementary_tests: payload.complementary_tests.map(p => ({ 
+        code: p.code, 
+        name: p.name || p.code, 
+        quantity: p.quantity || 1 
+      })),
+      reason: payload.reason.trim()
     })
     
     if (response) {
-      // Guardar el contenido actual del formulario para la notificación
       setSavedFromSections()
-      savedCaseCode.value = payload.caso_original
+      savedCaseCode.value = payload.case_code
+      requestedComplementaryTests.value = payload.complementary_tests
+      requestedComplementaryTestsReason.value = payload.reason.trim()
       
-      // Guardar las pruebas complementarias solicitadas para la notificación
-      requestedComplementaryTests.value = payload.pruebas_complementarias
-      requestedComplementaryTestsReason.value = payload.motivo.trim()
+      // Cambiar estado del caso original a "Por entregar"
+      try {
+        await casesApiService.updateCaseState(payload.case_code, 'Por entregar')
+      } catch (updateError) {
+        console.error('Error al actualizar estado del caso:', updateError)
+        // No bloquear la operación si falla la actualización del estado
+      }
       
-      showSuccess('Solicitud de aprobación creada', `Se creó la solicitud de pruebas complementarias para ${payload.caso_original}.`, 0)
+      showSuccess('Solicitud de aprobación creada', `Se creó la solicitud de pruebas complementarias para ${payload.case_code}.`, 0)
       needsComplementaryTests.value = false
       complementaryTestsDetails.value = ''
     }
@@ -825,7 +851,7 @@ const handleCreateApprovalRequest = async (payload: { caso_original: string; mot
 }
 
 // Firmar caso con pruebas complementarias
-const handleSignWithChanges = async (data: { details: string; tests: PruebaComplementaria[] }) => {
+const handleSignWithChanges = async (data: { details: string; tests: ComplementaryTestInfo[] }) => {
   try {
     signing.value = true
     

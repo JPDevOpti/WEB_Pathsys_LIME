@@ -34,34 +34,35 @@ export interface Case {
   // Nuevo: prioridad del caso (Normal|Prioritario|Urgente)
   priority?: string
   // Campo para capturar días hábiles al completar el caso
-  oportunidad?: number
+  business_days?: number
   // Campo para registrar quién recibe el caso al ser entregado
-  entregado_a?: string
+  delivered_to?: string
+  // Campo para registrar fecha de entrega
+  delivered_at?: string
   result?: {
-    method?: string
-    macro?: string
-    micro?: string
+    method?: string[]
+    macro_result?: string
+    micro_result?: string
     diagnosis?: string
     resultDate?: string
-    observaciones?: string
+    observations?: string
     // Campos adicionales para diagnósticos
-    diagnostico_cie10?: {
-      codigo: string
-      nombre: string
+    cie10_diagnosis?: {
+      code: string
+      name: string
     } | null
-    diagnostico_cieo?: {
-      codigo: string
-      nombre: string
+    cieo_diagnosis?: {
+      code: string
+      name: string
     } | null
   }
   subsamples?: Array<{
     bodyRegion: string
     tests: Array<{ id: string; name: string; quantity: number }>
   }>
-  notas_adicionales?: Array<{
-    fecha: string
-    nota: string
-    agregado_por?: string
+  additional_notes?: Array<{
+    date: string
+    note: string
   }>
 }
 

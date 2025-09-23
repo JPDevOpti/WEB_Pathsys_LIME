@@ -13,8 +13,8 @@
         <!-- Header -->
         <div class="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
           <div class="flex flex-col">
-            <h3 class="text-xl font-semibold text-gray-900">Revisión del Caso</h3>
-            <p class="text-xs text-gray-500" v-if="caseItem.caseCode || caseItem.id">Código: {{ caseItem.caseCode || caseItem.id }}</p>
+            <h3 class="text-xl font-semibold text-gray-900">Revisión de Solicitud de Aprobación</h3>
+            <p class="text-xs text-gray-500" v-if="caseItem.approval_code">Código: {{ caseItem.approval_code }}</p>
           </div>
           <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600" aria-label="Cerrar">✕</button>
         </div>
@@ -22,183 +22,154 @@
         <div class="p-6 space-y-6">
           <!-- Estado y acciones rápidas -->
           <div class="flex flex-wrap items-center gap-3">
-            <span v-if="caseItem.createdAt" class="text-xs text-gray-500">Fecha de creación: {{ formatDate(caseItem.createdAt) }}</span>
-            <span v-if="caseItem.updatedAt" class="text-xs text-gray-500">Última actualización: {{ formatDate(caseItem.updatedAt) }}</span>
+            <span v-if="caseItem.created_at" class="text-xs text-gray-500">Fecha de creación: {{ formatDate(caseItem.created_at) }}</span>
+            <span v-if="caseItem.updated_at" class="text-xs text-gray-500">Última actualización: {{ formatDate(caseItem.updated_at) }}</span>
           </div>
 
-          <!-- Datos del paciente -->
+          <!-- Información de la solicitud -->
           <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
-              <p class="text-xs text-gray-500">Paciente</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.patient?.fullName || 'N/A' }}</p>
+              <p class="text-xs text-gray-500">Código de Solicitud</p>
+              <p class="text-sm font-medium text-gray-900">{{ caseItem.approval_code || 'N/A' }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-500">Documento</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.patient?.id || 'N/A' }}</p>
+              <p class="text-xs text-gray-500">Caso Original</p>
+              <p class="text-sm font-medium text-gray-900">{{ caseItem.original_case_code || 'N/A' }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-500">Edad</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.patient?.age ? caseItem.patient.age + ' años' : 'N/D' }}</p>
+              <p class="text-xs text-gray-500">Estado</p>
+              <p class="text-sm font-medium text-gray-900">{{ getStatusText(caseItem.approval_state) }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-500">Sexo</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.patient?.sex || 'N/D' }}</p>
-            </div>
-            <div>
-              <p class="text-xs text-gray-500">Tipo Atención</p>
-              <p class="text-sm font-medium text-gray-900 capitalize">{{ caseItem.patient?.attentionType || 'N/D' }}</p>
-            </div>
-            <div class="col-span-2 lg:col-span-1">
-              <p class="text-xs text-gray-500">Entidad</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.patient?.entity || 'N/D' }}</p>
+              <p class="text-xs text-gray-500">Fecha de Solicitud</p>
+              <p class="text-sm font-medium text-gray-900">{{ caseItem.created_at ? formatDate(caseItem.created_at) : 'N/A' }}</p>
             </div>
           </section>
 
-            <!-- Fechas y patólogo -->
+            <!-- Información adicional -->
           <section class="grid grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
-              <p class="text-xs text-gray-500">Recibido</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.receivedAt ? formatDate(caseItem.receivedAt) : 'N/A' }}</p>
+              <p class="text-xs text-gray-500">Fecha de Creación</p>
+              <p class="text-sm font-medium text-gray-900">{{ caseItem.created_at ? formatDate(caseItem.created_at) : 'N/A' }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-500">Entrega</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.deliveredAt ? formatDate(caseItem.deliveredAt) : 'Pendiente' }}</p>
+              <p class="text-xs text-gray-500">Última Actualización</p>
+              <p class="text-sm font-medium text-gray-900">{{ caseItem.updated_at ? formatDate(caseItem.updated_at) : 'N/A' }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-500">Patólogo</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.pathologist || 'Sin asignar' }}</p>
+              <p class="text-xs text-gray-500">Patólogo Asignado</p>
+              <p class="text-sm font-medium text-gray-900">{{ getPathologistName() }}</p>
             </div>
           </section>
 
-          <!-- Descripción -->
-          <section v-if="caseItem.description" class="bg-gray-50 rounded-xl p-4 space-y-2">
-            <h5 class="text-xs font-medium text-gray-600">Descripción</h5>
-            <p class="text-sm text-gray-800 whitespace-pre-line">{{ caseItem.description }}</p>
+          <!-- Motivo de la solicitud -->
+          <section v-if="getReason()" class="bg-gray-50 rounded-xl p-4 space-y-2">
+            <h5 class="text-xs font-medium text-gray-600">Motivo de la Solicitud</h5>
+            <p class="text-sm text-gray-800 whitespace-pre-line">{{ getReason() }}</p>
           </section>
 
-          <!-- Muestras y pruebas -->
+          <!-- Editor de Pruebas Complementarias -->
           <section class="bg-gray-50 rounded-xl p-4 space-y-3">
-            <h5 class="text-xs font-medium text-gray-600">Muestras y Pruebas</h5>
-            <div v-if="caseItem.subsamples?.length" class="space-y-3">
-              <div v-for="(muestra, mIdx) in caseItem.subsamples" :key="mIdx" class="border border-gray-200 rounded-lg p-3 bg-white">
-                <div class="flex items-center justify-between mb-2">
-                  <p class="text-xs text-gray-500">Región del cuerpo</p>
-                  <p class="text-sm font-medium text-gray-900">{{ muestra.bodyRegion || 'No especificada' }}</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <span
-                    v-for="(prueba, pIdx) in muestra.tests"
-                    :key="pIdx"
-                    class="relative inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-[11px] pl-2 pr-6 py-0.5 rounded border text-nowrap"
-                    :title="prueba.name && prueba.name !== prueba.id ? prueba.name : ''"
-                  >
-                    {{ prueba.id }} - {{ prueba.name || prueba.id }}
+            <div class="flex items-center justify-between">
+              <h5 class="text-xs font-medium text-gray-600">Pruebas Complementarias Solicitadas</h5>
+              <BaseButton
+                v-if="!isEditingTests"
+                variant="outline"
+                size="xs"
+                text="Editar"
+                custom-class="bg-white border-blue-600 text-blue-600 hover:bg-blue-50"
+                @click="startEditingTests"
+              />
+            </div>
+            
+            <div v-if="!isEditingTests">
+              <div v-if="getComplementaryTests()?.length" class="space-y-3">
+                <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                  <div class="flex flex-wrap gap-2">
                     <span
-                      v-if="prueba.quantity > 1"
-                      class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold"
+                      v-for="(test, idx) in getComplementaryTests()"
+                      :key="idx"
+                      class="relative inline-flex items-center justify-center bg-blue-100 text-blue-700 font-mono text-[11px] pl-2 pr-6 py-0.5 rounded border text-nowrap"
+                      :title="test.name"
                     >
-                      {{ prueba.quantity }}
+                      {{ test.code }} - {{ test.name }}
+                      <span
+                        v-if="test.quantity > 1"
+                        class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold"
+                      >
+                        {{ test.quantity }}
+                      </span>
                     </span>
-                  </span>
+                  </div>
                 </div>
               </div>
+              <div v-else class="text-xs text-gray-500">Sin pruebas complementarias</div>
             </div>
-            <div v-else class="text-xs text-gray-500">Sin muestras registradas</div>
-          </section>
 
-          <!-- Pruebas nuevas asignadas por el patólogo -->
-          <section v-if="caseItem.newAssignedTests && caseItem.newAssignedTests.length" class="bg-blue-50 rounded-xl p-4 space-y-3">
-            <div class="flex items-center gap-2">
-              <h5 class="text-xs font-medium text-blue-700">Pruebas nuevas asignadas por el patólogo</h5>
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">{{ caseItem.newAssignedTests.length }}</span>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="(test, idx) in caseItem.newAssignedTests"
-                :key="idx"
-                class="relative inline-flex items-center justify-center bg-white text-blue-700 font-mono text-[11px] pl-1 pr-6 py-0.5 rounded border border-blue-200 text-nowrap shadow-sm group"
-                :title="test.name && test.name !== test.id ? test.name : ''"
-              >
-                <!-- Botón eliminar -->
-                <button
-                  type="button"
-                  class="inline-flex items-center justify-center w-4 h-4 mr-1 rounded-sm text-red-500 hover:text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 transition-colors"
-                  aria-label="Eliminar prueba"
-                  title="Eliminar prueba"
-                  @click.stop="handleRemoveNewAssignedTest(idx, test)"
+            <div v-else class="space-y-3">
+              <div class="space-y-2">
+                <div
+                  v-for="(test, index) in editableTests"
+                  :key="index"
+                  class="flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg"
                 >
-                  <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 8.586l4.95-4.95 1.414 1.414L11.414 10l4.95 4.95-1.414 1.414L10 11.414l-4.95 4.95-1.414-1.414L8.586 10l-4.95-4.95L5.05 3.636 10 8.586z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-                {{ test.id }} - {{ test.name || test.id }}
-                <span
-                  v-if="test.quantity > 1"
-                  class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold"
-                >
-                  {{ test.quantity }}
-                </span>
-              </span>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">{{ test.code }} - {{ test.name }}</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <label class="text-xs text-gray-500">Cantidad:</label>
+                    <input
+                      v-model.number="test.quantity"
+                      type="number"
+                      min="1"
+                      max="20"
+                      class="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    <button
+                      @click="removeTest(index)"
+                      class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+                      title="Eliminar prueba"
+                    >
+                      <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 8.586l4.95-4.95 1.414 1.414L11.414 10l4.95 4.95-1.414 1.414L10 11.414l-4.95 4.95-1.414-1.414L8.586 10l-4.95-4.95L5.05 3.636 10 8.586z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex gap-2 pt-2">
+                <BaseButton
+                  variant="outline"
+                  size="sm"
+                  text="Guardar"
+                  custom-class="bg-white border-green-600 text-green-600 hover:bg-green-50"
+                  :loading="savingTests"
+                  @click="saveTests"
+                />
+                <BaseButton
+                  variant="outline"
+                  size="sm"
+                  text="Cancelar"
+                  custom-class="bg-white border-gray-600 text-gray-600 hover:bg-gray-50"
+                  @click="cancelEditingTests"
+                />
+              </div>
             </div>
           </section>
 
-          <!-- Resultado del informe -->
-          <section v-if="caseItem.result && (caseItem.result.method || caseItem.result.macro || caseItem.result.micro || caseItem.result.diagnosis)" class="bg-gray-50 rounded-xl p-4 space-y-3">
-            <h5 class="text-xs font-medium text-gray-600">Resultado del Informe</h5>
-            <div v-if="caseItem.result.method" class="border border-gray-200 rounded-lg p-3 bg-white">
-              <p class="text-xs text-gray-500 mb-1">Método</p>
-              <p class="text-sm text-gray-800 break-words">{{ caseItem.result.method }}</p>
-            </div>
-            <div v-if="caseItem.result.macro" class="border border-gray-200 rounded-lg p-3 bg-white">
-              <p class="text-xs text-gray-500 mb-1">Resultado Macroscópico</p>
-              <p class="text-sm text-gray-800 break-words">{{ caseItem.result.macro }}</p>
-            </div>
-            <div v-if="caseItem.result.micro" class="border border-gray-200 rounded-lg p-3 bg-white">
-              <p class="text-xs text-gray-500 mb-1">Resultado Microscópico</p>
-              <p class="text-sm text-gray-800 break-words">{{ caseItem.result.micro }}</p>
-            </div>
-            <div v-if="caseItem.result.diagnosis" class="border border-gray-200 rounded-lg p-3 bg-white">
-              <p class="text-xs text-gray-500 mb-1">Diagnóstico</p>
-              <p class="text-sm text-gray-800 break-words">{{ caseItem.result.diagnosis }}</p>
-            </div>
-          </section>
-
-          <!-- Diagnósticos Clasificados -->
-          <section v-if="caseItem.result && (caseItem.result.diagnostico_cie10 || caseItem.result.diagnostico_cieo)" class="bg-gray-50 rounded-xl p-4 space-y-3">
-            <h5 class="text-xs font-medium text-gray-600">Diagnósticos Clasificados</h5>
-            <div v-if="caseItem.result.diagnostico_cie10" class="border border-gray-200 rounded-lg p-3 bg-white">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800">CIE-10</span>
-                <span class="text-xs font-mono text-gray-600">{{ caseItem.result.diagnostico_cie10.codigo }}</span>
-              </div>
-              <p class="text-sm text-gray-800">{{ caseItem.result.diagnostico_cie10.nombre }}</p>
-            </div>
-            <div v-if="caseItem.result.diagnostico_cieo" class="border border-gray-200 rounded-lg p-3 bg-white">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-green-100 text-green-800">CIE-O</span>
-                <span class="text-xs font-mono text-gray-600">{{ caseItem.result.diagnostico_cieo.codigo }}</span>
-              </div>
-              <p class="text-sm text-gray-800">{{ caseItem.result.diagnostico_cieo.nombre }}</p>
-            </div>
-          </section>
         </div>
 
         <!-- Footer -->
         <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl">
-          <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-            <div class="flex justify-center sm:justify-start w-full sm:w-auto">
-              <BaseButton
-                variant="outline"
-                size="sm"
-                text="Previsualizar"
-                custom-class="bg-white border-blue-600 text-blue-600 hover:bg-blue-50"
-                @click="$emit('preview', caseItem)"
-              />
-            </div>
-            <div class="flex gap-2 justify-center sm:justify-end w-full sm:w-auto">
-              <BaseButton variant="outline" size="sm" text="Aprobar" custom-class="bg-white border-green-600 text-green-600 hover:bg-green-50" :disabled="loadingApprove || loadingReject" :loading="loadingApprove" loading-text="Aprobando..." @click="$emit('approve', caseItem)" />
-              <BaseButton variant="outline" size="sm" text="Rechazar" custom-class="bg-white border-red-600 text-red-600 hover:bg-red-50" :disabled="loadingApprove || loadingReject" :loading="loadingReject" loading-text="Rechazando..." @click="$emit('reject', caseItem)" />
-            </div>
+          <div class="flex justify-end">
+            <BaseButton
+              variant="outline"
+              size="sm"
+              text="Cerrar"
+              custom-class="bg-white border-gray-600 text-gray-600 hover:bg-gray-50"
+              @click="$emit('close')"
+            />
           </div>
         </div>
       </div>
@@ -222,25 +193,18 @@ import { BaseButton } from '@/shared/components'
 import { ConfirmDialog } from '@/shared/components/feedback'
 import { computed } from 'vue'
 import { useSidebar } from '@/shared/composables/SidebarControl'
-import type { CaseApprovalDetails } from '../../../cases/types/case-approval.types'
+import type { ApprovalRequestResponse } from '@/shared/services/approval.service'
 
 interface Props {
-  caseItem: CaseApprovalDetails | null
-  loadingApprove?: boolean
-  loadingReject?: boolean
+  caseItem: ApprovalRequestResponse | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loadingApprove: false,
-  loadingReject: false
 })
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'approve', c: CaseApprovalDetails): void
-  (e: 'reject', c: CaseApprovalDetails): void
-  (e: 'preview', c: CaseApprovalDetails): void
-  (e: 'remove-new-test', payload: { index: number; test: any; caseItem: CaseApprovalDetails }): void
+  (e: 'testsUpdated', tests: any[]): void
 }>()
 
 function formatDate(dateString?: string) {
@@ -256,19 +220,20 @@ const overlayLeftClass = computed(() => {
   return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
 })
 
-function handleRemoveNewAssignedTest(index: number, test: any) {
-  pendingRemoval.value = { index, test }
-  showConfirm.value = true
-}
-
-// Estado para diálogo de confirmación
+// Estado para diálogo de confirmación (mantenido para compatibilidad)
 import { ref } from 'vue'
 const showConfirm = ref(false)
 const pendingRemoval = ref<{ index: number; test: any } | null>(null)
 
+// Estado para edición de pruebas
+const isEditingTests = ref(false)
+const editableTests = ref<any[]>([])
+const savingTests = ref(false)
+
+
 function confirmRemoval() {
   if (pendingRemoval.value && props.caseItem) {
-    emit('remove-new-test', { index: pendingRemoval.value.index, test: pendingRemoval.value.test, caseItem: props.caseItem })
+    emit('testsUpdated', [])
   }
   showConfirm.value = false
   pendingRemoval.value = null
@@ -277,5 +242,65 @@ function confirmRemoval() {
 function cancelRemoval() {
   showConfirm.value = false
   pendingRemoval.value = null
+}
+
+// Funciones helper para mostrar datos correctos
+function getStatusText(status?: string): string {
+  if (!status) return 'N/A'
+  const statusMap: Record<string, string> = {
+    'request_made': 'Solicitud Hecha',
+    'pending_approval': 'Pendiente de Aprobación',
+    'approved': 'Aprobado',
+    'rejected': 'Rechazado'
+  }
+  return statusMap[status] || status
+}
+
+function getPathologistName(): string {
+  if (!props.caseItem?.approval_info?.assigned_pathologist) {
+    return 'Sin asignar'
+  }
+  return props.caseItem.approval_info.assigned_pathologist.name || 'Sin asignar'
+}
+
+function getReason(): string | null {
+  return props.caseItem?.approval_info?.reason || null
+}
+
+function getComplementaryTests() {
+  return props.caseItem?.complementary_tests || []
+}
+
+// Funciones para edición de pruebas
+function startEditingTests() {
+  editableTests.value = [...(getComplementaryTests() || [])]
+  isEditingTests.value = true
+}
+
+function cancelEditingTests() {
+  isEditingTests.value = false
+  editableTests.value = []
+}
+
+function removeTest(index: number) {
+  editableTests.value.splice(index, 1)
+}
+
+async function saveTests() {
+  if (!props.caseItem) return
+  
+  savingTests.value = true
+  try {
+    // Emitir el evento con las pruebas actualizadas
+    emit('testsUpdated', editableTests.value)
+    
+    // Salir del modo edición
+    isEditingTests.value = false
+    editableTests.value = []
+  } catch (error) {
+    console.error('Error al guardar pruebas:', error)
+  } finally {
+    savingTests.value = false
+  }
 }
 </script>

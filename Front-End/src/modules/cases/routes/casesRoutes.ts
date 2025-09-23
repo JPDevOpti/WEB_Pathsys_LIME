@@ -24,15 +24,6 @@ export const casesRoutes: RouteRecordRaw[] = [
         }
       },
       {
-        path: 'technique-complementary',
-        name: 'cases-technique-complementary',
-        component: () => import('../views/TechniqueComplementaryView.vue'),
-        meta: {
-          title: 'Técnicas Complementarias',
-          requiresAuth: true
-        }
-      },
-      {
         path: 'to-approve',
         name: 'cases-to-approve',
         component: () => import('../../case-list/views/CasesToApproveView.vue'),

@@ -30,7 +30,7 @@
           <div v-for="(test, index) in tests" :key="index" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center bg-white border border-gray-200 rounded-lg p-3">
             <div class="flex-1 min-w-0">
               <TestList 
-                v-model="test.codigo" 
+                v-model="test.code" 
                 :label="`Prueba ${index + 1}`" 
                 placeholder="Buscar y seleccionar prueba..." 
                 :required="true" 
@@ -40,7 +40,7 @@
             </div>
             <div class="w-full sm:w-28">
               <FormInputField 
-                v-model.number="test.cantidad" 
+                v-model.number="test.quantity" 
                 label="Cant." 
                 type="number" 
                 :min="1" 
@@ -92,7 +92,7 @@ import { ref } from 'vue'
 import { FormCheckbox, FormTextareaUnlimited, FormInputField } from '@/shared/components/forms'
 import { SaveButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { TestList } from '@/shared/components/List'
-import type { PruebaComplementaria } from '@/modules/results/services/casoAprobacion.service'
+import type { ComplementaryTestInfo } from '@/shared/services/approval.service'
 
 // Props
 interface Props {
@@ -110,8 +110,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'needs-tests-change', value: boolean): void
   (e: 'details-change', value: string): void
-  (e: 'create-approval-request', data: { caso_original: string; motivo: string; pruebas_complementarias: PruebaComplementaria[] }): void
-  (e: 'sign-with-changes', data: { details: string; tests: PruebaComplementaria[] }): void
+  (e: 'create-approval-request', data: { case_code: string; reason: string; complementary_tests: ComplementaryTestInfo[] }): void
+  (e: 'sign-with-changes', data: { details: string; tests: ComplementaryTestInfo[] }): void
 }>()
 
 // Estado local
@@ -119,8 +119,8 @@ const needsComplementaryTests = ref(props.initialNeedsTests)
 const complementaryTestsDetails = ref(props.initialDetails)
 const signingWithChanges = ref(false)
 
-// Tests dinámicos - Usando la interfaz PruebaComplementaria actualizada
-const tests = ref<PruebaComplementaria[]>([{ codigo: '', nombre: '', cantidad: 1 }])
+// Tests dinámicos - Usando la nueva interfaz ComplementaryTestInfo
+const tests = ref<ComplementaryTestInfo[]>([{ code: '', name: '', quantity: 1 }])
 
 // Errores simples
 const testsError = ref('')
@@ -130,33 +130,28 @@ const validate = (): boolean => {
   testsError.value = ''
   descriptionError.value = ''
   
-  // Validar que al menos una prueba tenga código
-  const validTests = tests.value.filter(t => t.codigo && t.codigo.trim() !== '')
+  const validTests = tests.value.filter(t => t.code && t.code.trim() !== '')
   if (validTests.length === 0) {
     testsError.value = 'Seleccione al menos una prueba complementaria.'
     return false
   }
   
-  // Validar que todas las pruebas válidas tengan nombre
-  const testsWithoutName = validTests.filter(t => !t.nombre || t.nombre.trim() === '')
+  const testsWithoutName = validTests.filter(t => !t.name || t.name.trim() === '')
   if (testsWithoutName.length > 0) {
     testsError.value = 'Algunas pruebas no tienen nombre válido. Vuelva a seleccionarlas.'
     return false
   }
   
-  // Validar cantidad de cada prueba
-  const testsWithInvalidQuantity = validTests.filter(t => !t.cantidad || t.cantidad < 1 || t.cantidad > 20)
+  const testsWithInvalidQuantity = validTests.filter(t => !t.quantity || t.quantity < 1 || t.quantity > 20)
   if (testsWithInvalidQuantity.length > 0) {
     testsError.value = 'Las cantidades deben estar entre 1 y 20.'
     return false
   }
   
-  // Validar que el motivo no esté vacío
   if (!complementaryTestsDetails.value.trim()) {
     descriptionError.value = 'El motivo de la solicitud es obligatorio.'
     return false
   }
-  
   
   return true
 }
@@ -164,20 +159,17 @@ const validate = (): boolean => {
 
 // Manipulación de pruebas
 const addTest = () => {
-  // Asegurar que la nueva prueba tenga estructura válida
   tests.value.push({ 
-    codigo: '', 
-    nombre: '', 
-    cantidad: 1 
+    code: '', 
+    name: '', 
+    quantity: 1 
   })
-  // Limpiar errores al agregar nueva prueba
   testsError.value = ''
 }
 
 const removeTest = (index: number) => {
   if (tests.value.length > 1) {
     tests.value.splice(index, 1)
-    // Limpiar errores después de remover
     testsError.value = ''
   }
 }
@@ -187,21 +179,18 @@ const handleTestSelected = (index: number, test: any) => {
   
   const item = tests.value[index]
   if (item && typeof item === 'object') {
-    // Mapear desde TestDetails (estructura principal)
-    item.codigo = test.pruebaCode || test.codigo || test.code || ''
-    item.nombre = test.pruebasName || test.nombre || test.name || test.label || item.codigo
+    item.code = test.pruebaCode || test.codigo || test.code || ''
+    item.name = test.pruebasName || test.nombre || test.name || test.label || item.code
     
-    // Validación adicional
-    if (!item.codigo.trim()) {
+    if (!item.code.trim()) {
       console.warn('TestList devolvió una prueba sin código válido:', test)
       return
     }
-    if (!item.nombre.trim()) {
-      item.nombre = item.codigo // fallback al código si no hay nombre
+    if (!item.name.trim()) {
+      item.name = item.code
     }
     
-    // Limpiar errores si la selección es válida
-    if (item.codigo.trim()) {
+    if (item.code.trim()) {
       testsError.value = ''
     }
   }
@@ -211,16 +200,14 @@ const handleTestSelected = (index: number, test: any) => {
 const handleNeedsTestsChange = (value: boolean) => {
   needsComplementaryTests.value = value
   if (!value) {
-    // Limpiar datos cuando se desactiva
     complementaryTestsDetails.value = ''
-    tests.value = [{ codigo: '', nombre: '', cantidad: 1 }]
+    tests.value = [{ code: '', name: '', quantity: 1 }]
   }
   emit('needs-tests-change', value)
 }
 
 const handleDetailsChange = (value: string) => {
   complementaryTestsDetails.value = value
-  // Limpiar error si el motivo tiene contenido
   if (value.trim().length > 0) {
     descriptionError.value = ''
   }
@@ -228,7 +215,6 @@ const handleDetailsChange = (value: string) => {
 }
 
 const handleSignWithChanges = async () => {
-  // Validar antes de proceder
   if (!validate()) {
     console.warn('Validación falló al crear solicitud de aprobación')
     return
@@ -236,10 +222,9 @@ const handleSignWithChanges = async () => {
   
   signingWithChanges.value = true
   try {
-    // Filtrar y validar pruebas - solo las que tienen código y nombre válidos
     const validTests = tests.value.filter(test => 
-      test.codigo && test.codigo.trim() !== '' && 
-      test.nombre && test.nombre.trim() !== ''
+      test.code && test.code.trim() !== '' && 
+      test.name && test.name.trim() !== ''
     )
     
     if (validTests.length === 0) {
@@ -247,14 +232,12 @@ const handleSignWithChanges = async () => {
       return
     }
     
-    // Preparar datos para envío al backend
-    const testsToSend: PruebaComplementaria[] = validTests.map(test => ({
-      codigo: test.codigo.trim(),
-      nombre: test.nombre.trim(),
-      cantidad: Math.max(1, Math.min(20, test.cantidad || 1)) // Asegurar rango válido
+    const testsToSend: ComplementaryTestInfo[] = validTests.map(test => ({
+      code: test.code.trim(),
+      name: test.name.trim(),
+      quantity: Math.max(1, Math.min(20, test.quantity || 1))
     }))
     
-    // Validación final antes de enviar
     if (!props.casoOriginal || !/^[0-9]{4}-[0-9]{5}$/.test(props.casoOriginal)) {
       testsError.value = 'Código de caso original inválido.'
       return
@@ -262,23 +245,19 @@ const handleSignWithChanges = async () => {
     
     const motivoFinal = complementaryTestsDetails.value.trim()
     
-    // Emit los datos validados
+    // Solo emitir create-approval-request para crear la solicitud
+    // El componente padre manejará la lógica de firma por separado
     emit('create-approval-request', {
-      caso_original: props.casoOriginal,
-      motivo: motivoFinal,
-      pruebas_complementarias: testsToSend
-    })
-    
-    emit('sign-with-changes', { 
-      details: motivoFinal, 
-      tests: testsToSend 
+      case_code: props.casoOriginal,
+      reason: motivoFinal,
+      complementary_tests: testsToSend
     })
     
     console.log('Solicitud de aprobación enviada:', {
-      caso_original: props.casoOriginal,
-      motivo: motivoFinal,
+      case_code: props.casoOriginal,
+      reason: motivoFinal,
       pruebas_count: testsToSend.length,
-      pruebas_complementarias: testsToSend
+      complementary_tests: testsToSend
     })
     
   } catch (error) {

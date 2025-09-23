@@ -1,11 +1,7 @@
 <template>
   <ComponentCard title="Edición de usuarios" description="Selecciona una pestaña, busca y edita el perfil." :dense="true">
     <template #icon>
-      <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9" />
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z" />
-      </svg>
+      <EditUserIcon class="w-5 h-5 mr-2" />
     </template>
     <div class="border-b border-gray-200 mb-1">
       <nav class="-mb-px flex flex-wrap gap-1 md:gap-4" aria-label="Tabs">
@@ -69,6 +65,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
+import EditUserIcon from '@/assets/icons/EditUserIcon.vue'
 import UserSearch from './UserSearch.vue'
 import SearchResults from './SearchResults.vue'
 import FormEditAuxiliary from './FormEditAuxiliary.vue'

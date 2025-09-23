@@ -3,8 +3,7 @@ import { entityEditService } from '../services/entityEditService'
 import type {
   EntityEditFormModel,
   EntityEditionState,
-  EntityEditFormValidation,
-  EntityUpdateResponse
+  EntityEditFormValidation
 } from '../types/entity.types'
 
 export function useEntityEdition() {

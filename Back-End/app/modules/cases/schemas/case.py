@@ -46,6 +46,14 @@ class CaseState(str):
     COMPLETADO = "Completado"
 
 
+class AdditionalNote(BaseModel):
+    date: datetime = Field(..., description="Fecha de la nota")
+    note: str = Field(..., max_length=1000, description="Contenido de la nota")
+    
+    class Config:
+        from_attributes = True
+
+
 class CaseCreate(BaseModel):
     patient_info: PatientInfo
     requesting_physician: Optional[str] = Field(None, max_length=200)
@@ -65,6 +73,10 @@ class CaseUpdate(BaseModel):
     priority: Optional[str] = None
     observations: Optional[str] = Field(None, max_length=1000)
     assigned_pathologist: Optional[AssignedPathologist] = None
+    delivered_to: Optional[str] = Field(None, max_length=200)
+    delivered_at: Optional[datetime] = None
+    business_days: Optional[int] = Field(None, ge=0, description="Business days elapsed")
+    additional_notes: Optional[List[AdditionalNote]] = None
 
 
 class CaseResult(BaseModel):
@@ -96,6 +108,10 @@ class CaseResponse(BaseModel):
     signed_at: Optional[datetime] = None
     assigned_pathologist: Optional[AssignedPathologist] = None
     result: Optional[CaseResult] = None
+    delivered_to: Optional[str] = None
+    delivered_at: Optional[datetime] = None
+    business_days: Optional[int] = None
+    additional_notes: Optional[List[AdditionalNote]] = None
 
     class Config:
         from_attributes = True

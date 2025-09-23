@@ -5,6 +5,7 @@
     size="lg"
     @close="$emit('close')"
   >
+    <div class="space-y-6">
           <div class="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
               <p class="text-sm text-gray-500">Código del Caso</p>
@@ -88,31 +89,39 @@
             <div v-else class="text-sm text-gray-500">Sin muestras registradas</div>
           </div>
 
-          <div v-if="caseItem?.result && (caseItem.result.method || caseItem.result.macro || caseItem.result.micro || caseItem.result.diagnosis)" class="bg-gray-50 rounded-xl p-4 space-y-3">
+          <div v-if="caseItem?.result && caseItem?.status !== 'En proceso'" class="bg-gray-50 rounded-xl p-4 space-y-3">
             <h5 class="text-sm font-medium text-gray-700">Resultado del Informe</h5>
             
             <!-- Método -->
-            <div v-if="caseItem.result.method" class="border border-gray-200 rounded-lg p-3 bg-white">
+            <div v-if="caseItem.result.method && caseItem.result.method.length > 0" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="mb-2">
                 <p class="text-sm text-gray-600">Método</p>
               </div>
-              <p class="text-sm font-medium text-gray-900 break-words">{{ caseItem.result.method }}</p>
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="(metodo, index) in caseItem.result.method"
+                  :key="index"
+                  class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-800"
+                >
+                  {{ metodo }}
+                </span>
+              </div>
             </div>
 
             <!-- Resultado Macroscópico -->
-            <div v-if="caseItem.result.macro" class="border border-gray-200 rounded-lg p-3 bg-white">
+            <div v-if="caseItem.result.macro_result" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="mb-2">
                 <p class="text-sm text-gray-600">Resultado Macroscópico</p>
               </div>
-              <p class="text-sm text-gray-800 break-words">{{ caseItem.result.macro }}</p>
+              <p class="text-sm text-gray-800 break-words">{{ caseItem.result.macro_result }}</p>
             </div>
 
             <!-- Resultado Microscópico -->
-            <div v-if="caseItem.result.micro" class="border border-gray-200 rounded-lg p-3 bg-white">
+            <div v-if="caseItem.result.micro_result" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="mb-2">
                 <p class="text-sm text-gray-600">Resultado Microscópico</p>
               </div>
-              <p class="text-sm text-gray-800 break-words">{{ caseItem.result.micro }}</p>
+              <p class="text-sm text-gray-800 break-words">{{ caseItem.result.micro_result }}</p>
             </div>
 
             <!-- Diagnóstico -->
@@ -122,32 +131,40 @@
               </div>
               <p class="text-sm text-gray-800 break-words">{{ caseItem.result.diagnosis }}</p>
             </div>
+
+            <!-- Observaciones -->
+            <div v-if="caseItem.result.observations" class="border border-gray-200 rounded-lg p-3 bg-white">
+              <div class="mb-2">
+                <p class="text-sm text-gray-600">Observaciones</p>
+              </div>
+              <p class="text-sm text-gray-800 break-words">{{ caseItem.result.observations }}</p>
+            </div>
           </div>
 
           <!-- Nueva sección para diagnósticos CIE-10 y CIE-O -->
-          <div v-if="caseItem?.result && (caseItem.result.diagnostico_cie10 || caseItem.result.diagnostico_cieo)" class="bg-gray-50 rounded-xl p-4 space-y-3">
+          <div v-if="caseItem?.result && caseItem?.status !== 'En proceso' && (caseItem.result.cie10_diagnosis || caseItem.result.cieo_diagnosis)" class="bg-gray-50 rounded-xl p-4 space-y-3">
             <h5 class="text-sm font-medium text-gray-700">Diagnósticos Clasificados</h5>
             
             <!-- Diagnóstico CIE-10 -->
-            <div v-if="caseItem.result.diagnostico_cie10" class="border border-gray-200 rounded-lg p-3 bg-white">
+            <div v-if="caseItem.result.cie10_diagnosis" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="flex items-center gap-2 mb-2">
                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   CIE-10
                 </span>
-                <span class="text-sm font-mono text-gray-600">{{ caseItem.result.diagnostico_cie10.codigo }}</span>
+                <span class="text-sm font-mono text-gray-600">{{ caseItem.result.cie10_diagnosis.code }}</span>
               </div>
-              <p class="text-sm text-gray-800">{{ caseItem.result.diagnostico_cie10.nombre }}</p>
+              <p class="text-sm text-gray-800">{{ caseItem.result.cie10_diagnosis.name }}</p>
             </div>
 
             <!-- Diagnóstico CIE-O -->
-            <div v-if="caseItem.result.diagnostico_cieo" class="border border-gray-200 rounded-lg p-3 bg-white">
+            <div v-if="caseItem.result.cieo_diagnosis" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="flex items-center gap-2 mb-2">
                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                   CIE-O
                 </span>
-                <span class="text-sm font-mono text-gray-600">{{ caseItem.result.diagnostico_cieo.codigo }}</span>
+                <span class="text-sm font-mono text-gray-600">{{ caseItem.result.cieo_diagnosis.code }}</span>
               </div>
-              <p class="text-sm text-gray-800">{{ caseItem.result.diagnostico_cieo.nombre }}</p>
+              <p class="text-sm text-gray-800">{{ caseItem.result.cieo_diagnosis.name }}</p>
             </div>
           </div>
 
@@ -156,23 +173,21 @@
             <div class="flex items-center gap-2 mb-3">
               <DocsIcon class="w-4 h-4 text-gray-600" />
               <h5 class="text-sm font-medium text-gray-700">Notas Adicionales</h5>
-              <span v-if="props.caseItem?.notas_adicionales && props.caseItem.notas_adicionales.length > 0" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {{ props.caseItem.notas_adicionales.length }} {{ props.caseItem.notas_adicionales.length === 1 ? 'nota' : 'notas' }}
+              <span v-if="props.caseItem?.additional_notes && props.caseItem.additional_notes.length > 0" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {{ props.caseItem.additional_notes.length }} {{ props.caseItem.additional_notes.length === 1 ? 'nota' : 'notas' }}
               </span>
             </div>
             
             <!-- Mostrar notas existentes -->
-            <div v-if="props.caseItem?.notas_adicionales && props.caseItem.notas_adicionales.length > 0" class="space-y-3">
-              <div v-for="(nota, index) in props.caseItem.notas_adicionales" :key="index" class="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+            <div v-if="props.caseItem?.additional_notes && props.caseItem.additional_notes.length > 0" class="space-y-3">
+              <div v-for="(nota, index) in props.caseItem.additional_notes" :key="index" class="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
                 <div class="flex items-center justify-between mb-2">
                   <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-600 font-medium">{{ formatDate(nota.fecha, true) }}</span>
-                    <span class="text-xs text-gray-400">•</span>
-                    <span v-if="nota.agregado_por" class="text-xs text-gray-500">{{ nota.agregado_por }}</span>
+                    <span class="text-xs text-gray-600 font-medium">{{ formatDate(nota.date, true) }}</span>
                   </div>
                   <span class="text-xs text-gray-400">#{{ index + 1 }}</span>
                 </div>
-                <p class="text-sm text-gray-800 break-words leading-relaxed">{{ nota.nota }}</p>
+                <p class="text-sm text-gray-800 break-words leading-relaxed">{{ nota.note }}</p>
               </div>
             </div>
             
@@ -183,12 +198,13 @@
               <p class="text-xs text-gray-400 mt-1">Puedes agregar notas usando el botón "Notas adicionales"</p>
             </div>
           </div>
+    </div>
     
     <template #footer>
       <div class="flex justify-end gap-2">
         <PrintPdfButton text="Imprimir PDF" :caseCode="props.caseItem?.caseCode || props.caseItem?.id" />
         <button
-          v-if="props.caseItem?.status === 'Completado'"
+          v-if="props.caseItem?.status === 'Por entregar' || props.caseItem?.status === 'Completado'"
           @click="showNotesDialog = true"
           class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
@@ -265,24 +281,31 @@ async function handleNotesConfirm(notes: string) {
       return
     }
 
-    await casesApiService.addAdditionalNote(caseCode, notes, 'Usuario')
+    // Crear la nueva nota
+    const nuevaNota = {
+      date: new Date().toISOString(),
+      note: notes
+    }
+    
+    // Preparar todas las notas (existentes + nueva)
+    const todasLasNotas = [
+      ...(props.caseItem?.additional_notes || []),
+      nuevaNota
+    ]
+
+    // Actualizar en el backend con todas las notas
+    const updateData = {
+      additional_notes: todasLasNotas
+    }
+    
+    await casesApiService.updateCase(caseCode, updateData)
     showSuccess('Nota agregada', 'La nota adicional se ha guardado exitosamente')
     showNotesDialog.value = false
-    
-    // Crear la nueva nota localmente sin recargar todo el caso
-    const nuevaNota = {
-      fecha: new Date().toISOString(),
-      nota: notes,
-      agregado_por: 'Usuario'
-    }
     
     // Actualizar solo las notas adicionales localmente
     const casoActualizado = {
       ...props.caseItem,
-      notas_adicionales: [
-        ...(props.caseItem?.notas_adicionales || []),
-        nuevaNota
-      ]
+      additional_notes: todasLasNotas
     }
     
     // Emitir evento con solo la información de las notas actualizadas

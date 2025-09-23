@@ -22,6 +22,7 @@ export interface ResidentUpdate {
   medical_license?: string
   is_active?: boolean
   observations?: string
+  password?: string
 }
 
 class ResidentApiService {

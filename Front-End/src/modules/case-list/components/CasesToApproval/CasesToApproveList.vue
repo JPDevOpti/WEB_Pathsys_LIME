@@ -7,7 +7,6 @@
     </template>
 
     <div class="space-y-6">
-      <!-- Filtros de búsqueda -->
       <div class="flex flex-col md:flex-row gap-3">
         <div class="flex-1">
           <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Solicitud</label>
@@ -40,10 +39,10 @@
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white"
             >
               <option value="">Todos los estados</option>
-              <option value="solicitud_hecha">Solicitud Hecha</option>
-              <option value="pendiente_aprobacion">Pendiente de Aprobación</option>
-              <option value="aprobado">Aprobado</option>
-              <option value="rechazado">Rechazado</option>
+              <option value="request_made">Solicitud Hecha</option>
+              <option value="pending_approval">Pendiente de Aprobación</option>
+              <option value="approved">Aprobado</option>
+              <option value="rejected">Rechazado</option>
             </select>
           </div>
           <div class="flex items-end">
@@ -61,7 +60,6 @@
         </div>
       </div>
 
-      <!-- Lista de casos -->
       <div class="space-y-4">
         <div v-if="filteredCases.length === 0" class="text-center py-8 text-gray-500">
           <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,16 +78,16 @@
                   <span 
                     :class="[
                       'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                      caseItem.status === 'solicitud_hecha' ? 'bg-blue-100 text-blue-800' :
-                      caseItem.status === 'pendiente_aprobacion' ? 'bg-yellow-100 text-yellow-800' :
-                      caseItem.status === 'aprobado' ? 'bg-green-100 text-green-800' :
+                      caseItem.status === 'request_made' ? 'bg-blue-100 text-blue-800' :
+                      caseItem.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
+                      caseItem.status === 'approved' ? 'bg-green-100 text-green-800' :
                       'bg-red-100 text-red-800'
                     ]"
                   >
                     {{ 
-                      caseItem.status === 'solicitud_hecha' ? 'Solicitud Hecha' :
-                      caseItem.status === 'pendiente_aprobacion' ? 'Pendiente de Aprobación' :
-                      caseItem.status === 'aprobado' ? 'Aprobado' :
+                      caseItem.status === 'request_made' ? 'Solicitud Hecha' :
+                      caseItem.status === 'pending_approval' ? 'Pendiente de Aprobación' :
+                      caseItem.status === 'approved' ? 'Aprobado' :
                       'Rechazado'
                     }}
                   </span>
@@ -124,10 +122,10 @@
                   <div class="flex flex-wrap gap-1 mt-1">
                     <span
                       v-for="test in getCaseTests(caseItem)"
-                      :key="test.codigo"
+                      :key="test.code"
                       class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-800"
                     >
-                      {{ test.codigo }} - {{ test.nombre }} ({{ test.cantidad }})
+                      {{ test.code }} - {{ test.name }} ({{ test.quantity }})
                     </span>
                   </div>
                 </div>
@@ -143,9 +141,8 @@
                   @click="viewCase(caseItem.id)"
                 />
                 
-                <!-- Botón Revisar - Solo visible si es solicitud hecha -->
                 <BaseButton
-                  v-if="caseItem.status === 'solicitud_hecha'"
+                  v-if="caseItem.status === 'request_made'"
                   variant="outline"
                   size="sm"
                   text="Revisar"
@@ -153,12 +150,11 @@
                   :loading="caseItem.managing"
                   :disabled="caseItem.rejecting || caseItem.approving"
                   custom-class="bg-white border-orange-600 text-orange-600 hover:bg-orange-50 focus:ring-orange-500"
-                  @click="manageCase(caseItem.id)"
+                  @click="manageCase(caseItem.approvalCode)"
                 />
                 
-                <!-- Botón Aprobar - Solo visible si está pendiente de aprobación -->
                 <BaseButton
-                  v-if="caseItem.status === 'pendiente_aprobacion'"
+                  v-if="caseItem.status === 'pending_approval'"
                   variant="outline"
                   size="sm"
                   text="Aprobar"
@@ -166,12 +162,11 @@
                   :loading="caseItem.approving"
                   :disabled="caseItem.rejecting"
                   custom-class="bg-white border-green-600 text-green-600 hover:bg-green-50 focus:ring-green-500"
-                  @click="approveCase(caseItem.id)"
+                  @click="approveCase(caseItem.approvalCode)"
                 />
                 
-                <!-- Botón Rechazar - Visible para solicitud hecha y pendiente de aprobación -->
                 <BaseButton
-                  v-if="caseItem.status === 'solicitud_hecha' || caseItem.status === 'pendiente_aprobacion'"
+                  v-if="caseItem.status === 'request_made' || caseItem.status === 'pending_approval'"
                   variant="outline"
                   size="sm"
                   text="Rechazar"
@@ -179,7 +174,7 @@
                   :loading="caseItem.rejecting"
                   :disabled="caseItem.approving || caseItem.managing"
                   custom-class="bg-white border-red-600 text-red-600 hover:bg-red-50 focus:ring-red-500"
-                  @click="rejectCase(caseItem.id)"
+                  @click="rejectCase(caseItem.approvalCode)"
                 />
               </div>
             </div>
@@ -187,10 +182,8 @@
         </div>
       </div>
 
-      <!-- Paginación -->
       <div v-if="total > 0" class="px-4 sm:px-5 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <!-- Información de resultados -->
           <div class="flex items-center gap-2 text-sm text-gray-500">
             <span>Mostrando</span>
             <select 
@@ -208,7 +201,6 @@
             <span>de {{ total }} resultados</span>
           </div>
           
-          <!-- Navegación de páginas -->
           <div class="flex items-center justify-center gap-2">
             <button 
               @click="handlePageChange(currentPage - 1)" 
@@ -219,7 +211,6 @@
               <span class="sm:hidden">←</span>
             </button>
             
-            <!-- Información de página -->
             <div class="flex items-center gap-1 text-sm text-gray-500">
               <span class="hidden sm:inline">Página</span>
               <span class="font-medium">{{ currentPage }}</span>
@@ -242,12 +233,11 @@
     </div>
   </ComponentCard>
   <CaseApprovalDetailsModal
-    :approval-case="selectedApprovalCase"
+    :case-item="selectedApprovalCase"
     @close="closeModal"
     @tests-updated="handleTestsUpdated"
   />
   
-  <!-- Dialog de confirmación para revisar -->
   <ConfirmDialog
     v-model="showConfirmManage"
     title="Confirmar revisión"
@@ -259,7 +249,6 @@
     @cancel="cancelConfirm"
   />
 
-  <!-- Dialog de confirmación para aprobar -->
   <ConfirmDialog
     v-model="showConfirmApprove"
     title="Confirmar aprobación"
@@ -271,10 +260,8 @@
     @cancel="cancelConfirm"
   />
 
-  <!-- Notificación de caso creado tras aprobar -->
   <CaseCreatedToast v-model="createdToastVisible" :case-data="createdCase" />
 
-  <!-- Dialog de confirmación para rechazar -->
   <ConfirmDialog
     v-model="showConfirmReject"
     title="Confirmar rechazo"
@@ -294,20 +281,18 @@ import { TrashIcon } from '@/assets/icons'
 import ConfirmDialog from '@/shared/components/feedback/ConfirmDialog.vue'
 import CaseApprovalDetailsModal from './CaseApprovalDetailsModal.vue'
 import CaseCreatedToast from '../CurrentCases/CaseCreatedToast.vue'
-import casoAprobacionService from '@/modules/results/services/casoAprobacion.service'
-import type { CasoAprobacionResponse, CasoAprobacionSearch } from '@/modules/results/services/casoAprobacion.service'
+import approvalService from '@/shared/services/approval.service'
+import type { 
+  ApprovalRequestResponse, 
+  ApprovalRequestSearch, 
+  ApprovalState,
+  ComplementaryTestInfo
+} from '@/shared/services/approval.service'
 import PathologistList from '@/shared/components/List/PathologistList.vue'
-
-// Sin fechas; se filtra por patólogo
-// Componente actualizado para trabajar con solicitudes de pruebas complementarias
-// basado en la estructura real de la base de datos MongoDB
-
-// ============================================================================
-// INTERFACES Y TIPOS
-// ============================================================================
 
 interface CaseToApprove {
   id: string
+  approvalCode: string
   caseCode: string
   patientName: string
   pathologistName: string
@@ -315,16 +300,12 @@ interface CaseToApprove {
   description?: string
   createdAt: string
   updatedAt: string
-  status: 'solicitud_hecha' | 'pendiente_aprobacion' | 'aprobado' | 'rechazado'
+  status: ApprovalState
   approving: boolean
   rejecting: boolean
   managing: boolean
-  complementaryTests: Array<{ codigo: string; nombre: string; cantidad: number }>
+  complementaryTests: ComplementaryTestInfo[]
 }
-
-// ============================================================================
-// ESTADO DEL COMPONENTE
-// ============================================================================
 
 const searchTerm = ref('')
 const loading = ref(false)
@@ -333,89 +314,42 @@ const cases = ref<CaseToApprove[]>([])
 const total = ref(0)
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
-
-// Filtros
 const selectedPathologist = ref<string>('')
 const selectedStatus = ref<string>('')
 
-// const authStore = useAuthStore()
-
-const normalizeId = (raw: any): string => {
-  if (!raw) return ''
-  if (typeof raw === 'string') return raw
-  if (typeof raw === 'object' && ('$oid' in raw)) return (raw as any).$oid as string
-  return ''
-}
-
-const mapBackendCase = (c: CasoAprobacionResponse): CaseToApprove => {
-  const backendId = (c as any).id || normalizeId((c as any)._id)
-  
-  // Obtener información del patólogo del caso original (ahora viene directamente en la respuesta)
-  const patologoAsignado = (c.aprobacion_info as any)?.patologo_asignado
-  let pathologistName = 'Pendiente'
-  let pathologistId = ''
-  
-  if (patologoAsignado && patologoAsignado.nombre) {
-    pathologistName = patologoAsignado.nombre
-    pathologistId = patologoAsignado.codigo || ''
-  }
-  
-  return {
-    id: backendId,
-    caseCode: c.caso_original,
-    patientName: `Caso ${c.caso_original}`,
-    pathologistName: pathologistName,
-    pathologistId: pathologistId,
-    description: c.aprobacion_info?.motivo || 'Sin motivo especificado',
-    createdAt: c.fecha_creacion,
-    updatedAt: c.fecha_creacion, // Usar fecha_creacion para ambos campos
-    status: c.estado_aprobacion,
-    approving: false,
-    rejecting: false,
-    managing: false,
-    complementaryTests: c.pruebas_complementarias || []
-  }
-}
+const mapBackendCase = (c: ApprovalRequestResponse): CaseToApprove => ({
+  id: c.id,
+  approvalCode: c.approval_code,
+  caseCode: c.original_case_code,
+  patientName: `Caso ${c.original_case_code}`,
+  pathologistName: c.approval_info?.assigned_pathologist?.name || 'Sin asignar',
+  pathologistId: c.approval_info?.assigned_pathologist?.id || '',
+  description: c.approval_info?.reason || 'Sin motivo especificado',
+  createdAt: c.created_at,
+  updatedAt: c.updated_at,
+  status: c.approval_state,
+  approving: false,
+  rejecting: false,
+  managing: false,
+  complementaryTests: c.complementary_tests || []
+})
 
 const fetchCases = async () => {
   loading.value = true
   errorMessage.value = ''
   try {
-    const term = (searchTerm.value || '').trim()
-    const searchPayload: CasoAprobacionSearch = {
-      caso_original: term || undefined,
-      estado_aprobacion: selectedStatus.value || undefined,
-      solicitado_por: selectedPathologist.value || undefined
+    const searchPayload: ApprovalRequestSearch = {
+      original_case_code: searchTerm.value.trim() || undefined,
+      approval_state: selectedStatus.value as ApprovalState || undefined
     }
     
-    // Debug: mostrar el payload que se envía
-    console.log('🔍 Payload de búsqueda:', { 
-      solicitado_por: searchPayload.solicitado_por, 
-      estado_aprobacion: searchPayload.estado_aprobacion,
-      fullPayload: searchPayload 
-    })
-    
-    // Calcular skip basado en la página actual
     const calculatedSkip = (currentPage.value - 1) * itemsPerPage.value
-    
-    const respData = await casoAprobacionService.searchCasos(searchPayload, calculatedSkip, itemsPerPage.value)
-    const dataList: CasoAprobacionResponse[] = respData?.data || []
+    const respData = await approvalService.searchApprovalRequests(searchPayload, calculatedSkip, itemsPerPage.value)
+    const dataList: ApprovalRequestResponse[] = respData?.data || []
     total.value = respData?.total || dataList.length
     cases.value = dataList.map(mapBackendCase)
-    
-    // Debug: mostrar resultados
-    console.log('📊 Resultados encontrados:', {
-      total: total.value,
-      casos: cases.value.length,
-      primerosCasos: cases.value.slice(0, 3).map(c => ({
-        id: c.id,
-        caseCode: c.caseCode,
-        createdAt: c.createdAt,
-        status: c.status
-      }))
-    })
   } catch (e: any) {
-    console.error('❌ Error en fetchCases:', e)
+    console.error('Error en fetchCases:', e)
     errorMessage.value = e.message || 'Error cargando casos'
   } finally {
     loading.value = false
@@ -424,57 +358,43 @@ const fetchCases = async () => {
 
 fetchCases()
 
-// ============================================================================
-// WATCHERS
-// ============================================================================
+let searchTimeout: NodeJS.Timeout | null = null
 
-// Watcher para ejecutar búsqueda automáticamente cuando cambien los filtros
 watch([selectedPathologist, selectedStatus], () => {
   currentPage.value = 1
   fetchCases()
 })
 
-// Debounce para el término de búsqueda
-let searchTimeout: NodeJS.Timeout | null = null
-
-// Watcher para ejecutar búsqueda cuando cambie el término de búsqueda
 watch(searchTerm, () => {
   currentPage.value = 1
-  
-  // Limpiar timeout anterior
-  if (searchTimeout) {
-    clearTimeout(searchTimeout)
-  }
-  
-  // Debounce de 500ms
-  searchTimeout = setTimeout(() => {
-    fetchCases()
-  }, 500)
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => fetchCases(), 500)
 })
-
-// ============================================================================
-// FUNCIONES DE FILTRADO
-// ============================================================================
 
 const handleSearch = async () => {
   currentPage.value = 1
   await fetchCases()
 }
 
-// Función para limpiar filtros
-const clearFilters = () => {
+const clearFilters = async () => {
   searchTerm.value = ''
   selectedPathologist.value = ''
   selectedStatus.value = ''
   currentPage.value = 1
+  await fetchCases()
 }
 
-// ============================================================================
-// COMPUTED PROPERTIES
-// ============================================================================
-
-const filteredCases = computed(() => cases.value)
-
+const filteredCases = computed(() => {
+  let filtered = cases.value
+  
+  if (selectedPathologist.value) {
+    filtered = filtered.filter(caseItem => 
+      caseItem.pathologistId === selectedPathologist.value
+    )
+  }
+  
+  return filtered
+})
 const totalPages = computed(() => Math.ceil(total.value / itemsPerPage.value))
 
 const handlePageChange = async (page: number) => {
@@ -488,88 +408,73 @@ const handleItemsPerPageChange = async (newItemsPerPage: number) => {
   await fetchCases()
 }
 
-// ============================================================================
-// FUNCIONES
-// ============================================================================
-
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('es-ES', {
+const formatDate = (dateString: string): string => 
+  new Date(dateString).toLocaleDateString('es-ES', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
   })
-}
 
-const getCaseTests = (caseItem: CaseToApprove) => {
-  return caseItem.complementaryTests || []
-}
+const getCaseTests = (caseItem: CaseToApprove) => caseItem.complementaryTests || []
 
-const getPathologistName = (caseItem: CaseToApprove): string => {
-  // Retornar el nombre del patólogo si está disponible, sino "Pendiente"
-  return caseItem.pathologistName && caseItem.pathologistName !== 'Pendiente' 
+const getPathologistName = (caseItem: CaseToApprove): string => 
+  caseItem.pathologistName && caseItem.pathologistName !== 'Pendiente' 
     ? caseItem.pathologistName 
     : 'Pendiente'
-}
 
 const viewCase = async (caseId: string): Promise<void> => {
-  // Buscar el caso en la lista local primero
   const localCase = cases.value.find(ca => ca.id === caseId)
   if (!localCase) return
 
   try {
-    // Obtener los datos completos del caso de aprobación desde el backend
-    const fullApprovalCase = await casoAprobacionService.getCasoAprobacion(caseId)
+    const fullApprovalCase = await approvalService.getApprovalRequest(localCase.approvalCode)
     selectedApprovalCase.value = fullApprovalCase
   } catch (error) {
     console.error('Error al obtener detalles del caso:', error)
-    // Fallback: usar datos locales si falla la carga
     selectedApprovalCase.value = {
-      caso_original: localCase.caseCode,
-      estado_aprobacion: localCase.status as any,
-      pruebas_complementarias: localCase.complementaryTests,
-      aprobacion_info: {
-        motivo: localCase.description || '',
-        patologo_asignado: localCase.pathologistName !== 'Pendiente' ? {
-          codigo: '',
-          nombre: localCase.pathologistName,
-          firma: null
-        } : null,
-        fecha_aprobacion: null
+      id: localCase.id,
+      approval_code: localCase.approvalCode,
+      original_case_code: localCase.caseCode,
+      approval_state: localCase.status,
+      complementary_tests: localCase.complementaryTests,
+      approval_info: {
+        reason: localCase.description || '',
+        request_date: localCase.createdAt
       },
-      fecha_creacion: localCase.createdAt
-    } as any as CasoAprobacionResponse
+      created_at: localCase.createdAt,
+      updated_at: localCase.updatedAt
+    } as any as ApprovalRequestResponse
   }
 }
 
-// Mostrar dialog de confirmación para revisar
-const manageCase = async (caseId: string): Promise<void> => {
-  const caseItem = cases.value.find(c => c.id === caseId)
+const manageCase = async (approvalCode: string): Promise<void> => {
+  const caseItem = cases.value.find(c => c.approvalCode === approvalCode)
   if (!caseItem) return
   
   confirmData.value = {
-    caseId: caseId,
+    caseId: caseItem.id,
     caseCode: caseItem.caseCode,
+    approvalCode: approvalCode,
     loading: false
   }
   showConfirmManage.value = true
 }
 
-// Mostrar dialog de confirmación para aprobar
-const approveCase = async (caseId: string): Promise<void> => {
-  const caseItem = cases.value.find(c => c.id === caseId)
+const approveCase = async (approvalCode: string): Promise<void> => {
+  const caseItem = cases.value.find(c => c.approvalCode === approvalCode)
   if (!caseItem) return
   
   confirmData.value = {
-    caseId: caseId,
+    caseId: caseItem.id,
     caseCode: caseItem.caseCode,
+    approvalCode: approvalCode,
     loading: false
   }
   showConfirmApprove.value = true
 }
 
-// Ejecutar revisión después de confirmación
 const confirmManageCase = async (): Promise<void> => {
   if (!confirmData.value) return
   
@@ -580,11 +485,10 @@ const confirmManageCase = async (): Promise<void> => {
   caseItem.managing = true
   
   try {
-    await casoAprobacionService.gestionarCaso(confirmData.value.caseId)
+    await approvalService.manageApprovalRequest(confirmData.value.approvalCode!)
     await fetchCases()
     showConfirmManage.value = false
     
-    // Si el modal está abierto para este caso, cerrarlo
     if (selectedApprovalCase.value && (selectedApprovalCase.value as any).id === confirmData.value.caseId) {
       closeModal()
     }
@@ -596,7 +500,6 @@ const confirmManageCase = async (): Promise<void> => {
   }
 }
 
-// Ejecutar aprobación después de confirmación
 const confirmApproveCase = async (): Promise<void> => {
   if (!confirmData.value) return
   const caseItem = cases.value.find(c => c.id === confirmData.value!.caseId)
@@ -604,12 +507,17 @@ const confirmApproveCase = async (): Promise<void> => {
   confirmData.value.loading = true
   caseItem.approving = true
   try {
-    const { nuevo_caso } = await casoAprobacionService.aprobarCaso(confirmData.value.caseId)
+    const result = await approvalService.approveRequest(confirmData.value.approvalCode!)
     await fetchCases()
     showConfirmApprove.value = false
-    if (nuevo_caso) showSuccessNotification(nuevo_caso)
+    console.log('🔍 Resultado de aprobación:', result)
+    if (result.data?.new_case) {
+      console.log('🔍 Mostrando notificación con caso:', result.data.new_case)
+      showSuccessNotification(result.data.new_case)
+    } else {
+      console.log('🔍 No se encontró new_case en la respuesta')
+    }
     
-    // Si el modal está abierto para este caso, cerrarlo
     if (selectedApprovalCase.value && (selectedApprovalCase.value as any).id === confirmData.value.caseId) {
       closeModal()
     }
@@ -621,7 +529,6 @@ const confirmApproveCase = async (): Promise<void> => {
   }
 }
 
-// Ejecutar rechazo después de confirmación
 const confirmRejectCase = async (): Promise<void> => {
   if (!confirmData.value) return
   
@@ -632,11 +539,10 @@ const confirmRejectCase = async (): Promise<void> => {
   caseItem.rejecting = true
   
   try {
-    await casoAprobacionService.rechazarCaso(confirmData.value.caseId)
+    await approvalService.rejectRequest(confirmData.value.approvalCode!)
     await fetchCases()
     showConfirmReject.value = false
     
-    // Si el modal está abierto para este caso, cerrarlo
     if (selectedApprovalCase.value && (selectedApprovalCase.value as any).id === confirmData.value.caseId) {
       closeModal()
     }
@@ -649,7 +555,6 @@ const confirmRejectCase = async (): Promise<void> => {
   }
 }
 
-// Cancelar confirmación
 const cancelConfirm = (): void => {
   showConfirmManage.value = false
   showConfirmApprove.value = false
@@ -657,48 +562,39 @@ const cancelConfirm = (): void => {
   confirmData.value = null
 }
 
-// Mostrar dialog de confirmación para rechazar
-const rejectCase = async (caseId: string): Promise<void> => {
-  const caseItem = cases.value.find(c => c.id === caseId)
+const rejectCase = async (approvalCode: string): Promise<void> => {
+  const caseItem = cases.value.find(c => c.approvalCode === approvalCode)
   if (!caseItem) return
   
   confirmData.value = {
-    caseId: caseId,
+    caseId: caseItem.id,
     caseCode: caseItem.caseCode,
+    approvalCode: approvalCode,
     loading: false
   }
   showConfirmReject.value = true
 }
 
-// ============================================================================
-// MODAL STATE & HELPERS
-// ============================================================================
-const selectedApprovalCase = ref<CasoAprobacionResponse | null>(null)
-
-// Estado para diálogos de confirmación
+const selectedApprovalCase = ref<ApprovalRequestResponse | null>(null)
 const showConfirmManage = ref(false)
 const showConfirmApprove = ref(false)
 const showConfirmReject = ref(false)
-const confirmData = ref<{ caseId: string; caseCode: string; loading: boolean } | null>(null)
+const confirmData = ref<{ caseId: string; caseCode: string; approvalCode: string; loading: boolean } | null>(null)
 
 const closeModal = () => {
   selectedApprovalCase.value = null
 }
 
-
-const handleTestsUpdated = async (updatedTests: Array<{ codigo: string; nombre: string; cantidad: number }>) => {
-  // Actualizar la lista local con las pruebas modificadas
+const handleTestsUpdated = async (updatedTests: ComplementaryTestInfo[]) => {
   if (selectedApprovalCase.value) {
-    selectedApprovalCase.value.pruebas_complementarias = updatedTests
+    selectedApprovalCase.value.complementary_tests = updatedTests
   }
   
-  // Actualizar también en la lista principal
-  const caseItem = cases.value.find(c => c.id === (selectedApprovalCase.value as any)?.id)
+  const caseItem = cases.value.find(c => c.id === selectedApprovalCase.value?.id)
   if (caseItem) {
     caseItem.complementaryTests = updatedTests
   }
   
-  // Refrescar la lista completa para asegurar consistencia
   await fetchCases()
 }
 
@@ -709,6 +605,4 @@ const showSuccessNotification = (caseData: any) => {
   createdCase.value = caseData
   createdToastVisible.value = true
 }
-
-
 </script>

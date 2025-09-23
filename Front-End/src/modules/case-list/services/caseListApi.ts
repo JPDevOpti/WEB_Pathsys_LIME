@@ -55,6 +55,10 @@ export interface BackendCase {
     nota: string
     agregado_por?: string
   }>
+  additional_notes?: Array<{
+    date: string
+    note: string
+  }>
   is_active?: boolean
   actualizado_por?: string
   resultado?: {
@@ -67,8 +71,21 @@ export interface BackendCase {
     diagnostico_cieo?: { codigo?: string; nombre?: string } | null
     observaciones?: string
   }
+  result?: {
+    method?: string[] | string
+    macro_result?: string
+    micro_result?: string
+    diagnosis?: string
+    updated_at?: { $date?: string } | string
+    cie10_diagnosis?: { code?: string; name?: string } | null
+    cieo_diagnosis?: { code?: string; name?: string } | null
+    observations?: string
+  }
   patologo_asignado?: { codigo?: string; nombre?: string; firma?: string }
   assigned_pathologist?: { id?: string; name?: string }
+  delivered_to?: string
+  delivered_at?: { $date?: string } | string
+  business_days?: number
 }
 
 export interface BackendTest {

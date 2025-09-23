@@ -119,14 +119,13 @@ export class CasesApiService {
     return this.deleteRaw<DeleteCaseResponse>(`${this.endpoint}/${caseCode}`)
   }
 
-  async addAdditionalNote(caseCode: string, note: string, addedBy?: string): Promise<UpdateCaseResponse> {
+  async addAdditionalNote(caseCode: string, note: string): Promise<UpdateCaseResponse> {
     try {
       // Usar el nuevo endpoint de actualización para agregar nota
       const updateData: any = {
-        notas_adicionales: [{
-          fecha: new Date().toISOString(),
-          nota: note,
-          agregado_por: addedBy || 'Usuario'
+        additional_notes: [{
+          date: new Date().toISOString(),
+          note: note
         }]
       }
       return await this.updateCase(caseCode, updateData)
@@ -151,20 +150,20 @@ export class CasesApiService {
    */
   async batchCompleteCases(pendingCases: Array<{ 
     caseCode: string; 
-    remainingSubsamples: Array<{ region_cuerpo: string; pruebas: Array<{ id: string; nombre?: string; cantidad: number }> }>; 
-    oportunidad?: number;
-    entregadoA?: string;
-    fechaEntrega?: string;
+    remainingSubsamples: Array<{ body_region: string; tests: Array<{ id: string; name?: string; quantity: number }> }>; 
+    business_days?: number;
+    delivered_to?: string;
+    delivered_at?: string;
   }>): Promise<any[]> {
     const results: any[] = []
     for (const item of pendingCases) {
       try {
         const updateData: any = {
-          estado: 'Completado',
-          muestras: item.remainingSubsamples,
-          oportunidad: item.oportunidad,
-          entregado_a: item.entregadoA,
-          fecha_entrega: item.fechaEntrega ? new Date(item.fechaEntrega) : undefined
+          state: 'Completado',
+          samples: item.remainingSubsamples,
+          business_days: item.business_days,
+          delivered_to: item.delivered_to,
+          delivered_at: item.delivered_at ? new Date(item.delivered_at) : undefined
         }
         
         // Eliminar campos undefined para payload más limpio

@@ -8,6 +8,7 @@ export function useRoleTranslation() {
     admin: 'Administrador',
     pathologist: 'Patólogo',
     auxiliary: 'Auxiliar',
+    receptionist: 'Auxiliar',
     resident: 'Residente',
     billing: 'Usuario de Facturación',
     patient: 'Paciente',
@@ -25,7 +26,7 @@ export function useRoleTranslation() {
     if (normalizedRole.includes('admin')) return 'SettingsIcon'
     if (normalizedRole.includes('pathologist')) return 'DoctorIcon'
     if (normalizedRole.includes('resident')) return 'ResidenteIcon'
-    if (normalizedRole.includes('auxiliary')) return 'AuxiliarIcon'
+    if (normalizedRole.includes('auxiliary') || normalizedRole.includes('auxiliar') || normalizedRole.includes('receptionist')) return 'AuxiliarIcon'
     if (normalizedRole.includes('billing') || normalizedRole.includes('user')) return 'DolarIcon'
     
     return 'UserCircleIcon'

@@ -102,10 +102,10 @@ const userRole = computed(() => {
 const getRoleIcon = () => {
   const raw = (authStore.user?.role || '').toString().trim().toLowerCase()
   if (raw.includes('admin')) return SettingsIcon
-  if (raw.includes('pathologist')) return DoctorIcon
-  if (raw.includes('resident')) return ResidenteIcon
-  if (raw.includes('auxiliary')) return AuxiliarIcon
-  if (raw.includes('billing') || raw.includes('user')) return DolarIcon
+  if (raw.includes('pathologist') || raw.includes('patolog')) return DoctorIcon
+  if (raw.includes('resident') || raw.includes('residente')) return ResidenteIcon
+  if (raw.includes('auxiliary') || raw.includes('auxiliar') || raw.includes('receptionist')) return AuxiliarIcon
+  if (raw.includes('billing') || raw.includes('factur') || raw.includes('user')) return DolarIcon
   return UserCircleIcon
 }
 

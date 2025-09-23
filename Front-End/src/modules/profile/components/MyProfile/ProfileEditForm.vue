@@ -1,122 +1,150 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-6">
-    <!-- Personal Information Section -->
-    <div>
-      <h4 class="text-lg font-medium text-gray-900 mb-4">Información Personal</h4>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- First Name -->
-        <div>
-          <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">
-            Nombre *
-          </label>
-          <input
-            id="firstName"
-            v-model="formData.firstName"
-            type="text"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': getFieldError('firstName') }"
-            @blur="validateField('firstName')"
-          />
-          <p v-if="getFieldError('firstName')" class="mt-1 text-sm text-red-600">
-            {{ getFieldError('firstName') }}
-          </p>
-        </div>
+  <form @submit.prevent="onSubmit" class="space-y-6">
+    <!-- Patólogo Form -->
+    <div v-if="user.role === 'patologo'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <h4 class="text-lg font-medium text-gray-900 mb-1">Editar Patólogo</h4>
+        <p class="text-sm text-gray-500">Modifica los datos del patólogo</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
+        <input v-model="patologoForm.patologoName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Iniciales</label>
+        <input v-model="patologoForm.InicialesPatologo" type="text" maxlength="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+        <input v-model="patologoForm.PatologoEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Registro médico *</label>
+        <input v-model="patologoForm.registro_medico" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+        <textarea v-model="patologoForm.observaciones" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña (opcional)</label>
+        <input v-model="patologoForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="new-password" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+        <input v-model="patologoForm.passwordConfirm" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="confirm-password" />
+      </div>
+    </div>
 
-        <!-- Last Name -->
-        <div>
-          <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">
-            Apellido *
-          </label>
-          <input
-            id="lastName"
-            v-model="formData.lastName"
-            type="text"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': getFieldError('lastName') }"
-            @blur="validateField('lastName')"
-          />
-          <p v-if="getFieldError('lastName')" class="mt-1 text-sm text-red-600">
-            {{ getFieldError('lastName') }}
-          </p>
-        </div>
+    <!-- Residente Form -->
+    <div v-else-if="user.role === 'residente'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <h4 class="text-lg font-medium text-gray-900 mb-1">Editar Residente</h4>
+        <p class="text-sm text-gray-500">Modifica los datos del residente</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
+        <input v-model="residenteForm.residenteName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Iniciales</label>
+        <input v-model="residenteForm.InicialesResidente" type="text" maxlength="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+        <input v-model="residenteForm.ResidenteEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Registro médico *</label>
+        <input v-model="residenteForm.registro_medico" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+        <textarea v-model="residenteForm.observaciones" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña (opcional)</label>
+        <input v-model="residenteForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="new-password" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+        <input v-model="residenteForm.passwordConfirm" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="confirm-password" />
+      </div>
+    </div>
 
-        <!-- Email -->
-        <div class="md:col-span-2">
-          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
-            Correo Electrónico *
-          </label>
-          <input
-            id="email"
-            v-model="formData.email"
-            type="email"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': getFieldError('email') }"
-            @blur="validateField('email')"
-          />
-          <p v-if="getFieldError('email')" class="mt-1 text-sm text-red-600">
-            {{ getFieldError('email') }}
-          </p>
-        </div>
+    <!-- Auxiliar Form -->
+    <div v-else-if="user.role === 'auxiliar'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <h4 class="text-lg font-medium text-gray-900 mb-1">Editar Auxiliar</h4>
+        <p class="text-sm text-gray-500">Modifica los datos del auxiliar</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
+        <input v-model="auxiliarForm.auxiliarName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+        <input v-model="auxiliarForm.AuxiliarEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+        <textarea v-model="auxiliarForm.observaciones" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña (opcional)</label>
+        <input v-model="auxiliarForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="new-password" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+        <input v-model="auxiliarForm.passwordConfirm" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="confirm-password" />
+      </div>
+    </div>
 
-        <!-- Phone -->
-        <div>
-          <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
-            Teléfono
-          </label>
-          <input
-            id="phone"
-            v-model="formData.phone"
-            type="tel"
-            placeholder="+57 300 123 4567"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': getFieldError('phone') }"
-            @blur="validateField('phone')"
-          />
-          <p v-if="getFieldError('phone')" class="mt-1 text-sm text-red-600">
-            {{ getFieldError('phone') }}
-          </p>
-        </div>
+    <!-- Facturación Form -->
+    <div v-else-if="user.role === 'facturacion'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <h4 class="text-lg font-medium text-gray-900 mb-1">Editar Usuario de Facturación</h4>
+        <p class="text-sm text-gray-500">Modifica los datos del usuario de facturación</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
+        <input v-model="facturacionForm.facturacionName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+        <input v-model="facturacionForm.FacturacionEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+        <textarea v-model="facturacionForm.observaciones" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña (opcional)</label>
+        <input v-model="facturacionForm.password" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="new-password" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+        <input v-model="facturacionForm.passwordConfirm" type="password" placeholder="••••••••" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="new-password" name="confirm-password" />
+      </div>
+    </div>
 
-        <!-- Document Type -->
-        <div>
-          <label for="documentType" class="block text-sm font-medium text-gray-700 mb-1">
-            Tipo de Documento *
-          </label>
-          <select
-            id="documentType"
-            v-model="formData.documentType"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          >
-            <option value="CC">Cédula de Ciudadanía</option>
-            <option value="CE">Cédula de Extranjería</option>
-            <option value="PP">Pasaporte</option>
-          </select>
-        </div>
-
-        <!-- Document Number -->
-        <div class="md:col-span-2">
-          <label for="document" class="block text-sm font-medium text-gray-700 mb-1">
-            Número de Documento *
-          </label>
-          <input
-            id="document"
-            v-model="formData.document"
-            type="text"
-            required
-            placeholder="12345678"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': getFieldError('document') }"
-            @blur="validateField('document')"
-          />
-          <p v-if="getFieldError('document')" class="mt-1 text-sm text-red-600">
-            {{ getFieldError('document') }}
-          </p>
-        </div>
+    <!-- Admin Form -->
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <h4 class="text-lg font-medium text-gray-900 mb-1">Editar Perfil</h4>
+        <p class="text-sm text-gray-500">Modifica tus datos básicos</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+        <input v-model="adminForm.firstName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Apellido *</label>
+        <input v-model="adminForm.lastName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+        <input v-model="adminForm.email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="email" name="email" />
       </div>
     </div>
 
@@ -124,7 +152,7 @@
     <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200">
       <button
         type="submit"
-        :disabled="isLoading || !hasChanges || hasErrors"
+        :disabled="isLoading || !hasChanges"
         class="flex-1 sm:flex-none sm:order-2 inline-flex items-center justify-center px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <span v-if="!isLoading">Guardar Cambios</span>
@@ -158,132 +186,101 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, reactive } from 'vue'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import type { UserProfile, ProfileFormData, ValidationError } from '../../types/userProfile.types'
-import { MockProfileService } from '../../services/mockProfileService'
+import type { UserProfile, ProfileEditPayload } from '../../types/userProfile.types'
 
 interface Props {
   user: UserProfile
   isLoading?: boolean
-  errors?: ValidationError[]
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  isLoading: false,
-  errors: () => []
-})
+const props = withDefaults(defineProps<Props>(), { isLoading: false })
+const emit = defineEmits<{ submit: [payload: ProfileEditPayload]; cancel: []; change: [hasChanges: boolean] }>()
 
-const emit = defineEmits<{
-  submit: [data: ProfileFormData]
-  cancel: []
-  change: [hasChanges: boolean]
-}>()
-
-// Form data
-const formData = reactive<ProfileFormData>({
+const adminForm = reactive({
   firstName: props.user.firstName,
   lastName: props.user.lastName,
-  email: props.user.email,
-  phone: props.user.phone || '',
-  document: props.user.document,
-  documentType: props.user.documentType
+  email: props.user.email
 })
 
-// Original data for comparison
-const originalData = reactive<ProfileFormData>({
-  firstName: props.user.firstName,
-  lastName: props.user.lastName,
-  email: props.user.email,
-  phone: props.user.phone || '',
-  document: props.user.document,
-  documentType: props.user.documentType
+const patologoForm = reactive({
+  patologoName: `${props.user.firstName} ${props.user.lastName}`.trim(),
+  InicialesPatologo: props.user.roleSpecificData?.iniciales || '',
+  PatologoEmail: props.user.email,
+  registro_medico: props.user.roleSpecificData?.registroMedico || '',
+  password: '',
+  passwordConfirm: '',
+  observaciones: props.user.roleSpecificData?.observaciones || ''
 })
 
-// Local validation errors
-const localErrors = ref<ValidationError[]>([])
-
-// Computed properties
-const hasChanges = computed(() => {
-  return Object.keys(formData).some(key => {
-    const formKey = key as keyof ProfileFormData
-    return formData[formKey] !== originalData[formKey]
-  })
+const residenteForm = reactive({
+  residenteName: `${props.user.firstName} ${props.user.lastName}`.trim(),
+  InicialesResidente: props.user.roleSpecificData?.iniciales || '',
+  ResidenteEmail: props.user.email,
+  registro_medico: props.user.roleSpecificData?.registroMedico || '',
+  password: '',
+  passwordConfirm: '',
+  observaciones: props.user.roleSpecificData?.observaciones || ''
 })
 
-const hasErrors = computed(() => {
-  return localErrors.value.length > 0 || props.errors.length > 0
+const auxiliarForm = reactive({
+  auxiliarName: `${props.user.firstName} ${props.user.lastName}`.trim(),
+  AuxiliarEmail: props.user.email,
+  password: '',
+  passwordConfirm: '',
+  observaciones: props.user.roleSpecificData?.observaciones || ''
 })
 
-// Watch for changes and emit
-watch(hasChanges, (newValue) => {
-  emit('change', newValue)
-}, { immediate: true })
+const facturacionForm = reactive({
+  facturacionName: `${props.user.firstName} ${props.user.lastName}`.trim(),
+  FacturacionEmail: props.user.email,
+  password: '',
+  passwordConfirm: '',
+  observaciones: props.user.roleSpecificData?.observaciones || ''
+})
 
-// Methods
-const getFieldError = (field: string): string | undefined => {
-  const localError = localErrors.value.find(error => error.field === field)
-  const propError = props.errors.find(error => error.field === field)
-  return localError?.message || propError?.message
+const originalState = JSON.stringify({ adminForm, patologoForm, residenteForm, auxiliarForm, facturacionForm })
+
+const hasChanges = computed(() => JSON.stringify({ adminForm, patologoForm, residenteForm, auxiliarForm, facturacionForm }) !== originalState)
+
+const isLoading = computed(() => props.isLoading)
+
+const validatePasswords = (password: string, passwordConfirm: string): boolean => {
+  // If password is empty, no validation needed
+  if (!password || !password.trim()) {
+    return true
+  }
+  
+  if (password.length < 6) {
+    alert('La contraseña debe tener al menos 6 caracteres')
+    return false
+  }
+  if (password !== passwordConfirm) {
+    alert('Las contraseñas no coinciden')
+    return false
+  }
+  return true
 }
 
-const validateField = (field: keyof ProfileFormData) => {
-  // Remove existing error for this field
-  localErrors.value = localErrors.value.filter(error => error.field !== field)
+const onSubmit = () => {
+  let payload: ProfileEditPayload
   
-  const value = formData[field]
-  let errorMessage = ''
-
-  switch (field) {
-    case 'firstName':
-    case 'lastName':
-      if (!value.trim()) {
-        errorMessage = `${field === 'firstName' ? 'El nombre' : 'El apellido'} es requerido`
-      }
-      break
-    
-    case 'email':
-      if (!value.trim()) {
-        errorMessage = 'El email es requerido'
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        errorMessage = 'El email no tiene un formato válido'
-      }
-      break
-    
-    case 'phone':
-      if (value && !/^\+?[\d\s-()]{10,}$/.test(value)) {
-        errorMessage = 'El teléfono no tiene un formato válido'
-      }
-      break
-    
-    case 'document':
-      if (!value.trim()) {
-        errorMessage = 'El documento es requerido'
-      } else if (!/^\d{8,12}$/.test(value)) {
-        errorMessage = 'El documento debe tener entre 8 y 12 dígitos'
-      }
-      break
+  if (props.user.role === 'patologo') {
+    if (!validatePasswords(patologoForm.password, patologoForm.passwordConfirm)) return
+    payload = { role: 'patologo', ...patologoForm }
+  } else if (props.user.role === 'residente') {
+    if (!validatePasswords(residenteForm.password, residenteForm.passwordConfirm)) return
+    payload = { role: 'residente', ...residenteForm }
+  } else if (props.user.role === 'auxiliar') {
+    if (!validatePasswords(auxiliarForm.password, auxiliarForm.passwordConfirm)) return
+    payload = { role: 'auxiliar', ...auxiliarForm, auxiliarCode: '' }
+  } else if (props.user.role === 'facturacion') {
+    if (!validatePasswords(facturacionForm.password, facturacionForm.passwordConfirm)) return
+    payload = { role: 'facturacion', ...facturacionForm, facturacionCode: (props.user.roleSpecificData as any)?.facturacionCode || (props.user.roleSpecificData as any)?.billingCode || '' }
+  } else {
+    payload = { role: 'admin', ...adminForm }
   }
-
-  if (errorMessage) {
-    localErrors.value.push({ field, message: errorMessage })
-  }
-}
-
-const validateForm = (): boolean => {
-  localErrors.value = []
-  
-  // Validate all fields
-  Object.keys(formData).forEach(field => {
-    validateField(field as keyof ProfileFormData)
-  })
-  
-  return localErrors.value.length === 0
-}
-
-const handleSubmit = () => {
-  if (validateForm() && hasChanges.value) {
-    emit('submit', { ...formData })
-  }
+  emit('submit', payload)
 }
 </script>

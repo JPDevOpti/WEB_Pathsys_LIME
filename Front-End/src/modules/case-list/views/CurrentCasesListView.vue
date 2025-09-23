@@ -158,12 +158,12 @@ function handleNotesUpdate(updatedCase: any) {
   // Actualizar solo las notas adicionales en la lista local
   const caseIndex = cases.value.findIndex(c => c.caseCode === caseCode)
   if (caseIndex !== -1) {
-    cases.value[caseIndex].notas_adicionales = updatedCase.notas_adicionales
+    cases.value[caseIndex].additional_notes = updatedCase.additional_notes
   }
   
   // Si el caso actual es el mismo que se actualizó, actualizar solo las notas en selectedCase
   if (selectedCase.value && selectedCase.value.caseCode === caseCode) {
-    selectedCase.value.notas_adicionales = updatedCase.notas_adicionales
+    selectedCase.value.additional_notes = updatedCase.additional_notes
   }
 }
 

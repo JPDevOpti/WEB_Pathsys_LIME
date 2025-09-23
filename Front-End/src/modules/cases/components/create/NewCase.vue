@@ -2,7 +2,7 @@
   <!-- Create a new case: verify patient, fill case form, review summary -->
   <ComponentCard title="Crear nuevo caso" description="Complete la información del caso para ingresarlo al sistema.">
     <template #icon>
-      <DocsIcon class="w-5 h-5 mr-2 text-blue-600" />
+      <DocumentIcon class="w-5 h-5 mr-2" />
     </template>
     
     <div class="space-y-6">
@@ -224,7 +224,7 @@ import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/fo
 import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList, TestList, BodyRegionList } from '@/shared/components/List'
-import { DocsIcon, TestIcon, SearchIcon } from '@/assets/icons'
+import { DocumentIcon, TestIcon, SearchIcon } from '@/assets/icons'
 
 // DOM refs and emitted events
 const notificationContainer = ref<HTMLElement | null>(null)

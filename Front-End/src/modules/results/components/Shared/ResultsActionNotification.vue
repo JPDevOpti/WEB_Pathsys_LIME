@@ -69,11 +69,11 @@
               <div class="space-y-2">
                 <div v-for="(test, index) in props.complementaryTests" :key="index" class="flex justify-between items-center bg-white border border-orange-200 rounded p-2 text-sm">
                   <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">{{ test.codigo }}</span>
-                    <span class="text-gray-900">{{ test.nombre || test.codigo }}</span>
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">{{ test.code }}</span>
+                    <span class="text-gray-900">{{ test.name || test.code }}</span>
                   </div>
                   <div class="text-gray-600">
-                    <span class="text-xs">Cant:</span> {{ test.cantidad || 1 }}
+                    <span class="text-xs">Cant:</span> {{ test.quantity || 1 }}
                   </div>
                 </div>
               </div>
@@ -107,7 +107,7 @@ const props = withDefaults(defineProps<{
   savedContent: { method: string[]; macro: string; micro: string; diagnosis: string }
   context?: ContextType
   diagnoses?: { cie10?: { codigo: string; nombre: string }, cieo?: { codigo: string; nombre: string } }
-  complementaryTests?: Array<{ codigo: string; nombre: string; cantidad: number }>
+  complementaryTests?: Array<{ code: string; name: string; quantity: number }>
   complementaryTestsReason?: string
 }>(), {
   inline: true,

@@ -38,6 +38,13 @@ class CaseService:
         doc = await self.repo.get_by_case_code(case_code)
         if not doc:
             raise NotFoundError(f"Case with code {case_code} not found")
+        
+        # Validar que solo se puedan marcar como completados los casos en estado "Por entregar"
+        if payload.state == "Completado":
+            current_state = doc.get("state") or doc.get("estado") or "En proceso"
+            if current_state != "Por entregar":
+                raise BadRequestError(f"No se puede marcar como completado el caso {case_code} que está en estado '{current_state}'. Solo se pueden completar casos en estado 'Por entregar'.")
+        
         updated = await self.repo.update_by_case_code(case_code, payload.model_dump(exclude_unset=True))
         return self._to_response(updated)
 
@@ -142,21 +149,59 @@ class CaseService:
         return [self._to_response(doc) for doc in docs]
 
     def _to_response(self, doc: Dict[str, Any]) -> CaseResponse:
+        # Normalizar patient_info para tolerar datos legacy o incompletos
+        legacy_patient = doc.get("paciente") or {}
+        patient = doc.get("patient_info") or {}
+        entity_info = patient.get("entity_info") or legacy_patient.get("entidad_info") or {}
+        normalized_patient = {
+            "patient_code": patient.get("patient_code") or legacy_patient.get("paciente_code") or legacy_patient.get("cedula") or "",
+            "name": patient.get("name") or legacy_patient.get("nombre") or "",
+            "age": int(patient.get("age") or legacy_patient.get("edad") or 0),
+            "gender": patient.get("gender") or legacy_patient.get("sexo") or "",
+            "entity_info": {
+                "id": entity_info.get("id") or "",
+                "name": entity_info.get("name") or entity_info.get("nombre") or "",
+            },
+            "care_type": patient.get("care_type") or legacy_patient.get("tipo_atencion") or "",
+            "observations": patient.get("observations") or legacy_patient.get("observaciones"),
+        }
+
+        # Normalizar samples/tests del documento si vienen en formato legacy
+        samples = doc.get("samples")
+        if not samples and doc.get("muestras"):
+            samples = []
+            for m in doc.get("muestras", []):
+                tests = []
+                for t in m.get("pruebas", []):
+                    tests.append({
+                        "id": t.get("id") or "",
+                        "name": t.get("nombre") or "",
+                        "quantity": int(t.get("cantidad") or 1),
+                    })
+                samples.append({
+                    "body_region": m.get("region_cuerpo") or "",
+                    "tests": tests,
+                })
+
         doc_out = {
             "id": str(doc.get("_id")),
-            "case_code": doc["case_code"],
-            "patient_info": doc["patient_info"],
-            "requesting_physician": doc.get("requesting_physician"),
-            "service": doc.get("service"),
-            "samples": doc.get("samples", []),
-            "state": doc.get("state"),
-            "priority": doc.get("priority"),
-            "observations": doc.get("observations"),
-            "created_at": doc.get("created_at"),
-            "updated_at": doc.get("updated_at"),
-            "signed_at": doc.get("signed_at"),
-            "assigned_pathologist": doc.get("assigned_pathologist"),
+            "case_code": doc.get("case_code") or doc.get("caso_code") or "",
+            "patient_info": normalized_patient,
+            "requesting_physician": doc.get("requesting_physician") or (doc.get("medico_solicitante") or {}).get("nombre"),
+            "service": doc.get("service") or doc.get("servicio"),
+            "samples": samples or [],
+            "state": doc.get("state") or doc.get("estado") or "En proceso",
+            "priority": doc.get("priority") or "Normal",
+            "observations": doc.get("observations") or doc.get("observaciones_generales"),
+            "created_at": doc.get("created_at") or doc.get("fecha_creacion"),
+            "updated_at": doc.get("updated_at") or doc.get("fecha_actualizacion"),
+            "signed_at": doc.get("signed_at") or doc.get("fecha_firma"),
+            "assigned_pathologist": doc.get("assigned_pathologist") or doc.get("patologo_asignado"),
             "result": doc.get("result"),
+            "delivered_to": doc.get("delivered_to"),
+            "delivered_at": doc.get("delivered_at"),
+            "business_days": doc.get("business_days"),
+            "additional_notes": doc.get("additional_notes") or [],
         }
         return CaseResponse(**doc_out)
 

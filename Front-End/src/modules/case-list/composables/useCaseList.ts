@@ -1,6 +1,6 @@
 import { computed, onMounted, ref, watch, onUnmounted } from 'vue'
 import type { Case, Filters, SortKey, SortOrder } from '../types/case.types'
-import { listCases, listAllCases, searchCases, listTests, type BackendCase, type BackendTest } from '../services/caseListApi'
+import { listCases, searchCases, listTests, type BackendCase, type BackendTest } from '../services/caseListApi'
 import { getDefaultDateRange } from '../utils/dateUtils'
 import { useCasesStore } from '@/stores/cases.store'
 
@@ -104,8 +104,7 @@ export function useCaseList() {
     }
     
     // Manejar tanto el nuevo formato como el legacy
-    const id = bk.id || 
-               (typeof bk._id === 'string' ? bk._id : (bk._id as any)?.$oid) || 
+    const id = (typeof bk._id === 'string' ? bk._id : (bk._id as any)?.$oid) || 
                bk.case_code || 
                bk.caso_code || 
                `case-${Math.random().toString(36).substr(2, 9)}`
@@ -119,11 +118,11 @@ export function useCaseList() {
     const subsamples: Case['subsamples'] = []
     
     // Manejar tanto el nuevo formato (samples) como el legacy (muestras)
-    const samples = bk.samples || bk.muestras || []
+    const samples: any[] = (bk.samples as any) || (bk.muestras as any) || []
     if (Array.isArray(samples)) {
       samples.forEach((m: any) => {
         const items: { id: string; name: string; quantity: number }[] = []
-        const tests = m.tests || m.pruebas || []
+        const tests: any[] = (m.tests as any) || (m.pruebas as any) || []
         tests.forEach((p: any) => {
           const code = p.id || ''
           const name = p.name || p.nombre || testsCatalog.get(code) || ''
@@ -162,9 +161,9 @@ export function useCaseList() {
     const finalDeliveredAt = finalStatus === 'Por entregar' ? '' : deliveredAt
 
     // Manejar información del paciente tanto del nuevo formato como del legacy
-    const patientInfo = bk.patient_info || bk.paciente
+    const patientInfo: any = (bk.patient_info as any) || (bk.paciente as any) || {}
     const caseCode = bk.case_code || bk.caso_code || id
-    const sampleType = samples[0]?.body_region || samples[0]?.region_cuerpo || (patientInfo?.care_type || patientInfo?.tipo_atencion || '')
+    const sampleType = (samples[0]?.body_region || samples[0]?.region_cuerpo || (patientInfo?.care_type || patientInfo?.tipo_atencion || ''))
     
     return {
       id,
@@ -206,24 +205,33 @@ export function useCaseList() {
       // Incorporar prioridad (campo nuevo en backend). Mantenemos compatibilidad aunque el tipo Case aún no lo tenga.
       // @ts-ignore
       priority: bk.priority || (bk as any).prioridad || (bk as any).prioridad_caso || 'Normal',
-      // Campo oportunidad para días hábiles al completar
-      oportunidad: (bk as any).oportunidad || undefined,
-      // Campo entregado_a para registro de entrega
-      entregado_a: (bk as any).entregado_a || undefined,
+      // Campo business_days para días hábiles al completar
+      // @ts-ignore
+      business_days: bk.business_days || undefined,
+      // Campo delivered_to para registro de entrega
+      // @ts-ignore
+      delivered_to: bk.delivered_to || undefined,
+      // Campo delivered_at para fecha de entrega
+      // @ts-ignore
+      delivered_at: getDate(bk.delivered_at),
       result: {
-        method: Array.isArray(bk.resultado?.metodo) 
-          ? bk.resultado.metodo.join(', ') 
-          : (bk.resultado?.metodo || ''),
-        macro: bk.resultado?.resultado_macro || '',
-        micro: bk.resultado?.resultado_micro || '',
-        diagnosis: bk.resultado?.diagnostico || '',
-        resultDate: getDate(bk.resultado?.fecha_resultado),
-        diagnostico_cie10: (bk.resultado as any)?.diagnostico_cie10 || null,
-        diagnostico_cieo: (bk.resultado as any)?.diagnostico_cieo || null,
-        observaciones: (bk.resultado as any)?.observaciones || '',
+        method: Array.isArray(bk.result?.method) 
+          ? bk.result.method 
+          : (bk.result?.method ? [bk.result.method] : []) as string[],
+        macro_result: bk.result?.macro_result || '',
+        micro_result: bk.result?.micro_result || '',
+        diagnosis: bk.result?.diagnosis || '',
+        resultDate: getDate(bk.result?.updated_at),
+        cie10_diagnosis: (bk.result?.cie10_diagnosis?.code && bk.result?.cie10_diagnosis?.name) 
+          ? { code: bk.result.cie10_diagnosis.code, name: bk.result.cie10_diagnosis.name }
+          : null,
+        cieo_diagnosis: (bk.result?.cieo_diagnosis?.code && bk.result?.cieo_diagnosis?.name) 
+          ? { code: bk.result.cieo_diagnosis.code, name: bk.result.cieo_diagnosis.name }
+          : null,
+        observations: bk.result?.observations || '',
       },
       subsamples,
-      notas_adicionales: bk.notas_adicionales || [],
+      additional_notes: bk.additional_notes || [],
     }
   }
 
