@@ -20,12 +20,6 @@
         </div>
 
         <div class="p-6 space-y-6">
-          <!-- Estado y acciones rápidas -->
-          <div class="flex flex-wrap items-center gap-3">
-            <span v-if="caseItem.created_at" class="text-xs text-gray-500">Fecha de creación: {{ formatDate(caseItem.created_at) }}</span>
-            <span v-if="caseItem.updated_at" class="text-xs text-gray-500">Última actualización: {{ formatDate(caseItem.updated_at) }}</span>
-          </div>
-
           <!-- Información de la solicitud -->
           <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
@@ -42,19 +36,19 @@
             </div>
             <div>
               <p class="text-xs text-gray-500">Fecha de Solicitud</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.created_at ? formatDate(caseItem.created_at) : 'N/A' }}</p>
+              <p class="text-sm font-medium text-gray-900">{{ formatDate(caseItem.created_at) }}</p>
             </div>
           </section>
 
-            <!-- Información adicional -->
+          <!-- Información adicional -->
           <section class="grid grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50 rounded-xl p-4">
             <div>
               <p class="text-xs text-gray-500">Fecha de Creación</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.created_at ? formatDate(caseItem.created_at) : 'N/A' }}</p>
+              <p class="text-sm font-medium text-gray-900">{{ formatDate(caseItem.created_at) }}</p>
             </div>
             <div>
               <p class="text-xs text-gray-500">Última Actualización</p>
-              <p class="text-sm font-medium text-gray-900">{{ caseItem.updated_at ? formatDate(caseItem.updated_at) : 'N/A' }}</p>
+              <p class="text-sm font-medium text-gray-900">{{ formatDate(caseItem.updated_at) }}</p>
             </div>
             <div>
               <p class="text-xs text-gray-500">Patólogo Asignado</p>
@@ -83,24 +77,22 @@
             </div>
             
             <div v-if="!isEditingTests">
-              <div v-if="getComplementaryTests()?.length" class="space-y-3">
-                <div class="border border-gray-200 rounded-lg p-3 bg-white">
-                  <div class="flex flex-wrap gap-2">
+              <div v-if="getComplementaryTests()?.length" class="border border-gray-200 rounded-lg p-3 bg-white">
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    v-for="(test, idx) in getComplementaryTests()"
+                    :key="idx"
+                    class="relative inline-flex items-center justify-center bg-blue-100 text-blue-700 font-mono text-[11px] pl-2 pr-6 py-0.5 rounded border text-nowrap"
+                    :title="test.name"
+                  >
+                    {{ test.code }} - {{ test.name }}
                     <span
-                      v-for="(test, idx) in getComplementaryTests()"
-                      :key="idx"
-                      class="relative inline-flex items-center justify-center bg-blue-100 text-blue-700 font-mono text-[11px] pl-2 pr-6 py-0.5 rounded border text-nowrap"
-                      :title="test.name"
+                      v-if="test.quantity > 1"
+                      class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold"
                     >
-                      {{ test.code }} - {{ test.name }}
-                      <span
-                        v-if="test.quantity > 1"
-                        class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold"
-                      >
-                        {{ test.quantity }}
-                      </span>
+                      {{ test.quantity }}
                     </span>
-                  </div>
+                  </span>
                 </div>
               </div>
               <div v-else class="text-xs text-gray-500">Sin pruebas complementarias</div>
@@ -191,7 +183,7 @@
 <script setup lang="ts">
 import { BaseButton } from '@/shared/components'
 import { ConfirmDialog } from '@/shared/components/feedback'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import type { ApprovalRequestResponse } from '@/shared/services/approval.service'
 
@@ -213,19 +205,14 @@ function formatDate(dateString?: string) {
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-// Sidebar offset logic replicating CaseDetailsModal
 const { isExpanded, isMobileOpen, isHovered } = useSidebar()
 const overlayLeftClass = computed(() => {
   const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
   return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
 })
 
-// Estado para diálogo de confirmación (mantenido para compatibilidad)
-import { ref } from 'vue'
 const showConfirm = ref(false)
 const pendingRemoval = ref<{ index: number; test: any } | null>(null)
-
-// Estado para edición de pruebas
 const isEditingTests = ref(false)
 const editableTests = ref<any[]>([])
 const savingTests = ref(false)
@@ -244,8 +231,7 @@ function cancelRemoval() {
   pendingRemoval.value = null
 }
 
-// Funciones helper para mostrar datos correctos
-function getStatusText(status?: string): string {
+const getStatusText = (status?: string): string => {
   if (!status) return 'N/A'
   const statusMap: Record<string, string> = {
     'request_made': 'Solicitud Hecha',
@@ -256,45 +242,41 @@ function getStatusText(status?: string): string {
   return statusMap[status] || status
 }
 
-function getPathologistName(): string {
+const getPathologistName = (): string => {
   if (!props.caseItem?.approval_info?.assigned_pathologist) {
     return 'Sin asignar'
   }
   return props.caseItem.approval_info.assigned_pathologist.name || 'Sin asignar'
 }
 
-function getReason(): string | null {
+const getReason = (): string | null => {
   return props.caseItem?.approval_info?.reason || null
 }
 
-function getComplementaryTests() {
+const getComplementaryTests = () => {
   return props.caseItem?.complementary_tests || []
 }
 
-// Funciones para edición de pruebas
-function startEditingTests() {
+const startEditingTests = () => {
   editableTests.value = [...(getComplementaryTests() || [])]
   isEditingTests.value = true
 }
 
-function cancelEditingTests() {
+const cancelEditingTests = () => {
   isEditingTests.value = false
   editableTests.value = []
 }
 
-function removeTest(index: number) {
+const removeTest = (index: number) => {
   editableTests.value.splice(index, 1)
 }
 
-async function saveTests() {
+const saveTests = async () => {
   if (!props.caseItem) return
   
   savingTests.value = true
   try {
-    // Emitir el evento con las pruebas actualizadas
     emit('testsUpdated', editableTests.value)
-    
-    // Salir del modo edición
     isEditingTests.value = false
     editableTests.value = []
   } catch (error) {

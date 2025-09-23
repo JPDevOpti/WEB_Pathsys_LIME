@@ -22,7 +22,7 @@
           <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
         </div>
 
-        <!-- Content (placeholder for now) -->
+        <!-- Content -->
         <div class="flex-1 overflow-y-auto p-5 space-y-6">
           <div>
             <h4 class="text-sm font-semibold text-gray-700 mb-3">Casos Seleccionados (click para ver detalles)</h4>
@@ -32,7 +32,6 @@
                 :key="c.id"
                 class="group bg-white focus-within:bg-blue-50/50"
               >
-                <!-- Header item clickable -->
                 <button
                   type="button"
                   class="w-full px-3 py-2 flex items-center gap-3 text-left hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition-colors"
@@ -66,7 +65,6 @@
                   </svg>
                 </button>
 
-                <!-- Details panel -->
                 <transition
                   enter-active-class="overflow-hidden transition-all duration-300 ease-out"
                   enter-from-class="max-h-0 opacity-0"
@@ -76,7 +74,6 @@
                   leave-to-class="max-h-0 opacity-0"
                 >
                   <div v-if="isExpanded(c.id)" class="px-4 pb-4 pt-1 bg-gray-50/60 border-t border-gray-200 space-y-4">
-                    <!-- Metadata Card (Entidad, Patólogo, Fecha Creación, Oportunidad) -->
                     <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
                       <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <div>
@@ -100,7 +97,6 @@
                       </div>
                     </div>
 
-                    <!-- Submuestras y pruebas -->
                     <div>
                       <div class="flex items-center justify-between mb-2">
                         <p class="text-[11px] uppercase tracking-wide font-semibold text-gray-500">Submuestras</p>
@@ -115,7 +111,6 @@
                       </div>
                       
                       <div v-if="c.subsamples && c.subsamples.length" class="space-y-3">
-                        <!-- Modo visualización -->
                         <div v-if="!isEditingSamples(c.id)">
                           <div
                             v-for="(s, sIdx) in c.subsamples"
@@ -123,7 +118,6 @@
                             class="relative bg-white border border-gray-200 rounded-lg p-3 shadow-sm group/sub overflow-hidden"
                             :class="{ 'opacity-60': isSubsampleRemoved(c.id, sIdx) }"
                           >
-                            <!-- Botón remover submuestra (más grande) -->
                             <button
                               type="button"
                               class="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-red-600 hover:bg-red-100/70 active:scale-95 transition text-sm font-bold border border-transparent hover:border-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
@@ -154,7 +148,6 @@
                           </div>
                         </div>
                         
-                        <!-- Modo edición -->
                         <div v-else class="space-y-2">
                           <div
                             v-for="(s, sIdx) in getEditableSamples(c.id)"
@@ -281,57 +274,46 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void; (e: 'clos
 const visible = computed(() => props.modelValue)
 const cases = computed(() => props.selected || [])
 
-// Estado de paneles expandidos
 const expandedIds = ref<Set<string>>(new Set())
-
-// Campo "Entregado a"
 const entregadoA = ref('')
 const entregadoAError = ref('')
 
-function toggleExpanded(id: string) {
+const toggleExpanded = (id: string) => {
   if (!id) return
   if (expandedIds.value.has(id)) {
     expandedIds.value.delete(id)
   } else {
     expandedIds.value.add(id)
   }
-  // Forzar reactividad recreando el Set
   expandedIds.value = new Set(expandedIds.value)
 }
 
-function isExpanded(id: string): boolean {
+const isExpanded = (id: string): boolean => {
   return expandedIds.value.has(id)
 }
 
-function indexOfCase(id: string): number {
+const indexOfCase = (id: string): number => {
   return cases.value.findIndex(c => c.id === id)
 }
 
-function formatDate(dateString: string) {
+const formatDate = (dateString: string) => {
   if (!dateString) return 'N/A'
   const d = new Date(dateString)
   if (isNaN(d.getTime())) return 'N/A'
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-// ================= Eliminaciones diferidas =================
-// Estructura: removedSubsamples[caseId] = Set<subsampleIndex>
 const removedSubsamples = ref<Record<string, Set<number>>>({})
-// removedTests[caseId] = { [subsampleIndex]: Set<testIndex> }
 const removedTests = ref<Record<string, Record<number, Set<number>>>>({})
-
-// ================= Edición de muestras =================
-// Estados de edición por caso
 const editingSamples = ref<Set<string>>(new Set())
-// Muestras editables por caso
 const editableSamples = ref<Record<string, any[]>>({})
 
-function ensureCaseStructures(caseId: string) {
+const ensureCaseStructures = (caseId: string) => {
   if (!removedSubsamples.value[caseId]) removedSubsamples.value[caseId] = new Set()
   if (!removedTests.value[caseId]) removedTests.value[caseId] = {}
 }
 
-function toggleRemoveSubsample(caseId: string, subsampleIndex: number) {
+const toggleRemoveSubsample = (caseId: string, subsampleIndex: number) => {
   ensureCaseStructures(caseId)
   const set = removedSubsamples.value[caseId]
   if (set.has(subsampleIndex)) {
@@ -339,22 +321,19 @@ function toggleRemoveSubsample(caseId: string, subsampleIndex: number) {
   } else {
     set.add(subsampleIndex)
   }
-  // Si se remueve submuestra, limpiar pruebas marcadas de esa submuestra
   if (removedTests.value[caseId] && removedTests.value[caseId][subsampleIndex]) {
     delete removedTests.value[caseId][subsampleIndex]
   }
-  // Forzar reactividad
   removedSubsamples.value = { ...removedSubsamples.value }
   removedTests.value = { ...removedTests.value }
 }
 
-function isSubsampleRemoved(caseId: string, subsampleIndex: number): boolean {
+const isSubsampleRemoved = (caseId: string, subsampleIndex: number): boolean => {
   return !!removedSubsamples.value[caseId]?.has(subsampleIndex)
 }
 
 
-// Construir payload de confirmación incluyendo info de removidos
-function buildRemovalSummary() {
+const buildRemovalSummary = () => {
   return cases.value.map(c => {
     const subsRemoved = Array.from(removedSubsamples.value[c.id] || [])
     return {
@@ -364,15 +343,13 @@ function buildRemovalSummary() {
   }).filter(entry => entry.removedSubsamples.length > 0)
 }
 
-// Centrado adaptado al ancho del sidebar (igual que CaseDetailsModal)
 const { isExpanded: sidebarExpanded, isMobileOpen, isHovered } = useSidebar()
 const overlayLeftClass = computed(() => {
   const hasWideSidebar = (sidebarExpanded.value && !isMobileOpen.value) || (!sidebarExpanded.value && isHovered.value)
   return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
 })
 
-function emitConfirm() {
-  // Validar campo "Entregado a"
+const emitConfirm = () => {
   entregadoAError.value = ''
   if (!entregadoA.value.trim()) {
     entregadoAError.value = 'Este campo es requerido'
@@ -383,15 +360,10 @@ function emitConfirm() {
     return
   }
 
-
   const ids = cases.value.map(c => c.id).filter(Boolean)
-  // Emitir primero ids (compatibilidad)
   emit('confirm', ids)
-  // Emitir evento adicional opcional con detalle (si se decide usar después)
-  // @ts-ignore (evento extendido posible a futuro)
   emit('confirm-removals', buildRemovalSummary())
   
-  // Construir payload de casos a completar con muestras restantes
   const batchPayload = cases.value.map(c => {
     const subs = c.subsamples || []
     const remaining = subs
@@ -407,15 +379,14 @@ function emitConfirm() {
         }
       })
     
-    // Calcular días hábiles de oportunidad (días transcurridos hasta el momento de completar)
     const oportunidad = calculateBusinessDays(c.receivedAt || '')
     
     return { 
       caseCode: c.caseCode || c.id, 
       remainingSubsamples: remaining,
-      business_days: oportunidad, // Campo para registrar días hábiles al completar
-      delivered_to: entregadoA.value.trim(), // Campo para registrar quién recibe
-      delivered_at: new Date().toISOString() // Fecha actual de entrega
+      business_days: oportunidad,
+      delivered_to: entregadoA.value.trim(),
+      delivered_at: new Date().toISOString()
     }
   })
   
@@ -423,24 +394,19 @@ function emitConfirm() {
     .then(r => {
       emit('completed', r)
       emit('update:modelValue', false)
-      // Limpiar campo al cerrar exitosamente
       entregadoA.value = ''
       entregadoAError.value = ''
     })
     .catch((error) => {
       console.error('Error al completar casos:', error)
-      // En caso de error simplemente mantenemos abierto? podría mejorarse con estado de error
-      // Aquí se podría emitir un evento 'error' si se define posteriormente.
     })
 }
 
-// ================= Helpers para pruebas duplicadas =================
 interface DrawerTestEntry { id: string; name?: string; quantity?: number }
 
-// Cache de expansión por caso+submuestra para evitar recomputar en cada render
 const expandedTestsCache = new Map<string, DrawerTestEntry[]>()
 
-function getExpandedTestsCached(caseId: string, subsampleIndex: number, tests: DrawerTestEntry[]): DrawerTestEntry[] {
+const getExpandedTestsCached = (caseId: string, subsampleIndex: number, tests: DrawerTestEntry[]): DrawerTestEntry[] => {
   const key = `${caseId || ''}|${subsampleIndex}|${tests.length}`
   const cached = expandedTestsCache.get(key)
   if (cached) return cached
@@ -453,8 +419,7 @@ function getExpandedTestsCached(caseId: string, subsampleIndex: number, tests: D
   return expanded
 }
 
-function clearExpandedTestsCache(caseId: string) {
-  // Limpiar todas las entradas del cache que pertenecen a este caso
+const clearExpandedTestsCache = (caseId: string) => {
   for (const key of expandedTestsCache.keys()) {
     if (key.startsWith(`${caseId}|`)) {
       expandedTestsCache.delete(key)
@@ -462,113 +427,92 @@ function clearExpandedTestsCache(caseId: string) {
   }
 }
 
-// ================= Cálculo de días hábiles para Oportunidad =================
-function calculateBusinessDays(startDate: string, endDate?: string): number {
+const calculateBusinessDays = (startDate: string, endDate?: string): number => {
   const start = new Date(startDate)
   const end = endDate ? new Date(endDate) : new Date()
   
-  // Validar fechas válidas
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
     return 0
   }
   
-  // Asegurar que start sea anterior a end
   const fromDate = start <= end ? start : end
   const toDate = start <= end ? end : start
   
   let businessDays = 0
   const currentDate = new Date(fromDate)
   
-  // Si la fecha de inicio es fin de semana, avanzar al próximo lunes
   while (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
     currentDate.setDate(currentDate.getDate() + 1)
-    // Si después de avanzar ya pasamos la fecha final, retornar 0
     if (currentDate > toDate) {
       return 0
     }
   }
   
-  // Ahora currentDate está en el primer día hábil
   const firstBusinessDay = new Date(currentDate)
   
-  // Si estamos en el mismo día que empezó (primer día hábil), retornar 0
   if (firstBusinessDay.toDateString() === toDate.toDateString()) {
     return 0
   }
   
-  // Avanzar al siguiente día para empezar a contar días completados
   currentDate.setDate(currentDate.getDate() + 1)
   
-  // Contar días hábiles completados (excluyendo el primer día)
   while (currentDate <= toDate) {
     const dayOfWeek = currentDate.getDay()
     
-    // Contar solo lunes(1) a viernes(5)
     if (dayOfWeek >= 1 && dayOfWeek <= 5) {
       businessDays++
     }
     
-    // Avanzar al siguiente día
     currentDate.setDate(currentDate.getDate() + 1)
   }
   
-  // Nunca retornar números negativos
   return Math.max(0, businessDays)
 }
 
-// ================= Funciones de edición de muestras =================
-function isEditingSamples(caseId: string): boolean {
+const isEditingSamples = (caseId: string): boolean => {
   return editingSamples.value.has(caseId)
 }
 
-function startEditingSamples(caseId: string) {
+const startEditingSamples = (caseId: string) => {
   const caseItem = cases.value.find(c => c.id === caseId)
   if (!caseItem) return
   
-  // Crear copia editable de las muestras
   editableSamples.value[caseId] = JSON.parse(JSON.stringify(caseItem.subsamples || []))
   editingSamples.value.add(caseId)
 }
 
-function cancelEditingSamples(caseId: string) {
+const cancelEditingSamples = (caseId: string) => {
   editingSamples.value.delete(caseId)
   delete editableSamples.value[caseId]
 }
 
-function getEditableSamples(caseId: string) {
+const getEditableSamples = (caseId: string) => {
   return editableSamples.value[caseId] || []
 }
 
-function removeTestFromSample(caseId: string, sampleIndex: number, testIndex: number) {
+const removeTestFromSample = (caseId: string, sampleIndex: number, testIndex: number) => {
   const samples = editableSamples.value[caseId]
   if (!samples || !samples[sampleIndex]) return
   
   samples[sampleIndex].tests.splice(testIndex, 1)
-  
-  // Forzar reactividad
   editableSamples.value = { ...editableSamples.value }
 }
 
-function saveSamples(caseId: string) {
+const saveSamples = (caseId: string) => {
   const caseIndex = cases.value.findIndex(c => c.id === caseId)
   if (caseIndex === -1) return
   
   const editableData = getEditableSamples(caseId)
   if (!editableData) return
   
-  // Limpiar el cache de expansión para este caso
   clearExpandedTestsCache(caseId)
   
-  // Actualizar las muestras del caso con las editadas
   const updatedCase = {
     ...cases.value[caseIndex],
     subsamples: JSON.parse(JSON.stringify(editableData))
   }
   
-  // Emitir evento para actualizar el caso en el componente padre
   emit('update-case', caseId, updatedCase)
-  
-  // Salir del modo edición
   cancelEditingSamples(caseId)
 }
 </script>

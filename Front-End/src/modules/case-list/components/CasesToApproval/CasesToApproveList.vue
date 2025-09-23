@@ -14,27 +14,18 @@
             <div class="flex-1">
               <FormInputField 
                 v-model="searchTerm" 
-                :label="undefined" 
                 placeholder="Código del caso (Ejemplo: 2025-00001)" 
                 :max-length="100" 
                 @keyup.enter="handleSearch"
               />
             </div>
-            <SearchButton 
-              text="Buscar" 
-              size="md" 
-              variant="primary" 
-              @click="handleSearch" 
-            />
+            <SearchButton text="Buscar" size="md" variant="primary" @click="handleSearch" />
           </div>
         </div>
         <div class="flex gap-3 items-end">
           <div class="w-48">
             <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-            <select 
-              v-model="selectedStatus" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white"
-            >
+            <select v-model="selectedStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white">
               <option value="">Todos los estados</option>
               <option value="request_made">Solicitud Hecha</option>
               <option value="pending_approval">Pendiente de Aprobación</option>
@@ -60,21 +51,8 @@
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
                   <span class="text-sm font-medium text-gray-900">Solicitud para {{ caseItem.caseCode }}</span>
-                  <span 
-                    :class="[
-                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                      caseItem.status === 'request_made' ? 'bg-blue-100 text-blue-800' :
-                      caseItem.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
-                      caseItem.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
-                    ]"
-                  >
-                    {{ 
-                      caseItem.status === 'request_made' ? 'Solicitud Hecha' :
-                      caseItem.status === 'pending_approval' ? 'Pendiente de Aprobación' :
-                      caseItem.status === 'approved' ? 'Aprobado' :
-                      'Rechazado'
-                    }}
+                  <span :class="statusClasses(caseItem.status)">
+                    {{ statusText(caseItem.status) }}
                   </span>
                 </div>
                 
@@ -320,6 +298,27 @@ const mapBackendCase = (c: ApprovalRequestResponse): CaseToApprove => ({
   complementaryTests: c.complementary_tests || []
 })
 
+const statusClasses = (status: string) => {
+  const base = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium'
+  const colors = {
+    request_made: 'bg-blue-100 text-blue-800',
+    pending_approval: 'bg-yellow-100 text-yellow-800',
+    approved: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800'
+  }
+  return `${base} ${colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'}`
+}
+
+const statusText = (status: string) => {
+  const texts = {
+    request_made: 'Solicitud Hecha',
+    pending_approval: 'Pendiente de Aprobación',
+    approved: 'Aprobado',
+    rejected: 'Rechazado'
+  }
+  return texts[status as keyof typeof texts] || status
+}
+
 const fetchCases = async () => {
   loading.value = true
   errorMessage.value = ''
@@ -328,7 +327,6 @@ const fetchCases = async () => {
       original_case_code: searchTerm.value.trim() || undefined,
       approval_state: selectedStatus.value as ApprovalState || undefined
     }
-    
     const calculatedSkip = (currentPage.value - 1) * itemsPerPage.value
     const respData = await approvalService.searchApprovalRequests(searchPayload, calculatedSkip, itemsPerPage.value)
     const dataList: ApprovalRequestResponse[] = respData?.data || []
@@ -363,9 +361,7 @@ const handleSearch = async () => {
 }
 
 
-const filteredCases = computed(() => {
-  return cases.value
-})
+const filteredCases = computed(() => cases.value)
 const totalPages = computed(() => Math.ceil(total.value / itemsPerPage.value))
 
 const handlePageChange = async (page: number) => {
@@ -389,7 +385,6 @@ const formatDate = (dateString: string): string =>
   })
 
 const getCaseTests = (caseItem: CaseToApprove) => caseItem.complementaryTests || []
-
 const getPathologistName = (caseItem: CaseToApprove): string => 
   caseItem.pathologistName && caseItem.pathologistName !== 'Pendiente' 
     ? caseItem.pathologistName 
@@ -400,8 +395,7 @@ const viewCase = async (caseId: string): Promise<void> => {
   if (!localCase) return
 
   try {
-    const fullApprovalCase = await approvalService.getApprovalRequest(localCase.approvalCode)
-    selectedApprovalCase.value = fullApprovalCase
+    selectedApprovalCase.value = await approvalService.getApprovalRequest(localCase.approvalCode)
   } catch (error) {
     console.error('Error al obtener detalles del caso:', error)
     selectedApprovalCase.value = {
@@ -481,12 +475,9 @@ const confirmApproveCase = async (): Promise<void> => {
     const result = await approvalService.approveRequest(confirmData.value.approvalCode!)
     await fetchCases()
     showConfirmApprove.value = false
-    console.log('🔍 Resultado de aprobación:', result)
+    
     if (result.data?.new_case) {
-      console.log('🔍 Mostrando notificación con caso:', result.data.new_case)
       showSuccessNotification(result.data.new_case)
-    } else {
-      console.log('🔍 No se encontró new_case en la respuesta')
     }
     
     if (selectedApprovalCase.value && (selectedApprovalCase.value as any).id === confirmData.value.caseId) {
@@ -563,12 +554,10 @@ const handleTestsUpdated = async (updatedTests: ComplementaryTestInfo[]) => {
   }
   
   try {
-    // Actualizar en el backend
     await approvalService.updateApprovalRequest(selectedApprovalCase.value.approval_code, {
       complementary_tests: updatedTests
     })
     
-    // Actualizar estado local
     if (selectedApprovalCase.value) {
       selectedApprovalCase.value.complementary_tests = updatedTests
     }
@@ -578,13 +567,11 @@ const handleTestsUpdated = async (updatedTests: ComplementaryTestInfo[]) => {
       caseItem.complementaryTests = updatedTests
     }
     
-    // Recargar casos para sincronizar con el backend
     await fetchCases()
-    
-    success('Pruebas actualizadas', 'Las pruebas complementarias se han actualizado exitosamente')
+    success('generic', 'Pruebas actualizadas', 'Las pruebas complementarias se han actualizado exitosamente')
   } catch (error: any) {
     console.error('Error al actualizar pruebas:', error)
-    showError('Error al actualizar', error.message || 'No se pudieron actualizar las pruebas complementarias')
+    showError('generic', 'Error al actualizar', error.message || 'No se pudieron actualizar las pruebas complementarias')
   }
 }
 

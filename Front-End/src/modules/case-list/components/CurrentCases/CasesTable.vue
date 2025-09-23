@@ -1,8 +1,5 @@
 <template>
   <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
-
-
-    <!-- Barra de herramientas de lote -->
     <div v-if="selectedIds.length > 0" class="bg-blue-50 border-b border-blue-200 px-4 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -18,7 +15,6 @@
         </div>
         
         <div class="flex items-center gap-2">
-          
           <button
             @click="handleBatchDownloadExcel"
             :disabled="isDownloadingExcel"
@@ -44,24 +40,21 @@
           </button>
         </div>
 
-          <!-- Drawer para marcado múltiple de firma/entrega -->
-          <BatchMarkDeliveredDrawer
-            v-model="showMarkDeliveredDrawer"
-            :selected="props.cases.filter(c => props.selectedIds.includes(c.id))"
-            @close="showMarkDeliveredDrawer = false"
-            @confirm="() => {}"
-            @completed="handleBatchCompleted"
-            @update-case="handleUpdateCase"
-          />
+        <BatchMarkDeliveredDrawer
+          v-model="showMarkDeliveredDrawer"
+          :selected="props.cases.filter(c => props.selectedIds.includes(c.id))"
+          @close="showMarkDeliveredDrawer = false"
+          @confirm="() => {}"
+          @completed="handleBatchCompleted"
+          @update-case="handleUpdateCase"
+        />
       </div>
     </div>
 
-    <!-- Vista de escritorio -->
     <div class="hidden lg:block max-w-full overflow-x-auto custom-scrollbar">
       <table class="min-w-full text-base">
         <thead>
           <tr class="border-b border-gray-200 bg-gray-50">
-            <!-- Columna de selección -->
             <th class="px-2 py-2 text-center w-12">
               <div class="flex items-center justify-center">
                 <FormCheckbox
@@ -82,7 +75,6 @@
         </thead>
         <tbody class="divide-y divide-gray-200">
           <tr v-for="(c, index) in props.cases" :key="`case-${c.id}-${index}`" class="hover:bg-gray-50" @click="toggleCaseSelection(c.id)">
-            <!-- Checkbox de selección -->
             <td class="px-2 py-3 text-center">
               <div class="flex items-center justify-center">
                 <FormCheckbox
@@ -108,63 +100,36 @@
               <p class="text-gray-500 text-xs">{{ c.pathologist || 'No asignado' }}</p>
             </td>
             <td class="px-3 py-3 text-center">
-              <div class="w-full max-w-full">
-                <!-- Organizar pruebas en 2 columnas -->
-                <template v-if="getTestsLayout(c).totalTests > 0">
-                  <div class="space-y-1">
-                    <div class="grid grid-cols-2 gap-1">
-                      <!-- Columna 1 -->
-                      <div class="flex flex-col gap-1 items-end">
-                        <span
-                          v-for="(g, idx) in getTestsLayout(c).organized.column1"
-                          :key="`col1-${idx}`"
-                          class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0"
-                          :title="getTestTooltip(c.tests, g.code, g.count)"
-                        >
-                          <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
-                            <span class="truncate test-code">{{ g.code }}</span>
-                            <sub v-if="g.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ g.count }}</sub>
-                          </span>
-                        </span>
-                      </div>
-                      <!-- Columna 2 -->
-                      <div class="flex flex-col gap-1 items-start">
-                        <span
-                          v-for="(g, idx) in getTestsLayout(c).organized.column2"
-                          :key="`col2-${idx}`"
-                          class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0"
-                          :title="getTestTooltip(c.tests, g.code, g.count)"
-                        >
-                          <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
-                            <span class="truncate test-code">{{ g.code }}</span>
-                            <sub v-if="g.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ g.count }}</sub>
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <!-- Elemento del medio si hay número impar -->
-                    <div v-if="getTestsLayout(c).organized.middle" class="flex justify-center">
-                      <span class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0"
-                            :title="getTestTooltip(c.tests, getTestsLayout(c).organized.middle!.code, getTestsLayout(c).organized.middle!.count)">
-                        <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
-                          <span class="truncate test-code">{{ getTestsLayout(c).organized.middle!.code }}</span>
-                          <sub v-if="getTestsLayout(c).organized.middle!.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ getTestsLayout(c).organized.middle!.count }}</sub>
-                        </span>
+              <div v-if="getTestsLayout(c).totalTests > 0" class="space-y-1">
+                <div class="grid grid-cols-2 gap-1">
+                  <div class="flex flex-col gap-1 items-end">
+                    <span v-for="(g, idx) in getTestsLayout(c).organized.column1" :key="`col1-${idx}`" class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0" :title="getTestTooltip(c.tests, g.code, g.count)">
+                      <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
+                        <span class="truncate test-code">{{ g.code }}</span>
+                        <sub v-if="g.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ g.count }}</sub>
                       </span>
-                    </div>
-                    
-                    <!-- Indicador de pruebas adicionales -->
-                    <div v-if="getTestsLayout(c).hasMore" class="flex justify-center mt-1">
-                      <span
-                        class="inline-flex items-center justify-center bg-blue-50 text-blue-600 font-mono text-xs px-2 py-1 rounded border"
-                        :title="`${getTestsLayout(c).moreCount} pruebas más`"
-                      >
-                        +{{ getTestsLayout(c).moreCount }}
-                      </span>
-                    </div>
+                    </span>
                   </div>
-                </template>
+                  <div class="flex flex-col gap-1 items-start">
+                    <span v-for="(g, idx) in getTestsLayout(c).organized.column2" :key="`col2-${idx}`" class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0" :title="getTestTooltip(c.tests, g.code, g.count)">
+                      <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
+                        <span class="truncate test-code">{{ g.code }}</span>
+                        <sub v-if="g.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ g.count }}</sub>
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                <div v-if="getTestsLayout(c).organized.middle" class="flex justify-center">
+                  <span class="inline-flex items-center text-nowrap min-w-0 flex-shrink-0" :title="getTestTooltip(c.tests, getTestsLayout(c).organized.middle!.code, getTestsLayout(c).organized.middle!.count)">
+                    <span class="test-badge inline-flex items-center justify-center bg-gray-100 text-gray-700 font-mono text-xs px-2 py-1 rounded border relative min-w-0">
+                      <span class="truncate test-code">{{ getTestsLayout(c).organized.middle!.code }}</span>
+                      <sub v-if="getTestsLayout(c).organized.middle!.count > 1" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-200 text-blue-800 text-[10px] font-bold rounded-full flex items-center justify-center">{{ getTestsLayout(c).organized.middle!.count }}</sub>
+                    </span>
+                  </span>
+                </div>
+                <div v-if="getTestsLayout(c).hasMore" class="flex justify-center mt-1">
+                  <span class="inline-flex items-center justify-center bg-blue-50 text-blue-600 font-mono text-xs px-2 py-1 rounded border" :title="`${getTestsLayout(c).moreCount} pruebas más`">+{{ getTestsLayout(c).moreCount }}</span>
+                </div>
               </div>
             </td>
             <td class="px-2 py-3 text-center">
@@ -196,43 +161,14 @@
             </td>
             <td class="px-2 py-3 text-center">
               <div class="flex gap-1 justify-center min-w-[120px]">
-                <button
-                  class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                  @click.stop="$emit('show-details', c)"
-                  title="Ver detalles"
-                >
-                  <InfoCircleIcon class="w-4 h-4" />
+                <button class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="$emit('show-details', c)" title="Ver detalles"><InfoCircleIcon class="w-4 h-4" /></button>
+                <button v-if="!isPatologo && !isResidente && !isFacturacion && c.status !== 'Completado'" class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="handleEdit(c)" title="Editar caso"><SettingsIcon class="w-4 h-4" /></button>
+                <button v-if="c.status === 'En proceso' && !isFacturacion" class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="handlePerform(c)" title="Realizar resultados">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 </button>
-                <button
-                  v-if="!isPatologo && !isResidente && !isFacturacion && c.status !== 'Completado'"
-                  class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                  @click.stop="handleEdit(c)"
-                  title="Editar caso"
-                >
-                  <SettingsIcon class="w-4 h-4" />
-                </button>
-                <button
-                  v-if="c.status === 'En proceso' && !isFacturacion"
-                  class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                  @click.stop="handlePerform(c)"
-                  title="Realizar resultados"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                  </svg>
-                </button>
-                <button
-                  v-if="['Por firmar','Por entregar'].includes(c.status) && !isFacturacion"
-                  class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                  @click.stop="handleValidate(c)"
-                  :title="c.status === 'Por firmar' ? 'Realizar validación del informe' : 'Validar'"
-                >
-                  <svg v-if="c.status === 'Por firmar'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                  </svg>
-                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                <button v-if="['Por firmar','Por entregar'].includes(c.status) && !isFacturacion" class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="handleValidate(c)" :title="c.status === 'Por firmar' ? 'Realizar validación del informe' : 'Validar'">
+                  <svg v-if="c.status === 'Por firmar'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </button>
               </div>
             </td>
@@ -246,7 +182,6 @@
       </table>
     </div>
 
-    <!-- Vista móvil y tablet -->
     <div class="lg:hidden">
       <div class="space-y-3 p-4">
         <div
@@ -255,10 +190,8 @@
           class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
           @click="toggleCaseSelection(c.id)"
         >
-          <!-- Header del caso -->
           <div class="flex items-start justify-between mb-3">
             <div class="flex items-center gap-3 flex-1 min-w-0">
-              <!-- Checkbox de selección para móvil -->
               <FormCheckbox
                 :model-value="isCaseSelected(c.id)"
                 :id="`case-mobile-${c.id}-${props.selectedIds.includes(c.id)}`"
@@ -299,7 +232,6 @@
             </div>
           </div>
 
-          <!-- Información del caso -->
           <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
             <div>
               <p class="text-gray-500">Entidad</p>
@@ -325,7 +257,6 @@
             </div>
           </div>
 
-          <!-- Pruebas en 2 filas -->
           <div class="mb-3">
             <p class="text-gray-500 text-xs mb-2">Pruebas</p>
             <div class="grid grid-cols-3 gap-1">
@@ -350,99 +281,46 @@
             </div>
           </div>
 
-          <!-- Acciones -->
           <div class="flex gap-1 pt-2 border-t border-gray-100">
-            <button
-              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
-              @click.stop="$emit('show-details', c)"
-            >
-              <InfoCircleIcon class="w-3 h-3" />
-              Ver detalles
+            <button class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium" @click.stop="$emit('show-details', c)"><InfoCircleIcon class="w-3 h-3" />Ver detalles</button>
+            <button v-if="!isPatologo && !isResidente && !isFacturacion && c.status !== 'Completado'" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium" @click.stop="handleEdit(c)"><SettingsIcon class="w-3 h-3" />Editar</button>
+            <button v-if="c.status === 'En proceso' && !isFacturacion" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium" @click.stop="handlePerform(c)">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>Realizar
             </button>
-            <button
-              v-if="!isPatologo && !isResidente && !isFacturacion && c.status !== 'Completado'"
-              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
-              @click.stop="handleEdit(c)"
-            >
-              <SettingsIcon class="w-3 h-3" />
-              Editar
-            </button>
-            <button
-              v-if="c.status === 'En proceso' && !isFacturacion"
-              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
-              @click.stop="handlePerform(c)"
-            >
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-              </svg>
-              Realizar
-            </button>
-            <button
-              v-if="['Por firmar','Por entregar'].includes(c.status) && !isFacturacion"
-              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
-              @click.stop="handleValidate(c)"
-            >
-              <svg v-if="c.status === 'Por firmar'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-              </svg>
-              <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Validar
+            <button v-if="['Por firmar','Por entregar'].includes(c.status) && !isFacturacion" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium" @click.stop="handleValidate(c)">
+              <svg v-if="c.status === 'Por firmar'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+              <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Validar
             </button>
           </div>
         </div>
 
-        <!-- Estado sin resultados para móvil -->
         <div v-if="props.cases.length === 0" class="text-center py-8">
           <div class="flex flex-col items-center space-y-2">
-            <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div class="text-center">
-              <p class="text-gray-500 text-sm font-medium">{{ noResultsMessage }}</p>
-            </div>
+            <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="text-center"><p class="text-gray-500 text-sm font-medium">{{ noResultsMessage }}</p></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Pie de tabla con paginación responsive -->
     <div class="px-4 sm:px-5 py-4 border-t border-gray-200 bg-gray-50">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <!-- Información de resultados -->
         <div class="flex items-center gap-2 text-sm text-gray-500">
           <span>Mostrando</span>
           <select :value="itemsPerPage" @change="$emit('update-items-per-page', Number(($event.target as HTMLSelectElement)?.value))" class="h-8 rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700">
-            <option :value="5">5</option>
-            <option :value="10">10</option>
-            <option :value="20">20</option>
-            <option :value="50">50</option>
-            <option :value="100">100</option>
-            <option :value="totalItems">Todos</option>
+            <option :value="5">5</option><option :value="10">10</option><option :value="20">20</option><option :value="50">50</option><option :value="100">100</option><option :value="totalItems">Todos</option>
           </select>
           <span>de {{ totalItems }} resultados</span>
         </div>
-        
-        <!-- Navegación de páginas -->
         <div class="flex items-center justify-center gap-2">
           <button @click="$emit('prev-page')" :disabled="currentPage === 1" class="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">
-            <span class="hidden sm:inline">Anterior</span>
-            <span class="sm:hidden">←</span>
+            <span class="hidden sm:inline">Anterior</span><span class="sm:hidden">←</span>
           </button>
-          
-          <!-- Información de página -->
           <div class="flex items-center gap-1 text-sm text-gray-500">
-            <span class="hidden sm:inline">Página</span>
-            <span class="font-medium">{{ currentPage }}</span>
-            <span class="hidden sm:inline">de</span>
-            <span class="hidden sm:inline">{{ totalPages }}</span>
-            <span class="sm:hidden">/ {{ totalPages }}</span>
+            <span class="hidden sm:inline">Página</span><span class="font-medium">{{ currentPage }}</span><span class="hidden sm:inline">de</span><span class="hidden sm:inline">{{ totalPages }}</span><span class="sm:hidden">/ {{ totalPages }}</span>
           </div>
-          
           <button @click="$emit('next-page')" :disabled="currentPage === totalPages" class="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">
-            <span class="hidden sm:inline">Siguiente</span>
-            <span class="sm:hidden">→</span>
+            <span class="hidden sm:inline">Siguiente</span><span class="sm:hidden">→</span>
           </button>
         </div>
       </div>
@@ -454,7 +332,7 @@
 import type { Case } from '../../types/case.types'
 import { InfoCircleIcon, SettingsIcon, DocsIcon } from '@/assets/icons'
 import { useRouter } from 'vue-router'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import FormCheckbox from '@/shared/components/forms/FormCheckbox.vue'
 import BatchMarkDeliveredDrawer from './BatchMarkDeliveredDrawer.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -496,33 +374,29 @@ const emit = defineEmits<{
   'update-case': [caseId: string, updatedCase: any]
 }>()
 
-// Router para navegación
 const router = useRouter()
-
-// Permisos del usuario
 const { isPatologo, isResidente, isFacturacion } = usePermissions()
-
-// Toasts
 const { warning } = useToasts()
 
-function showWarningToast(title: string, message: string) {
+const isDownloadingExcel = ref(false)
+const showMarkDeliveredDrawer = ref(false)
+
+const showWarningToast = (title: string, message: string) => {
   warning('generic', title, message, 5000)
 }
 
-// Funciones para selección - delegar al componente padre (igual que el frontend viejo)
-function toggleSelectAll() {
+const toggleSelectAll = () => {
   emit('toggle-select-all')
 }
 
-function toggleCaseSelection(caseId: string) {
+const toggleCaseSelection = (caseId: string) => {
   emit('toggle-select', caseId)
 }
 
-function clearSelection() {
+const clearSelection = () => {
   emit('clear-selection')
 }
 
-// Computed para verificar si un caso está seleccionado
 const isCaseSelected = (caseId: string) => {
   if (!caseId || caseId.trim() === '') {
     return false
@@ -531,56 +405,39 @@ const isCaseSelected = (caseId: string) => {
   return isSelected
 }
 
-
-// Funciones de descarga (temporalmente deshabilitadas)
 const exportCasesToExcel = async (_cases: Case[], _type: string) => {}
 
-// Ref para controlar el estado de carga de Excel
-const isDownloadingExcel = ref(false)
-// Drawer marcar entregados
-const showMarkDeliveredDrawer = ref(false)
-
-// Handlers de acciones por lote (implementación real)
-
-async function handleBatchDownloadExcel() {
+const handleBatchDownloadExcel = async () => {
   if (props.selectedIds.length === 0) {
     return
   }
   
   try {
-    // Obtener los casos seleccionados
     const selectedCases = props.cases.filter(c => props.selectedIds.includes(c.id))
     
     if (selectedCases.length === 0) {
       return
     }
     
-    // Mostrar indicador de carga
     isDownloadingExcel.value = true
     
-    // Exportar SOLO los casos seleccionados
     await exportCasesToExcel(selectedCases, 'selected')
     
-    // Aquí podrías mostrar una notificación de éxito
-    
   } catch (error) {
-    // Aquí podrías mostrar una notificación de error
     alert('Error al exportar a Excel. Por favor, intente nuevamente.')
   } finally {
     isDownloadingExcel.value = false
   }
 }
 
-function handleBatchMarkDelivered() {
+const handleBatchMarkDelivered = () => {
   if (isPatologo?.value || isFacturacion?.value) return
   
-  // Verificar si hay casos en estado diferente a "Por entregar"
   const selectedCases = props.cases.filter(c => props.selectedIds.includes(c.id))
   const invalidCases = selectedCases.filter(c => c.status !== 'Por entregar')
   
   if (invalidCases.length > 0) {
     const invalidCodes = invalidCases.map(c => c.caseCode || c.id).join(', ')
-    // Mostrar toast de advertencia
     showWarningToast('Casos en estado inválido', `Los siguientes casos no están en estado "Por entregar" y no se pueden marcar como entregados: ${invalidCodes}`)
     return
   }
@@ -588,73 +445,51 @@ function handleBatchMarkDelivered() {
   showMarkDeliveredDrawer.value = true
 }
 
-function handleBatchCompleted(_result: any) {
-  // Limpiar selección y solicitar refresco al padre
+const handleBatchCompleted = (_result: any) => {
   clearSelection()
   emit('refresh')
 }
 
-function handleUpdateCase(caseId: string, updatedCase: any) {
-  // Emitir evento para actualizar el caso en el componente padre
+const handleUpdateCase = (caseId: string, updatedCase: any) => {
   emit('update-case', caseId, updatedCase)
 }
 
-// Handlers de navegación directa
-function handleEdit(c: Case) {
+const handleEdit = (c: Case) => {
   const code = c?.caseCode || ''
   if (!code) return
   
-  // Emitir evento para mantener compatibilidad
   emit('edit', c)
-  
-  // Navegar directamente a la vista de edición usando la ruta correcta
   router.push({ name: 'cases-edit', params: { code } })
 }
 
-function handlePerform(c: Case) {
+const handlePerform = (c: Case) => {
   const code = c?.caseCode || ''
   if (!code) return
   
-  // Emitir evento para mantener compatibilidad
   emit('perform', c)
-  
-  // Navegar a realizar resultados y simular búsqueda automática
-  // El parámetro 'case' será usado por el buscador automáticamente
   router.push({ name: 'results-perform', query: { case: code, auto: '1' } })
 }
 
-function handleValidate(c: Case) {
+const handleValidate = (c: Case) => {
   const code = c?.caseCode || ''
   if (!code) return
   
-  // Emitir evento para mantener compatibilidad
   emit('validate', c)
-  
-  // Navegar a validar/firmar resultados y simular búsqueda automática
-  // El parámetro 'case' será usado por el buscador automáticamente
   router.push({ name: 'results-sign', query: { case: code, auto: '1' } })
 }
 
-// Funciones utilitarias
-function formatDate(dateString: string) {
+const formatDate = (dateString: string) => {
   if (!dateString) return 'N/A'
   const d = new Date(dateString)
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-// ===== Agrupamiento de pruebas (memoizado) =====
-
 const groupedTestsCache = new Map<string, { code: string; count: number }[]>()
 const testsLayoutCache = new Map<string, { organized: { column1: { code: string; count: number }[]; column2: { code: string; count: number }[]; middle: { code: string; count: number } | null }; totalTests: number; hasMore: boolean; moreCount: number }>()
 
-function getTestsKeyFromStrings(tests: string[]): string {
-  const len = tests.length
-  const head = tests.slice(0, 3).join('|')
-  const tail = tests.slice(-3).join('|')
-  return `${len}|${head}||${tail}`
-}
+const getTestsKeyFromStrings = (tests: string[]): string => `${tests.length}|${tests.slice(0, 3).join('|')}||${tests.slice(-3).join('|')}`
 
-function groupTests(tests: string[]): { code: string; count: number }[] {
+const groupTests = (tests: string[]): { code: string; count: number }[] => {
   const key = getTestsKeyFromStrings(tests)
   const cached = groupedTestsCache.get(key)
   if (cached) return cached
@@ -673,38 +508,23 @@ function groupTests(tests: string[]): { code: string; count: number }[] {
   return result
 }
 
-function organizeTestsInTwoColumns(tests: { code: string; count: number }[]): {
+const organizeTestsInTwoColumns = (tests: { code: string; count: number }[]): {
   column1: { code: string; count: number }[]
   column2: { code: string; count: number }[]
   middle: { code: string; count: number } | null
-} {
+} => {
   const visibleTests = tests.slice(0, 6)
   const totalTests = visibleTests.length
-  
-  if (totalTests === 0) {
-    return { column1: [], column2: [], middle: null }
-  }
-  
-  // Si es par, dividir en 2 columnas iguales
+  if (totalTests === 0) return { column1: [], column2: [], middle: null }
   if (totalTests % 2 === 0) {
     const half = totalTests / 2
-    return {
-      column1: visibleTests.slice(0, half),
-      column2: visibleTests.slice(half),
-      middle: null
-    }
+    return { column1: visibleTests.slice(0, half), column2: visibleTests.slice(half), middle: null }
   }
-  
-  // Si es impar, columnas iguales + 1 en el medio
   const half = Math.floor(totalTests / 2)
-  return {
-    column1: visibleTests.slice(0, half),
-    column2: visibleTests.slice(half + 1),
-    middle: visibleTests[half]
-  }
+  return { column1: visibleTests.slice(0, half), column2: visibleTests.slice(half + 1), middle: visibleTests[half] }
 }
 
-function getTestsLayout(c: Case) {
+const getTestsLayout = (c: Case) => {
   const id = c.id || c.caseCode || ''
   const key = `${id}|${getTestsKeyFromStrings(c.tests)}`
   const cached = testsLayoutCache.get(key)
@@ -719,89 +539,45 @@ function getTestsLayout(c: Case) {
   return result
 }
 
-function getTestTooltip(tests: string[], code: string, count: number): string {
-  // Buscar todas las pruebas que empiecen con este código
+const getTestTooltip = (tests: string[], code: string, count: number): string => {
   const matching = tests.filter(t => t.trim().startsWith(code))
-  const names = matching
-    .map(t => t.includes(' - ') ? t.split(' - ').slice(1).join(' - ') : t)
-    .filter(Boolean)
+  const names = matching.map(t => t.includes(' - ') ? t.split(' - ').slice(1).join(' - ') : t).filter(Boolean)
   const uniqueNames = Array.from(new Set(names))
   const nameStr = uniqueNames.length ? uniqueNames.join(', ') : `Código ${code}`
   return `${nameStr} • ${count} vez${count > 1 ? 'es' : ''}`
 }
 
-function elapsedDays(c: Case): number {
+const elapsedDays = (c: Case): number => {
   if (!c.receivedAt) return 0
   return calculateBusinessDays(c.receivedAt, c.deliveredAt)
 }
 
-function calculateBusinessDays(startDate: string, endDate?: string): number {
+const calculateBusinessDays = (startDate: string, endDate?: string): number => {
   const start = new Date(startDate)
   const end = endDate ? new Date(endDate) : new Date()
-  
-  // Validar fechas válidas
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-    return 0
-  }
-  
-  // Asegurar que start sea anterior a end
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0
   const fromDate = start <= end ? start : end
   const toDate = start <= end ? end : start
-  
   let businessDays = 0
   const currentDate = new Date(fromDate)
-  
-  // Si la fecha de inicio es fin de semana, avanzar al próximo lunes
   while (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
     currentDate.setDate(currentDate.getDate() + 1)
-    // Si después de avanzar ya pasamos la fecha final, retornar 0
-    if (currentDate > toDate) {
-      return 0
-    }
+    if (currentDate > toDate) return 0
   }
-  
-  // Ahora currentDate está en el primer día hábil
   const firstBusinessDay = new Date(currentDate)
-  
-  // Si estamos en el mismo día que empezó (primer día hábil), retornar 0
-  if (firstBusinessDay.toDateString() === toDate.toDateString()) {
-    return 0
-  }
-  
-  // Avanzar al siguiente día para empezar a contar días completados
+  if (firstBusinessDay.toDateString() === toDate.toDateString()) return 0
   currentDate.setDate(currentDate.getDate() + 1)
-  
-  // Contar días hábiles completados (excluyendo el primer día)
   while (currentDate <= toDate) {
     const dayOfWeek = currentDate.getDay()
-    
-    // Contar solo lunes(1) a viernes(5)
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      businessDays++
-    }
-    
-    // Avanzar al siguiente día
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) businessDays++
     currentDate.setDate(currentDate.getDate() + 1)
   }
-  
-  // Nunca retornar números negativos
   return Math.max(0, businessDays)
 }
 
-// Función de ejemplo para pruebas (se puede remover en producción)
-// Ejemplos de la nueva lógica:
-// - Lunes (primer día): 0 días hábiles
-// - Martes (segundo día): 1 día hábil completado
-// - Viernes (quinto día): 4 días hábiles completados
-// - Sábado ingresado → Lunes (primer día hábil): 0 días
-// - Domingo ingresado → Lunes (primer día hábil): 0 días
-// - Sábado ingresado → Martes: 1 día hábil completado (lunes completado)
+const statusLabel = (c: Case): string => c.status
 
-function statusLabel(c: Case): string {
-  return c.status
-}
-
-function statusClass(c: Case): string {
+const statusClass = (c: Case): string => {
   if (c.status === 'Por entregar') return 'bg-red-50 text-red-700 font-semibold'
   if (c.status === 'Por firmar') return 'bg-yellow-50 text-yellow-700'
   if (c.status === 'En proceso') return 'bg-blue-50 text-blue-700'
@@ -809,11 +585,9 @@ function statusClass(c: Case): string {
   return ''
 }
 
-function daysClass(c: Case): string {
+const daysClass = (c: Case): string => {
   const days = elapsedDays(c)
-  // Ajustado para días hábiles: más de 4 días hábiles (1 semana laboral) es crítico
   if (days > 4 && c.status !== 'Completado') return 'bg-red-50 text-red-700'
-  // Más de 3 días hábiles: advertencia
   if (days > 3 && c.status !== 'Completado') return 'bg-yellow-50 text-yellow-700'
   return 'bg-brand-50 text-brand-700'
 }

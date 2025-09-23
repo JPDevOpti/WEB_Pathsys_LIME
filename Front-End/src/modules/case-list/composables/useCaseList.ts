@@ -4,17 +4,15 @@ import { listCases, searchCases, listTests, type BackendCase, type BackendTest }
 import { getDefaultDateRange } from '../utils/dateUtils'
 import { useCasesStore } from '@/stores/cases.store'
 
-function normalize(text: string): string {
-  return (text || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
-}
+const normalize = (text: string): string => (text || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
 
-function toYYYYMMDD(dateStr: string): string {
+const toYYYYMMDD = (dateStr: string): string => {
   if (!dateStr) return ''
   const d = new Date(dateStr)
   return d.toISOString().split('T')[0]
 }
 
-function ddmmyyyyToISO(dateStr: string): string {
+const ddmmyyyyToISO = (dateStr: string): string => {
   if (!dateStr) return ''
   const [dd, mm, yyyy] = dateStr.split('/');
   if (!dd || !mm || !yyyy) return ''
@@ -27,8 +25,6 @@ export function useCaseList() {
   const error = ref<string | null>(null)
 
   const defaultDates = getDefaultDateRange()
-  
-  // Store para sincronización
   const casesStore = useCasesStore()
   
   const filters = ref<Filters>({
@@ -43,17 +39,15 @@ export function useCaseList() {
 
   const sortKey = ref<SortKey>('caseCode')
   const sortOrder = ref<SortOrder>('desc')
-
   const currentPage = ref(1)
   const itemsPerPage = ref(10)
   const selectedCaseIds = ref<string[]>([])
   const selectedCase = ref<Case | null>(null)
 
-  async function loadCases(fullSearch: boolean = false) {
+  const loadCases = async (fullSearch: boolean = false) => {
     isLoading.value = true
     error.value = null
     try {
-      // cargar catálogo de pruebas para mapear nombres
       const testsCatalog = new Map<string, string>()
       try {
         const tests: BackendTest[] = await listTests()
@@ -61,21 +55,10 @@ export function useCaseList() {
           if (t.isActive !== false) testsCatalog.set(t.pruebaCode, t.pruebasName)
         })
       } catch (e) {
-        // continuar sin catálogo
       }
 
-      // Construir parámetros de servidor para paginado y filtros
       const serverParams: Record<string, any> = { skip: 0 }
-      
-      // Si es una búsqueda completa (fullSearch), cargar todos los casos
-      // Si es carga inicial, limitar a 100 casos
-      if (fullSearch) {
-        // Búsqueda con filtros: cargar todos los casos que coincidan (máximo 100,000 según backend)
-        serverParams.limit = 100000
-      } else {
-        // Carga inicial: solo 100 casos
-        serverParams.limit = 100
-      }
+      serverParams.limit = fullSearch ? 100000 : 100
       
       if (filters.value.searchQuery) serverParams.search = filters.value.searchQuery
       if (filters.value.searchPathologist) serverParams.pathologist = filters.value.searchPathologist
@@ -95,7 +78,7 @@ export function useCaseList() {
     }
   }
 
-  function transformBackendCase(bk: BackendCase, testsCatalog: Map<string, string>): Case {
+  const transformBackendCase = (bk: BackendCase, testsCatalog: Map<string, string>): Case => {
     const getDate = (v: any): string => {
       if (!v) return ''
       if (typeof v === 'string') return v
@@ -103,21 +86,14 @@ export function useCaseList() {
       return ''
     }
     
-    // Manejar tanto el nuevo formato como el legacy
-    const id = (typeof bk._id === 'string' ? bk._id : (bk._id as any)?.$oid) || 
-               bk.case_code || 
-               bk.caso_code || 
-               `case-${Math.random().toString(36).substr(2, 9)}`
-    
+    const id = (typeof bk._id === 'string' ? bk._id : (bk._id as any)?.$oid) || bk.case_code || bk.caso_code || `case-${Math.random().toString(36).substr(2, 9)}`
     const receivedAt = getDate(bk.created_at || bk.fecha_creacion)
     const deliveredAt = getDate(bk.updated_at || bk.fecha_entrega)
     const signedAt = getDate(bk.fecha_firma)
 
-    // aplanar pruebas como "code - name" expandidas por cantidad
     const flatTests: string[] = []
     const subsamples: Case['subsamples'] = []
     
-    // Manejar tanto el nuevo formato (samples) como el legacy (muestras)
     const samples: any[] = (bk.samples as any) || (bk.muestras as any) || []
     if (Array.isArray(samples)) {
       samples.forEach((m: any) => {
@@ -128,7 +104,6 @@ export function useCaseList() {
           const name = p.name || p.nombre || testsCatalog.get(code) || ''
           const cantidad = p.quantity || p.cantidad || 1
           
-          // Expandir según cantidad para flatTests (para el agrupamiento en tabla)
           if (code) {
             const testString = name ? `${code} - ${name}` : code
             for (let i = 0; i < cantidad; i++) {
@@ -136,7 +111,6 @@ export function useCaseList() {
             }
           }
           
-          // Para subsamples mantener la estructura con cantidad
           items.push({ id: code, name: name || code, quantity: cantidad })
         })
         subsamples.push({ 
@@ -151,16 +125,14 @@ export function useCaseList() {
       if (v.includes('firmar')) return 'Por firmar'
       if (v.includes('entregar')) return 'Por entregar'
       if (v.includes('complet')) return 'Completado'
-      if (v.includes('cambio')) return 'Por entregar' // Reemplazar "Requiere cambios" por "Por entregar"
+      if (v.includes('cambio')) return 'Por entregar'
       if (v.includes('pend') || !v) return 'En proceso'
       return s || 'En proceso'
     }
 
-    // Manejar tanto el nuevo formato como el legacy para el estado
     const finalStatus = mapStatus(bk.state || bk.estado)
     const finalDeliveredAt = finalStatus === 'Por entregar' ? '' : deliveredAt
 
-    // Manejar información del paciente tanto del nuevo formato como del legacy
     const patientInfo: any = (bk.patient_info as any) || (bk.paciente as any) || {}
     const caseCode = bk.case_code || bk.caso_code || id
     const sampleType = (samples[0]?.body_region || samples[0]?.region_cuerpo || (patientInfo?.care_type || patientInfo?.tipo_atencion || ''))
@@ -170,7 +142,6 @@ export function useCaseList() {
       caseCode,
       sampleType,
       patient: {
-        // Manejar tanto el nuevo formato como el legacy
         id: patientInfo?.patient_code || patientInfo?.paciente_code || '',
         dni: patientInfo?.patient_code || patientInfo?.paciente_code || patientInfo?.cedula || '',
         fullName: patientInfo?.name || patientInfo?.nombre || '',
@@ -183,18 +154,17 @@ export function useCaseList() {
         updatedAt: getDate(bk.updated_at || bk.fecha_actualizacion),
       },
       entity: patientInfo?.entity_info?.name || patientInfo?.entidad_info?.nombre || '',
-      requester: bk.requesting_physician || 
-                (typeof bk.medico_solicitante === 'string' ? bk.medico_solicitante : (bk.medico_solicitante?.nombre || '')),
+      requester: bk.requesting_physician || (typeof bk.medico_solicitante === 'string' ? bk.medico_solicitante : (bk.medico_solicitante?.nombre || '')),
       status: finalStatus,
       receivedAt,
       deliveredAt: finalDeliveredAt,
-      signedAt,  // Nueva: fecha de firma específica
+      signedAt,
       tests: flatTests,
       pathologist: bk.assigned_pathologist?.name || bk.patologo_asignado?.nombre || '',
       patologo_asignado: bk.assigned_pathologist ? {
         codigo: bk.assigned_pathologist.id || '',
         nombre: bk.assigned_pathologist.name || '',
-        firma: undefined // El nuevo backend no incluye firma en este campo
+        firma: undefined
       } : (bk.patologo_asignado ? {
         codigo: bk.patologo_asignado.codigo || '',
         nombre: bk.patologo_asignado.nombre || '',
@@ -202,32 +172,22 @@ export function useCaseList() {
       } : undefined),
       notes: bk.observations || bk.observaciones_generales || '',
       servicio: bk.service || bk.servicio || '',
-      // Incorporar prioridad (campo nuevo en backend). Mantenemos compatibilidad aunque el tipo Case aún no lo tenga.
       // @ts-ignore
       priority: bk.priority || (bk as any).prioridad || (bk as any).prioridad_caso || 'Normal',
-      // Campo business_days para días hábiles al completar
       // @ts-ignore
       business_days: bk.business_days || undefined,
-      // Campo delivered_to para registro de entrega
       // @ts-ignore
       delivered_to: bk.delivered_to || undefined,
-      // Campo delivered_at para fecha de entrega
       // @ts-ignore
       delivered_at: getDate(bk.delivered_at),
       result: {
-        method: Array.isArray(bk.result?.method) 
-          ? bk.result.method 
-          : (bk.result?.method ? [bk.result.method] : []) as string[],
+        method: Array.isArray(bk.result?.method) ? bk.result.method : (bk.result?.method ? [bk.result.method] : []) as string[],
         macro_result: bk.result?.macro_result || '',
         micro_result: bk.result?.micro_result || '',
         diagnosis: bk.result?.diagnosis || '',
         resultDate: getDate(bk.result?.updated_at),
-        cie10_diagnosis: (bk.result?.cie10_diagnosis?.code && bk.result?.cie10_diagnosis?.name) 
-          ? { code: bk.result.cie10_diagnosis.code, name: bk.result.cie10_diagnosis.name }
-          : null,
-        cieo_diagnosis: (bk.result?.cieo_diagnosis?.code && bk.result?.cieo_diagnosis?.name) 
-          ? { code: bk.result.cieo_diagnosis.code, name: bk.result.cieo_diagnosis.name }
-          : null,
+        cie10_diagnosis: (bk.result?.cie10_diagnosis?.code && bk.result?.cie10_diagnosis?.name) ? { code: bk.result.cie10_diagnosis.code, name: bk.result.cie10_diagnosis.name } : null,
+        cieo_diagnosis: (bk.result?.cieo_diagnosis?.code && bk.result?.cieo_diagnosis?.name) ? { code: bk.result.cieo_diagnosis.code, name: bk.result.cieo_diagnosis.name } : null,
         observations: bk.result?.observations || '',
       },
       subsamples,
@@ -241,12 +201,7 @@ export function useCaseList() {
 
     if (filters.value.searchQuery) {
       const q = normalize(filters.value.searchQuery)
-      list = list.filter(c =>
-        normalize(c.id).includes(q) ||
-        normalize(c.caseCode || '').includes(q) ||
-        normalize(c.patient.dni).includes(q) ||
-        normalize(c.patient.fullName).includes(q)
-      )
+      list = list.filter(c => normalize(c.id).includes(q) || normalize(c.caseCode || '').includes(q) || normalize(c.patient.dni).includes(q) || normalize(c.patient.fullName).includes(q))
     }
 
     if (filters.value.searchPathologist) {
@@ -278,7 +233,6 @@ export function useCaseList() {
       list = list.filter(c => c.tests.some(t => normalize(t).includes(q)))
     }
 
-    // sort
     list = [...list].sort((a, b) => {
       let aValue: string | Date = (a as any)[sortKey.value]
       let bValue: string | Date = (b as any)[sortKey.value]
@@ -306,25 +260,17 @@ export function useCaseList() {
     return paginatedCases.value.every(c => selectedCaseIds.value.includes(c.id))
   })
 
-  function toggleSelectAll() {
+  const toggleSelectAll = () => {
     if (isAllSelected.value) {
-      // Deseleccionar todos los de la página actual
-      selectedCaseIds.value = selectedCaseIds.value.filter(
-        id => !paginatedCases.value.some(c => c.id === id)
-      )
+      selectedCaseIds.value = selectedCaseIds.value.filter(id => !paginatedCases.value.some(c => c.id === id))
     } else {
-      // Seleccionar todos los de la página actual
       const newSelected = paginatedCases.value.map(c => c.id)
       selectedCaseIds.value = [...new Set([...selectedCaseIds.value, ...newSelected])]
     }
   }
 
-  function toggleSelect(id: string) {
-    // Validar que el ID no esté vacío
-    if (!id || id.trim() === '') {
-      return
-    }
-    
+  const toggleSelect = (id: string) => {
+    if (!id || id.trim() === '') return
     const index = selectedCaseIds.value.indexOf(id)
     if (index === -1) {
       selectedCaseIds.value.push(id)
@@ -333,7 +279,7 @@ export function useCaseList() {
     }
   }
 
-  function sortBy(key: SortKey) {
+  const sortBy = (key: SortKey) => {
     if (sortKey.value === key) {
       sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
     } else {
@@ -342,7 +288,7 @@ export function useCaseList() {
     }
   }
 
-  function applyBulkAction(action: string, ids: string[]) {
+  const applyBulkAction = (action: string, ids: string[]) => {
     cases.value = cases.value.map(c => {
       if (ids.includes(c.id)) {
         let newStatus = action
@@ -350,7 +296,7 @@ export function useCaseList() {
         if (action === 'por-firmar') newStatus = 'Por firmar'
         if (action === 'por-entregar') newStatus = 'Por entregar'
         if (action === 'completado') newStatus = 'Completado'
-        if (action === 'requiere-cambios') newStatus = 'Por entregar' // Eliminar estado "Requiere cambios"
+        if (action === 'requiere-cambios') newStatus = 'Por entregar'
         return { ...c, status: newStatus }
       }
       return c
@@ -358,27 +304,27 @@ export function useCaseList() {
     selectedCaseIds.value = []
   }
 
-  function showDetails(c: Case) {
+  const showDetails = (c: Case) => {
     selectedCase.value = c
   }
 
-  function closeDetails() {
+  const closeDetails = () => {
     selectedCase.value = null
   }
 
-  function validateCase(c: Case) {
+  const validateCase = (c: Case) => {
     const idx = cases.value.findIndex(x => x.id === c.id)
     if (idx !== -1) cases.value[idx].status = 'Validado'
     if (selectedCase.value?.id === c.id) selectedCase.value.status = 'Validado'
   }
 
-  function markAsCompleted(c: Case) {
+  const markAsCompleted = (c: Case) => {
     const idx = cases.value.findIndex(x => x.id === c.id)
     if (idx !== -1 && cases.value[idx].status === 'Por firmar') cases.value[idx].status = 'Completado'
     if (selectedCase.value?.id === c.id && selectedCase.value.status === 'Por firmar') selectedCase.value.status = 'Completado'
   }
 
-  function clearFilters() {
+  const clearFilters = () => {
     const defaultDates = getDefaultDateRange()
     filters.value = {
       searchQuery: '',
@@ -394,15 +340,10 @@ export function useCaseList() {
   watch(filters, () => { currentPage.value = 1 }, { deep: true })
   watch(itemsPerPage, () => { currentPage.value = 1 })
   
-
-  
-  // Listener para detectar cuando se crea un nuevo caso
   const handleCaseCreated = (_event: CustomEvent) => {
-    // Recargar la lista de casos para incluir el nuevo caso
     loadCases()
   }
   
-  // Watcher para el store de casos
   watch(() => casesStore.needsRefresh, (needsRefresh) => {
     if (needsRefresh) {
       loadCases().then(() => {
@@ -411,25 +352,20 @@ export function useCaseList() {
     }
   })
   
-  // Watcher para el timestamp de última actualización
   watch(() => casesStore.lastUpdate, () => {
-    // Recargar cuando se actualiza el timestamp
     loadCases()
   })
   
   onMounted(() => {
     loadCases()
-    // Agregar listener para eventos de creación de casos
     window.addEventListener('case-created', handleCaseCreated as EventListener)
   })
   
   onUnmounted(() => {
-    // Limpiar listener al desmontar el componente
     window.removeEventListener('case-created', handleCaseCreated as EventListener)
   })
 
   return {
-    // state
     cases,
     isLoading,
     error,
@@ -440,12 +376,10 @@ export function useCaseList() {
     itemsPerPage,
     selectedCaseIds,
     selectedCase,
-    // derived
     filteredCases,
     paginatedCases,
     totalPages,
     isAllSelected,
-    // actions
     loadCases,
     toggleSelectAll,
     toggleSelect,
@@ -456,7 +390,6 @@ export function useCaseList() {
     validateCase,
     markAsCompleted,
     clearFilters,
-    // utils
     toYYYYMMDD,
     ddmmyyyyToISO,
     getDefaultDateRange,

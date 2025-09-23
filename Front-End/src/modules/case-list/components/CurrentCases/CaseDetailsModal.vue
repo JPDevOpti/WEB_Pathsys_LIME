@@ -92,7 +92,6 @@
           <div v-if="caseItem?.result && caseItem?.status !== 'En proceso'" class="bg-gray-50 rounded-xl p-4 space-y-3">
             <h5 class="text-sm font-medium text-gray-700">Resultado del Informe</h5>
             
-            <!-- Método -->
             <div v-if="caseItem.result.method && caseItem.result.method.length > 0" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="mb-2">
                 <p class="text-sm text-gray-600">Método</p>
@@ -108,7 +107,6 @@
               </div>
             </div>
 
-            <!-- Resultado Macroscópico -->
             <div v-if="caseItem.result.macro_result" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="mb-2">
                 <p class="text-sm text-gray-600">Resultado Macroscópico</p>
@@ -116,7 +114,6 @@
               <p class="text-sm text-gray-800 break-words">{{ caseItem.result.macro_result }}</p>
             </div>
 
-            <!-- Resultado Microscópico -->
             <div v-if="caseItem.result.micro_result" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="mb-2">
                 <p class="text-sm text-gray-600">Resultado Microscópico</p>
@@ -124,7 +121,6 @@
               <p class="text-sm text-gray-800 break-words">{{ caseItem.result.micro_result }}</p>
             </div>
 
-            <!-- Diagnóstico -->
             <div v-if="caseItem.result.diagnosis" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="mb-2">
                 <p class="text-sm text-gray-600">Diagnóstico</p>
@@ -132,7 +128,6 @@
               <p class="text-sm text-gray-800 break-words">{{ caseItem.result.diagnosis }}</p>
             </div>
 
-            <!-- Observaciones -->
             <div v-if="caseItem.result.observations" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="mb-2">
                 <p class="text-sm text-gray-600">Observaciones</p>
@@ -141,11 +136,9 @@
             </div>
           </div>
 
-          <!-- Nueva sección para diagnósticos CIE-10 y CIE-O -->
           <div v-if="caseItem?.result && caseItem?.status !== 'En proceso' && (caseItem.result.cie10_diagnosis || caseItem.result.cieo_diagnosis)" class="bg-gray-50 rounded-xl p-4 space-y-3">
             <h5 class="text-sm font-medium text-gray-700">Diagnósticos Clasificados</h5>
             
-            <!-- Diagnóstico CIE-10 -->
             <div v-if="caseItem.result.cie10_diagnosis" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="flex items-center gap-2 mb-2">
                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -156,7 +149,6 @@
               <p class="text-sm text-gray-800">{{ caseItem.result.cie10_diagnosis.name }}</p>
             </div>
 
-            <!-- Diagnóstico CIE-O -->
             <div v-if="caseItem.result.cieo_diagnosis" class="border border-gray-200 rounded-lg p-3 bg-white">
               <div class="flex items-center gap-2 mb-2">
                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -168,14 +160,11 @@
             </div>
           </div>
 
-          <!-- Sección para pruebas complementarias -->
           <div v-if="caseItem?.complementary_tests && caseItem.complementary_tests.length > 0" class="bg-yellow-50 rounded-xl p-4 space-y-3">
             <h5 class="text-sm font-medium text-gray-700">Pruebas Complementarias</h5>
             
             <div class="space-y-3">
-              <!-- Mostrar pruebas complementarias -->
               <div v-for="(test, index) in caseItem.complementary_tests" :key="index">
-                <!-- Pruebas con code, name, quantity -->
                 <div v-if="test.code && test.name && test.quantity" class="border border-gray-200 rounded-lg p-3 bg-white">
                   <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
@@ -190,7 +179,6 @@
                   </div>
                 </div>
                 
-                <!-- Motivo (reason) -->
                 <div v-else-if="test.reason" class="border border-gray-200 rounded-lg p-3 bg-white">
                   <div class="mb-2">
                     <p class="text-sm text-gray-600">Motivo de la solicitud</p>
@@ -201,7 +189,6 @@
             </div>
           </div>
 
-          <!-- Sección para notas adicionales -->
           <div v-if="props.caseItem?.status === 'Completado' && props.caseItem?.additional_notes && props.caseItem.additional_notes.length > 0" class="bg-gray-50 rounded-xl p-4 space-y-3">
             <div class="flex items-center gap-2 mb-3">
               <DocsIcon class="w-4 h-4 text-gray-600" />
@@ -211,7 +198,6 @@
               </span>
             </div>
             
-            <!-- Mostrar notas existentes -->
             <div v-if="props.caseItem?.additional_notes && props.caseItem.additional_notes.length > 0" class="space-y-3">
               <div v-for="(nota, index) in props.caseItem.additional_notes" :key="index" class="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
                 <div class="flex items-center justify-between mb-2">
@@ -224,7 +210,6 @@
               </div>
             </div>
             
-            <!-- Mensaje cuando no hay notas -->
             <div v-else class="text-center py-4">
               <DocsIcon class="w-8 h-8 text-gray-400 mx-auto mb-2" />
               <p class="text-sm text-gray-500">No hay notas adicionales para este caso</p>
@@ -254,7 +239,6 @@
     </template>
   </Modal>
   
-  <!-- Modal de notas adicionales -->
   <NotesDialog
     v-model="showNotesDialog"
     title="Notas adicionales"
@@ -283,12 +267,10 @@ const props = defineProps<{ caseItem: Case | null }>()
 const emit = defineEmits<{ (e: 'close'): void; (e: 'edit', c: Case): void; (e: 'preview', c: Case): void; (e: 'notes', c: Case): void }>()
 
 const showNotesDialog = ref(false)
-
-// Estado del modal principal
 const isOpen = computed(() => !!props.caseItem)
 const { showSuccess, showError } = useNotifications()
 
-function formatDate(dateString: string, includeTime: boolean = false) {
+const formatDate = (dateString: string, includeTime: boolean = false) => {
   if (!dateString) return 'N/A'
   const d = new Date(dateString)
   
@@ -305,8 +287,7 @@ function formatDate(dateString: string, includeTime: boolean = false) {
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-
-async function handleNotesConfirm(notes: string) {
+const handleNotesConfirm = async (notes: string) => {
   try {
     const caseCode = props.caseItem?.caseCode || (props.caseItem as any)?.caso_code
     if (!caseCode) {
@@ -314,19 +295,16 @@ async function handleNotesConfirm(notes: string) {
       return
     }
 
-    // Crear la nueva nota
     const nuevaNota = {
       date: new Date().toISOString(),
       note: notes
     }
     
-    // Preparar todas las notas (existentes + nueva)
     const todasLasNotas = [
       ...(props.caseItem?.additional_notes || []),
       nuevaNota
     ]
 
-    // Actualizar en el backend con todas las notas
     const updateData = {
       additional_notes: todasLasNotas
     }
@@ -335,23 +313,19 @@ async function handleNotesConfirm(notes: string) {
     showSuccess('Nota agregada', 'La nota adicional se ha guardado exitosamente')
     showNotesDialog.value = false
     
-    // Actualizar solo las notas adicionales localmente
     const casoActualizado = {
       ...props.caseItem,
       additional_notes: todasLasNotas
     }
     
-    // Emitir evento con solo la información de las notas actualizadas
     emit('notes', casoActualizado as any)
   } catch (error: any) {
     showError('Error', error.message || 'No se pudo guardar la nota adicional')
   }
 }
 
-function handleNotesCancel() {
+const handleNotesCancel = () => {
   showNotesDialog.value = false
 }
 
 </script>
-
-

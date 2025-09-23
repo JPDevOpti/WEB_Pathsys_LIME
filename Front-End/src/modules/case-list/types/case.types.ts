@@ -21,7 +21,7 @@ export interface Case {
   status: string
   receivedAt: string
   deliveredAt: string
-  signedAt?: string  // Nueva: fecha de firma específica
+  signedAt?: string
   tests: string[]
   pathologist?: string
   patologo_asignado?: {
@@ -31,13 +31,9 @@ export interface Case {
   }
   notes?: string
   servicio?: string
-  // Nuevo: prioridad del caso (Normal|Prioritario|Urgente)
   priority?: string
-  // Campo para capturar días hábiles al completar el caso
   business_days?: number
-  // Campo para registrar quién recibe el caso al ser entregado
   delivered_to?: string
-  // Campo para registrar fecha de entrega
   delivered_at?: string
   result?: {
     method?: string[]
@@ -46,46 +42,28 @@ export interface Case {
     diagnosis?: string
     resultDate?: string
     observations?: string
-    // Campos adicionales para diagnósticos
-    cie10_diagnosis?: {
-      code: string
-      name: string
-    } | null
-    cieo_diagnosis?: {
-      code: string
-      name: string
-    } | null
+    cie10_diagnosis?: { code: string; name: string } | null
+    cieo_diagnosis?: { code: string; name: string } | null
   }
   subsamples?: Array<{
     bodyRegion: string
     tests: Array<{ id: string; name: string; quantity: number }>
   }>
-  additional_notes?: Array<{
-    date: string
-    note: string
-  }>
-  complementary_tests?: Array<{
-    code?: string
-    name?: string
-    quantity?: number
-    reason?: string
-  }>
+  additional_notes?: Array<{ date: string; note: string }>
+  complementary_tests?: Array<{ code?: string; name?: string; quantity?: number; reason?: string }>
 }
 
 export interface Filters {
   searchQuery: string
   searchPathologist: string
-  dateFrom: string // DD/MM/YYYY
-  dateTo: string   // DD/MM/YYYY
+  dateFrom: string
+  dateTo: string
   selectedEntity: string
   selectedStatus: string
   selectedTest: string
 }
 
-export type SortKey = keyof Pick<Case,
-  'id' | 'caseCode' | 'status' | 'receivedAt' | 'deliveredAt'
->
-
+export type SortKey = keyof Pick<Case, 'id' | 'caseCode' | 'status' | 'receivedAt' | 'deliveredAt'>
 export type SortOrder = 'asc' | 'desc'
 
 

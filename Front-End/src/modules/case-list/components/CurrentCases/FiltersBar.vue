@@ -9,36 +9,20 @@
       </svg>
     </template>
 
-    <!-- Fila de búsqueda principal -->
     <div class="flex flex-col md:flex-row gap-3">
       <div class="flex-1">
         <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre, documento de identidad o caso</label>
-        <FormInputField
-          v-model="local.searchQuery"
-          placeholder="Ejemplo 2025-00001, 123456789, Juan Pérez"
-          @keydown.enter.prevent
-        />
+        <FormInputField v-model="local.searchQuery" placeholder="Ejemplo 2025-00001, 123456789, Juan Pérez" @keydown.enter.prevent />
       </div>
       <div class="flex gap-3 items-end">
-        <div class="w-44 md:w-56">
-          <DateInputField v-model="local.dateFrom" label="Fecha desde" placeholder="DD/MM/AAAA" />
-        </div>
-        <div class="w-44 md:w-56">
-          <DateInputField v-model="local.dateTo" label="Fecha hasta" placeholder="DD/MM/AAAA" />
-        </div>
+        <div class="w-44 md:w-56"><DateInputField v-model="local.dateFrom" label="Fecha desde" placeholder="DD/MM/AAAA" /></div>
+        <div class="w-44 md:w-56"><DateInputField v-model="local.dateTo" label="Fecha hasta" placeholder="DD/MM/AAAA" /></div>
       </div>
     </div>
 
-    <!-- Fila de filtros secundarios -->
     <div class="flex flex-col md:flex-row gap-3 mt-3">
       <div class="flex-1">
-        <PathologistList 
-          v-model="pathologistCode" 
-          label="Patólogo" 
-          :placeholder="isPatologo ? 'Patólogo fijo (usted)' : 'Buscar y seleccionar patólogo...'" 
-          :disabled="isPatologo"
-          @pathologist-selected="onPathologistSelected" 
-        />
+        <PathologistList v-model="pathologistCode" label="Patólogo" :placeholder="isPatologo ? 'Patólogo fijo (usted)' : 'Buscar y seleccionar patólogo...'" :disabled="isPatologo" @pathologist-selected="onPathologistSelected" />
       </div>
       <div class="flex-1">
         <EntityList v-model="entityCode" label="Entidad" placeholder="Buscar y seleccionar entidad..." @entity-selected="onEntitySelected" />
@@ -47,37 +31,15 @@
         <TestList v-model="local.selectedTest" label="Pruebas" placeholder="Buscar y seleccionar prueba..." />
       </div>
       <div class="flex-1">
-        <FormSelect
-          v-model="local.selectedStatus"
-          label="Estado"
-          :options="statusOptions"
-          placeholder="Seleccione estado"
-          dense
-        />
+        <FormSelect v-model="local.selectedStatus" label="Estado" :options="statusOptions" placeholder="Seleccione estado" dense />
       </div>
     </div>
 
-    <!-- Footer con acciones -->
     <template #footer>
       <div class="flex flex-col sm:flex-row justify-end gap-2">
-        <BaseButton size="sm" variant="outline" @click="clearAll">
-          <template #icon-left>
-            <TrashIcon class="w-4 h-4 mr-1" />
-          </template>
-          Limpiar
-        </BaseButton>
-        <BaseButton size="sm" variant="outline" :disabled="!canExport" @click="$emit('export')">
-          <template #icon-left>
-            <DocsIcon class="w-4 h-4 mr-1" />
-          </template>
-          Exportar a Excel
-        </BaseButton>
-        <BaseButton size="sm" variant="outline" :disabled="isLoading" @click="$emit('refresh')">
-          <template #icon-left>
-            <RefreshIcon class="w-4 h-4 mr-1" />
-          </template>
-          Actualizar
-        </BaseButton>
+        <BaseButton size="sm" variant="outline" @click="clearAll"><template #icon-left><TrashIcon class="w-4 h-4 mr-1" /></template>Limpiar</BaseButton>
+        <BaseButton size="sm" variant="outline" :disabled="!canExport" @click="$emit('export')"><template #icon-left><DocsIcon class="w-4 h-4 mr-1" /></template>Exportar a Excel</BaseButton>
+        <BaseButton size="sm" variant="outline" :disabled="isLoading" @click="$emit('refresh')"><template #icon-left><RefreshIcon class="w-4 h-4 mr-1" /></template>Actualizar</BaseButton>
         <SearchButton text="Buscar" size="sm" :disabled="isLoading" @click="search" />
       </div>
     </template>
@@ -107,46 +69,29 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{ (e: 'update:modelValue', v: Filters): void; (e: 'refresh'): void; (e: 'export'): void; (e: 'search', v: Filters): void }>()
 
-// Composable para permisos y autenticación
 const { isPatologo } = usePermissions()
 const authStore = useAuthStore()
 
 const local = reactive<Filters>({ ...props.modelValue })
-
-// Valores intermedios de componentes reutilizables
 const pathologistCode = ref<string>('')
 const entityCode = ref<string>('')
 
-// Computed para obtener el nombre del patólogo logueado
 const currentPathologistName = computed(() => {
   if (!isPatologo.value || !authStore.user) return null
-
-  // Para patólogos, comparamos por NOMBRE (priorizar campos del backend nuevo)
-  let userName =
-    (authStore.user as any).name ||
-    (authStore.user as any).username ||
-    (authStore.user as any).nombre ||
-    (authStore.user as any).nombres ||
-    (authStore.user as any).nombre_completo ||
-    (authStore.user as any).full_name ||
-    null
-
-  // Si no hay nombre completo, intentar construir desde nombres + apellidos
+  let userName = (authStore.user as any).name || (authStore.user as any).username || (authStore.user as any).nombre || (authStore.user as any).nombres || (authStore.user as any).nombre_completo || (authStore.user as any).full_name || null
   if (!userName && ((authStore.user as any).nombres || (authStore.user as any).apellidos)) {
     const nombres = (authStore.user as any).nombres || ''
     const apellidos = (authStore.user as any).apellidos || ''
     userName = `${nombres} ${apellidos}`.trim()
   }
-
-  // Si no hay nombre completo, intentar construir desde first_name + last_name
   if (!userName && ((authStore.user as any).first_name || (authStore.user as any).last_name)) {
     const firstName = (authStore.user as any).first_name || ''
     const lastName = (authStore.user as any).last_name || ''
     userName = `${firstName} ${lastName}`.trim()
   }
-
   return userName
 })
+
 const statusOptions = [
   { value: '', label: 'Todos' },
   { value: 'En proceso', label: 'En proceso' },
@@ -157,7 +102,6 @@ const statusOptions = [
 
 watch(() => props.modelValue, (v) => Object.assign(local, v))
 
-// Watcher para mantener el patólogo logueado como filtro fijo
 watch(currentPathologistName, (newName) => {
   if (newName && isPatologo.value) {
     local.searchPathologist = newName
@@ -165,21 +109,17 @@ watch(currentPathologistName, (newName) => {
 }, { immediate: true })
 
 onMounted(() => {
-  // Al montar el componente, si es patólogo, establecer su nombre como filtro
   if (currentPathologistName.value && isPatologo.value) {
     local.searchPathologist = currentPathologistName.value
   }
-  // Normalizar fechas iniciales
   const defaults = getDefaultDateRange()
   local.dateFrom = normalizeToDDMMYYYY(local.dateFrom || defaults.dateFrom)
   local.dateTo = normalizeToDDMMYYYY(local.dateTo || defaults.dateTo)
 })
 
-function clearAll() {
+const clearAll = () => {
   const defaultDates = getDefaultDateRange()
-  
   local.searchQuery = ''
-  // NO limpiar el patólogo si el usuario es patólogo
   if (!isPatologo.value) {
     local.searchPathologist = ''
   } else if (currentPathologistName.value) {
@@ -192,36 +132,29 @@ function clearAll() {
   local.selectedTest = ''
   pathologistCode.value = ''
   entityCode.value = ''
-
-  // Actualizar el v-model del padre y recargar últimos 100
   emit('update:modelValue', { ...local })
   emit('refresh')
 }
 
-function onPathologistSelected(p: any | null) {
-  // Si el usuario es patólogo, no permitir cambiar el patólogo seleccionado
+const onPathologistSelected = (p: any | null) => {
   if (isPatologo.value && currentPathologistName.value) {
-    // Mantener el patólogo logueado como filtro fijo
     local.searchPathologist = currentPathologistName.value
     return
   }
-  
   local.searchPathologist = p?.nombre || ''
 }
 
-function onEntitySelected(e: any | null) {
+const onEntitySelected = (e: any | null) => {
   local.selectedEntity = e?.nombre || ''
 }
 
-function search() {
-  // Solo emitir la búsqueda sin limpiar los filtros
+const search = () => {
   emit('search', { ...local })
 }
 
 
 
-// --- Normalización y validación de fechas ---
-function normalizeToDDMMYYYY(value: string | null | undefined): string {
+const normalizeToDDMMYYYY = (value: string | null | undefined): string => {
   if (!value) return ''
   const isoMatch = /^\d{4}-\d{2}-\d{2}/.test(value)
   if (isoMatch) {
@@ -233,9 +166,9 @@ function normalizeToDDMMYYYY(value: string | null | undefined): string {
   return ''
 }
 
-function pad2(n: number): string { return n < 10 ? '0' + n : String(n) }
+const pad2 = (n: number): string => n < 10 ? '0' + n : String(n)
 
-function parseDDMMYYYY(s: string): Date | null {
+const parseDDMMYYYY = (s: string): Date | null => {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s)
   if (!m) return null
   const d = Number(m[1]), mo = Number(m[2]) - 1, y = Number(m[3])
@@ -243,7 +176,7 @@ function parseDDMMYYYY(s: string): Date | null {
   return dt.getFullYear() === y && dt.getMonth() === mo && dt.getDate() === d ? dt : null
 }
 
-function clampToToday(s: string): string {
+const clampToToday = (s: string): string => {
   const dt = parseDDMMYYYY(s)
   if (!dt) return ''
   const today = new Date(); today.setHours(0,0,0,0)
@@ -255,7 +188,6 @@ watch(() => local.dateFrom, (v) => {
   if (!v) return
   const norm = clampToToday(normalizeToDDMMYYYY(v))
   if (norm !== v) local.dateFrom = norm
-  // Corregir rango si desde > hasta
   if (local.dateTo) {
     const a = parseDDMMYYYY(local.dateFrom)
     const b = parseDDMMYYYY(local.dateTo)
@@ -267,7 +199,6 @@ watch(() => local.dateTo, (v) => {
   if (!v) return
   const norm = clampToToday(normalizeToDDMMYYYY(v))
   if (norm !== v) local.dateTo = norm
-  // Corregir rango si hasta < desde
   if (local.dateFrom) {
     const a = parseDDMMYYYY(local.dateFrom)
     const b = parseDDMMYYYY(local.dateTo)
