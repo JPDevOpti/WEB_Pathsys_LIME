@@ -31,6 +31,13 @@ from app.modules.patients.services.patient_service import PatientService
 from app.modules.entities.services.entity_service import EntityService
 from app.modules.pathologists.services.pathologist_service import PathologistService
 from app.modules.tests.services.test_service import TestService
+from app.modules.diseases.services.disease_service import DiseaseService
+from app.modules.diseases.repositories.disease_repository import DiseaseRepository
+
+# Variables globales para datos de BD
+CIE10_DISEASES = []
+CIE0_DISEASES = []
+COMPLEMENTARY_TESTS = []
 
 REGIONES_CUERPO = [
     # Cabeza y Cuello
@@ -250,6 +257,9 @@ def build_sample_tests(tests_catalog: List[Dict]) -> List[SampleTest]:
 async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) -> Tuple[int, int]:
     created = 0
     skipped = 0
+    
+    # Cargar datos de la base de datos
+    await load_database_data()
     
     # Contadores para estadísticas
     stats = {
@@ -527,16 +537,75 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                             "Paciente directamente", "Familiar del paciente", "Servicio de Medicina Interna"
                         ])
                         
+                        # CIE-10 (obligatorio en todos los casos) y CIE-O (20% de los casos)
+                        cie10_diagnosis = random.choice(CIE10_DISEASES) if CIE10_DISEASES else {"code": "Z00.00", "name": "Examen médico general"}
+                        cieo_diagnosis = None
+                        
+                        # CIE-O solo en 20% de los casos
+                        if random.random() < 0.2 and CIE0_DISEASES:
+                            cieo_diagnosis = random.choice(CIE0_DISEASES)
+                        
+                        # Pruebas complementarias (60% de casos las tienen)
+                        complementary_tests = []
+                        if random.random() < 0.6 and COMPLEMENTARY_TESTS:
+                            num_complementary = random.randint(1, 3)
+                            for _ in range(num_complementary):
+                                test = random.choice(COMPLEMENTARY_TESTS)
+                                complementary_tests.append({
+                                    "code": test["code"],
+                                    "name": test["name"],
+                                    "quantity": random.randint(1, 2)
+                                })
+                            
+                            # Agregar razón para las pruebas complementarias
+                            razones = [
+                                "Estudio adicional para confirmación diagnóstica",
+                                "Evaluación de extensión tumoral",
+                                "Análisis de marcadores específicos",
+                                "Estudio molecular complementario",
+                                "Verificación de diagnóstico diferencial",
+                                "Evaluación pronóstica",
+                                "Estudio para planificación terapéutica"
+                            ]
+                            complementary_tests.append({
+                                "reason": random.choice(razones)
+                            })
+                        
+                        # Notas adicionales (40% de casos las tienen)
+                        additional_notes = []
+                        if random.random() < 0.4:
+                            num_notes = random.randint(1, 2)
+                            for i in range(num_notes):
+                                fecha_nota = fecha_firma + timedelta(days=random.randint(0, 2))
+                                notas_posibles = [
+                                    "Paciente requiere seguimiento estrecho",
+                                    "Resultado compatible con hallazgos clínicos",
+                                    "Se recomienda correlación clínico-patológica",
+                                    "Muestra de buena calidad para diagnóstico",
+                                    "Hallazgos sugestivos de proceso benigno",
+                                    "Requiere estudio adicional para confirmación",
+                                    "Diagnóstico definitivo establecido",
+                                    "Paciente con antecedentes familiares relevantes"
+                                ]
+                                additional_notes.append({
+                                    "date": fecha_nota,
+                                    "note": random.choice(notas_posibles)
+                                })
+                        
                         update_data.update({
                             "result": {
                                 "method": [metodo],
                                 "macro_result": macro_result,
                                 "micro_result": micro_result,
                                 "diagnosis": diagnosis,
+                                "cie10_diagnosis": cie10_diagnosis,
+                                "cieo_diagnosis": cieo_diagnosis,
                                 "updated_at": fecha_firma
                             },
                             "delivered_at": fecha_entrega,
-                            "delivered_to": entregado_a
+                            "delivered_to": entregado_a,
+                            "complementary_tests": complementary_tests,
+                            "additional_notes": additional_notes
                         })
                     
                     await repo.update_by_case_code(created_case.case_code, update_data)
@@ -577,6 +646,48 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
         return created, skipped
     finally:
         await close_mongo_connection()
+
+async def load_database_data():
+    """Cargar datos reales de la base de datos"""
+    global CIE10_DISEASES, CIE0_DISEASES, COMPLEMENTARY_TESTS
+    
+    print("Cargando datos de la base de datos...")
+    
+    # Obtener la base de datos
+    database = await get_database()
+    
+    # Cargar enfermedades CIE-10
+    try:
+        disease_repository = DiseaseRepository(database)
+        disease_service = DiseaseService(disease_repository)
+        cie10_response = await disease_service.get_diseases_by_table("CIE10", limit=1000)
+        CIE10_DISEASES = [{"code": d.code, "name": d.name} for d in cie10_response["diseases"] if d.is_active]
+    except Exception as e:
+        print(f"Error cargando CIE-10: {e}")
+        CIE10_DISEASES = []
+    
+    # Cargar enfermedades CIE-O (si existen)
+    try:
+        cie0_response = await disease_service.get_diseases_by_table("CIEO", limit=1000)
+        CIE0_DISEASES = [{"code": d.code, "name": d.name} for d in cie0_response["diseases"] if d.is_active]
+    except:
+        CIE0_DISEASES = []
+        print("No se encontraron datos de CIE-O en la base de datos")
+    
+    # Cargar pruebas complementarias
+    try:
+        test_service = TestService(database)
+        from app.modules.tests.schemas.test import TestSearch
+        search = TestSearch(skip=0, limit=100)
+        tests_response = await test_service.list_active(search)
+        COMPLEMENTARY_TESTS = [{"code": t.test_code, "name": t.name} for t in tests_response if t.is_active]
+    except Exception as e:
+        print(f"Error cargando pruebas complementarias: {e}")
+        COMPLEMENTARY_TESTS = []
+    
+    print(f"✓ Cargados {len(CIE10_DISEASES)} enfermedades CIE-10")
+    print(f"✓ Cargados {len(CIE0_DISEASES)} enfermedades CIE-O")
+    print(f"✓ Cargados {len(COMPLEMENTARY_TESTS)} pruebas complementarias")
 
 def main():
     parser = argparse.ArgumentParser(description="Importar casos con muestras y pruebas reales")
