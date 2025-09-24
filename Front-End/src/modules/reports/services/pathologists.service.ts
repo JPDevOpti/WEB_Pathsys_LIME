@@ -7,72 +7,50 @@ export class PathologistsApiService {
 
   async getMonthlyPathologists(month?: number, year?: number): Promise<PathologistsReportData> {
     try {
-      const params: Record<string, any> = {}
+      const params: Record<string, any> = { thresholdDays: 7 }
       if (typeof month === 'number') params.month = month
       if (typeof year === 'number') params.year = year
       
-      const resp: any = await apiClient.get(`${this.baseCases}/estadisticas-oportunidad-mensual-detalle`, { params })
+      // Use the new optimized endpoint
+      const resp: any = await apiClient.get(`${this.baseCases}/statistics/pathologists/monthly-performance`, { params })
       const data = resp?.data ?? resp
       return this.mapApiToFront(data)
     } catch (err) {
-      console.warn('Fallo en /estadisticas-oportunidad-mensual-detalle. Se intenta fallback /estadisticas', err)
-      try {
-        const url2 = `${this.baseCases}/estadisticas`
-        const resp2: any = await apiClient.get(url2)
-        const data2 = resp2?.data ?? resp2
-        return this.mapGeneralStatsToFront(data2)
-      } catch (err2) {
-        console.error('Fallo en /estadisticas', err2)
-        return { pathologists: [] }
-      }
+      console.error('Error obteniendo datos de patólogos:', err)
+      return { pathologists: [] }
     }
   }
 
   private mapApiToFront(raw: any): PathologistsReportData {
     const pathologists: PathologistMetrics[] = []
 
-    // Mapeo flexible de patólogos
-    const patoBlocks: any[] = raw?.patologos || raw?.rendimiento_patologos || raw?.pathologists || []
+    // Mapeo para nuevos endpoints optimizados
+    const patoBlocks: any[] = raw?.pathologists || []
     if (Array.isArray(patoBlocks)) {
       for (const p of patoBlocks) {
         pathologists.push({
-          name: String(p.nombre || p.name || p.patologo || ''),
-          withinOpportunity: Number(p.dentroOportunidad || p.within || p.en_oportunidad || 0),
-          outOfOpportunity: Number(p.fueraOportunidad || p.out || p.fuera || 0),
-          avgTime: Number(p.tiempoPromedio || p.avgTime || p.tiempo || 0)
+          code: String(p.code || ''),
+          name: String(p.name || ''),
+          withinOpportunity: Number(p.withinOpportunity || 0),
+          outOfOpportunity: Number(p.outOfOpportunity || 0),
+          averageDays: Number(p.averageDays || 0)
         })
       }
     }
 
-    // Mapeo del resumen
-    const res = raw?.resumen || {}
+    // Calcular resumen desde los datos de patólogos
+    const total_within = pathologists.reduce((sum, p) => sum + p.withinOpportunity, 0)
+    const total_out = pathologists.reduce((sum, p) => sum + p.outOfOpportunity, 0)
+    
     const summary = {
-      total: Number(res.total || 0),
-      within: Number(res.dentro || 0),
-      out: Number(res.fuera || 0)
+      total: total_within + total_out,
+      within: total_within,
+      out: total_out
     }
 
     return { pathologists, summary }
   }
 
-  private mapGeneralStatsToFront(raw: any): PathologistsReportData {
-    // Este endpoint no trae detalle de patólogos; solo podemos mapear como totales
-    const pathologists: PathologistMetrics[] = []
-    const casosPorPatologo = raw?.casos_por_patologo || raw?.by_pathologist || {}
-    
-    if (casosPorPatologo && typeof casosPorPatologo === 'object') {
-      for (const [name, total] of Object.entries(casosPorPatologo)) {
-        pathologists.push({ 
-          name, 
-          withinOpportunity: Number(total), 
-          outOfOpportunity: 0, 
-          avgTime: 0 
-        })
-      }
-    }
-    
-    return { pathologists }
-  }
 
   async getPathologistEntities(pathologistName: string, month?: number, year?: number): Promise<any> {
     try {
@@ -80,7 +58,8 @@ export class PathologistsApiService {
       if (typeof month === 'number') params.month = month
       if (typeof year === 'number') params.year = year
       
-      const resp: any = await apiClient.get(`${this.baseCases}/entidades-por-patologo`, { params })
+      // Use the new optimized endpoint
+      const resp: any = await apiClient.get(`${this.baseCases}/statistics/pathologists/entities`, { params })
       const data = resp?.data ?? resp
       return data
     } catch (error) {
@@ -95,7 +74,8 @@ export class PathologistsApiService {
       if (typeof month === 'number') params.month = month
       if (typeof year === 'number') params.year = year
       
-      const resp: any = await apiClient.get(`${this.baseCases}/pruebas-por-patologo`, { params })
+      // Use the new optimized endpoint
+      const resp: any = await apiClient.get(`${this.baseCases}/statistics/pathologists/tests`, { params })
       const data = resp?.data ?? resp
       return data
     } catch (error) {

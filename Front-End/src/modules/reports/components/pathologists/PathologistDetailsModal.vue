@@ -17,19 +17,19 @@
                 </svg>
               </div>
               <div>
-                <h4 class="text-2xl font-bold text-gray-900">{{ pathologist.name }}</h4>
+                <h4 class="text-2xl font-bold text-gray-900">{{ pathologist?.name || 'N/A' }}</h4>
                 <p class="text-blue-600 font-medium">Patólogo</p>
               </div>
             </div>
           </div>
 
           <!-- Métricas Principales -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mt-4">
             <div class="bg-green-50 border border-green-200 rounded-xl p-4">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-green-600 font-medium">Dentro de Oportunidad</p>
-                  <p class="text-2xl font-bold text-green-700">{{ pathologist.withinOpportunity }}</p>
+                  <p class="text-2xl font-bold text-green-700">{{ pathologist?.withinOpportunity || 0 }}</p>
                   <p class="text-xs text-green-600">casos</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -44,7 +44,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-red-600 font-medium">Fuera de Oportunidad</p>
-                  <p class="text-2xl font-bold text-red-700">{{ pathologist.outOfOpportunity }}</p>
+                  <p class="text-2xl font-bold text-red-700">{{ pathologist?.outOfOpportunity || 0 }}</p>
                   <p class="text-xs text-red-600">casos</p>
                 </div>
                 <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -59,7 +59,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-blue-600 font-medium">Tiempo Promedio</p>
-                  <p class="text-2xl font-bold text-blue-700">{{ formatTime(pathologist.avgTime) }}</p>
+                  <p class="text-2xl font-bold text-blue-700">{{ pathologist?.averageDays || 0 }} días</p>
                   <p class="text-xs text-blue-600">por caso</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -72,7 +72,7 @@
           </div>
 
           <!-- Entidades y Pruebas -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-4">
             <!-- Entidades donde trabaja -->
             <div class="bg-gray-50 rounded-xl p-6 space-y-4">
               <h5 class="text-lg font-semibold text-gray-900">Entidades donde trabaja</h5>
@@ -206,20 +206,8 @@ const testsData = ref<TestData[]>([])
 const isLoadingTests = ref(false)
 
 // Computed properties
-const totalCases = computed(() => 
-  props.pathologist ? props.pathologist.withinOpportunity + props.pathologist.outOfOpportunity : 0
-)
 
 // Helper functions
-function formatTime(hours: number): string {
-  if (hours < 1) {
-    const minutes = Math.round(hours * 60)
-    return `${minutes} min`
-  }
-  const wholeHours = Math.floor(hours)
-  const minutes = Math.round((hours - wholeHours) * 60)
-  return `${wholeHours}h ${minutes}min`
-}
 
 function formatPeriod(): string {
   const months = [

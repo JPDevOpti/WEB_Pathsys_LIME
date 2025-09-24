@@ -1,8 +1,9 @@
 export interface PathologistMetrics {
+  code: string
   name: string
   withinOpportunity: number
   outOfOpportunity: number
-  avgTime: number
+  averageDays: number
 }
 
 export interface PathologistsReportData {

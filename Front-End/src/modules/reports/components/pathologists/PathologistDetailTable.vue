@@ -70,7 +70,7 @@
             </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-            {{ pathologist.avgTime.toFixed(1) }} días
+            {{ pathologist.averageDays?.toFixed(1) || '0.0' }} días
           </td>
         </tr>
       </tbody>
@@ -122,7 +122,7 @@ const exportToExcel = () => {
       'Dentro de Oportunidad': pathologist.withinOpportunity,
       'Fuera de Oportunidad': pathologist.outOfOpportunity,
       '% Cumplimiento': `${compliance}%`,
-      'Tiempo Promedio (días)': pathologist.avgTime.toFixed(1)
+      'Tiempo Promedio (días)': pathologist.averageDays?.toFixed(1) || '0.0'
     }
   })
   

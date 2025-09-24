@@ -82,3 +82,4 @@ class OpportunityStatisticsService:
     ) -> Dict[str, Any]:
         data = await self.get_monthly(month, year, threshold_days, entity, None)
         return {"tests": data.get("tests", [])}
+
