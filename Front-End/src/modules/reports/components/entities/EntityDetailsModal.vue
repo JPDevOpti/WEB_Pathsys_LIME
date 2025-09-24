@@ -24,7 +24,7 @@
           </div>
 
           <!-- Métricas Principales -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 py-6">
             <div class="bg-green-50 border border-green-200 rounded-xl p-4">
               <div class="flex items-center justify-between">
                 <div>

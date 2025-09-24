@@ -33,9 +33,6 @@ export const API_CONFIG = {
     },
     CASOS: {
       TEST: '/cases/test',
-      ESTADISTICAS_PRUEBAS: '/cases/estadisticas-pruebas-mensual',
-      DETALLE_PRUEBA: '/cases/detalle-prueba',
-      PATOLOGOS_POR_PRUEBA: '/cases/patologos-por-prueba',
       ESTADISTICAS_ENTIDADES: '/cases/estadisticas-entidades-mensual',
       DETALLE_ENTIDAD: '/cases/detalle-entidad',
       PATOLOGOS_POR_ENTIDAD: '/cases/patologos-por-entidad',

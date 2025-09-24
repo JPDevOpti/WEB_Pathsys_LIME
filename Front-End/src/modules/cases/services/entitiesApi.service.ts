@@ -24,13 +24,13 @@ export class EntitiesApiService {
 
   // Active entities only
   async getEntities(): Promise<EntityInfo[]> {
-    const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}`)
+    const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}?limit=100`)
     return Array.isArray(response) ? response.map(this.mapEntity) : []
   }
 
   // Active + inactive entities (includes activo flag)
   async getAllEntitiesIncludingInactive(): Promise<EntityInfo[]> {
-    const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}/inactive`)
+    const response = await this.makeRequest<any>(`${API_CONFIG.ENDPOINTS.ENTITIES}/inactive?limit=100`)
     return Array.isArray(response) ? response.map(this.mapEntity) : []
   }
 
@@ -46,8 +46,8 @@ export class EntitiesApiService {
 
   async searchEntities(query: string, includeInactive: boolean = false): Promise<EntityInfo[]> {
     const endpoint = includeInactive
-      ? `${API_CONFIG.ENDPOINTS.ENTITIES}/inactive?query=${encodeURIComponent(query)}`
-      : `${API_CONFIG.ENDPOINTS.ENTITIES}?query=${encodeURIComponent(query)}`
+      ? `${API_CONFIG.ENDPOINTS.ENTITIES}/inactive?query=${encodeURIComponent(query)}&limit=100`
+      : `${API_CONFIG.ENDPOINTS.ENTITIES}?query=${encodeURIComponent(query)}&limit=100`
     const response = await this.makeRequest<any>(endpoint)
     return Array.isArray(response) ? response.map(this.mapEntity) : []
   }

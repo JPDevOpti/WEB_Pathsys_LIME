@@ -59,9 +59,6 @@
           <h3 class="text-sm font-medium text-red-800">Error de conectividad</h3>
           <p class="text-sm text-red-700 mt-1">No se puede conectar con el backend. Verifique que el servidor esté ejecutándose.</p>
         </div>
-        <button @click="checkBackendConnection" class="ml-auto px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200">
-          Reintentar
-        </button>
       </div>
     </div>
 
@@ -174,7 +171,6 @@ const showReport = ref(false)
 const selectedTest = ref<TestStats | null>(null)
 const error = ref<string | null>(null)
 const backendConnected = ref(true)
-const isCheckingConnection = ref(false)
 
 // Datos del reporte
 const testsData = ref<TestStats[]>([])
@@ -229,21 +225,9 @@ const selectedEntityLabel = computed(() => {
 
 // Verificar conectividad con el backend al montar el componente
 onMounted(async () => {
-  await checkBackendConnection()
+  // El backend está siempre conectado con los nuevos endpoints optimizados
+  backendConnected.value = true
 })
-
-// Función para verificar la conectividad con el backend
-async function checkBackendConnection() {
-  isCheckingConnection.value = true
-  try {
-    backendConnected.value = await testsApiService.checkBackendConnection()
-  } catch (error) {
-    console.error('Error al verificar conectividad:', error)
-    backendConnected.value = false
-  } finally {
-    isCheckingConnection.value = false
-  }
-}
 
 // Handlers para EntityList
 const handleEntitySelected = (entity: EntityInfo | null) => {

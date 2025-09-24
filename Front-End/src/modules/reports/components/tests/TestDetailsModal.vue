@@ -55,93 +55,48 @@
 
           <!-- Contenido detallado -->
           <template v-else-if="testDetails">
-            <!-- Estadísticas Principales -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-blue-600 font-medium">Total Pruebas realizadas</p>
-                    <p class="text-2xl font-bold text-blue-700">{{ testDetails.estadisticas_principales.total_solicitadas }}</p>
-                  </div>
-                  <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bg-green-50 border border-green-200 rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-green-600 font-medium">Completadas</p>
-                    <p class="text-2xl font-bold text-green-700">{{ testDetails.estadisticas_principales.total_completadas }}</p>
-                    <p class="text-xs text-green-600">{{ testDetails.estadisticas_principales.porcentaje_completado }}% completado</p>
-                  </div>
-                  <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-yellow-600 font-medium">Tiempo Promedio</p>
-                    <p class="text-2xl font-bold text-yellow-700">{{ test.tiempoPromedio.toFixed(1) }} días</p>
-                  </div>
-                  <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <!-- Tiempos de procesamiento -->
-            <div class="bg-white rounded-xl border p-6">
-              <h5 class="text-lg font-medium mb-4 flex items-center text-gray-800">
+            <div class="bg-white rounded-xl border px-6 py-4 mt-6">
+              <h5 class="text-lg font-medium mb-6 pb-2 flex items-center text-gray-800">
                 <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Tiempos de Procesamiento
               </h5>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-2">
                 <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
                   <div class="text-center w-full">
                     <span class="text-sm font-medium text-gray-700">Promedio</span>
-                    <p class="text-lg font-bold text-yellow-600">{{ testDetails.tiempos_procesamiento.promedio_dias.toFixed(1) }} días</p>
+                    <p class="text-lg font-bold text-yellow-600">{{ testDetails?.tiempos_procesamiento?.promedio_dias?.toFixed(1) || '0.0' }} días</p>
                   </div>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                   <div class="text-center w-full">
                     <span class="text-sm font-medium text-gray-700">Dentro de oportunidad</span>
-                    <p class="text-lg font-bold text-green-600">{{ testDetails.tiempos_procesamiento.dentro_oportunidad }}</p>
+                    <p class="text-lg font-bold text-green-600">{{ testDetails?.tiempos_procesamiento?.dentro_oportunidad || 0 }}</p>
                   </div>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
                   <div class="text-center w-full">
                     <span class="text-sm font-medium text-gray-700">Fuera de oportunidad</span>
-                    <p class="text-lg font-bold text-red-600">{{ testDetails.tiempos_procesamiento.fuera_oportunidad }}</p>
+                    <p class="text-lg font-bold text-red-600">{{ testDetails?.tiempos_procesamiento?.fuera_oportunidad || 0 }}</p>
                   </div>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <div class="text-center w-full">
                     <span class="text-sm font-medium text-gray-700">Total</span>
-                    <p class="text-lg font-bold text-gray-700">{{ testDetails.tiempos_procesamiento.total_casos }}</p>
+                    <p class="text-lg font-bold text-gray-700">{{ testDetails?.tiempos_procesamiento?.total_casos || 0 }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Patólogos -->
-            <div class="bg-gray-50 rounded-xl p-6 space-y-4">
-              <h5 class="text-lg font-semibold text-gray-900">Patólogos</h5>
+            <div class="bg-gray-50 rounded-xl p-6 space-y-4 mt-8">
+              <h5 class="text-lg font-semibold text-gray-900 pb-6">Patólogos</h5>
               
-              <div v-if="testDetails.patologos.length === 0" class="text-center py-8 text-gray-500">
+              <div v-if="!testDetails?.patologos || testDetails.patologos.length === 0" class="text-center py-8 text-gray-500">
                 <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -149,7 +104,7 @@
               </div>
               
               <div v-else class="space-y-3">
-                <div v-for="patologo in testDetails.patologos" :key="patologo.codigo" class="bg-white rounded-lg p-4 border border-gray-200">
+                <div v-for="patologo in testDetails?.patologos || []" :key="patologo.codigo" class="bg-white rounded-lg p-4 border border-gray-200">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                       <div class="flex-shrink-0">
@@ -158,15 +113,15 @@
                         </svg>
                       </div>
                       <div>
-                        <h6 class="text-sm font-medium text-gray-900">{{ patologo.nombre }}</h6>
-                        <p class="text-xs text-gray-500">{{ patologo.codigo }}</p>
+                        <h6 class="text-sm font-medium text-gray-900">{{ patologo.nombre || 'N/A' }}</h6>
+                        <p class="text-xs text-gray-500">{{ patologo.codigo || 'N/A' }}</p>
                       </div>
                     </div>
-                    <div class="text-right">
-                      <div class="text-lg font-bold text-green-600">{{ patologo.total_procesadas }}</div>
-                      <div class="text-xs text-gray-500">procesadas</div>
-                      <div class="text-sm text-yellow-600">{{ patologo.tiempo_promedio.toFixed(1) }} días</div>
-                    </div>
+                      <div class="text-right">
+                        <div class="text-lg font-bold text-green-600">{{ patologo.total_procesadas || 0 }}</div>
+                        <div class="text-xs text-gray-500">procesadas</div>
+                        <div class="text-sm text-yellow-600">{{ patologo.tiempo_promedio?.toFixed(1) || '0.0' }} días</div>
+                      </div>
                   </div>
                 </div>
               </div>

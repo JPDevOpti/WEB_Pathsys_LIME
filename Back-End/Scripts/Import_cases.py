@@ -173,7 +173,7 @@ def random_date_from_year_to_today(year: int) -> datetime:
 async def load_entities(db) -> Dict[str, Dict]:
     entity_service = EntityService(db)
     from app.modules.entities.schemas.entity import EntitySearch
-    search_params = EntitySearch()
+    search_params = EntitySearch(skip=0, limit=100)  # Cargar hasta 100 entidades
     entities = await entity_service.list_all(search_params)
     
     name_to_entity: Dict[str, Dict] = {}

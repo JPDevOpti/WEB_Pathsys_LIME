@@ -2,6 +2,8 @@ import type { EntityStats, EntitiesReportData, EntityDetails } from '../types/en
 import { API_CONFIG, buildApiUrl, getAuthHeaders } from '@/core/config/api.config'
 
 export class EntitiesApiService {
+  private baseCases = `/cases`
+
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = buildApiUrl(endpoint)
     
@@ -27,7 +29,7 @@ export class EntitiesApiService {
 
   async getMonthlyEntities(month: number, year: number, entity?: string): Promise<EntitiesReportData> {
     try {
-      let endpoint = `${API_CONFIG.ENDPOINTS.CASOS.ESTADISTICAS_ENTIDADES}?month=${month}&year=${year}`
+      let endpoint = `${this.baseCases}/statistics/entities/monthly-performance?month=${month}&year=${year}`
       
       // Si se especifica una entidad, agregar el filtro
       if (entity && entity.trim()) {
@@ -66,7 +68,7 @@ export class EntitiesApiService {
 
   async getEntityDetails(entityCode: string, period: string): Promise<EntityDetails> {
     try {
-      const endpoint = `${API_CONFIG.ENDPOINTS.CASOS.DETALLE_ENTIDAD}?entidad=${encodeURIComponent(entityCode)}&month=${period.split('-')[1]}&year=${period.split('-')[0]}`
+      const endpoint = `${this.baseCases}/statistics/entities/details?entidad=${encodeURIComponent(entityCode)}&month=${period.split('-')[1]}&year=${period.split('-')[0]}`
       const response = await this.makeRequest<any>(endpoint)
       
       if (!response.detalles) {
@@ -101,7 +103,7 @@ export class EntitiesApiService {
 
   async getEntityPathologists(entityCode: string, period: string): Promise<any[]> {
     try {
-      const endpoint = `${API_CONFIG.ENDPOINTS.CASOS.PATOLOGOS_POR_ENTIDAD}?entidad=${encodeURIComponent(entityCode)}&month=${period.split('-')[1]}&year=${period.split('-')[0]}`
+      const endpoint = `${this.baseCases}/statistics/entities/pathologists?entidad=${encodeURIComponent(entityCode)}&month=${period.split('-')[1]}&year=${period.split('-')[0]}`
       const response = await this.makeRequest<any>(endpoint)
       
       if (!response.patologos) {
@@ -109,12 +111,11 @@ export class EntitiesApiService {
       }
       
       const result: any[] = (response.patologos || []).map((pat: any) => ({
-        codigo: pat.codigo || pat.patologo_code || '',
-        nombre: pat.nombre || pat.patologo_name || 'Sin nombre',
-        totalCasos: pat.total_casos || pat.casesCount || 0,
+        codigo: pat.codigo || '',
+        nombre: pat.nombre || 'Sin nombre',
+        totalCasos: pat.total_casos || 0,
         casosCompletados: pat.casos_completados || 0,
-        tiempoPromedio: pat.tiempo_promedio || 0,
-        casosPorMes: pat.casos_por_mes || []
+        tiempoPromedio: pat.tiempo_promedio || 0
       }))
       
       return result
@@ -124,16 +125,6 @@ export class EntitiesApiService {
     }
   }
 
-  // Método para verificar la conectividad con el backend
-  async checkBackendConnection(): Promise<boolean> {
-    try {
-      const response = await this.makeRequest<any>(API_CONFIG.ENDPOINTS.CASOS.TEST)
-      return response.message === 'Casos router funcionando correctamente'
-    } catch (error) {
-      console.error('Error de conectividad con el backend:', error)
-      return false
-    }
-  }
 }
 
 export const entitiesApiService = new EntitiesApiService()
