@@ -46,10 +46,10 @@ class OpportunityStatisticsRepository:
 
         # Traer solo los campos necesarios para minimizar payload
         projection = {
-            "created_at": 1,
             "signed_at": 1,
             "state": 1,
             "assigned_pathologist.id": 1,
+            "business_days": 1,
             "_id": 0,
         }
 
@@ -57,7 +57,7 @@ class OpportunityStatisticsRepository:
         docs = await cursor.to_list(length=None)
 
         # Filtrar a sólo los completados dentro de los firmados el mes consultado
-        filtered = [d for d in docs if str(d.get("state")) == "Completado" and d.get("created_at") and d.get("signed_at")]
+        filtered = [d for d in docs if str(d.get("state")) == "Completado" and d.get("signed_at") and d.get("business_days") is not None]
 
         total_considerados = len(filtered)
         if total_considerados == 0:
@@ -73,12 +73,9 @@ class OpportunityStatisticsRepository:
         dentro = 0
         fuera = 0
         for d in filtered:
-            created_at: datetime = d["created_at"]
-            signed_at: datetime = d["signed_at"]
-            # Diferencia en días naturales con decimales
-            delta_days = (signed_at - created_at).total_seconds() / 86400.0
-            diffs_days.append(delta_days)
-            if delta_days <= float(opportunity_days_threshold):
+            business_days: int = d["business_days"]
+            diffs_days.append(business_days)
+            if business_days <= opportunity_days_threshold:
                 dentro += 1
             else:
                 fuera += 1
@@ -186,3 +183,178 @@ class OpportunityStatisticsRepository:
                 "fin": (curr_start - timedelta(seconds=1)).isoformat(),
             },
         }
+
+    # ---------------------------
+    # New English-facing helpers
+    # ---------------------------
+    def _month_bounds(self, year: int, month: int) -> tuple[datetime, datetime]:
+        start = datetime(year, month, 1)
+        if month == 12:
+            end = datetime(year + 1, 1, 1)
+        else:
+            end = datetime(year, month + 1, 1)
+        return start, end
+
+    async def get_monthly_opportunity(
+        self,
+        month: int,
+        year: int,
+        threshold_days: int = 7,
+        entity: str | None = None,
+        pathologist: str | None = None,
+    ) -> dict:
+        """Monthly opportunity breakdown for tests and pathologists (English shape).
+
+        - Universe: cases with state == "Completado" and signed_at within month.
+        - Time in days = (signed_at - created_at) / 86400.0
+        - within if days <= threshold_days
+        """
+        start, end = self._month_bounds(year, month)
+
+        match_stage: Dict[str, Any] = {
+            "state": "Completado",
+            "signed_at": {"$gte": start, "$lt": end},
+        }
+
+        # Optional filters
+        if entity:
+            match_stage["patient_info.entity_info.name"] = {"$regex": entity, "$options": "i"}
+
+        if pathologist:
+            # Match either by id exact or name regex (case-insensitive)
+            match_stage["$or"] = [
+                {"assigned_pathologist.id": pathologist},
+                {"assigned_pathologist.name": {"$regex": pathologist, "$options": "i"}},
+            ]
+
+        projection = {
+            "signed_at": 1,
+            "state": 1,
+            "assigned_pathologist.id": 1,
+            "assigned_pathologist.name": 1,
+            "patient_info.entity_info.name": 1,
+            "samples.tests.id": 1,
+            "samples.tests.name": 1,
+            "business_days": 1,
+            "_id": 0,
+        }
+
+        cursor = self.collection.find(match_stage, projection=projection)
+        docs = await cursor.to_list(length=None)
+
+        tests_map: Dict[str, Dict[str, Any]] = {}
+        pat_map: Dict[str, Dict[str, Any]] = {}
+        total = 0
+        total_within = 0
+        sum_days_all = 0.0
+
+        for d in docs:
+            signed_at: Optional[datetime] = d.get("signed_at")
+            business_days: Optional[int] = d.get("business_days")
+            if not signed_at or business_days is None:
+                continue
+            days = business_days
+            within = days <= threshold_days
+            total += 1
+            sum_days_all += days
+            if within:
+                total_within += 1
+
+            # Aggregate by tests
+            samples = d.get("samples") or []
+            for s in samples:
+                for t in s.get("tests", []) or []:
+                    code = str(t.get("id") or "")
+                    name = str(t.get("name") or "")
+                    if not code and not name:
+                        continue
+                    key = code or name
+                    rec = tests_map.get(key)
+                    if not rec:
+                        rec = {
+                            "code": code,
+                            "name": name,
+                            "within": 0,
+                            "out": 0,
+                            "sumDays": 0.0,
+                            "count": 0,
+                        }
+                        tests_map[key] = rec
+                    rec["sumDays"] += days
+                    rec["count"] += 1
+                    if within:
+                        rec["within"] += 1
+                    else:
+                        rec["out"] += 1
+
+            # Aggregate by pathologist
+            ap = d.get("assigned_pathologist") or {}
+            pcode = str(ap.get("id") or "")
+            pname = str(ap.get("name") or "")
+            pkey = pcode or pname
+            if pkey:
+                prec = pat_map.get(pkey)
+                if not prec:
+                    prec = {
+                        "code": pcode,
+                        "name": pname,
+                        "within": 0,
+                        "out": 0,
+                        "sumDays": 0.0,
+                        "count": 0,
+                    }
+                    pat_map[pkey] = prec
+                prec["sumDays"] += days
+                prec["count"] += 1
+                if within:
+                    prec["within"] += 1
+                else:
+                    prec["out"] += 1
+
+        def to_test_item(v: Dict[str, Any]) -> Dict[str, Any]:
+            count = max(1, int(v.get("count", 0)))
+            avg = (float(v.get("sumDays", 0.0)) / count) if count else 0.0
+            return {
+                "code": v.get("code", ""),
+                "name": v.get("name", ""),
+                "withinOpportunity": int(v.get("within", 0)),
+                "outOfOpportunity": int(v.get("out", 0)),
+                "averageDays": round(avg, 2),
+            }
+
+        def to_pat_item(v: Dict[str, Any]) -> Dict[str, Any]:
+            count = max(1, int(v.get("count", 0)))
+            avg = (float(v.get("sumDays", 0.0)) / count) if count else 0.0
+            return {
+                "code": v.get("code", ""),
+                "name": v.get("name", ""),
+                "withinOpportunity": int(v.get("within", 0)),
+                "outOfOpportunity": int(v.get("out", 0)),
+                "averageDays": round(avg, 2),
+            }
+
+        tests = [to_test_item(v) for v in tests_map.values()]
+        pathologists = [to_pat_item(v) for v in pat_map.values()]
+        avg_all = round((sum_days_all / total), 2) if total else 0.0
+
+        return {
+            "tests": tests,
+            "pathologists": pathologists,
+            "summary": {
+                "total": total,
+                "within": total_within,
+                "out": total - total_within,
+                "averageDays": avg_all,
+            },
+        }
+
+    async def get_yearly_opportunity(self, year: int, threshold_days: int = 7) -> list[float]:
+        """Return 12-month opportunity percentages for a year (English shape)."""
+        out: list[float] = []
+        for m in range(1, 13):
+            monthly = await self.get_monthly_opportunity(m, year, threshold_days)
+            total = monthly.get("summary", {}).get("total", 0)
+            within = monthly.get("summary", {}).get("within", 0)
+            pct = round((within / total) * 100.0, 1) if total else 0.0
+            out.append(pct)
+        return out

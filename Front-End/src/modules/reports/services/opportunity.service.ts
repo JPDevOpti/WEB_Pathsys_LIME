@@ -10,88 +10,62 @@ export interface OpportunityReportData {
 }
 
 export class OpportunityApiService {
-  private readonly baseCases = API_CONFIG.ENDPOINTS.CASES
+  private readonly base = `${API_CONFIG.ENDPOINTS.CASES}/statistics/opportunity`
 
   async getMonthlyOpportunity(month?: number, year?: number): Promise<OpportunityReportData> {
-    try {
-      const params: Record<string, any> = {}
-      if (typeof month === 'number') params.month = month
-      if (typeof year === 'number') params.year = year
-      const resp: any = await apiClient.get(`${this.baseCases}/estadisticas-oportunidad-mensual-detalle`, { params })
-      const data = resp?.data ?? resp
-      return this.mapMonthlyApiToFront(data)
-    } catch (err) {
-      console.warn('Fallo en /estadisticas-oportunidad-mensual. Se intenta fallback /estadisticas', err)
-      try {
-        const url2 = `${this.baseCases}/estadisticas`
-        const resp2: any = await apiClient.get(url2)
-        const data2 = resp2?.data ?? resp2
-        return this.mapGeneralStatsToFront(data2)
-      } catch (err2) {
-        console.error('Fallo en /estadisticas', err2)
-        return { tests: [], pathologists: [] }
-      }
-    }
+    const params: Record<string, any> = {}
+    if (typeof month === 'number') params.month = month
+    if (typeof year === 'number') params.year = year
+    const url = `${this.base}/monthly`
+    const resp: any = await apiClient.get(url, { params })
+    const data = resp?.data ?? resp
+    return this.mapMonthlyV2ToFront(data)
   }
 
   async getYearlyOpportunity(year: number): Promise<number[]> {
-    const url = `${this.baseCases}/oportunidad-por-mes/${year}`
+    const url = `${this.base}/yearly/${year}`
     const resp: any = await apiClient.get(url)
     const data = resp?.data ?? resp
-    return Array.isArray(data?.porcentaje_por_mes) ? data.porcentaje_por_mes.map((n: any) => Number(n)) : []
+    const arr = Array.isArray(data?.percentageByMonth) ? data.percentageByMonth : []
+    return arr.map((n: any) => Number(n))
   }
 
-  private mapMonthlyApiToFront(raw: any): OpportunityReportData {
+  private mapMonthlyV2ToFront(raw: any): OpportunityReportData {
     const tests: OpportunityTest[] = []
     const pathologists: PathologistPerformance[] = []
 
-    // Intentos de mapeo flexible
-    const testBlocks: any[] = raw?.pruebas || raw?.detalle_por_prueba || raw?.procedimientos || []
+    const testBlocks: any[] = raw?.tests || []
     if (Array.isArray(testBlocks)) {
       for (const t of testBlocks) {
         tests.push({
-          code: String(t.codigo || t.codigoPrueba || t.code || ''),
-          name: String(t.nombre || t.prueba || t.name || ''),
-          withinOpportunity: Number(t.dentroOportunidad || t.within || t.en_oportunidad || 0),
-          outOfOpportunity: Number(t.fueraOportunidad || t.out || t.fuera || 0),
-          opportunityTime: String(t.tiempoOportunidad || t.tiempo || t.opportunityTime || '')
+          code: String(t.code || ''),
+          name: String(t.name || ''),
+          withinOpportunity: Number(t.withinOpportunity || 0),
+          outOfOpportunity: Number(t.outOfOpportunity || 0),
+          opportunityTime: `${Number(t.averageDays || 0).toFixed(1)} días`
         })
       }
     }
 
-    const patoBlocks: any[] = raw?.patologos || raw?.rendimiento_patologos || raw?.pathologists || []
+    const patoBlocks: any[] = raw?.pathologists || []
     if (Array.isArray(patoBlocks)) {
       for (const p of patoBlocks) {
         pathologists.push({
-          name: String(p.nombre || p.name || p.patologo || ''),
-          withinOpportunity: Number(p.dentroOportunidad || p.within || p.en_oportunidad || 0),
-          outOfOpportunity: Number(p.fueraOportunidad || p.out || p.fuera || 0),
-          avgTime: Number(p.tiempoPromedio || p.avgTime || p.tiempo || 0)
+          code: String(p.code || ''),
+          name: String(p.name || ''),
+          withinOpportunity: Number(p.withinOpportunity || 0),
+          outOfOpportunity: Number(p.outOfOpportunity || 0),
+          avgTime: Number(p.averageDays || 0)
         })
       }
     }
 
-    const monthlyPct = Array.isArray(raw?.porcentaje_por_mes) ? raw.porcentaje_por_mes.map((n: any) => Number(n)) : undefined
-    const res = raw?.resumen || {}
-    const summary = {
-      total: Number(res.total || 0),
-      within: Number(res.dentro || 0),
-      out: Number(res.fuera || 0)
-    }
-    return { tests, pathologists, monthlyPct, summary }
+    const res = raw?.summary || null
+    const summary = res ? { total: Number(res.total || 0), within: Number(res.within || 0), out: Number(res.out || 0) } : undefined
+    return { tests, pathologists, summary }
   }
 
-  private mapGeneralStatsToFront(raw: any): OpportunityReportData {
-    // Este endpoint no trae detalle de oportunidad; solo podemos mapear patólogos como totales
-    const pathologists: PathologistPerformance[] = []
-    const casosPorPatologo = raw?.casos_por_patologo || raw?.by_pathologist || {}
-    if (casosPorPatologo && typeof casosPorPatologo === 'object') {
-      for (const [name, total] of Object.entries(casosPorPatologo)) {
-        pathologists.push({ name, withinOpportunity: Number(total), outOfOpportunity: 0, avgTime: 0 })
-      }
-    }
-    return { tests: [], pathologists }
-  }
+  // Old fallbacks removed in v2
 }
 
 export const opportunityApiService = new OpportunityApiService()

@@ -38,3 +38,69 @@ async def opportunity_by_pathologist(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+# ---------------------------
+# New English endpoints (v2)
+# ---------------------------
+
+@router.get("/monthly")
+async def opportunity_monthly(
+    month: int = Query(..., ge=1, le=12),
+    year: int = Query(...),
+    thresholdDays: int = Query(7, ge=1, le=60),
+    entity: str | None = Query(None),
+    pathologist: str | None = Query(None),
+    service: OpportunityStatisticsService = Depends(get_opportunity_service)
+):
+    try:
+        return await service.get_monthly(month, year, thresholdDays, entity, pathologist)
+    except BadRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+@router.get("/yearly/{year}")
+async def opportunity_yearly(
+    year: int,
+    thresholdDays: int = Query(7, ge=1, le=60),
+    service: OpportunityStatisticsService = Depends(get_opportunity_service)
+):
+    try:
+        return await service.get_yearly(year, thresholdDays)
+    except BadRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+@router.get("/pathologists")
+async def opportunity_pathologists(
+    month: int = Query(..., ge=1, le=12),
+    year: int = Query(...),
+    thresholdDays: int = Query(7, ge=1, le=60),
+    entity: str | None = Query(None),
+    service: OpportunityStatisticsService = Depends(get_opportunity_service)
+):
+    try:
+        return await service.get_pathologists(month, year, thresholdDays, entity)
+    except BadRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+@router.get("/tests")
+async def opportunity_tests(
+    month: int = Query(..., ge=1, le=12),
+    year: int = Query(...),
+    thresholdDays: int = Query(7, ge=1, le=60),
+    entity: str | None = Query(None),
+    service: OpportunityStatisticsService = Depends(get_opportunity_service)
+):
+    try:
+        return await service.get_tests(month, year, thresholdDays, entity)
+    except BadRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")

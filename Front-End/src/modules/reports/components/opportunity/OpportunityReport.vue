@@ -164,14 +164,25 @@ const monthlyPct = ref<number[]>([])
 
 // Cargar desde backend al generar
 async function loadFromApi() {
-  const api = await opportunityApiService.getMonthlyOpportunity(Number(selectedMonth.value) + 1, Number(selectedYear.value))
-  apiTests.value = api.tests
-  apiPathologists.value = api.pathologists
-  summary.value = api.summary || null
-  // Cargar serie anual para el gráfico de líneas (enero -> mes anterior)
-  const year = Number(selectedYear.value)
-  const yearly = await opportunityApiService.getYearlyOpportunity(year)
-  monthlyPct.value = yearly
+  try {
+    const api = await opportunityApiService.getMonthlyOpportunity(Number(selectedMonth.value) + 1, Number(selectedYear.value))
+    apiTests.value = api.tests
+    apiPathologists.value = api.pathologists
+    summary.value = api.summary || null
+    
+    // Cargar serie anual para el gráfico de líneas (enero -> mes anterior)
+    const year = Number(selectedYear.value)
+    const yearly = await opportunityApiService.getYearlyOpportunity(year)
+    monthlyPct.value = yearly
+  } catch (error) {
+    console.error('Error cargando datos de oportunidad:', error)
+    // Resetear datos en caso de error
+    apiTests.value = []
+    apiPathologists.value = []
+    summary.value = null
+    monthlyPct.value = []
+    throw error
+  }
 }
 
 

@@ -481,14 +481,65 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                     await case_service.update_case(created_case.case_code, case_update)
 
                 # Asignar fecha de firma para casos Por entregar o Completados
-                if estado_final in [CaseState.POR_ENTREGAR, CaseState.COMPLETADO]:
-                    # Diferencia aleatoria entre 1 y 10 días respecto a la fecha de creación
-                    dias_para_firma = random.randint(1, 10)
-                    fecha_firma = fecha_creacion + timedelta(days=dias_para_firma)
+                if estado_final in [CaseState.POR_FIRMAR, CaseState.POR_ENTREGAR, CaseState.COMPLETADO]:
+                    # Asignar oportunidad entre 1 y 11 días hábiles (sesgo hacia 3-7)
+                    pesos = [1, 2, 4, 6, 6, 6, 6, 4, 2, 1, 1]  # 1..11
+                    objetivo_habiles = random.choices(list(range(1, 12)), weights=pesos, k=1)[0]
+                    dias_corridos = 0
+                    fecha_firma = fecha_creacion
+                    while business_days(fecha_creacion, fecha_firma) < objetivo_habiles:
+                        dias_corridos += 1
+                        fecha_firma = fecha_creacion + timedelta(days=dias_corridos)
                     if fecha_firma > today:
                         fecha_firma = today
-                    # Actualizar directamente via repositorio para permitir signed_at
-                    await repo.update_by_case_code(created_case.case_code, {"signed_at": fecha_firma})
+                    
+                    update_data = {
+                        "signed_at": fecha_firma,
+                        "business_days": objetivo_habiles
+                    }
+                    
+                    # Para casos completados, agregar campos adicionales
+                    if estado_final == CaseState.COMPLETADO:
+                        # Generar resultado del caso
+                        region_principal = samples[0].body_region if samples else "región no especificada"
+                        metodo = random.choice([
+                            "tincion-he-eosina",
+                            "inmunohistoquimica-polimero-peroxidasa", 
+                            "tincion-tricromica-masson",
+                            "tincion-pas",
+                            "tincion-plata-metenamina"
+                        ])
+                        
+                        macro_result = f"Lesión en {region_principal.lower()} de aspecto nodular, bien delimitada, de coloración variable."
+                        micro_result = f"Microscópicamente se observa proliferación celular en {region_principal.lower()} con características histológicas sugestivas de proceso benigno."
+                        diagnosis = f"Proceso proliferativo benigno en {region_principal.lower()}"
+                        
+                        # Fecha de entrega (1-3 días después de la firma)
+                        dias_entrega = random.randint(1, 3)
+                        fecha_entrega = fecha_firma + timedelta(days=dias_entrega)
+                        if fecha_entrega > today:
+                            fecha_entrega = today
+                        
+                        # A quién se entregó
+                        entregado_a = random.choice([
+                            "Dr. Carlos Rodríguez", "Dra. María González", "Dr. José Martínez", 
+                            "Dra. Ana López", "Dr. Luis García", "Dra. Carmen Hernández",
+                            "Paciente directamente", "Familiar del paciente", "Servicio de Medicina Interna"
+                        ])
+                        
+                        update_data.update({
+                            "result": {
+                                "method": [metodo],
+                                "macro_result": macro_result,
+                                "micro_result": micro_result,
+                                "diagnosis": diagnosis,
+                                "updated_at": fecha_firma
+                            },
+                            "delivered_at": fecha_entrega,
+                            "delivered_to": entregado_a
+                        })
+                    
+                    await repo.update_by_case_code(created_case.case_code, update_data)
 
                 created += 1
                 medico_txt = requesting_physician if requesting_physician else 'sin médico'

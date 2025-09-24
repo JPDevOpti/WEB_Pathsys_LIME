@@ -25,3 +25,60 @@ class OpportunityStatisticsService:
             return OpportunityResponse(oportunity=OpportunityMetrics(**data))
         except Exception as e:
             raise BadRequestError(f"Error obteniendo oportunidad por patólogo: {str(e)}")
+
+    # ---------------------------
+    # English responses for v2
+    # ---------------------------
+    async def get_monthly(
+        self,
+        month: int,
+        year: int,
+        threshold_days: int = 7,
+        entity: str | None = None,
+        pathologist: str | None = None,
+    ) -> Dict[str, Any]:
+        if month < 1 or month > 12:
+            raise BadRequestError("month must be between 1 and 12")
+        from datetime import datetime
+        current_year = datetime.utcnow().year
+        if year < 2020 or year > current_year + 1:
+            raise BadRequestError(f"year must be between 2020 and {current_year + 1}")
+        if threshold_days < 1 or threshold_days > 60:
+            raise BadRequestError("thresholdDays must be between 1 and 60")
+        try:
+            return await self.repo.get_monthly_opportunity(month, year, threshold_days, entity, pathologist)
+        except Exception as e:
+            raise BadRequestError(f"Error computing monthly opportunity: {str(e)}")
+
+    async def get_yearly(self, year: int, threshold_days: int = 7) -> Dict[str, Any]:
+        from datetime import datetime
+        current_year = datetime.utcnow().year
+        if year < 2020 or year > current_year + 1:
+            raise BadRequestError(f"year must be between 2020 and {current_year + 1}")
+        if threshold_days < 1 or threshold_days > 60:
+            raise BadRequestError("thresholdDays must be between 1 and 60")
+        try:
+            arr = await self.repo.get_yearly_opportunity(year, threshold_days)
+            return {"percentageByMonth": arr}
+        except Exception as e:
+            raise BadRequestError(f"Error computing yearly opportunity: {str(e)}")
+
+    async def get_pathologists(
+        self,
+        month: int,
+        year: int,
+        threshold_days: int = 7,
+        entity: str | None = None,
+    ) -> Dict[str, Any]:
+        data = await self.get_monthly(month, year, threshold_days, entity, None)
+        return {"pathologists": data.get("pathologists", [])}
+
+    async def get_tests(
+        self,
+        month: int,
+        year: int,
+        threshold_days: int = 7,
+        entity: str | None = None,
+    ) -> Dict[str, Any]:
+        data = await self.get_monthly(month, year, threshold_days, entity, None)
+        return {"tests": data.get("tests", [])}

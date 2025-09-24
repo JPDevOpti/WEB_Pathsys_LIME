@@ -16,6 +16,7 @@ export interface OpportunityFilters {
 }
 
 export interface PathologistPerformance {
+  code: string
   name: string
   withinOpportunity: number
   outOfOpportunity: number
