@@ -17,8 +17,8 @@
                 </svg>
               </div>
               <div>
-                <h4 class="text-2xl font-bold text-gray-900">{{ test.nombre }}</h4>
-                <p class="text-blue-600 font-medium">{{ test.codigo }}</p>
+                <h4 class="text-2xl font-bold text-gray-900">{{ test?.nombre || 'N/A' }}</h4>
+                <p class="text-blue-600 font-medium">{{ test?.codigo || 'N/A' }}</p>
               </div>
             </div>
           </div>

@@ -24,9 +24,6 @@
             Prueba
           </th>
           <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Solicitadas
-          </th>
-          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
             Completadas
           </th>
           <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -54,9 +51,6 @@
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-center">
-            <span class="text-sm font-semibold text-blue-600">{{ test.solicitadas.toLocaleString() }}</span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-center">
             <span class="text-sm font-semibold text-green-600">{{ test.completadas.toLocaleString() }}</span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -67,7 +61,6 @@
       <tfoot class="bg-gray-50">
         <tr>
           <td class="px-6 py-4 text-sm font-bold text-gray-900">Total</td>
-          <td class="px-6 py-4 text-center text-sm font-bold text-blue-600">{{ totalSolicitadas.toLocaleString() }}</td>
           <td class="px-6 py-4 text-center text-sm font-bold text-green-600">{{ totalCompletadas.toLocaleString() }}</td>
           <td class="px-6 py-4 text-center text-sm font-bold text-yellow-600">{{ tiempoPromedioTotal.toFixed(1) }} días</td>
         </tr>
@@ -92,10 +85,6 @@ const emit = defineEmits<{
   'test-click': [test: TestStats]
 }>()
 
-const totalSolicitadas = computed(() => 
-  props.datos.reduce((sum, test) => sum + test.solicitadas, 0)
-)
-
 const totalCompletadas = computed(() => 
   props.datos.reduce((sum, test) => sum + test.completadas, 0)
 )
@@ -113,7 +102,6 @@ const exportToExcel = () => {
   const data = props.datos.map(test => ({
     'Prueba': test.nombre,
     'Código': test.codigo,
-    'Solicitadas': test.solicitadas,
     'Completadas': test.completadas,
     'Tiempo Promedio (días)': test.tiempoPromedio.toFixed(1)
   }))
