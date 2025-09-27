@@ -8,11 +8,10 @@ export function useRoleTranslation() {
     admin: 'Administrador',
     pathologist: 'Patólogo',
     auxiliary: 'Auxiliar',
-    receptionist: 'Auxiliar',
+    receptionist: 'Recepcionista',
     resident: 'Residente',
     billing: 'Usuario de Facturación',
-    patient: 'Paciente',
-    receptionist: 'Recepcionista'
+    patient: 'Paciente'
   }
 
   const translateRole = (role: string): string => {

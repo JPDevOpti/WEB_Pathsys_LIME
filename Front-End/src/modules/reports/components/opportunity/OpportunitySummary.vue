@@ -1,7 +1,7 @@
 <template>
   <ComponentCard title="Resumen de Oportunidad">
     <template #icon>
-      <GraficoIcon class="w-5 h-5 text-blue-600 mr-2" />
+      <ChartIcon class="w-5 h-5 text-blue-600 mr-2" />
     </template>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
       <div class="bg-blue-50 p-4 rounded-md border border-blue-100">
@@ -44,7 +44,7 @@
 import { computed } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
 import type { OpportunityTest } from '../../types/opportunity.types'
-import { GraficoIcon } from '@/assets/icons'
+import { ChartIcon } from '@/assets/icons'
 
 const props = defineProps<{ datos: OpportunityTest[]; monthlyPct?: number[]; resumen?: { total: number; within: number; out: number } }>()
 

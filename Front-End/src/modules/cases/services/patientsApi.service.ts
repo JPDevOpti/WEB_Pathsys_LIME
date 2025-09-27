@@ -109,12 +109,12 @@ export class PatientsApiService {
   validatePatientData(patientData: PatientData): { isValid: boolean; errors: string[] } {
     const errors: string[] = []
     const validations = [
-      { ok: !!patientData.patientCode && patientData.patientCode.length >= 6 && patientData.patientCode.length <= 11, msg: 'La cédula debe tener entre 6 y 11 dígitos' },
-      { ok: !!patientData.name && patientData.name.length >= 2, msg: 'El nombre debe tener al menos 2 caracteres' },
-      { ok: !!parseInt(patientData.age) && parseInt(patientData.age) >= 0 && parseInt(patientData.age) <= 150, msg: 'La edad debe ser un número válido entre 0 y 150' },
-      { ok: !!patientData.gender, msg: 'Debe seleccionar el sexo del paciente' },
-      { ok: !!patientData.entity, msg: 'Debe seleccionar una entidad de salud' },
-      { ok: !!patientData.careType, msg: 'Debe seleccionar el tipo de atención' }
+      { ok: !!(patientData as any).patientCode && (patientData as any).patientCode.length >= 6 && (patientData as any).patientCode.length <= 11, msg: 'La cédula debe tener entre 6 y 11 dígitos' },
+      { ok: !!(patientData as any).name && (patientData as any).name.length >= 2, msg: 'El nombre debe tener al menos 2 caracteres' },
+      { ok: !!parseInt((patientData as any).age) && parseInt((patientData as any).age) >= 0 && parseInt((patientData as any).age) <= 150, msg: 'La edad debe ser un número válido entre 0 y 150' },
+      { ok: !!(patientData as any).gender, msg: 'Debe seleccionar el sexo del paciente' },
+      { ok: !!(patientData as any).entity, msg: 'Debe seleccionar una entidad de salud' },
+      { ok: !!(patientData as any).careType, msg: 'Debe seleccionar el tipo de atención' }
     ]
     validations.forEach(v => { if (!v.ok) errors.push(v.msg) })
     return { isValid: errors.length === 0, errors }
@@ -130,16 +130,16 @@ export class PatientsApiService {
       ['entity', 'entidad']
     ] as const
     required.forEach(([key, label]) => { const v = (patientData as any)[key]; if (!v || !String(v).trim()) throw new Error(`El ${label} es requerido`) })
-    const entidadNombre = String(patientData.entity).trim()
-    const entidadCodigo = String(patientData.entityCode || entidadNombre || 'UNKNOWN').trim()
+    const entidadNombre = String((patientData as any).entity).trim()
+    const entidadCodigo = String((patientData as any).entityCode || entidadNombre || 'UNKNOWN').trim()
     return {
-      patient_code: String(patientData.patientCode).trim(),
-      name: String(patientData.name).trim(),
-      age: parseInt(String(patientData.age)),
-      gender: patientData.gender === 'masculino' ? 'Masculino' : 'Femenino',
+      patient_code: String((patientData as any).patientCode).trim(),
+      name: String((patientData as any).name).trim(),
+      age: parseInt(String((patientData as any).age)),
+      gender: (patientData as any).gender === 'masculino' ? 'Masculino' : 'Femenino',
       entity_info: { id: entidadCodigo, name: entidadNombre },
-      care_type: patientData.careType === 'ambulatorio' ? 'Ambulatorio' : 'Hospitalizado',
-      observations: patientData.observations?.trim() || undefined
+      care_type: (patientData as any).careType === 'ambulatorio' ? 'Ambulatorio' : 'Hospitalizado',
+      observations: (patientData as any).observations?.trim() || undefined
     }
   }
 

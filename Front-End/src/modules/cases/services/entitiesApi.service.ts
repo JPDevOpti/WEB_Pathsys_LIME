@@ -16,11 +16,12 @@ export class EntitiesApiService {
   }
 
   // Map backend item to normalized EntityInfo
-  private mapEntity = (e: any): EntityInfo => ({
+  private mapEntity = (e: any): any => ({
     id: e?.entity_code || e?.code || e?.id || '',
     name: e?.name || e?.nombre || '',
-    is_active: typeof e?.is_active === 'boolean' ? e.is_active : undefined
-  }) as EntityInfo
+    codigo: e?.entity_code || e?.code || e?.id || '',
+    nombre: e?.name || e?.nombre || ''
+  })
 
   // Active entities only
   async getEntities(): Promise<EntityInfo[]> {

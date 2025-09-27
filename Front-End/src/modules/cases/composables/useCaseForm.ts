@@ -1,12 +1,46 @@
 // Case form state/validation composable: holds reactive form, validations and helpers
 import { ref, reactive, computed } from 'vue'
 import type { 
-  CaseFormData, CaseFormErrors, CaseFormWarnings, CaseValidationState, FormSubSample, FormTestInfo
-} from '../types'
-import { MAX_MUESTRAS } from '../types'
+  CaseValidationState, FormSubSample, FormTestInfo
+} from '../types/sample'
+import { MAX_MUESTRAS } from '../types/sample'
+
+// Definir tipos locales para evitar conflictos
+interface LocalCaseFormData {
+  patientDocument: string
+  entryDate: string
+  requestingPhysician: string
+  service: string
+  patientEntity: string
+  patientCareType: string
+  casePriority: string
+  numberOfSamples: string
+  samples: FormSubSample[]
+  observations: string
+}
+
+interface LocalCaseFormErrors {
+  entryDate: string[]
+  requestingPhysician: string[]
+  service: string[]
+  patientEntity: string[]
+  patientCareType: string[]
+  casePriority: string[]
+  numberOfSamples: string[]
+  samples: string[]
+  observations: string[]
+}
+
+interface LocalCaseFormWarnings {
+  entryDate: string[]
+  requestingPhysician: string[]
+  service: string[]
+  casePriority: string[]
+  numberOfSamples: string[]
+}
 
 export function useCaseForm() {
-  const formData = reactive<CaseFormData>({
+  const formData = reactive<LocalCaseFormData>({
     patientDocument: '',
     entryDate: new Date().toISOString().split('T')[0],
     requestingPhysician: '',
@@ -23,14 +57,18 @@ export function useCaseForm() {
   const validationState = reactive<CaseValidationState>({ hasAttemptedSubmit: false, showValidationError: false, isValidating: false })
 
   // Validation messages
-  const errors = reactive<CaseFormErrors>({ entryDate: [], requestingPhysician: [], service: [], patientEntity: [], patientCareType: [], casePriority: [], numberOfSamples: [], samples: [], observations: [] })
+  const errors = reactive<LocalCaseFormErrors>({ entryDate: [], requestingPhysician: [], service: [], patientEntity: [], patientCareType: [], casePriority: [], numberOfSamples: [], samples: [], observations: [] })
 
-  const warnings = reactive<CaseFormWarnings>({ entryDate: [], requestingPhysician: [], service: [], casePriority: [], numberOfSamples: [] })
+  const warnings = reactive<LocalCaseFormWarnings>({ entryDate: [], requestingPhysician: [], service: [], casePriority: [], numberOfSamples: [] })
 
   const isLoading = ref(false)
 
   // Factories
-  const createEmptySubSample = (number: number): FormSubSample => ({ number, bodyRegion: '', tests: [{ code: '', quantity: 1, name: '' }] })
+  const createEmptySubSample = (number: number): FormSubSample => ({ 
+    number: number, 
+    bodyRegion: '', 
+    tests: [{ code: '', quantity: 1, name: '' }] 
+  })
 
   const createEmptyTest = (): FormTestInfo => ({ code: '', quantity: 1, name: '' })
 
@@ -166,8 +204,8 @@ export function useCaseForm() {
     const requiredFields = ['patientEntity', 'patientCareType', 'entryDate', 'casePriority', 'requestingPhysician']
     
     const basicFieldsValid = requiredFields.every(field => 
-      formData[field as keyof CaseFormData] && 
-      String(formData[field as keyof CaseFormData]).trim() !== ''
+      formData[field as keyof LocalCaseFormData] && 
+      String(formData[field as keyof LocalCaseFormData]).trim() !== ''
     )
     
     const serviceValid = !formData.requestingPhysician?.trim() || !!(formData.service?.trim())
@@ -195,18 +233,22 @@ export function useCaseForm() {
     }
   }
 
-  const addTestToSample = (sampleIndex: number): void => { if (sampleIndex >= 0 && sampleIndex < formData.samples.length) formData.samples[sampleIndex].tests.push(createEmptyTest()) }
+  const addTestToSample = (sampleIndex: number): void => { 
+    if (sampleIndex >= 0 && sampleIndex < formData.samples.length) 
+      formData.samples[sampleIndex].tests.push(createEmptyTest()) 
+  }
 
   const removeTestFromSample = (sampleIndex: number, testIndex: number): void => {
     if (sampleIndex < 0 || sampleIndex >= formData.samples.length) return
     const sample = formData.samples[sampleIndex]
-    if (sample.tests.length > 1 && testIndex >= 0 && testIndex < sample.tests.length) sample.tests.splice(testIndex, 1)
+    if (sample.tests.length > 1 && testIndex >= 0 && testIndex < sample.tests.length) 
+      sample.tests.splice(testIndex, 1)
   }
 
   // Reset validation messages/flags
   const clearValidationErrors = (): void => {
-    Object.keys(errors).forEach(key => (errors[key as keyof CaseFormErrors] = []))
-    Object.keys(warnings).forEach(key => (warnings[key as keyof CaseFormWarnings] = []))
+    Object.keys(errors).forEach(key => (errors[key as keyof LocalCaseFormErrors] = []))
+    Object.keys(warnings).forEach(key => (warnings[key as keyof LocalCaseFormWarnings] = []))
   }
 
   const clearValidationState = (): void => { validationState.hasAttemptedSubmit = false; validationState.showValidationError = false; validationState.isValidating = false }

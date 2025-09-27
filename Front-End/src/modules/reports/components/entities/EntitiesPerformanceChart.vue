@@ -1,7 +1,7 @@
 <template>
   <ComponentCard title="Distribución de Pacientes por Entidad" description="Gráfico de barras apiladas mostrando ambulatorios y hospitalizados por entidad.">
     <template #icon>
-      <GraficoIcon class="w-5 h-5 text-blue-600 mr-2" />
+      <ChartIcon class="w-5 h-5 text-blue-600 mr-2" />
     </template>
     <apexchart type="bar" height="320" :options="chartOptions" :series="chartSeries" />
   </ComponentCard>
@@ -11,7 +11,7 @@
 import { computed } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
 import type { EntityStats } from '../../types/entities.types'
-import { GraficoIcon } from '@/assets/icons'
+import { ChartIcon } from '@/assets/icons'
 
 const props = defineProps<{
   datos: EntityStats[]

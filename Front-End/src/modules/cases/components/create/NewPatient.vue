@@ -2,26 +2,26 @@
   <!-- Register a new patient -->
   <ComponentCard title="Ingresar un nuevo paciente al sistema" description="Complete la información del paciente para ingresarlo al sistema.">
     <template #icon>
-      <NewUserIcon class="w-5 h-5 mr-2" />
+      <NewUserIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
 
     <div class="space-y-6">
       <!-- Basic identity fields -->
-      <FormInputField v-model="formData.patientCode" label="Documento de identidad" placeholder="Ejemplo: 12345678" :required="true" :max-length="12" inputmode="numeric" :only-numbers="true" :errors="getDocumentoErrors" @input="handleCedulaInput" />
-      <FormInputField v-model="formData.name" label="Nombre del Paciente" placeholder="Ejemplo: Juan Perez" :required="true" :max-length="200" :only-letters="true" :errors="getNombreErrors" @input="handleNombreInput" />
+      <FormInputField v-model="(formData as any).patientCode" label="Documento de identidad" placeholder="Ejemplo: 12345678" :required="true" :max-length="12" inputmode="numeric" :only-numbers="true" :errors="getDocumentoErrors" @input="handleCedulaInput" />
+      <FormInputField v-model="(formData as any).name" label="Nombre del Paciente" placeholder="Ejemplo: Juan Perez" :required="true" :max-length="200" :only-letters="true" :errors="getNombreErrors" @input="handleNombreInput" />
       
       <!-- Demographics -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormInputField v-model="formData.age" label="Edad" placeholder="Edad en años" :required="true" :max-length="3" inputmode="numeric" :only-numbers="true" :errors="getEdadErrors" @input="handleEdadInput" />
-        <FormSelect v-model="formData.gender" label="Sexo" placeholder="Seleccione el sexo" :required="true" :options="sexoOptions" :error="getSexoError" />
+        <FormInputField v-model="(formData as any).age" label="Edad" placeholder="Edad en años" :required="true" :max-length="3" inputmode="numeric" :only-numbers="true" :errors="getEdadErrors" @input="handleEdadInput" />
+        <FormSelect v-model="(formData as any).gender" label="Sexo" placeholder="Seleccione el sexo" :required="true" :options="sexoOptions" :error="getSexoError" />
       </div>
 
       <!-- Entity and care type -->
-      <EntityList v-model="formData.entity" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :errors="entidadErrors" :key="entityListKey" @entity-selected="onEntitySelected" />
-      <FormSelect v-model="formData.careType" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="getTipoAtencionError" />
+      <EntityList v-model="(formData as any).entity" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :errors="entidadErrors" :key="entityListKey" @entity-selected="onEntitySelected" />
+      <FormSelect v-model="(formData as any).careType" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="getTipoAtencionError" />
       
       <!-- Notes -->
-      <FormTextarea v-model="formData.observations" label="Observaciones del paciente" placeholder="Observaciones adicionales del paciente" :rows="3" :max-length="500" />
+      <FormTextarea v-model="(formData as any).observations" label="Observaciones del paciente" placeholder="Observaciones adicionales del paciente" :rows="3" :max-length="500" />
 
       <!-- Actions -->
       <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -37,10 +37,10 @@
               <div class="space-y-4">
                 <!-- Header -->
                 <div class="mb-4 pb-3 border-b border-gray-100">
-                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ createdPatient.nombre }}</h3>
+                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ (createdPatient as any)?.nombrePaciente || (createdPatient as any)?.nombre }}</h3>
                   <p class="text-gray-600">
                     <span class="font-medium">Documento de identidad:</span> 
-                    <span class="font-mono font-bold text-gray-800 ml-1">{{ createdPatient.cedula || 'NO DISPONIBLE' }}</span>
+                    <span class="font-mono font-bold text-gray-800 ml-1">{{ (createdPatient as any)?.numeroCedula || (createdPatient as any)?.cedula || 'NO DISPONIBLE' }}</span>
                   </p>
                 </div>
                 
@@ -48,22 +48,22 @@
                 <div class="space-y-3 text-sm">
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Edad:</span>
-                    <span class="text-gray-800 font-semibold">{{ createdPatient.edad }} años</span>
+                    <span class="text-gray-800 font-semibold">{{ (createdPatient as any)?.edad }} años</span>
                   </div>
                   
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Sexo:</span>
-                    <span class="text-gray-800 font-semibold">{{ createdPatient.sexo }}</span>
+                    <span class="text-gray-800 font-semibold">{{ (createdPatient as any)?.sexo || (createdPatient as any)?.gender }}</span>
                   </div>
                   
                   <div class="flex justify-between py-2 border-b border-gray-100">
                     <span class="text-gray-500 font-medium">Entidad:</span>
-                    <span class="text-gray-800 font-semibold text-right max-w-64 truncate">{{ createdPatient.entidad_info?.nombre }}</span>
+                    <span class="text-gray-800 font-semibold text-right max-w-64 truncate">{{ (createdPatient as any)?.entidad_info?.nombre || (createdPatient as any)?.entidad }}</span>
                   </div>
                   
                   <div class="flex justify-between py-2">
                     <span class="text-gray-500 font-medium">Tipo de Atención:</span>
-                    <span class="text-gray-800 font-semibold">{{ createdPatient.tipo_atencion }}</span>
+                    <span class="text-gray-800 font-semibold">{{ (createdPatient as any)?.tipoAtencion || (createdPatient as any)?.tipo_atencion || (createdPatient as any)?.careType }}</span>
                   </div>
                 </div>
               </div>
@@ -110,29 +110,31 @@ const tipoAtencionOptions = [{ value: 'Ambulatorio', label: 'Ambulatorio' }, { v
 const validationErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return [] as string[]
   const list: string[] = []
+  const form = formData as any
+  const errorObj = errors as any
   // Prefer specific field errors when present, else show required label
-  if (errors.patientCode.length > 0) list.push(`Documento: ${errors.patientCode[0]}`)
-  else if (!formData.patientCode?.trim()) list.push('Documento de identidad')
+  if (errorObj.patientCode.length > 0) list.push(`Documento: ${errorObj.patientCode[0]}`)
+  else if (!form.patientCode?.trim()) list.push('Documento de identidad')
 
-  if (errors.name.length > 0) list.push(`Nombre: ${errors.name[0]}`)
-  else if (!formData.name?.trim()) list.push('Nombre del paciente')
+  if (errorObj.name.length > 0) list.push(`Nombre: ${errorObj.name[0]}`)
+  else if (!form.name?.trim()) list.push('Nombre del paciente')
 
-  if (errors.age.length > 0) list.push(`Edad: ${errors.age[0]}`)
-  else if (!formData.age?.trim()) list.push('Edad')
+  if (errorObj.age.length > 0) list.push(`Edad: ${errorObj.age[0]}`)
+  else if (!form.age?.trim()) list.push('Edad')
 
-  if (!formData.gender) list.push('Sexo')
-  if (!formData.entity) list.push('Entidad')
-  if (!formData.careType) list.push('Tipo de atención')
+  if (!form.gender) list.push('Sexo')
+  if (!form.entity) list.push('Entidad')
+  if (!form.careType) list.push('Tipo de atención')
   return list
 })
 
 // Field-level validation helpers
-const getDocumentoErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (errors.patientCode.length > 0 ? errors.patientCode : (!formData.patientCode?.trim() ? ['El documento de identidad es obligatorio'] : [])))
-const getNombreErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (errors.name.length > 0 ? errors.name : (!formData.name?.trim() ? ['El nombre del paciente es obligatorio'] : [])))
-const getEdadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (errors.age.length > 0 ? errors.age : (!formData.age?.trim() ? ['La edad es obligatoria'] : [])))
-const getSexoError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!formData.gender ? 'Por favor seleccione el sexo' : ''))
-const getTipoAtencionError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!formData.careType ? 'Por favor seleccione el tipo de atención' : ''))
-const entidadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (!formData.entity ? ['La entidad es obligatoria'] : []))
+const getDocumentoErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : ((errors as any).patientCode.length > 0 ? (errors as any).patientCode : (!(formData as any).patientCode?.trim() ? ['El documento de identidad es obligatorio'] : [])))
+const getNombreErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : ((errors as any).name.length > 0 ? (errors as any).name : (!(formData as any).name?.trim() ? ['El nombre del paciente es obligatorio'] : [])))
+const getEdadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : ((errors as any).age.length > 0 ? (errors as any).age : (!(formData as any).age?.trim() ? ['La edad es obligatoria'] : [])))
+const getSexoError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!(formData as any).gender ? 'Por favor seleccione el sexo' : ''))
+const getTipoAtencionError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!(formData as any).careType ? 'Por favor seleccione el tipo de atención' : ''))
+const entidadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (!(formData as any).entity ? ['La entidad es obligatoria'] : []))
 
 // Entity selected from list (normalize to expected shape)
 const onEntitySelected = (entity: any) => {
@@ -150,17 +152,27 @@ const handleSaveClick = async () => {
   validationState.showValidationError = false
   clearState()
   try {
-    const patientData: PatientData = {
-      patientCode: formData.patientCode,
-      name: formData.name,
-      gender: formData.gender,
-      age: formData.age,
-      entity: selectedEntity.value?.nombre || formData.entity,
+    const form = formData as any
+    const patientData: any = {
+      patientCode: form.patientCode,
+      name: form.name,
+      gender: form.gender === 'Masculino' ? 'masculino' : form.gender === 'Femenino' ? 'femenino' : '',
+      age: form.age,
+      entity: selectedEntity.value?.nombre || form.entity,
       entityCode: selectedEntity.value?.codigo,
-      careType: formData.careType,
-      observations: formData.observations
+      careType: form.careType === 'Ambulatorio' ? 'ambulatorio' : form.careType === 'Hospitalizado' ? 'hospitalizado' : '',
+      observations: form.observations
     }
+    
+    // LOG: Datos que se van a enviar
+    console.log('🔍 [LOG NewPatient] formData:', JSON.stringify(form, null, 2))
+    console.log('🔍 [LOG NewPatient] selectedEntity:', JSON.stringify(selectedEntity.value, null, 2))
+    console.log('🔍 [LOG NewPatient] patientData construido:', JSON.stringify(patientData, null, 2))
+    
     const result = await createPatient(patientData)
+    
+    // LOG: Resultado del createPatient
+    console.log('🔍 [LOG NewPatient] result del createPatient:', JSON.stringify(result, null, 2))
     if (result.success && result.patient) {
       createdPatient.value = result.patient
       showNotification('success', '¡Paciente Registrado Exitosamente!', '', 15000)

@@ -88,13 +88,13 @@ export function usePathologistAPI() {
 
   // Find in loaded list by code/id
   const findSelectedPathologist = (patologoId: string): FormPathologistInfo | undefined => {
-    return pathologists.value.find(p => p.patologo_code === patologoId || (p as any).id === patologoId)
+    return pathologists.value.find(p => (p as any).patologo_code === patologoId || (p as any).id === patologoId)
   }
 
   // Minimal payload expected by backend
   const buildPathologistApiData = (pathologist: FormPathologistInfo) => ({
-    codigo: pathologist.patologo_code || (pathologist as any).id || '',
-    nombre: pathologist.patologo_name || (pathologist as any).nombre || ''
+    codigo: (pathologist as any).patologo_code || (pathologist as any).id || '',
+    nombre: (pathologist as any).patologo_name || (pathologist as any).nombre || ''
   })
 
   // Clear UI state flags

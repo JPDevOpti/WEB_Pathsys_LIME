@@ -28,6 +28,14 @@ function setup() {
     echo "✅ Docker Compose ya está instalado"
   fi
   
+  # Verificar Python 3.12
+  if ! command -v /opt/homebrew/bin/python3.12 &> /dev/null; then
+    echo "❌ Python 3.12 no está instalado. Instalando..."
+    brew install python@3.12
+  else
+    echo "✅ Python 3.12 ya está instalado"
+  fi
+  
   echo "📦 Instalando dependencias Front-End..."
   if cd Front-End && npm install --legacy-peer-deps || npm install --force; then
     cd ..
@@ -37,20 +45,28 @@ function setup() {
     exit 1
   fi
   
-  echo "🐍 Configurando entorno virtual para Back-End..."
+  echo "🐍 Configurando entorno virtual para Back-End con Python 3.12..."
   if cd Back-End; then
+    # Respaldar entorno virtual anterior si existe
+    if [ -d "venv" ] && [ ! -d "venv_backup" ]; then
+      echo "  • Respaldando entorno virtual anterior..."
+      mv venv venv_backup_$(date +%Y%m%d_%H%M%S)
+    fi
+    
     if [ ! -d "venv" ]; then
-      echo "  • Creando entorno virtual..."
-      python3 -m venv venv
+      echo "  • Creando entorno virtual con Python 3.12..."
+      /opt/homebrew/bin/python3.12 -m venv venv
     fi
     echo "  • Activando entorno virtual..."
     source venv/bin/activate
+    echo "  • Actualizando pip..."
+    pip install --upgrade pip
     echo "  • Instalando dependencias..."
     if [ -f requirements.txt ]; then
       pip install -r requirements.txt
     fi
     cd ..
-    echo "✅ Dependencias Back-End instaladas en entorno virtual"
+    echo "✅ Dependencias Back-End instaladas en entorno virtual con Python 3.12"
   else
     echo "❌ Error accediendo al directorio Back-End"
     exit 1
@@ -58,6 +74,43 @@ function setup() {
   
   
   echo "✅ Configuración completada"
+}
+
+function update_venv() {
+  echo "🔄 Actualizando entorno virtual a Python 3.12..."
+  
+  # Detener procesos de uvicorn si están corriendo
+  echo "⏹️  Deteniendo procesos de uvicorn..."
+  pkill -f "uvicorn app.main:app" || true
+  sleep 2
+  
+  # Respaldar el entorno virtual actual
+  if [ -d "Back-End/venv" ]; then
+    echo "💾 Respaldando entorno virtual actual..."
+    mv Back-End/venv Back-End/venv_backup_$(date +%Y%m%d_%H%M%S)
+  fi
+  
+  # Crear nuevo entorno virtual con Python 3.12
+  echo "🐍 Creando nuevo entorno virtual con Python 3.12..."
+  cd Back-End
+  /opt/homebrew/bin/python3.12 -m venv venv
+  
+  # Activar el nuevo entorno
+  echo "🔧 Activando entorno virtual..."
+  source venv/bin/activate
+  
+  # Actualizar pip
+  echo "⬆️  Actualizando pip..."
+  pip install --upgrade pip
+  
+  # Instalar dependencias
+  echo "📦 Instalando dependencias..."
+  pip install -r requirements.txt
+  
+  cd ..
+  echo "✅ ¡Entorno virtual actualizado exitosamente!"
+  echo "🚀 Para iniciar el servidor:"
+  echo "   ./Run.sh local"
 }
 
 function setup_atlas() {
@@ -236,10 +289,11 @@ EOF
   
   # Verificar dependencias del backend
   if [ ! -d "Back-End/venv" ]; then
-    echo "🐍 Configurando entorno virtual para Back-End..."
+    echo "🐍 Configurando entorno virtual para Back-End con Python 3.12..."
     cd Back-End
-    python3 -m venv venv
+    /opt/homebrew/bin/python3.12 -m venv venv
     source venv/bin/activate
+    pip install --upgrade pip
     pip install -r requirements.txt
     cd ..
   fi
@@ -248,12 +302,40 @@ EOF
   # Iniciar MongoDB local
   echo "🗄️  Iniciando MongoDB local..."
   if ! pgrep -f mongod > /dev/null; then
+    echo "  • Iniciando MongoDB..."
     brew services start mongodb/brew/mongodb-community
     echo "⏳ Esperando que MongoDB esté listo..."
-    sleep 5
-    echo "✅ MongoDB iniciado en puerto 27017"
+    sleep 8
+    
+    # Verificar que MongoDB esté respondiendo
+    echo "  • Verificando conexión a MongoDB..."
+    for i in {1..10}; do
+      if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+        echo "✅ MongoDB iniciado y respondiendo en puerto 27017"
+        break
+      else
+        echo "  ⏳ Intento $i/10: MongoDB aún no responde..."
+        sleep 2
+      fi
+    done
+    
+    # Verificar una vez más
+    if ! mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+      echo "❌ MongoDB no responde después de 10 intentos"
+      echo "   Verifica que MongoDB esté instalado correctamente:"
+      echo "   brew tap mongodb/brew && brew install mongodb-community"
+      exit 1
+    fi
   else
     echo "✅ MongoDB ya está corriendo"
+    # Verificar que esté respondiendo
+    if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+      echo "✅ MongoDB respondiendo correctamente"
+    else
+      echo "⚠️  MongoDB está corriendo pero no responde. Reiniciando..."
+      brew services restart mongodb/brew/mongodb-community
+      sleep 5
+    fi
   fi
   
   # Verificar si el puerto 8000 ya está en uso
@@ -266,14 +348,15 @@ EOF
   fi
   
   # Iniciar backend local
-  echo "🔧 Iniciando Backend (Back-End) en puerto 8000..."
+  echo "🔧 Iniciando Backend (Back-End) en puerto 8000 con Python 3.12..."
   cd Back-End
   if [ ! -d "venv" ]; then
-    echo "  • Creando entorno virtual..."
-    python3 -m venv venv
+    echo "  • Creando entorno virtual con Python 3.12..."
+    /opt/homebrew/bin/python3.12 -m venv venv
   fi
   if [ -f requirements.txt ]; then
     echo "  • Asegurando dependencias en venv..."
+    ./venv/bin/python -m pip install --upgrade pip >/dev/null 2>&1
     ./venv/bin/python -m pip install -r requirements.txt >/dev/null 2>&1 || ./venv/bin/python -m pip install -r requirements.txt
   fi
   ./venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
@@ -372,10 +455,11 @@ EOF
   fi
 
   if [ ! -d "Back-End/venv" ]; then
-    echo "🐍 Configurando entorno virtual para Back-End..."
+    echo "🐍 Configurando entorno virtual para Back-End con Python 3.12..."
     cd Back-End
-    python3 -m venv venv
+    /opt/homebrew/bin/python3.12 -m venv venv
     source venv/bin/activate
+    pip install --upgrade pip
     if [ -f requirements.txt ]; then
       pip install -r requirements.txt
     else
@@ -386,9 +470,40 @@ EOF
 
   echo "🗄️  Asegurando MongoDB local..."
   if ! pgrep -f mongod > /dev/null; then
+    echo "  • Iniciando MongoDB..."
     brew services start mongodb/brew/mongodb-community
     echo "⏳ Esperando que MongoDB esté listo..."
-    sleep 5
+    sleep 8
+    
+    # Verificar que MongoDB esté respondiendo
+    echo "  • Verificando conexión a MongoDB..."
+    for i in {1..10}; do
+      if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+        echo "✅ MongoDB iniciado y respondiendo en puerto 27017"
+        break
+      else
+        echo "  ⏳ Intento $i/10: MongoDB aún no responde..."
+        sleep 2
+      fi
+    done
+    
+    # Verificar una vez más
+    if ! mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+      echo "❌ MongoDB no responde después de 10 intentos"
+      echo "   Verifica que MongoDB esté instalado correctamente:"
+      echo "   brew tap mongodb/brew && brew install mongodb-community"
+      exit 1
+    fi
+  else
+    echo "✅ MongoDB ya está corriendo"
+    # Verificar que esté respondiendo
+    if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+      echo "✅ MongoDB respondiendo correctamente"
+    else
+      echo "⚠️  MongoDB está corriendo pero no responde. Reiniciando..."
+      brew services restart mongodb/brew/mongodb-community
+      sleep 5
+    fi
   fi
 
   if lsof -Pi :8001 -sTCP:LISTEN -t >/dev/null ; then
@@ -399,14 +514,15 @@ EOF
     sleep 2
   fi
 
-  echo "🔧 Iniciando Backend nuevo en puerto 8001..."
+  echo "🔧 Iniciando Backend nuevo en puerto 8001 con Python 3.12..."
   cd Back-End
   if [ ! -d "venv" ]; then
-    echo "  • Creando entorno virtual..."
-    python3 -m venv venv
+    echo "  • Creando entorno virtual con Python 3.12..."
+    /opt/homebrew/bin/python3.12 -m venv venv
   fi
   if [ -f requirements.txt ]; then
     echo "  • Asegurando dependencias en venv..."
+    ./venv/bin/python -m pip install --upgrade pip >/dev/null 2>&1
     ./venv/bin/python -m pip install -r requirements.txt >/dev/null 2>&1 || ./venv/bin/python -m pip install -r requirements.txt
   fi
   if [ -f app/main.py ]; then
@@ -567,6 +683,7 @@ function help() {
   echo " Configuración:"
   echo "  setup        - Instala dependencias del sistema"
   echo "  setup-atlas  - Configura MongoDB Atlas"
+  echo "  update-venv  - Actualiza entorno virtual a Python 3.12"
   echo ""
   echo " Inicio:"
   echo "  local        - Inicia servicios en LOCAL (MongoDB local)"
@@ -591,6 +708,7 @@ function help() {
   echo " Ejemplos de uso:"
   echo "  ./Run.sh setup        # Primera vez - instalar todo"
   echo "  ./Run.sh setup-atlas  # Configurar MongoDB Atlas"
+  echo "  ./Run.sh update-venv  # Actualizar a Python 3.12"
   echo "  ./Run.sh local        # Iniciar todo en LOCAL"
   echo "  ./Run.sh docker       # Iniciar con Docker (MongoDB local)"
   echo "  ./Run.sh docker-atlas # Iniciar con Docker + MongoDB Atlas"
@@ -614,6 +732,9 @@ case "$1" in
     ;;
   setup-atlas)
     setup_atlas
+    ;;
+  update-venv)
+    update_venv
     ;;
   local)
     start_local

@@ -1,14 +1,14 @@
 // Patient form state/validation composable
 import { ref, reactive } from 'vue'
-import type { PatientData, PatientFormErrors, PatientFormWarnings, ValidationState } from '../types'
+import type { ValidationState } from '../types'
 
 export function usePatientForm() {
-  const formData = reactive<PatientData>({ patientCode: '', name: '', gender: '', age: '', entity: '', careType: '', observations: '' })
+  const formData = reactive<any>({ patientCode: '', name: '', gender: '', age: '', entity: '', careType: '', observations: '' })
 
   const validationState = reactive<ValidationState>({ hasAttemptedSubmit: false, isValidating: false, showValidationError: false })
 
-  const errors = reactive<PatientFormErrors>({ patientCode: [], name: [], age: [] })
-  const warnings = reactive<PatientFormWarnings>({ patientCode: [], age: [] })
+  const errors = reactive<any>({ patientCode: [], name: [], age: [] })
+  const warnings = reactive<any>({ patientCode: [], age: [] })
   const isLoading = ref(false)
 
   // Field validations
@@ -60,7 +60,7 @@ export function usePatientForm() {
       return false
     }
     
-    const palabras = nombre.split(/\s+/).filter(p => p.length > 0)
+    const palabras = nombre.split(/\s+/).filter((p: string) => p.length > 0)
     if (palabras.length < 2) {
       errors.name.push('Ingrese el nombre completo (nombre y apellido)')
       return false
@@ -100,7 +100,7 @@ export function usePatientForm() {
     return true
   }
 
-  const validateRequiredFields = (): boolean => ['gender', 'entity', 'careType'].every(field => formData[field as keyof PatientData])
+  const validateRequiredFields = (): boolean => ['gender', 'entity', 'careType'].every(field => formData[field as keyof any])
 
   const validateForm = (): boolean => {
     validationState.hasAttemptedSubmit = true
@@ -134,15 +134,15 @@ export function usePatientForm() {
   }
 
   const clearValidationErrors = (): void => {
-    Object.keys(errors).forEach(key => (errors[key as keyof PatientFormErrors] = []))
-    Object.keys(warnings).forEach(key => (warnings[key as keyof PatientFormWarnings] = []))
+    Object.keys(errors).forEach(key => (errors[key as keyof any] = []))
+    Object.keys(warnings).forEach(key => (warnings[key as keyof any] = []))
   }
 
   const clearValidationState = (): void => { validationState.hasAttemptedSubmit = false; validationState.showValidationError = false; validationState.isValidating = false }
 
   // Reset form and validation
   const clearForm = (): void => {
-    Object.keys(formData).forEach(key => (formData[key as keyof PatientData] = ''))
+    Object.keys(formData).forEach(key => (formData[key as keyof any] = ''))
     clearValidationErrors(); clearValidationState()
   }
 

@@ -34,7 +34,7 @@ export class PathologistApiService {
       email: pathologist.pathologist_email || '',
       medicalLicense: pathologist.medical_license || 'N/A',
       isActive: pathologist.is_active ?? true
-    }
+    } as any
   }
 
   // Map list

@@ -2,7 +2,7 @@
   <!-- Create a new case: verify patient, fill case form, review summary -->
   <ComponentCard title="Crear nuevo caso" description="Complete la información del caso para ingresarlo al sistema.">
     <template #icon>
-      <DocumentIcon class="w-5 h-5 mr-2" />
+      <DocumentIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
     
     <div class="space-y-6">
@@ -10,7 +10,7 @@
       <!-- Patient verification section -->
       <div class="bg-gray-50 rounded-lg p-3 sm:p-4 lg:p-6 border border-gray-200">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-          <SearchIcon class="w-4 h-4 mr-2 text-gray-500" />
+          <UserSearchIcon class="w-4 h-4 mr-2 text-gray-500" />
         Buscar paciente
         </h3>
         
@@ -44,12 +44,12 @@
           <!-- Key patient data -->
           <div class="bg-white border border-green-200 rounded-lg shadow-sm p-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div class="space-y-1"><p class="text-gray-600 font-medium">Nombre</p><p class="text-gray-900 break-words font-semibold">{{ verifiedPatient.name }}</p></div>
-              <div class="space-y-1"><p class="text-gray-600 font-medium">Documento</p><p class="text-gray-900 font-mono font-semibold">{{ verifiedPatient.patientCode }}</p></div>
-              <div class="space-y-1"><p class="text-gray-600 font-medium">Edad</p><p class="text-gray-900 font-semibold">{{ verifiedPatient.age }} años</p></div>
-              <div class="space-y-1"><p class="text-gray-600 font-medium">Sexo</p><p class="text-gray-900 font-semibold capitalize">{{ verifiedPatient.gender }}</p></div>
-              <div class="space-y-1"><p class="text-gray-600 font-medium">Tipo de Atención</p><p class="text-gray-900 font-semibold capitalize">{{ verifiedPatient.careType }}</p></div>
-              <div class="space-y-1"><p class="text-gray-600 font-medium">Entidad</p><p class="text-gray-900 break-words font-semibold">{{ verifiedPatient.entity }}</p></div>
+              <div class="space-y-1"><p class="text-gray-600 font-medium">Nombre</p><p class="text-gray-900 break-words font-semibold">{{ (verifiedPatient as any).name }}</p></div>
+              <div class="space-y-1"><p class="text-gray-600 font-medium">Documento</p><p class="text-gray-900 font-mono font-semibold">{{ (verifiedPatient as any).patientCode }}</p></div>
+              <div class="space-y-1"><p class="text-gray-600 font-medium">Edad</p><p class="text-gray-900 font-semibold">{{ (verifiedPatient as any).age }} años</p></div>
+              <div class="space-y-1"><p class="text-gray-600 font-medium">Sexo</p><p class="text-gray-900 font-semibold capitalize">{{ (verifiedPatient as any).gender }}</p></div>
+              <div class="space-y-1"><p class="text-gray-600 font-medium">Tipo de Atención</p><p class="text-gray-900 font-semibold capitalize">{{ (verifiedPatient as any).careType }}</p></div>
+              <div class="space-y-1"><p class="text-gray-600 font-medium">Entidad</p><p class="text-gray-900 break-words font-semibold">{{ (verifiedPatient as any).entity }}</p></div>
             </div>
           </div>
         </div>
@@ -83,17 +83,17 @@
         <!-- Samples details -->
         <div class="space-y-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-            <TestIcon class="w-5 h-5 mr-2 text-blue-600" />
+            <TaskIcon class="w-5 h-5 mr-2 text-blue-600" />
             Información de Submuestras
           </h3>
           
           <div class="space-y-6">
-            <div v-for="(sample, sampleIndex) in formData.samples" :key="sample.number" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ sample.number }}</h4>
+            <div v-for="(sample, sampleIndex) in formData.samples" :key="(sample as any).number" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ (sample as any).number }}</h4>
               
               <!-- Body region per sample -->
               <div class="mb-4">
-                <BodyRegionList v-model="sample.bodyRegion" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" :auto-load="true" :errors="getRegionErrors(sampleIndex)" help-text="Seleccione la región anatómica de donde proviene la muestra" />
+                <BodyRegionList v-model="(sample as any).bodyRegion" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" :auto-load="true" :errors="getRegionErrors(sampleIndex)" help-text="Seleccione la región anatómica de donde proviene la muestra" />
               </div>
               
               <!-- Tests per sample -->
@@ -106,9 +106,9 @@
                 </div>
                 
                 <div class="space-y-2">
-                  <div v-for="(test, testIndex) in sample.tests" :key="testIndex" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
+                  <div v-for="(test, testIndex) in (sample as any).tests" :key="testIndex" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
                     <div class="flex-1 min-w-0">
-                      <TestList v-model="test.code" :label="`Prueba #${testIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${testIndex + 1}...`" :required="true" :auto-load="true" :errors="getPruebaErrors(sampleIndex, testIndex)" @test-selected="(t)=>onTestSelected(sampleIndex, testIndex, t)" />
+                      <TestList v-model="test.code" :label="`Prueba #${testIndex + 1}`" :placeholder="`Buscar y seleccionar prueba ${testIndex + 1}...`" :required="true" :auto-load="true" :errors="getPruebaErrors(sampleIndex, testIndex)" @test-selected="(t: any)=>onTestSelected(sampleIndex, testIndex, t)" />
                     </div>
                     <div class="w-full sm:w-24">
                       <FormInputField v-model.number="test.quantity" label="Cantidad" type="number" :min="1" placeholder="Cantidad" />
@@ -149,7 +149,7 @@
                 <div class="text-center pb-3 border-b border-gray-200 relative">
                   <div class="inline-block">
                     <div class="relative inline-block">
-                      <p class="font-mono font-bold text-2xl text-gray-900 mb-1">{{ createdCase.code }}</p>
+                      <p class="font-mono font-bold text-2xl text-gray-900 mb-1">{{ (createdCase as any)?.codigo }}</p>
                       <button @click="copyCaseCode" class="absolute -right-10 top-1/2 transform -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors duración-200" title="Copiar código del caso">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
@@ -165,11 +165,11 @@
                   <div>
                     <h4 class="font-semibold text-gray-800 mb-3 text-base">Información del Paciente</h4>
                     <div class="space-y-2 text-sm">
-                      <div><span class="text-gray-500 font-medium">Nombre:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.name || verifiedPatient?.name }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Documento:</span><p class="text-gray-900 font-mono font-semibold">{{ createdCase.patient?.patient_code || verifiedPatient?.patientCode || 'NO DISPONIBLE' }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Edad:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.age || verifiedPatient?.age }} años</p></div>
+                      <div><span class="text-gray-500 font-medium">Nombre:</span><p class="text-gray-900 font-semibold">{{ (() => { console.log('🔍 [LOG NOTIFICATION] createdCase:', createdCase); console.log('🔍 [LOG NOTIFICATION] createdCase.paciente:', (createdCase as any)?.paciente); console.log('🔍 [LOG NOTIFICATION] createdCase.paciente.name:', (createdCase as any)?.paciente?.name); return (createdCase as any)?.paciente?.name || (verifiedPatient as any)?.name || 'No disponible'; })() }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Documento:</span><p class="text-gray-900 font-mono font-semibold">{{ (createdCase as any)?.paciente?.patient_code || (createdCase as any)?.paciente?.patientCode || (verifiedPatient as any)?.patientCode || 'NO DISPONIBLE' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Edad:</span><p class="text-gray-900 font-semibold">{{ (createdCase as any)?.paciente?.age || (verifiedPatient as any)?.age || 'No disponible' }} años</p></div>
                       <div><span class="text-gray-500 font-medium">Sexo:</span><p class="text-gray-900 font-semibold">{{ genderDisplay }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Entidad:</span><p class="text-gray-900 font-semibold">{{ createdCase.patient?.entity || verifiedPatient?.entity }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Entidad:</span><p class="text-gray-900 font-semibold">{{ (createdCase as any)?.paciente?.entity || (verifiedPatient as any)?.entity || 'No disponible' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Tipo de Atención:</span><p class="text-gray-900 font-semibold">{{ careTypeDisplay }}</p></div>
                     </div>
                   </div>
@@ -179,10 +179,10 @@
                     <div class="space-y-2 text-sm">
                       <div><span class="text-gray-500 font-medium">Estado:</span><p class="text-gray-900 font-semibold">{{ stateDisplay }}</p></div>
                       <div><span class="text-gray-500 font-medium">Prioridad:</span><p class="text-gray-900 font-semibold">{{ priorityDisplay }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ createdCase.requestingPhysician || formData.requestingPhysician || 'No especificado' }}</p></div>
-                      <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ createdCase.service || formData.service || 'No especificado' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Médico Solicitante:</span><p class="text-gray-900 font-semibold">{{ (createdCase as any)?.requestingPhysician || (createdCase as any)?.medicoSolicitante || (formData as any)?.requestingPhysician || 'No especificado' }}</p></div>
+                      <div><span class="text-gray-500 font-medium">Servicio:</span><p class="text-gray-900 font-semibold">{{ (createdCase as any)?.service || (createdCase as any)?.servicio || (formData as any)?.service || 'No especificado' }}</p></div>
                       <div><span class="text-gray-500 font-medium">Número de Submuestras:</span><p class="text-gray-900 font-semibold">{{ getMuestrasForNotification().length }}</p></div>
-                      <div v-if="createdCase.observations || formData.observations"><span class="text-gray-500 font-medium">Observaciones:</span><p class="text-gray-900">{{ createdCase.observations || formData.observations }}</p></div>
+                      <div v-if="(createdCase as any)?.observations || (createdCase as any)?.observaciones || (formData as any)?.observations"><span class="text-gray-500 font-medium">Observaciones:</span><p class="text-gray-900">{{ (createdCase as any)?.observations || (createdCase as any)?.observaciones || (formData as any)?.observations }}</p></div>
                     </div>
                   </div>
                 </div>
@@ -198,7 +198,7 @@
                       </div>
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                         <div><span class="text-gray-500 font-medium">Región:</span><p class="text-gray-900">{{ sample.bodyRegion || 'Sin especificar' }}</p></div>
-                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="sample.tests && sample.tests.length > 0">{{ sample.tests.map((t: any) => `${t.name || t.code || 'Sin código'} (${t.quantity || 1})`).join(', ') }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
+                        <div><span class="text-gray-500 font-medium">Pruebas:</span><div class="text-gray-900"><span v-if="sample.tests && sample.tests.length > 0">{{ sample.tests.map((t: any) => `${t.name || t.nombre || t.pruebasName || t.code || 'Sin nombre'} (${t.quantity || 1})`).join(', ') }}</span><span v-else class="text-gray-400">Sin pruebas</span></div></div>
                       </div>
                     </div>
                   </div>
@@ -224,7 +224,7 @@ import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/fo
 import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList, TestList, BodyRegionList } from '@/shared/components/List'
-import { DocumentIcon, TestIcon, SearchIcon } from '@/assets/icons'
+import { DocumentIcon, TaskIcon, UserSearchIcon } from '@/assets/icons'
 
 // DOM refs and emitted events
 const notificationContainer = ref<HTMLElement | null>(null)
@@ -262,16 +262,24 @@ const validationErrors = computed(() => {
     { value: formData.patientCareType, name: 'Tipo de atención' }
   ]
   const list: string[] = []
-  fields.forEach(f => !f.value && list.push(f.name))
-  formData.samples?.forEach((sample, i) => {
-    if (!sample.bodyRegion) list.push(`Submuestra ${i + 1}: Región del cuerpo`)
-    if (!sample.tests?.length) list.push(`Submuestra ${i + 1}: Al menos una prueba`)
-    sample.tests?.forEach((test, j) => {
-      if (!test.code) list.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Código de prueba`)
-      if (!test.quantity || test.quantity < 1) list.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Cantidad`)
-    })
+  fields.forEach((f: any) => { 
+    if (!f.value) list.push(f.name) 
   })
-  errors.samples?.forEach(e => list.push(`Submuestras: ${e}`))
+  const samples = formData.samples as any
+  if (samples) {
+    samples.forEach((sample: any, i: number) => {
+      if (!(sample as any).bodyRegion) list.push(`Submuestra ${i + 1}: Región del cuerpo`)
+      if (!(sample as any).tests?.length) list.push(`Submuestra ${i + 1}: Al menos una prueba`)
+      const tests = (sample as any).tests
+      if (tests && Array.isArray(tests)) {
+        tests.forEach((test: any, j: number) => {
+          if (!test.code) list.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Código de prueba`)
+          if (!test.quantity || test.quantity < 1) list.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Cantidad`)
+        })
+      }
+    })
+  }
+  errors.samples?.forEach((e: string) => list.push(`Submuestras: ${e}`))
   return list
 })
 
@@ -290,15 +298,15 @@ const getServicioErrors = computed(() => {
 })
 const getRegionErrors = (sampleIndex: number) => {
   if (!validationState.hasAttemptedSubmit) return [] as string[]
-  const sample = formData.samples[sampleIndex]
-  if (!sample || !sample.bodyRegion?.trim()) return ['La región del cuerpo es obligatoria']
+  const sample = (formData.samples as any)[sampleIndex]
+  if (!sample || !(sample as any).bodyRegion?.trim()) return ['La región del cuerpo es obligatoria']
   return [] as string[]
 }
 const getPruebaErrors = (sampleIndex: number, testIndex: number) => {
   if (!validationState.hasAttemptedSubmit) return [] as string[]
-  const sample = formData.samples[sampleIndex]
+  const sample = (formData.samples as any)[sampleIndex]
   if (!sample) return ['Debe seleccionar una prueba']
-  const test = sample.tests[testIndex]
+  const test = (sample as any).tests[testIndex]
   if (!test || !String(test.code || '').trim()) return ['El código de la prueba es obligatorio']
   if (test.quantity == null || Number(test.quantity) < 1) return ['La cantidad debe ser al menos 1']
   return [] as string[]
@@ -306,7 +314,7 @@ const getPruebaErrors = (sampleIndex: number, testIndex: number) => {
 
 // Friendly date/time rendering for the created case banner
 const createdDateDisplay = computed(() => {
-  const value = createdCase.value?.entryDate || formData.entryDate
+  const value = (createdCase.value as any)?.fechaIngreso || formData.entryDate
   if (!value) return ''
   const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(String(value))
   const date = new Date(isDateOnly ? `${value}T00:00:00` : String(value))
@@ -317,12 +325,17 @@ const createdDateDisplay = computed(() => {
 
 // Normalize samples for notification (merge backend and form)
 const getMuestrasForNotification = () => {
-  const backendSamples = createdCase.value?.samples || []
-  const formSamples = formData.samples || []
+  const backendSamples = (createdCase.value as any)?.samples || (createdCase.value as any)?.muestras || []
+  const formSamples = (formData.samples as any) || []
   return !backendSamples.length ? formSamples : backendSamples.map((s: any, i: number) => ({
     ...s,
-    bodyRegion: s.bodyRegion || s.body_region || formSamples[i]?.bodyRegion || 'Sin especificar',
-    tests: (s.tests || []).map((t: any, ti: number) => ({ ...t, quantity: t.quantity || formSamples[i]?.tests?.[ti]?.quantity || 1 }))
+    bodyRegion: s.bodyRegion || s.regionCuerpo || formSamples[i]?.bodyRegion || 'Sin especificar',
+    tests: (s.tests || s.pruebas || []).map((t: any, ti: number) => ({ 
+      ...t, 
+      quantity: t.quantity || t.cantidad || formSamples[i]?.tests?.[ti]?.quantity || 1,
+      name: t.name || t.nombre || t.pruebasName || t.code || 'Sin nombre',
+      code: t.code || t.pruebaCode || 'Sin código'
+    }))
   }))
 }
 
@@ -338,11 +351,11 @@ const searchPatient = async () => {
 }
 
 // Prefill entity and care type from verified patient
-const updateFormDataWithPatient = (patientData: PatientData) => {
-  const careType = String(patientData.careType || '').toLowerCase()
+const updateFormDataWithPatient = (patientData: any) => {
+  const careType = String((patientData as any).careType || '').toLowerCase()
   Object.assign(formData, {
-    patientDocument: patientData.patientCode,
-    patientEntity: patientData.entityCode || '',
+    patientDocument: (patientData as any).patientCode || '',
+    patientEntity: (patientData as any).entityCode || '',
     patientCareType: careType.includes('ambulator') || careType === 'ambulatorio' ? 'Ambulatorio' : careType.includes('hospital') || careType === 'hospitalizado' ? 'Hospitalizado' : ''
   })
 }
@@ -370,17 +383,17 @@ const translateCareType = (value: any): string => {
 }
 
 // Displays for notification dialog
-const stateDisplay = computed(() => translateCaseState((createdCase.value?.state as any) || 'In process'))
-const priorityDisplay = computed(() => translateCasePriority((createdCase.value?.priority as any) || (formData.casePriority as any) || 'Normal'))
-const genderDisplay = computed(() => translateGender((createdCase.value?.patient?.gender as any) || (verifiedPatient.value?.gender as any)))
-const careTypeDisplay = computed(() => translateCareType((createdCase.value?.patient?.careType as any) || (verifiedPatient.value?.careType as any)))
+const stateDisplay = computed(() => translateCaseState((createdCase.value as any)?.state || (createdCase.value as any)?.estado || 'In process'))
+const priorityDisplay = computed(() => translateCasePriority((createdCase.value as any)?.priority || (createdCase.value as any)?.prioridad || (formData.casePriority as any) || 'Normal'))
+const genderDisplay = computed(() => translateGender((createdCase.value as any)?.paciente?.gender || (createdCase.value as any)?.paciente?.sexo || (verifiedPatient.value as any)?.gender))
+const careTypeDisplay = computed(() => translateCareType((createdCase.value as any)?.paciente?.careType || (createdCase.value as any)?.paciente?.tipoAtencion || (verifiedPatient.value as any)?.careType))
 
 // Clear fields when resetting patient verification
 const clearPatientFormData = () => { Object.assign(formData, { patientDocument: '', patientEntity: '', patientCareType: '', casePriority: 'Normal', service: '' }) }
 const clearPatientVerification = () => { clearVerification(); pacienteCodeBusqueda.value = ''; clearPatientFormData() }
 
 // Handle new patient created elsewhere
-const handleNewPatient = (patientData: PatientData) => { useNewPatient(patientData); pacienteCodeBusqueda.value = patientData.patientCode; updateFormDataWithPatient(patientData); emit('patient-verified', patientData) }
+const handleNewPatient = (patientData: any) => { useNewPatient(patientData); pacienteCodeBusqueda.value = (patientData as any).patientCode || ''; updateFormDataWithPatient(patientData); emit('patient-verified', patientData) }
 
 // Auto-scroll to notification when visible
 const scrollToNotification = async () => { await nextTick(); if (notificationContainer.value) notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
@@ -388,8 +401,8 @@ watch(() => notification.visible, (v) => { if (v) scrollToNotification() })
 
 // Copy created case code to clipboard
 const copyCaseCode = async () => {
-  if (!createdCase.value?.code) return
-  const code = createdCase.value.code
+  if (!(createdCase.value as any)?.codigo) return
+  const code = (createdCase.value as any).codigo
   const message = `El código ${code} se ha copiado al portapapeles.`
   try { await navigator.clipboard.writeText(code); showNotification('success', 'Código copiado', message, 3000) }
   catch { const t = document.createElement('textarea'); t.value = code; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); showNotification('success', 'Código copiado', message, 3000) }
@@ -405,10 +418,26 @@ const handleSaveClick = async () => {
   if (!patientVerified.value || !verifiedPatient.value) { showNotification('error', 'Paciente Requerido', 'Debe buscar y verificar un paciente antes de crear el caso.', 5000); return }
   validationState.showValidationError = false
   clearState()
+  
+  // LOG: Datos que se van a enviar
+  console.log('🔍 [LOG] Datos del formulario (formData):', JSON.stringify(formData, null, 2))
+  console.log('🔍 [LOG] Paciente verificado (verifiedPatient):', JSON.stringify(verifiedPatient.value, null, 2))
+  
   try {
-    const result = await createCase(formData, verifiedPatient.value)
+    const result = await createCase(formData as any, verifiedPatient.value)
+    
+    // LOG: Resultado del caso creado
+    console.log('🔍 [LOG] Resultado del createCase:', JSON.stringify(result, null, 2))
+    if (result.case) {
+      console.log('🔍 [LOG] Caso creado (result.case):', JSON.stringify(result.case, null, 2))
+    }
+    
     if (result.success && result.case) {
-      createdCase.value = result.case
+      createdCase.value = result.case as any
+      
+      // LOG: Caso asignado a createdCase
+      console.log('🔍 [LOG] createdCase.value asignado:', JSON.stringify(createdCase.value, null, 2))
+      
       showNotification('success', '¡Caso Creado Exitosamente!', '', 0)
       emit('case-saved', result.case)
       try { window.dispatchEvent(new CustomEvent('case-created')) } catch {}
@@ -417,6 +446,7 @@ const handleSaveClick = async () => {
       throw new Error(result.message || 'Error desconocido al crear el caso')
     }
   } catch (error: any) {
+    console.error('❌ [ERROR] Error al crear caso:', error)
     showNotification('error', 'Error al Guardar Caso', apiError.value || error.message || 'No se pudo guardar el caso. Por favor, inténtelo nuevamente.', 0)
   }
 }
@@ -424,9 +454,9 @@ const handleSaveClick = async () => {
 // Update selected test for a given sample/test index
 const onTestSelected = (sampleIndex: number, testIndex: number, test: any) => {
   if (!test) return
-  const sample = formData.samples?.[sampleIndex]
+  const sample = (formData.samples as any)?.[sampleIndex]
   if (!sample) return
-  const t = sample.tests?.[testIndex]
+  const t = (sample as any).tests?.[testIndex]
   if (!t) return
   t.code = test.pruebaCode || test.code || ''
   t.name = test.pruebasName || test.nombre || test.label || ''

@@ -31,13 +31,13 @@ export function usePatientVerification() {
       careType: tipoAtencionForm as any,
       observations: apiPatient.observations || apiPatient.observaciones || '',
       code: apiPatient._id || apiPatient.id
-    }
+    } as any
   }
   const searchPatientByDocumento = async (documento: string) => {
     isSearching.value = true
     searchError.value = ''
     try {
-      const apiPatient = await patientsApiService.getPatientByDocumento(documento)
+      const apiPatient = await (patientsApiService as any).getPatientByDocumento(documento)
       patientVerified.value = !!apiPatient
       verifiedPatient.value = apiPatient ? transformApiPatientToFormData(apiPatient) : null
       return { found: !!apiPatient, patient: verifiedPatient.value }

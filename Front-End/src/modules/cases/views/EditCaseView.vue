@@ -8,7 +8,7 @@
           description="Actualice la información del caso existente."
         >
           <template #icon>
-            <DocumentOutlinedIcon class="w-5 h-5 mr-2" />
+            <DocumentIcon class="w-5 h-5 mr-2 text-blue-600" />
           </template>
           <EditCaseForm 
             :case-code-prop="caseCodeFromRoute"
@@ -40,7 +40,7 @@ import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { AdminLayout } from '@/shared'
 import { PageBreadcrumb, ComponentCard } from '@/shared/components/common'
-import { DocumentOutlinedIcon, EditUserIcon } from '@/assets/icons'
+import { DocumentIcon, EditUserIcon } from '@/assets/icons'
 import { EditCaseForm, EditPatientForm } from '../components'
 import type { CaseModel, PatientData } from '../types'
 

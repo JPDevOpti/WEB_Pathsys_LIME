@@ -57,27 +57,27 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Nombre</p>
-                  <p class="text-gray-900 break-words font-semibold">{{ foundCaseInfo.patient_info?.name || (foundCaseInfo as any)?.paciente?.nombre || 'N/A' }}</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ (foundCaseInfo as any)?.patient_info?.name || (foundCaseInfo as any)?.paciente?.nombre || 'N/A' }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Código</p>
-                  <p class="text-gray-900 font-mono font-semibold">{{ foundCaseInfo.patient_info?.patient_code || (foundCaseInfo as any)?.paciente?.paciente_code || 'N/A' }}</p>
+                  <p class="text-gray-900 font-mono font-semibold">{{ (foundCaseInfo as any)?.patient_info?.patient_code || (foundCaseInfo as any)?.paciente?.paciente_code || 'N/A' }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Edad</p>
-                  <p class="text-gray-900 font-semibold">{{ (foundCaseInfo.patient_info?.age ?? (foundCaseInfo as any)?.paciente?.edad ?? 'N/A') + (foundCaseInfo.patient_info?.age || (foundCaseInfo as any)?.paciente?.edad ? ' años' : '') }}</p>
+                  <p class="text-gray-900 font-semibold">{{ ((foundCaseInfo as any)?.patient_info?.age ?? (foundCaseInfo as any)?.paciente?.edad ?? 'N/A') + ((foundCaseInfo as any)?.patient_info?.age || (foundCaseInfo as any)?.paciente?.edad ? ' años' : '') }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Sexo</p>
-                  <p class="text-gray-900 font-semibold capitalize">{{ translateGender(foundCaseInfo.patient_info?.gender || (foundCaseInfo as any)?.paciente?.sexo) }}</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ translateGender((foundCaseInfo as any)?.patient_info?.gender || (foundCaseInfo as any)?.paciente?.sexo) }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Tipo de Atención</p>
-                  <p class="text-gray-900 font-semibold capitalize">{{ translateCareType(foundCaseInfo.patient_info?.care_type || (foundCaseInfo as any)?.paciente?.tipo_atencion) }}</p>
+                  <p class="text-gray-900 font-semibold capitalize">{{ translateCareType((foundCaseInfo as any)?.patient_info?.care_type || (foundCaseInfo as any)?.paciente?.tipo_atencion) }}</p>
                 </div>
                 <div class="space-y-1">
                   <p class="text-gray-600 font-medium">Entidad</p>
-                  <p class="text-gray-900 break-words font-semibold">{{ (foundCaseInfo.patient_info?.entity_info as any)?.name || (foundCaseInfo as any)?.paciente?.entidad_info?.nombre || (foundCaseInfo as any)?.entidad_info?.nombre || 'N/A' }}</p>
+                  <p class="text-gray-900 break-words font-semibold">{{ ((foundCaseInfo as any)?.patient_info?.entity_info as any)?.name || (foundCaseInfo as any)?.paciente?.entidad_info?.nombre || (foundCaseInfo as any)?.entidad_info?.nombre || 'N/A' }}</p>
                 </div>
                 <div class="space-y-1 sm:col-span-2">
                   <p class="text-gray-600 font-medium">Estado del Caso</p>
@@ -185,11 +185,11 @@
           </h3>
           
           <div class="space-y-6">
-            <div v-for="(sample, sampleIndex) in formData.samples" :key="sample.number + '-' + resetKey" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ sample.number }}</h4>
+            <div v-for="(sample, sampleIndex) in formData.samples" :key="(sample as any).number + '-' + resetKey" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <h4 class="font-medium text-gray-700 mb-4">Submuestra #{{ (sample as any).number }}</h4>
               
               <div class="mb-4">
-                <BodyRegionList :key="'region-' + sampleIndex + '-' + resetKey" v-model="sample.bodyRegion" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
+                <BodyRegionList :key="'region-' + sampleIndex + '-' + resetKey" v-model="(sample as any).bodyRegion" :label="`Región del Cuerpo`" placeholder="Buscar región del cuerpo..." :required="true" help-text="Seleccione la región anatómica de donde proviene la muestra" />
               </div>
               
               <div class="space-y-3">
@@ -201,7 +201,7 @@
                 </div>
                 
                 <div class="space-y-2">
-                  <div v-for="(test, testIndex) in sample.tests" :key="testIndex + '-' + resetKey" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-end">
+                  <div v-for="(test, testIndex) in (sample as any).tests" :key="testIndex + '-' + resetKey" class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-end">
                     <div class="flex-1 min-w-0">
                       <TestList 
                         :key="'test-' + sampleIndex + '-' + testIndex + '-' + resetKey" 
@@ -210,7 +210,7 @@
                         :placeholder="`Buscar y seleccionar prueba ${testIndex + 1}...`" 
                         :required="true" 
                         :auto-load="true" 
-                        @test-selected="(test) => handleTestSelected(sampleIndex, testIndex, test)"
+                        @test-selected="(test: any) => handleTestSelected(sampleIndex, testIndex, test)"
                       />
                     </div>
                     <div class="w-full sm:w-24">
@@ -392,10 +392,10 @@ const isFormValid = computed(() => {
     state.value !== '' &&
     formData.numberOfSamples !== ''
   )
-  const samplesOk = formData.samples.length > 0 && formData.samples.every(s => {
+  const samplesOk = formData.samples.length > 0 && (formData.samples as any).every((s: any) => {
     if (!String(s.bodyRegion || '').trim()) return false
     if (!s.tests || s.tests.length === 0) return false
-    return s.tests.every(t => String(t.code || '').trim() !== '' && (t.quantity ?? 0) >= 1)
+    return s.tests.every((t: any) => String(t.code || '').trim() !== '' && (t.quantity ?? 0) >= 1)
   })
   return baseOk && samplesOk
 })
@@ -408,7 +408,7 @@ const isCaseCompleted = computed(() => {
 })
 const validationErrors = computed(() => {
   const errorsList: string[] = []
-  const fields = [
+  const fields: Array<{value: any, name: string}> = [
     { value: formData.entryDate, name: 'Fecha de ingreso' },
     { value: formData.requestingPhysician, name: 'Médico solicitante' },
     { value: formData.service, name: 'Servicio' },
@@ -419,12 +419,16 @@ const validationErrors = computed(() => {
     { value: formData.patientCareType, name: 'Tipo de atención' }
   ]
   
-  fields.forEach(field => !field.value && errorsList.push(field.name))
+  for (const field of fields) {
+    if (!field.value) {
+      errorsList.push(field.name)
+    }
+  }
   
-  formData.samples?.forEach((sample, i) => {
+  (formData.samples as any)?.forEach((sample: any, i: number) => {
     if (!sample.bodyRegion) errorsList.push(`Submuestra ${i + 1}: Región del cuerpo`)
     if (!sample.tests?.length) errorsList.push(`Submuestra ${i + 1}: Al menos una prueba`)
-    sample.tests?.forEach((test, j) => {
+    sample.tests?.forEach((test: any, j: number) => {
       if (!test.code) errorsList.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Código de prueba`)
       if (!test.quantity || test.quantity < 1) errorsList.push(`Submuestra ${i + 1}, Prueba ${j + 1}: Cantidad`)
     })
@@ -509,17 +513,17 @@ const onSubmit = async () => {
     const prioridadToSend = formData.casePriority || 'Normal'
 
   const existingSamples = (((foundCaseInfo.value as any)?.muestras) || []) as any[]
-    const samplesClean = formData.samples.map((s, idx) => {
+    const samplesClean = (formData.samples as any).map((s: any, idx: number) => {
       const region = s.bodyRegion || existingSamples[idx]?.region_cuerpo || existingSamples[idx]?.regionCuerpo || ''
       return {
         body_region: region,
         tests: s.tests
-          .filter(t => String(t.code).trim() !== '')
-          .map(t => ({ id: t.code, name: t.name || t.code, quantity: t.quantity || 1 }))
+          .filter((t: any) => String(t.code).trim() !== '')
+          .map((t: any) => ({ id: t.code, name: t.name || t.code, quantity: t.quantity || 1 }))
       }
     })
     
-    const allEmptyRegions = samplesClean.every(s => !s.body_region)
+    const allEmptyRegions = samplesClean.every((s: any) => !s.body_region)
     const pacienteEntidad = entityInfoToSend || (formData.patientEntity && selectedEntity.value?.nombre
       ? { id: formData.patientEntity, nombre: selectedEntity.value?.nombre || '' }
       : undefined)
@@ -788,10 +792,10 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
       try {
         const pathologist = await pathologistApi.getPathologist(codigo)
         if (pathologist) {
-        const patologoCode = pathologist.patologo_code || codigo
+        const patologoCode = (pathologist as any).patologo_code || codigo
         const patologoData = {
           codigo: patologoCode,
-          nombre: pathologist.patologo_name || pathologist.nombre || patologoAsignado.name || patologoAsignado.pathologist_name || patologoAsignado.nombre || ''
+          nombre: (pathologist as any).patologo_name || pathologist.nombre || patologoAsignado.name || patologoAsignado.pathologist_name || patologoAsignado.nombre || ''
         }
         selectedPathologist.value = patologoData
         assignedPathologist.value = patologoCode
@@ -892,8 +896,8 @@ const onPathologistSelected = (pathologist: any | null) => {
 // Reuse composable handlers directly (removed local wrappers)
 
 const handleTestSelected = (sampleIndex: number, testIndex: number, test: any) => {
-  if (test && sampleIndex >= 0 && sampleIndex < formData.samples.length) {
-    const sample = formData.samples[sampleIndex]
+  if (test && sampleIndex >= 0 && sampleIndex < (formData.samples as any).length) {
+    const sample = (formData.samples as any)[sampleIndex]
     if (testIndex >= 0 && testIndex < sample.tests.length) {
       sample.tests[testIndex].code = test.pruebaCode || test.code || ''
       sample.tests[testIndex].name = test.pruebasName || test.nombre || test.label || ''
@@ -949,7 +953,7 @@ const getObservaciones = (): string => ((updatedCase.value as any)?.observations
 // Build samples list with normalized fields for notification view
 const getMuestras = () => {
   const backendSamples = (updatedCase.value as any)?.samples || (updatedCase.value as any)?.muestras || []
-  const formSamples = formData.samples || []
+  const formSamples = (formData.samples as any) || []
   if (!backendSamples.length) return formSamples
   return backendSamples.map((s: any, i: number) => ({
     ...s,
