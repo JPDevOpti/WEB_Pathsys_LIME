@@ -121,7 +121,7 @@ async def seed_patients(count: int, dry_run: bool) -> Tuple[int, int]:
         # Get all entities from the database
         print("Getting available entities...")
         from app.modules.entities.schemas.entity import EntitySearch
-        search_params = EntitySearch()
+        search_params = EntitySearch(skip=0, limit=100)  # Cargar hasta 100 entidades
         entities = await entity_service.list_all(search_params)
         
         # Convertir entidades para usar códigos como IDs
@@ -142,9 +142,13 @@ async def seed_patients(count: int, dry_run: bool) -> Tuple[int, int]:
             return 0, count
 
         print(f"Available entities: {len(entities_list)}")
+        print("All entities will be used for patient generation")
         print(f"{'='*60}")
 
         existing_codes: set = set()
+        
+        # Estadísticas de distribución por entidad
+        entity_stats = {entity["name"]: 0 for entity in entities_list}
 
         for i in range(count):
             print(f"\n[{i+1}/{count}] Generating patient...")
@@ -173,7 +177,7 @@ async def seed_patients(count: int, dry_run: bool) -> Tuple[int, int]:
                     gender=gender,
                     entity_info=entity_info,
                     care_type=care_type,
-                    observations="Test data generated automatically",
+                    observations="Test data generated automatically (uniform distribution)",
                     patient_code=patient_code,
                 )
 
@@ -185,6 +189,7 @@ async def seed_patients(count: int, dry_run: bool) -> Tuple[int, int]:
                     print(f"    - Age: {age} years")
                     print(f"    - Entity: {entity_info.name}")
                     print(f"    - Care Type: {care_type.value}")
+                    entity_stats[entity_info.name] += 1
                     created += 1
                     continue
 
@@ -212,10 +217,14 @@ async def seed_patients(count: int, dry_run: bool) -> Tuple[int, int]:
                 else:
                     print(f"  [WARNING] Could not verify patient date")
                 
+                # Update statistics
+                entity_stats[entity_info.name] += 1
+                
                 print(f"  [OK] Patient created successfully:")
                 print(f"    - ID: {created_patient.id}")
                 print(f"    - Code: {patient_code}")
                 print(f"    - Name: {name}")
+                print(f"    - Entity: {entity_info.name}")
                 print(f"    - Date: {rnd_date.strftime('%Y-%m-%d')}")
                 created += 1
 
@@ -226,6 +235,18 @@ async def seed_patients(count: int, dry_run: bool) -> Tuple[int, int]:
                 print(f"  [ERROR] Unexpected error: {str(e)}")
                 errors += 1
 
+        # Show entity distribution statistics
+        if created > 0:
+            print(f"\n{'='*60}")
+            print("ENTITY DISTRIBUTION STATISTICS")
+            print(f"{'='*60}")
+            
+            print("Patients created per entity:")
+            for entity_name, count in sorted(entity_stats.items(), key=lambda x: x[1], reverse=True):
+                if count > 0:
+                    percentage = (count / created) * 100
+                    print(f"  {entity_name:<50} : {count:>4} patients ({percentage:>5.1f}%)")
+        
         # Show date distribution statistics
         if not dry_run and created > 0:
             print(f"\n{'='*60}")
@@ -234,7 +255,7 @@ async def seed_patients(count: int, dry_run: bool) -> Tuple[int, int]:
             
             # Get all patients created in this session
             all_patients = await db.patients.find({
-                "observations": "Test data generated automatically"
+                "observations": "Test data generated automatically (uniform distribution)"
             }).to_list(length=None)
             
             if all_patients:
@@ -272,7 +293,7 @@ async def seed_patients(count: int, dry_run: bool) -> Tuple[int, int]:
             print(f"\n⚠️  DRY-RUN MODE: No changes were made to the database")
             print(f"To execute for real, run the script without --dry-run")
         else:
-            print(f"\n✅ Generation completed")
+            print(f"\n✅ Generation completed with UNIFORM distribution across ALL entities")
 
         print(f"{'='*60}")
 

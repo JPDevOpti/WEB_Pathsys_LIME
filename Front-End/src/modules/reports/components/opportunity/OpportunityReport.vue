@@ -3,7 +3,7 @@
     <!-- Card de selección de período y acciones -->
     <ComponentCard title="Reporte de Oportunidades general del laboratorio" description="Seleccione mes y año para generar el informe.">
       <template #icon>
-        <PieChartIcon class="w-5 h-5 text-blue-600 mr-2" />
+        <StatisticsChartIcon class="w-5 h-5 text-blue-600 mr-2" />
       </template>
       <div class="flex flex-wrap items-end gap-4">
         <!-- Mes -->
@@ -54,7 +54,7 @@ import { computed, ref, watch } from 'vue'
 import { FormSelect } from '@/shared/components'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ComponentCard } from '@/shared/components/common'
-import { RefreshIcon, PieChartIcon } from '@/assets/icons'
+import { RefreshIcon, StatisticsChartIcon } from '@/assets/icons'
 import OpportunitySummary from './OpportunitySummary.vue'
 import TestsOpportunityPanel from './TestsOpportunityPanel.vue'
 import PathologistsPerformancePanel from './PathologistsPerformancePanel.vue'

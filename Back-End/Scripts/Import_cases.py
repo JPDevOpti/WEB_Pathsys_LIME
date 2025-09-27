@@ -263,19 +263,20 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
     
     # Contadores para estadísticas
     stats = {
-        "casos_recientes": 0,
-        "casos_antiguos": 0,
-        "estados": {
-            CaseState.EN_PROCESO: 0,
-            CaseState.POR_FIRMAR: 0,
-            CaseState.POR_ENTREGAR: 0,
-            CaseState.COMPLETADO: 0
-        },
-        "con_patologo": 0,
-        "sin_patologo": 0,
-        "con_medico": 0,
-        "sin_medico": 0
-    }
+            "casos_recientes": 0,
+            "casos_antiguos": 0,
+            "estados": {
+                CaseState.EN_PROCESO: 0,
+                CaseState.POR_FIRMAR: 0,
+                CaseState.POR_ENTREGAR: 0,
+                CaseState.COMPLETADO: 0
+            },
+            "con_patologo": 0,
+            "sin_patologo": 0,
+            "con_medico": 0,
+            "sin_medico": 0,
+            "entidades": {}  # Estadísticas por entidad
+        }
 
     db = await get_database()
     try:
@@ -298,6 +299,9 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
         if not entidades_by_name:
             print("[ERROR] No hay entidades en la base de datos. Abortando.")
             return 0, count
+        
+        print(f"Entidades disponibles: {len(entidades_by_name)}")
+        print("Todos los casos se distribuirán uniformemente entre TODAS las entidades")
         if not pathologists:
             print("[WARN] No hay patólogos activos. Continuaré creando casos sin patólogo asignado.")
 
@@ -322,12 +326,11 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
         total_span_days_antiguos = max(1, (max_fecha_antiguos - base_start_date).days)
 
         for i in range(count):
-            # Paciente
+            # Paciente (usar cualquier paciente para datos básicos)
             p = random.choice(patients)
-            entidad_nombre = p.get("entity_info", {}).get("name")
-            entidad_doc = entidades_by_name.get(entidad_nombre) if entidad_nombre else None
-            if not entidad_doc:
-                entidad_doc = random.choice(list(entidades_by_name.values()))
+            
+            # ENTIDAD: Seleccionar de TODAS las entidades disponibles (distribución uniforme)
+            entidad_doc = random.choice(list(entidades_by_name.values()))
             
             entity_info = EntityInfo(
                 id=entidad_doc.get("entity_code") or entidad_doc.get("code"),
@@ -456,6 +459,12 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
                 stats["casos_antiguos"] += 1
             
             stats["estados"][estado_final] += 1
+            
+            # Estadísticas por entidad
+            entity_name = entity_info.name
+            if entity_name not in stats["entidades"]:
+                stats["entidades"][entity_name] = 0
+            stats["entidades"][entity_name] += 1
             
             if assigned_pathologist:
                 stats["con_patologo"] += 1
@@ -634,6 +643,12 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
             print(f"Sin patólogo asignado: {stats['sin_patologo']}")
             print(f"Con médico solicitante: {stats['con_medico']}")
             print(f"Sin médico solicitante: {stats['sin_medico']}")
+            
+            # Estadísticas por entidad
+            print(f"\nDistribución por entidad:")
+            for entity_name, count in sorted(stats["entidades"].items(), key=lambda x: x[1], reverse=True):
+                percentage = (count / created * 100) if created > 0 else 0
+                print(f"  {entity_name:<50} : {count:>4} casos ({percentage:>5.1f}%)")
             
             # Información adicional sobre casos recientes
             if stats['casos_recientes'] > 0:

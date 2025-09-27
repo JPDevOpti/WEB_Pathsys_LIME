@@ -14,7 +14,7 @@ class EntityStatisticsRepository:
         self,
         month: int,
         year: int,
-        entity_name: str | None = None
+        entity_name: str = None
     ) -> Dict[str, Any]:
         """Get monthly performance data for entities"""
         

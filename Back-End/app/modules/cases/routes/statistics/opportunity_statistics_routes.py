@@ -39,17 +39,15 @@ async def opportunity_by_pathologist(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
-# ---------------------------
-# New English endpoints (v2)
-# ---------------------------
+
 
 @router.get("/monthly")
 async def opportunity_monthly(
     month: int = Query(..., ge=1, le=12),
     year: int = Query(...),
     thresholdDays: int = Query(7, ge=1, le=60),
-    entity: str | None = Query(None),
-    pathologist: str | None = Query(None),
+    entity: str = Query(None),
+    pathologist: str = Query(None),
     service: OpportunityStatisticsService = Depends(get_opportunity_service)
 ):
     try:
@@ -79,7 +77,7 @@ async def opportunity_pathologists(
     month: int = Query(..., ge=1, le=12),
     year: int = Query(...),
     thresholdDays: int = Query(7, ge=1, le=60),
-    entity: str | None = Query(None),
+    entity: str = Query(None),
     service: OpportunityStatisticsService = Depends(get_opportunity_service)
 ):
     try:
@@ -95,7 +93,7 @@ async def opportunity_tests(
     month: int = Query(..., ge=1, le=12),
     year: int = Query(...),
     thresholdDays: int = Query(7, ge=1, le=60),
-    entity: str | None = Query(None),
+    entity: str = Query(None),
     service: OpportunityStatisticsService = Depends(get_opportunity_service)
 ):
     try:

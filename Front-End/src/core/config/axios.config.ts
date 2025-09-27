@@ -59,9 +59,9 @@ class ApiClient {
               break
               
             case 401:
-              // Token expirado o inválido
-              localStorage.removeItem('auth_token')
-              window.location.href = '/login'
+              // Token expirado o inválido - manejar de forma más suave
+              console.warn('Token expirado detectado en interceptor')
+              // No hacer logout inmediato, dejar que el store lo maneje
               break
               
             case 403:

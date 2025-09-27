@@ -95,6 +95,19 @@ async def get_test_opportunity_summary(
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
+@router.get("/debug-structure")
+async def debug_cases_structure(
+    month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
+    year: int = Query(..., ge=2020, le=2030, description="Year"),
+    service: TestStatisticsService = Depends(get_test_statistics_service)
+):
+    """Debug endpoint to see the actual structure of cases"""
+    try:
+        result = await service.debug_cases_structure(month, year)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
 @router.get("/monthly-trends", response_model=TestMonthlyTrendsResponse)
 async def get_test_monthly_trends(
     year: int = Query(..., ge=2020, le=2030, description="Year"),

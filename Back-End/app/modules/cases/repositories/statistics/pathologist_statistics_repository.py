@@ -15,7 +15,7 @@ class PathologistStatisticsRepository:
         month: int,
         year: int,
         threshold_days: int = 7,
-        pathologist_name: str | None = None
+        pathologist_name: str = None
     ) -> Dict[str, Any]:
         """Get monthly performance data for pathologists"""
         

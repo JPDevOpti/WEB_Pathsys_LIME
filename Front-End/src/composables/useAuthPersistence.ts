@@ -36,7 +36,7 @@ export function useAuthPersistence() {
   }
 
   /**
-   * Verificar autenticación periódicamente (cada 15 minutos)
+   * Verificar autenticación periódicamente (cada 60 minutos)
    * Reducido la frecuencia para evitar interferir con la navegación
    */
   const startTokenRefreshTimer = () => {
@@ -55,7 +55,7 @@ export function useAuthPersistence() {
           // No redirigir en caso de error de red
         }
       }
-    }, 15 * 60 * 1000) // 15 minutos en lugar de 5
+    }, 60 * 60 * 1000) // 60 minutos (1 hora)
 
     // Retornar el ID del intervalo para poder limpiarlo si es necesario
     return interval

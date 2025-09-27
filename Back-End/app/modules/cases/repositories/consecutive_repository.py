@@ -24,7 +24,7 @@ class CaseConsecutiveRepository:
         doc = await self.collection.find_one({"year": year})
         return int(doc.get("last_number", 0)) + 1 if doc else 1
 
-    async def generate_case_code(self, year: int | None = None) -> str:
+    async def generate_case_code(self, year: int = None) -> str:
         y = year or datetime.utcnow().year
         n = await self.get_next_number(y)
         return f"{y}-{n:05d}"

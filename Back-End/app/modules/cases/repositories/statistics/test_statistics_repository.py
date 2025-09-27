@@ -25,38 +25,54 @@ class TestStatisticsRepository:
         else:
             end_date = datetime(year, month + 1, 1)
         
-        # Base match conditions
+        # Base match conditions - Include all cases, not just completed ones
         match_conditions = {
-            "state": "Completado",
-            "signed_at": {"$gte": start_date, "$lt": end_date},
+            "created_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests": {"$exists": True, "$ne": []}
         }
         
         # Add entity filter if specified
         if entity_name:
-            match_conditions["patient_info.entity_info.name"] = {"$regex": entity_name.strip(), "$options": "i"}
+            match_conditions["$or"] = [
+                {"patient_info.entity_info.name": {"$regex": entity_name.strip(), "$options": "i"}},
+                {"patient_info.entity_info.id": {"$regex": entity_name.strip(), "$options": "i"}}
+            ]
         
+        # Much simpler pipeline - just handle new format first
         pipeline = [
             {"$match": match_conditions},
             {"$unwind": "$samples"},
             {"$unwind": "$samples.tests"},
             {
+                "$lookup": {
+                    "from": "tests",
+                    "localField": "samples.tests.id",
+                    "foreignField": "test_code",
+                    "as": "test_info"
+                }
+            },
+            {"$unwind": {"path": "$test_info", "preserveNullAndEmptyArrays": True}},
+            {
                 "$group": {
                     "_id": {
-                        "test_code": "$samples.tests.id",
-                        "test_name": "$samples.tests.name"
+                        "test_code": "$samples.tests.id"
                     },
+                    "test_name": {"$first": "$test_info.name"},
                     "total_solicitadas": {"$sum": 1},
-                    "total_completadas": {"$sum": 1},  # Already filtered by "Completado"
-                    "total_business_days": {"$sum": "$business_days"},
-                    "avg_business_days": {"$avg": "$business_days"}
+                    "total_completadas": {
+                        "$sum": {
+                            "$cond": [{"$eq": ["$state", "Completado"]}, 1, 0]
+                        }
+                    },
+                    "total_business_days": {"$sum": {"$ifNull": ["$business_days", 0]}},
+                    "avg_business_days": {"$avg": {"$ifNull": ["$business_days", 0]}}
                 }
             },
             {
                 "$project": {
                     "_id": 0,
                     "codigo": "$_id.test_code",
-                    "nombre": "$_id.test_name",
+                    "nombre": {"$ifNull": ["$test_name", "$_id.test_code"]},
                     "solicitadas": "$total_solicitadas",
                     "completadas": "$total_completadas",
                     "tiempoPromedio": {"$round": ["$avg_business_days", 2]},
@@ -76,10 +92,12 @@ class TestStatisticsRepository:
         # Calculate summary
         total_solicitadas = sum(test["solicitadas"] for test in results)
         total_completadas = sum(test["completadas"] for test in results)
-        total_business_days = sum(test["solicitadas"] * test["tiempoPromedio"] for test in results)
         
-        # Calculate weighted average
-        weighted_avg_days = total_business_days / total_solicitadas if total_solicitadas > 0 else 0
+        # Calculate weighted average correctly
+        if total_solicitadas > 0:
+            weighted_avg_days = sum(test["solicitadas"] * test["tiempoPromedio"] for test in results) / total_solicitadas
+        else:
+            weighted_avg_days = 0
         
         return {
             "tests": results,
@@ -106,10 +124,9 @@ class TestStatisticsRepository:
         else:
             end_date = datetime(year, month + 1, 1)
         
-        # Base match conditions
+        # Base match conditions - Include all cases, not just completed ones
         match_conditions = {
-            "state": "Completado",
-            "signed_at": {"$gte": start_date, "$lt": end_date},
+            "created_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests.id": test_code
         }
         
@@ -127,9 +144,13 @@ class TestStatisticsRepository:
                 "$group": {
                     "_id": None,
                     "total_solicitadas": {"$sum": 1},
-                    "total_completadas": {"$sum": 1},
-                    "total_business_days": {"$sum": "$business_days"},
-                    "avg_business_days": {"$avg": "$business_days"}
+                    "total_completadas": {
+                        "$sum": {
+                            "$cond": [{"$eq": ["$state", "Completado"]}, 1, 0]
+                        }
+                    },
+                    "total_business_days": {"$sum": {"$ifNull": ["$business_days", 0]}},
+                    "avg_business_days": {"$avg": {"$ifNull": ["$business_days", 0]}}
                 }
             },
             {
@@ -248,10 +269,9 @@ class TestStatisticsRepository:
         else:
             end_date = datetime(year, month + 1, 1)
         
-        # Base match conditions
+        # Base match conditions - Include all cases, not just completed ones
         match_conditions = {
-            "state": "Completado",
-            "signed_at": {"$gte": start_date, "$lt": end_date},
+            "created_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests.id": test_code
         }
         
@@ -305,10 +325,9 @@ class TestStatisticsRepository:
         else:
             end_date = datetime(year, month + 1, 1)
         
-        # Base match conditions
+        # Base match conditions - Include all cases, not just completed ones
         match_conditions = {
-            "state": "Completado",
-            "signed_at": {"$gte": start_date, "$lt": end_date},
+            "created_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests": {"$exists": True, "$ne": []}
         }
         
@@ -377,6 +396,56 @@ class TestStatisticsRepository:
             }
         }
     
+    async def debug_cases_structure(self, month: int, year: int) -> Dict[str, Any]:
+        """Debug method to see the actual structure of cases"""
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        
+        # Get any case from the database to see structure
+        any_case = await self.collection.find_one({})
+        
+        # Get a sample case from the date range
+        sample_case = await self.collection.find_one({
+            "created_at": {"$gte": start_date, "$lt": end_date}
+        })
+        
+        # Count total cases in date range
+        total_cases_in_range = await self.collection.count_documents({
+            "created_at": {"$gte": start_date, "$lt": end_date}
+        })
+        
+        # Count cases with different structures
+        new_format_count = await self.collection.count_documents({
+            "created_at": {"$gte": start_date, "$lt": end_date},
+            "samples": {"$exists": True, "$ne": []}
+        })
+        
+        legacy_format_count = await self.collection.count_documents({
+            "created_at": {"$gte": start_date, "$lt": end_date},
+            "muestras": {"$exists": True, "$ne": []}
+        })
+        
+        # Check what years and months actually have data
+        years_with_data = await self.collection.distinct("created_at", {
+            "created_at": {"$exists": True}
+        })
+        
+        return {
+            "any_case_structure": any_case,
+            "sample_case_in_range": sample_case,
+            "total_cases_in_range": total_cases_in_range,
+            "new_format_cases": new_format_count,
+            "legacy_format_cases": legacy_format_count,
+            "date_range": {
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat()
+            },
+            "years_with_data": [d.year for d in years_with_data if hasattr(d, 'year')]
+        }
+
     async def get_test_monthly_trends(
         self, 
         year: int, 
@@ -387,22 +456,43 @@ class TestStatisticsRepository:
         pipeline = [
             {
                 "$match": {
-                    "state": "Completado",
-                    "signed_at": {
+                    "created_at": {
                         "$gte": datetime(year, 1, 1),
                         "$lt": datetime(year + 1, 1, 1)
                     },
-                    "samples.tests": {"$exists": True, "$ne": []}
+                    "$or": [
+                        {"samples.tests": {"$exists": True, "$ne": []}},
+                        {"muestras.pruebas": {"$exists": True, "$ne": []}}
+                    ]
                 }
             },
-            {"$unwind": "$samples"},
-            {"$unwind": "$samples.tests"},
+            {
+                "$addFields": {
+                    "all_samples": {
+                        "$concatArrays": [
+                            {"$ifNull": ["$samples", []]},
+                            {"$ifNull": ["$muestras", []]}
+                        ]
+                    }
+                }
+            },
+            {"$unwind": "$all_samples"},
+            {
+                "$addFields": {
+                    "all_tests": {
+                        "$concatArrays": [
+                            {"$ifNull": ["$all_samples.tests", []]},
+                            {"$ifNull": ["$all_samples.pruebas", []]}
+                        ]
+                    }
+                }
+            },
+            {"$unwind": "$all_tests"},
             {
                 "$group": {
                     "_id": {
                         "month": {"$month": "$signed_at"},
-                        "test_code": "$samples.tests.id",
-                        "test_name": "$samples.tests.name"
+                        "test_code": "$all_tests.id"
                     },
                     "total_casos": {"$sum": 1},
                     "avg_business_days": {"$avg": "$business_days"}
@@ -413,7 +503,6 @@ class TestStatisticsRepository:
                     "_id": 0,
                     "mes": "$_id.month",
                     "codigo": "$_id.test_code",
-                    "nombre": "$_id.test_name",
                     "total_casos": 1,
                     "tiempo_promedio": {"$round": ["$avg_business_days", 2]}
                 }
@@ -423,7 +512,15 @@ class TestStatisticsRepository:
         
         # Add entity filter if specified
         if entity_name:
-            pipeline[0]["$match"]["patient_info.entity_info.name"] = {"$regex": entity_name.strip(), "$options": "i"}
+            pipeline[0]["$match"]["$and"] = [
+                pipeline[0]["$match"],
+                {
+                    "$or": [
+                        {"patient_info.entity_info.name": {"$regex": entity_name.strip(), "$options": "i"}},
+                        {"paciente.entidad_info.nombre": {"$regex": entity_name.strip(), "$options": "i"}}
+                    ]
+                }
+            ]
         
         results = await self.collection.aggregate(pipeline).to_list(length=1000)
         return results

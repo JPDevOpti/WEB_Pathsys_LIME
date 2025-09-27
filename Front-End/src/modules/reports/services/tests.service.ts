@@ -31,7 +31,22 @@ export class TestsApiService {
     try {
       const entityParam = entity && entity !== '' && entity !== 'general' ? `&entity=${encodeURIComponent(entity)}` : ''
       const endpoint = `${this.baseCases}/statistics/tests/monthly-performance?month=${month}&year=${year}${entityParam}`
+      
+      console.log('🔍 Tests API Debug:', {
+        month,
+        year,
+        entity,
+        entityParam,
+        endpoint
+      })
+      
       const response = await this.makeRequest<any>(endpoint)
+      
+      console.log('📊 Tests API Response:', {
+        testsCount: response.tests?.length || 0,
+        summary: response.summary,
+        firstTest: response.tests?.[0]
+      })
       
       return {
         tests: response.tests || [],

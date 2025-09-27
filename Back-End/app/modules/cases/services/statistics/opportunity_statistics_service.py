@@ -34,8 +34,8 @@ class OpportunityStatisticsService:
         month: int,
         year: int,
         threshold_days: int = 7,
-        entity: str | None = None,
-        pathologist: str | None = None,
+        entity: str = None,
+        pathologist: str = None,
     ) -> Dict[str, Any]:
         if month < 1 or month > 12:
             raise BadRequestError("month must be between 1 and 12")
@@ -68,7 +68,7 @@ class OpportunityStatisticsService:
         month: int,
         year: int,
         threshold_days: int = 7,
-        entity: str | None = None,
+        entity: str = None,
     ) -> Dict[str, Any]:
         data = await self.get_monthly(month, year, threshold_days, entity, None)
         return {"pathologists": data.get("pathologists", [])}
@@ -78,7 +78,7 @@ class OpportunityStatisticsService:
         month: int,
         year: int,
         threshold_days: int = 7,
-        entity: str | None = None,
+        entity: str = None,
     ) -> Dict[str, Any]:
         data = await self.get_monthly(month, year, threshold_days, entity, None)
         return {"tests": data.get("tests", [])}

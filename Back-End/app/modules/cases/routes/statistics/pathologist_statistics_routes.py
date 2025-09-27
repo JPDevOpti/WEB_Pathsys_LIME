@@ -19,7 +19,7 @@ async def get_monthly_performance(
     month: int = Query(..., ge=1, le=12, description="Mes (1-12)"),
     year: int = Query(..., description="Año"),
     thresholdDays: int = Query(7, ge=1, le=60, description="Días de oportunidad"),
-    pathologist: str | None = Query(None, description="Nombre del patólogo (opcional)"),
+    pathologist: str = Query(None, description="Nombre del patólogo (opcional)"),
     service: PathologistStatisticsService = Depends(get_pathologist_statistics_service)
 ):
     """Obtener rendimiento mensual de patólogos"""

@@ -161,7 +161,7 @@ const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
 // Selección por defecto: mes anterior al actual pero manteniendo el año actual
 const nowMonth = now.getMonth()
 const defaultMonthIndex = (nowMonth + 11) % 12
-const defaultYear = currentYear  // Siempre usar el año actual (2025)
+const defaultYear = currentYear  // Usar el año actual (2025)
 
 const selectedMonth = ref<string>(String(defaultMonthIndex))
 const selectedYear = ref<string>(String(defaultYear))
@@ -232,7 +232,7 @@ onMounted(async () => {
 // Handlers para EntityList
 const handleEntitySelected = (entity: EntityInfo | null) => {
   selectedEntityInfo.value = entity
-  selectedEntity.value = entity?.codigo || ''
+  selectedEntity.value = entity?.nombre || ''
 }
 
 const handleEntityLoadError = (error: string) => {
