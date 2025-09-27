@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from app.config.settings import settings
 
 # Configuración de encriptación de contraseñas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 
 def create_access_token(
     subject: Union[str, Any], expires_delta: Optional[timedelta] = None
@@ -26,10 +26,14 @@ def create_access_token(
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verificar contraseña"""
+    # Si el hash es de bcrypt (empieza con $2b$), truncar la contraseña
+    if hashed_password.startswith('$2b$') and len(plain_password.encode('utf-8')) > 72:
+        plain_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
     """Obtener hash de contraseña"""
+    # Usar argon2 por defecto (sin límite de longitud)
     return pwd_context.hash(password)
 
 def decode_token(token: str) -> Optional[dict]:
