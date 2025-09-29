@@ -89,22 +89,6 @@ class TestStatisticsService:
         
         return await self.repository.get_test_opportunity_summary(month, year, threshold_days, entity_name)
     
-    async def debug_cases_structure(
-        self, 
-        month: int, 
-        year: int
-    ) -> Dict[str, Any]:
-        """Debug method to see the actual structure of cases"""
-        
-        # Validate inputs
-        if not (1 <= month <= 12):
-            raise BadRequestError("Month must be between 1 and 12")
-        
-        if year < 2020 or year > 2030:
-            raise BadRequestError("Year must be between 2020 and 2030")
-        
-        return await self.repository.debug_cases_structure(month, year)
-    
     async def get_test_monthly_trends(
         self, 
         year: int, 

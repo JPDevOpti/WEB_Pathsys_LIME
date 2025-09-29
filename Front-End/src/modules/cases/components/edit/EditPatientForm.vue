@@ -251,7 +251,7 @@ const onSubmit = async () => {
     let updatedPatientResponse: any
 
     if (codeChanged) {
-      // updatedPatientResponse = await patientsApiService.changePatientCode(originalPatientCode, form.patientCode.trim())
+      updatedPatientResponse = await patientsApiService.changePatientCode(originalPatientCode, form.patientCode.trim())
       showNotification('success', '¡Código de Paciente Actualizado!', 'El código del paciente ha sido cambiado exitosamente', 5000)
     } else {
       const patientUpdateData = {

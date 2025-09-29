@@ -220,7 +220,7 @@ const monthLabel = computed(() => {
 })
 
 const selectedEntityLabel = computed(() => {
-  return selectedEntityInfo.value?.nombre || ''
+  return selectedEntityInfo.value?.name || ''
 })
 
 // Verificar conectividad con el backend al montar el componente
@@ -232,7 +232,7 @@ onMounted(async () => {
 // Handlers para EntityList
 const handleEntitySelected = (entity: EntityInfo | null) => {
   selectedEntityInfo.value = entity
-  selectedEntity.value = entity?.nombre || ''
+  selectedEntity.value = entity?.name || ''
 }
 
 const handleEntityLoadError = (error: string) => {

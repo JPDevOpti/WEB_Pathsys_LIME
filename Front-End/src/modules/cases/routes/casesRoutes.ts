@@ -1,4 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
+import { complementaryTechniquesRoutes } from './complementaryTechniquesRoutes'
 
 export const casesRoutes: RouteRecordRaw[] = [
   {
@@ -33,5 +34,7 @@ export const casesRoutes: RouteRecordRaw[] = [
         }
       }
     ]
-  }
+  },
+  // Técnicas Complementarias
+  ...complementaryTechniquesRoutes
 ]

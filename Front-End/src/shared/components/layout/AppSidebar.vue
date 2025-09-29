@@ -324,7 +324,7 @@ const canAccessRoute = (path: string): boolean => {
     // Bloquear submenús específicos
     if (path.includes('/users')) return false; // Gestión de usuarios
     if (path.includes('/cases/new') || path.includes('/cases/edit')) return false; // Nuevo/Editar caso
-    if (path.includes('/cases/technique-complementary')) return false; // Técnicas complementarias
+    // if (path.includes('/complementary-techniques')) return false; // Técnicas complementarias - PERMITIDO
     if (path.includes('/cases/to-approve')) return false; // Casos por aprobar
     if (path.startsWith('/statistics/')) return false; // Todos los submenús de estadísticas
     
@@ -333,6 +333,8 @@ const canAccessRoute = (path: string): boolean => {
                    path.startsWith('/cases/current') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/sign') || 
+                   path.startsWith('/complementary-techniques') ||
+                   path.startsWith('/cases/complementary-techniques') ||
                    path === '/profile' ||
                    path.startsWith('/support');
     return result;
@@ -353,7 +355,7 @@ const canAccessRoute = (path: string): boolean => {
     // Bloquear submenús específicos
     if (path.includes('/users')) return false; // Gestión de usuarios
     if (path.includes('/cases/new') || path.includes('/cases/edit')) return false; // Nuevo/Editar caso
-    if (path.includes('/cases/technique-complementary')) return false; // Técnicas complementarias
+    // if (path.includes('/complementary-techniques')) return false; // Técnicas complementarias - PERMITIDO
     if (path.includes('/cases/to-approve')) return false; // Casos por aprobar
     if (path.startsWith('/statistics/')) return false; // Todos los submenús de estadísticas
     if (path.startsWith('/results/sign')) return false; // Firmar resultados
@@ -363,6 +365,8 @@ const canAccessRoute = (path: string): boolean => {
                    path.startsWith('/cases/current') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/perform') || 
+                   path.startsWith('/complementary-techniques') ||
+                   path.startsWith('/cases/complementary-techniques') ||
                    path === '/profile' ||
                    path.startsWith('/support');
     return result;
@@ -425,6 +429,7 @@ const filteredMenuItems = computed(() => {
       subItems: [
         { name: "Nuevo caso", path: "/cases/new", pro: false, alwaysVisible: true },
         { name: "Editar caso", path: "/cases/edit", pro: false, alwaysVisible: true },
+        { name: "Técnicas Complementarias", path: "/complementary-techniques", pro: false, alwaysVisible: true },
       ],
       alwaysVisible: true
     },
@@ -434,6 +439,7 @@ const filteredMenuItems = computed(() => {
       subItems: [
         { name: "Casos actuales", path: "/cases/current", pro: false, alwaysVisible: true },
         { name: "Casos por aprobar", path: "/cases/to-approve", pro: false, alwaysVisible: false },
+        { name: "Técnicas complementarias", path: "/cases/complementary-techniques", pro: false, alwaysVisible: true },
       ],
       alwaysVisible: true
     },

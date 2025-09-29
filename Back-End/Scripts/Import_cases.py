@@ -203,7 +203,7 @@ async def load_pathologists(db) -> List[Dict]:
 async def load_tests(db) -> List[Dict]:
     test_service = TestService(db)
     from app.modules.tests.schemas.test import TestSearch
-    search_params = TestSearch()
+    search_params = TestSearch(limit=100)  # Cargar hasta 100 pruebas
     tests = await test_service.list_all(search_params)
     
     test_list: List[Dict] = []
@@ -218,6 +218,8 @@ async def load_tests(db) -> List[Dict]:
             "test_code": test_code,
             "test_name": test_name
         })
+    
+    print(f"✓ Cargadas {len(test_list)} pruebas del catálogo")
     return test_list
 
 async def load_patients(db, batch_size: int = 1000) -> List[Dict]:

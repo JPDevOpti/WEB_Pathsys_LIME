@@ -38,6 +38,7 @@ export function roleGuard(
       '/dashboard',
       '/cases',
       '/results',
+      '/complementary-techniques',
       '/profile',
       '/support'
     ],
@@ -45,6 +46,7 @@ export function roleGuard(
       '/dashboard',
       '/cases',
       '/results',
+      '/complementary-techniques',
       '/profile',
       '/reports',
       '/statistics',
@@ -54,6 +56,7 @@ export function roleGuard(
       '/dashboard',
       '/cases',
       '/results',
+      '/complementary-techniques',
       '/profile',
       '/reports',
       '/support'
@@ -76,6 +79,7 @@ export function roleGuard(
       '/dashboard',
       '/cases',
       '/results',
+      '/complementary-techniques',
       '/profile',
       '/reports',
       '/statistics',

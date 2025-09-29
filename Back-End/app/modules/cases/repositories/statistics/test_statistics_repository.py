@@ -10,6 +10,46 @@ class TestStatisticsRepository:
         self.database = database
         self.collection = database.cases
     
+    def _get_entity_filter_pattern(self, entity_name: str) -> str:
+        """Convert entity abbreviation to regex pattern that matches full entity names"""
+        if not entity_name or not entity_name.strip():
+            return ""
+        
+        entity_name = entity_name.strip()
+        
+        # Common entity abbreviation mappings
+        abbreviation_mappings = {
+            'HAMA': r'Hospital Alma Máter de Antioquia',
+            'HGM': r'Hospital General de Medellín Luz Castro G\.',
+            'HUSVP': r'Hospital Universitario San Vicente de Paul',
+            'CES': r'Clínica CES',
+            'VID': r'Clínica VID - Fundación Santa María',
+            'SURA': r'SURA',
+            'PROLAB': r'PROLAB S\.A\.S',
+            'LIME': r'LIME',
+            'TEM': r'TEM - SIU',
+            'INVESTIGACION': r'Investigación',
+            'MICROBIOLOGIA': r'Microbiología',
+            'PATOLOGIA': r'Patología',
+            'SUESCUN': r'Patología Suescún S\.A\.S',
+            'INTEGRAL': r'Patología Integral S\.A',
+            'HSVF': r'Centros Especializados HSVF Rionegro',
+            'RENALES': r'Renales IPS Clínica León XIII',
+            'AMBULATORIOS': r'Hospitales Ambulatorios',
+            'CARDIOLOGICA': r'Clínica Cardiovascular Santa María',
+            'NEUROCENTRO': r'Neurocentro - Pereira',
+            'IPS': r'IPS Universitaria Ambulatoria',
+            'HOSPITAL': r'Hospital',
+            'CLINICA': r'Clínica'
+        }
+        
+        # Check if it's a known abbreviation
+        if entity_name.upper() in abbreviation_mappings:
+            return abbreviation_mappings[entity_name.upper()]
+        
+        # For other cases, create a pattern that matches the entity name as a substring
+        return f".*{entity_name}.*"
+    
     async def get_monthly_test_performance(
         self, 
         month: int, 
@@ -31,12 +71,11 @@ class TestStatisticsRepository:
             "samples.tests": {"$exists": True, "$ne": []}
         }
         
-        # Add entity filter if specified
+        # Add entity filter if specified - support partial matching for abbreviated names
         if entity_name:
-            match_conditions["$or"] = [
-                {"patient_info.entity_info.name": {"$regex": entity_name.strip(), "$options": "i"}},
-                {"patient_info.entity_info.id": {"$regex": entity_name.strip(), "$options": "i"}}
-            ]
+            entity_pattern = self._get_entity_filter_pattern(entity_name)
+            if entity_pattern:
+                match_conditions["patient_info.entity_info.name"] = {"$regex": entity_pattern, "$options": "i"}
         
         # Much simpler pipeline - just handle new format first
         pipeline = [
@@ -130,9 +169,11 @@ class TestStatisticsRepository:
             "samples.tests.id": test_code
         }
         
-        # Add entity filter if specified
+        # Add entity filter if specified - support partial matching for abbreviated names
         if entity_name:
-            match_conditions["patient_info.entity_info.name"] = {"$regex": entity_name.strip(), "$options": "i"}
+            entity_pattern = self._get_entity_filter_pattern(entity_name)
+            if entity_pattern:
+                match_conditions["patient_info.entity_info.name"] = {"$regex": entity_pattern, "$options": "i"}
         
         # Get basic statistics
         basic_stats_pipeline = [
@@ -275,9 +316,11 @@ class TestStatisticsRepository:
             "samples.tests.id": test_code
         }
         
-        # Add entity filter if specified
+        # Add entity filter if specified - support partial matching for abbreviated names
         if entity_name:
-            match_conditions["patient_info.entity_info.name"] = {"$regex": entity_name.strip(), "$options": "i"}
+            entity_pattern = self._get_entity_filter_pattern(entity_name)
+            if entity_pattern:
+                match_conditions["patient_info.entity_info.name"] = {"$regex": entity_pattern, "$options": "i"}
         
         pipeline = [
             {"$match": match_conditions},
@@ -331,9 +374,11 @@ class TestStatisticsRepository:
             "samples.tests": {"$exists": True, "$ne": []}
         }
         
-        # Add entity filter if specified
+        # Add entity filter if specified - support partial matching for abbreviated names
         if entity_name:
-            match_conditions["patient_info.entity_info.name"] = {"$regex": entity_name.strip(), "$options": "i"}
+            entity_pattern = self._get_entity_filter_pattern(entity_name)
+            if entity_pattern:
+                match_conditions["patient_info.entity_info.name"] = {"$regex": entity_pattern, "$options": "i"}
         
         pipeline = [
             {"$match": match_conditions},
@@ -396,55 +441,6 @@ class TestStatisticsRepository:
             }
         }
     
-    async def debug_cases_structure(self, month: int, year: int) -> Dict[str, Any]:
-        """Debug method to see the actual structure of cases"""
-        start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
-        
-        # Get any case from the database to see structure
-        any_case = await self.collection.find_one({})
-        
-        # Get a sample case from the date range
-        sample_case = await self.collection.find_one({
-            "created_at": {"$gte": start_date, "$lt": end_date}
-        })
-        
-        # Count total cases in date range
-        total_cases_in_range = await self.collection.count_documents({
-            "created_at": {"$gte": start_date, "$lt": end_date}
-        })
-        
-        # Count cases with different structures
-        new_format_count = await self.collection.count_documents({
-            "created_at": {"$gte": start_date, "$lt": end_date},
-            "samples": {"$exists": True, "$ne": []}
-        })
-        
-        legacy_format_count = await self.collection.count_documents({
-            "created_at": {"$gte": start_date, "$lt": end_date},
-            "muestras": {"$exists": True, "$ne": []}
-        })
-        
-        # Check what years and months actually have data
-        years_with_data = await self.collection.distinct("created_at", {
-            "created_at": {"$exists": True}
-        })
-        
-        return {
-            "any_case_structure": any_case,
-            "sample_case_in_range": sample_case,
-            "total_cases_in_range": total_cases_in_range,
-            "new_format_cases": new_format_count,
-            "legacy_format_cases": legacy_format_count,
-            "date_range": {
-                "start": start_date.isoformat(),
-                "end": end_date.isoformat()
-            },
-            "years_with_data": [d.year for d in years_with_data if hasattr(d, 'year')]
-        }
 
     async def get_test_monthly_trends(
         self, 
@@ -460,39 +456,16 @@ class TestStatisticsRepository:
                         "$gte": datetime(year, 1, 1),
                         "$lt": datetime(year + 1, 1, 1)
                     },
-                    "$or": [
-                        {"samples.tests": {"$exists": True, "$ne": []}},
-                        {"muestras.pruebas": {"$exists": True, "$ne": []}}
-                    ]
+                    "samples.tests": {"$exists": True, "$ne": []}
                 }
             },
-            {
-                "$addFields": {
-                    "all_samples": {
-                        "$concatArrays": [
-                            {"$ifNull": ["$samples", []]},
-                            {"$ifNull": ["$muestras", []]}
-                        ]
-                    }
-                }
-            },
-            {"$unwind": "$all_samples"},
-            {
-                "$addFields": {
-                    "all_tests": {
-                        "$concatArrays": [
-                            {"$ifNull": ["$all_samples.tests", []]},
-                            {"$ifNull": ["$all_samples.pruebas", []]}
-                        ]
-                    }
-                }
-            },
-            {"$unwind": "$all_tests"},
+            {"$unwind": "$samples"},
+            {"$unwind": "$samples.tests"},
             {
                 "$group": {
                     "_id": {
                         "month": {"$month": "$signed_at"},
-                        "test_code": "$all_tests.id"
+                        "test_code": "$samples.tests.id"
                     },
                     "total_casos": {"$sum": 1},
                     "avg_business_days": {"$avg": "$business_days"}
@@ -510,17 +483,11 @@ class TestStatisticsRepository:
             {"$sort": {"mes": 1, "total_casos": -1}}
         ]
         
-        # Add entity filter if specified
+        # Add entity filter if specified - support partial matching for abbreviated names
         if entity_name:
-            pipeline[0]["$match"]["$and"] = [
-                pipeline[0]["$match"],
-                {
-                    "$or": [
-                        {"patient_info.entity_info.name": {"$regex": entity_name.strip(), "$options": "i"}},
-                        {"paciente.entidad_info.nombre": {"$regex": entity_name.strip(), "$options": "i"}}
-                    ]
-                }
-            ]
+            entity_pattern = self._get_entity_filter_pattern(entity_name)
+            if entity_pattern:
+                pipeline[0]["$match"]["patient_info.entity_info.name"] = {"$regex": entity_pattern, "$options": "i"}
         
         results = await self.collection.aggregate(pipeline).to_list(length=1000)
         return results

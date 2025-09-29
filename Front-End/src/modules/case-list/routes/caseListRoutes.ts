@@ -24,6 +24,16 @@ export const caseListRoutes: RouteRecordRaw[] = [
     meta: {
       title: 'Casos por Aprobar'
     }
+  },
+  {
+    path: '/cases/complementary-techniques',
+    name: 'case-list.complementary-techniques',
+    component: () => import('../views/ComplementaryTechniquesView.vue'),
+    meta: {
+      title: 'Técnicas Complementarias',
+      requiresAuth: true,
+      requiresRole: ['admin', 'pathologist', 'resident']
+    }
   }
 ]
 
