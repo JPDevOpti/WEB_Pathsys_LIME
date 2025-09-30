@@ -87,6 +87,7 @@ export function roleGuard(
     ],
     patient: [
       '/dashboard',
+      '/cases/current',
       '/profile',
       '/support'
     ],

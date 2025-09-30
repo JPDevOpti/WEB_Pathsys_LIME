@@ -10,7 +10,11 @@ class AuthRepository:
         self.collection = db.get_collection("users")
 
     async def get_user_by_email(self, email: EmailStr) -> Optional[Dict[str, Any]]:
-        doc = await self.collection.find_one({"email": email, "is_active": True})
+        # Búsqueda case-insensitive por email para evitar fallos por mayúsculas/minúsculas
+        doc = await self.collection.find_one({
+            "email": {"$regex": f"^{email}$", "$options": "i"},
+            "is_active": True
+        })
         if not doc:
             return None
         doc["_id"] = str(doc.get("_id", ""))

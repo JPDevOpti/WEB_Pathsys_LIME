@@ -32,7 +32,7 @@
       <!-- Cases KPI -->
       <div class="flex items-center gap-4">
         <div class="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg transition-colors duration-300 group-hover:bg-blue-50">
-          <SampleIcon class="w-5 h-5 text-gray-800 transition-colors duration-300 group-hover:text-blue-600" />
+          <CaseIcon class="w-5 h-5 text-gray-800 transition-colors duration-300 group-hover:text-blue-600" />
         </div>
         <div>
           <span class="text-xs text-gray-500 transition-colors duration-300 group-hover:text-gray-700">
@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { SampleIcon } from '@/assets/icons'
+import { CaseIcon } from '@/assets/icons'
 import { onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { Card } from '@/shared/components/layout'
 import { formatearNumero, obtenerClasePorcentaje } from '@/shared'

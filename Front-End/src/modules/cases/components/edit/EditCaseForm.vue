@@ -180,7 +180,7 @@
         <!-- Samples editor -->
         <div v-if="formData.samples.length > 0" class="space-y-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-            <TestIcon class="w-5 h-5 mr-2 text-blue-600" />
+            <SampleIcon class="w-5 h-5 mr-2 text-blue-600" />
             Información de Submuestras
           </h3>
           
@@ -330,7 +330,7 @@ import { useCaseForm } from '../../composables/useCaseForm'
 import { casesApiService } from '../../services/casesApi.service'
 import pathologistApi from '../../services/pathologistApi.service'
 import type { CaseModel } from '../../types'
-import { TestIcon } from '@/assets/icons'
+import { SampleIcon } from '@/assets/icons'
 
 interface Props {
   caseCodeProp?: string

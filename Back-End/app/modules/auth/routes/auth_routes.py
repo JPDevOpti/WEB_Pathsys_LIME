@@ -15,8 +15,9 @@ async def login(payload: LoginRequest):
         service = await AuthService.build()
         result = await service.login(payload.email, payload.password)
         return result
-    except ValueError as e:
-        raise HTTPException(status_code=401, detail=str(e))
+    except ValueError:
+        # Evitar filtrar detalles internos como avisos de longitud de bcrypt
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     except Exception:
         raise HTTPException(status_code=500, detail="Internal authentication error")
 

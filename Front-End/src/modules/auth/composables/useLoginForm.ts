@@ -15,17 +15,13 @@ export function useLoginForm() {
 
   const emailError = computed(() => {
     if (!email.value) return ''
-    if (!isValidEmail(email.value)) {
-      return 'Please enter a valid email address'
-    }
+    if (!isValidEmail(email.value)) return 'Ingrese un correo electrónico válido'
     return ''
   })
 
   const passwordError = computed(() => {
     if (!password.value) return ''
-    if (!isValidPassword(password.value)) {
-      return 'Password must have at least 6 characters'
-    }
+    if (!isValidPassword(password.value)) return 'La contraseña debe tener al menos 6 caracteres'
     return ''
   })
 
@@ -38,7 +34,7 @@ export function useLoginForm() {
 
   const handleSubmit = async (): Promise<boolean> => {
     if (!isFormValid.value) {
-      error.value = 'Please complete all fields correctly'
+      error.value = 'Por favor complete todos los campos correctamente'
       return false
     }
 
@@ -47,7 +43,7 @@ export function useLoginForm() {
 
     try {
       const credentials: LoginRequest = {
-        email: email.value,
+        email: email.value.trim(),
         password: password.value
       }
 
@@ -58,11 +54,15 @@ export function useLoginForm() {
         resetForm()
         return true
       } else {
-        error.value = authStore.error || 'Error signing in'
+        // Mapear errores comunes a español
+        const msg = String(authStore.error || '').toLowerCase()
+        if (msg.includes('invalid credentials') || msg.includes('401')) error.value = 'Credenciales inválidas. Verifique correo y contraseña.'
+        else if (msg.includes('connection') || msg.includes('network')) error.value = 'Error de conexión. Verifique su conexión e intente nuevamente.'
+        else error.value = 'No se pudo iniciar sesión. Intente nuevamente.'
         return false
       }
     } catch (err) {
-      error.value = 'Connection error. Check your internet connection.'
+      error.value = 'Error de conexión. Verifique su conexión a internet.'
       return false
     } finally {
       isLoading.value = false

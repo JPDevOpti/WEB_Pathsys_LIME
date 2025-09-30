@@ -3,7 +3,7 @@
     <!-- Card de selección de período y acciones -->
     <ComponentCard title="Reporte de entidades" description="Seleccione mes y año para generar el informe.">
       <template #icon>
-        <EntityIcon class="w-5 h-5 text-blue-600 mr-2" />
+        <HospitalIcon class="w-5 h-5 text-blue-600 mr-2" />
       </template>
       <div class="flex flex-wrap items-end gap-4">
         <!-- Mes -->
@@ -65,7 +65,7 @@ import { computed, ref, watch } from 'vue'
 import { FormSelect } from '@/shared/components'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ComponentCard } from '@/shared/components/common'
-import { RefreshIcon, EntityIcon, TableIcon } from '@/assets/icons'
+import { RefreshIcon, HospitalIcon, TableIcon } from '@/assets/icons'
 import EntitiesSummary from './EntitiesSummary.vue'
 import EntitiesPerformanceChart from './EntitiesPerformanceChart.vue'
 import EntitiesDetailTable from './EntitiesDetailTable.vue'

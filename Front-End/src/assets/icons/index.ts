@@ -44,6 +44,7 @@ import RefreshIcon from "./RefreshIcon.vue";
 import SupportIcon from "./SupportIcon.vue";
 import LayoutDashboardIcon from "./LayoutDashboardIcon.vue";
 import UserGroupIcon from "./UserGroupIcon.vue";
+import UserSearchIcon from "./UserSearchIcon.vue";
 import BellIcon from "./BellIcon.vue";
 import BarChartIcon from "./BarChartIcon.vue";
 import AuxiliarIcon from "./AuxiliarIcon.vue";
@@ -51,12 +52,31 @@ import DoctorIcon from "./DoctorIcon.vue";
 import DolarIcon from "./DolarIcon.vue";
 import ResidentIcon from "./ResidentIcon.vue";
 import SampleIcon from "./SampleIcon.vue";
+import CaseIcon from "./CaseIcon.vue";
+import TestIcon from "./TestIcon.vue";
+import NewUserIcon from "./NewUserIcon.vue";
+import DocumentIcon from "./DocumentIcon.vue";
+import DocumentNewIcon from "./DocumentNewIcon.vue";
+import EditIcon from "./EditIcon.vue";
+import EditUserIcon from "./EditUserIcon.vue";
+import ChartIcon from "./ChartIcon.vue";
+import StatisticsChartIcon from "./StatisticsChartIcon.vue";
+import StatisticsIcon from "./StatisticsIcon.vue";
+import EntityIcon from "./EntityIcon.vue";
+import HospitalIcon from "./HospitalIcon.vue";
+import SignIcon from "./SignIcon.vue";
+import ResidenteIcon from "./ResidenteIcon.vue";
+import NewPatientIcon from "./NewPatientIcon.vue";
+import SearchPatientIcon from "./SearchPatientIcon.vue";
+import EditPatientIcon from "./EditPatientIcon.vue";
+import EditCaseIcon from "./EditCaseIcon.vue";
 
 export {
   BellIcon,
   BarChartIcon,
   LayoutDashboardIcon,
   UserGroupIcon,
+  UserSearchIcon,
   FolderIcon,
   TrashIconLg,
   SupportIcon,
@@ -106,4 +126,22 @@ export {
   DolarIcon,
   ResidentIcon,
   SampleIcon,
+  CaseIcon,
+  TestIcon,
+  NewUserIcon,
+  DocumentIcon,
+  DocumentNewIcon,
+  EditIcon,
+  EditUserIcon,
+  ChartIcon,
+  StatisticsChartIcon,
+  StatisticsIcon,
+  EntityIcon,
+  HospitalIcon,
+  SignIcon,
+  ResidenteIcon,
+  NewPatientIcon,
+  SearchPatientIcon,
+  EditPatientIcon,
+  EditCaseIcon,
 };

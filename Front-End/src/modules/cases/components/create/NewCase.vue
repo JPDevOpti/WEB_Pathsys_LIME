@@ -2,7 +2,7 @@
   <!-- Create a new case: verify patient, fill case form, review summary -->
   <ComponentCard title="Crear nuevo caso" description="Complete la información del caso para ingresarlo al sistema.">
     <template #icon>
-      <DocumentIcon class="w-5 h-5 mr-2 text-blue-600" />
+      <CaseIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
     
     <div class="space-y-6">
@@ -10,7 +10,7 @@
       <!-- Patient verification section -->
       <div class="bg-gray-50 rounded-lg p-3 sm:p-4 lg:p-6 border border-gray-200">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-          <UserSearchIcon class="w-4 h-4 mr-2 text-gray-500" />
+          <SearchPatientIcon class="w-4 h-4 mr-2 text-gray-500" />
         Buscar paciente
         </h3>
         
@@ -83,7 +83,7 @@
         <!-- Samples details -->
         <div class="space-y-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-            <TaskIcon class="w-5 h-5 mr-2 text-blue-600" />
+            <SampleIcon class="w-5 h-5 mr-2 text-blue-600" />
             Información de Submuestras
           </h3>
           
@@ -224,7 +224,7 @@ import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/fo
 import { SaveButton, ClearButton, SearchButton, AddButton, RemoveButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList, TestList, BodyRegionList } from '@/shared/components/List'
-import { DocumentIcon, TaskIcon, UserSearchIcon } from '@/assets/icons'
+import { CaseIcon, SampleIcon, SearchPatientIcon } from '@/assets/icons'
 
 // DOM refs and emitted events
 const notificationContainer = ref<HTMLElement | null>(null)

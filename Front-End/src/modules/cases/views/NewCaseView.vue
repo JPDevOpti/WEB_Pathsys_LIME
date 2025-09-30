@@ -10,7 +10,7 @@
             @patient-verified="handlePatientVerified"
           />
           
-          <CasePathologist 
+          <AssignPathologistToCase 
             :case-to-assign="currentCase"
           />
         </div>
@@ -30,7 +30,7 @@
 import { ref } from 'vue'
 import { AdminLayout } from '@/shared'
 import { PageBreadcrumb } from '@/shared/components/navigation'
-import { NewPatient, NewCase, CasePathologist } from '../components'
+import { NewPatient, NewCase, AssignPathologistToCase } from '../components'
 import type { PatientData } from '../types'
 
 const currentPageTitle = ref('Nuevo Caso Médico')

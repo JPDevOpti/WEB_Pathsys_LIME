@@ -3,7 +3,7 @@
     <!-- Card de selección de período, entidad, estado y acciones -->
     <ComponentCard title="Reporte de pruebas realizadas" description="Seleccione período, entidad y estado para generar el informe.">
       <template #icon>
-        <TestIcon class="w-5 h-5 text-blue-600 mr-2" />
+        <SampleIcon class="w-5 h-5 text-blue-600 mr-2" />
       </template>
 
       
@@ -139,7 +139,7 @@ import { FormSelect } from '@/shared/components'
 import { EntityList } from '@/shared/components/List'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ComponentCard } from '@/shared/components/common'
-import { RefreshIcon, TestIcon, TableIcon } from '@/assets/icons'
+import { RefreshIcon, SampleIcon, TableIcon } from '@/assets/icons'
 import TestsSummary from './TestsSummary.vue'
 import TestsPerformanceChart from './TestsPerformanceChart.vue'
 import TestsDetailTable from './TestsDetailTable.vue'

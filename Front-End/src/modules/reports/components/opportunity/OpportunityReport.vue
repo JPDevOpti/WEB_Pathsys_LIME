@@ -3,7 +3,7 @@
     <!-- Card de selección de período y acciones -->
     <ComponentCard title="Reporte de Oportunidades general del laboratorio" description="Seleccione mes y año para generar el informe.">
       <template #icon>
-        <StatisticsChartIcon class="w-5 h-5 text-blue-600 mr-2" />
+        <StatisticsIcon class="w-5 h-5 text-blue-600 mr-2" />
       </template>
       <div class="flex flex-wrap items-end gap-4">
         <!-- Mes -->
@@ -39,7 +39,10 @@
 
       <PathologistsPerformancePanel :datos="pathologistsForSelection" />
 
-      <ComponentCard title="Detalle por Procedimiento" description="Paneles por prueba.">
+      <ComponentCard title="Detalle por Procedimiento"  description="Paneles  de cada una de las oportunidades por prueba.">
+        <template #icon>
+          <TestIcon class="w-5 h-5 text-blue-600 mr-2" />
+        </template>
         <div v-if="testsForSelection.length === 0" class="text-gray-500">No hay procedimientos para el período seleccionado.</div>
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <TestsOpportunityPanel v-for="t in testsForSelection" :key="t.code" :prueba="t" />
@@ -54,7 +57,7 @@ import { computed, ref, watch } from 'vue'
 import { FormSelect } from '@/shared/components'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ComponentCard } from '@/shared/components/common'
-import { RefreshIcon, StatisticsChartIcon } from '@/assets/icons'
+import { RefreshIcon, TestIcon, StatisticsIcon } from '@/assets/icons'
 import OpportunitySummary from './OpportunitySummary.vue'
 import TestsOpportunityPanel from './TestsOpportunityPanel.vue'
 import PathologistsPerformancePanel from './PathologistsPerformancePanel.vue'

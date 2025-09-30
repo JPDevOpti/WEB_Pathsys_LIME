@@ -5,7 +5,7 @@
       <!-- Search block (hidden when editing via case code prop) -->
       <div v-if="!caseCodeProp" class="bg-gray-50 rounded-lg border border-gray-200 px-4 py-4">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-          <UserSearchIcon class="w-4 h-4 mr-2 text-gray-500" />
+          <SearchPatientIcon class="w-4 h-4 mr-2 text-gray-500" />
           Buscar paciente para editar
         </h3>
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
@@ -40,7 +40,7 @@
       <!-- Helper when nothing loaded -->
       <div v-if="!patientFound && !notification.visible" class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
         <div class="flex flex-col items-center space-y-3">
-          <UserSearchIcon class="w-12 h-12 text-blue-400" />
+          <SearchPatientIcon class="w-12 h-12 text-blue-400" />
           <h3 class="text-lg font-medium text-blue-800">Busque un paciente para editar</h3>
           <p class="text-blue-600 text-sm">Ingrese el documento de identidad del paciente para comenzar a editar</p>
         </div>
@@ -120,7 +120,7 @@ import patientsApiService from '../../services/patientsApi.service'
 import { EntityList } from '@/shared/components/List'
 import Notification from '@/shared/components/feedback/Notification.vue'
 import { ValidationAlert } from '@/shared/components/feedback'
-import { UserSearchIcon } from '@/assets/icons'
+import { SearchPatientIcon } from '@/assets/icons'
 import type { PatientData } from '../../types'
 
 interface Props { caseCodeProp?: string }

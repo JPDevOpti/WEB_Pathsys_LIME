@@ -7,7 +7,7 @@ export const authRoutes: RouteRecordRaw[] = [
     component: () => import('../views/LoginView.vue'),
     meta: {
       requiresAuth: false,
-      title: 'Sign In'
+      title: 'Iniciar sesión'
     }
   },
   {
@@ -16,7 +16,7 @@ export const authRoutes: RouteRecordRaw[] = [
     component: () => import('../views/LoginView.vue'),
     meta: {
       requiresAuth: false,
-      title: 'Sign In'
+      title: 'Iniciar sesión'
     }
   }
 ] 

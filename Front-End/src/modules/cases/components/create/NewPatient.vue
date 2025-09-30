@@ -2,7 +2,7 @@
   <!-- Register a new patient -->
   <ComponentCard title="Ingresar un nuevo paciente al sistema" description="Complete la información del paciente para ingresarlo al sistema.">
     <template #icon>
-      <NewUserIcon class="w-5 h-5 mr-2 text-blue-600" />
+      <NewPatientIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
 
     <div class="space-y-6">
@@ -89,7 +89,7 @@ import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/fo
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
 import { EntityList } from '@/shared/components/List'
-import { NewUserIcon } from '@/assets/icons'
+import { NewPatientIcon } from '@/assets/icons'
 
 // UI refs/state
 const notificationContainer = ref<HTMLElement | null>(null)

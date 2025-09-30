@@ -5,7 +5,7 @@
     description="Busque un caso y asigne un patólogo responsable para el análisis."
   >
     <template #icon>
-      <ResidenteIcon class="w-5 h-5 mr-2 text-blue-600" />
+      <DoctorIcon class="w-5 h-5 mr-2 text-blue-600" />
     </template>
 
     <div class="space-y-6">
@@ -87,19 +87,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Completed warning: block reassignment -->
-        <div v-if="casoEncontrado && casoInfo && isCaseCompleted" class="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
-          <div class="flex items-center">
-            <svg class="w-5 h-5 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <div>
-              <h4 class="text-sm font-semibold text-red-800">Caso Completado</h4>
-              <p class="text-sm text-red-700 mt-1">Este caso ya ha sido completado y no se puede reasignar patólogo. Los casos completados mantienen su asignación final para preservar la integridad de los datos.</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Assignment form -->
@@ -139,7 +126,7 @@ import { FormInputField } from '@/shared/components/forms'
 import { PathologistList } from '@/shared/components/List'
 import { SearchButton, SaveButton, ClearButton } from '@/shared/components/buttons'
 import { ValidationAlert, Notification } from '@/shared/components/feedback'
-import { ResidenteIcon } from '@/assets/icons'
+import { DoctorIcon } from '@/assets/icons'
 
 // UI state
 const codigoCaso = ref('')
@@ -304,3 +291,5 @@ const emit = defineEmits<{ 'patologo-asignado': [data: { codigoCaso: string; pat
 // Expose search and reset to parent if needed
 defineExpose({ limpiarFormulario, buscarCaso })
 </script>
+
+

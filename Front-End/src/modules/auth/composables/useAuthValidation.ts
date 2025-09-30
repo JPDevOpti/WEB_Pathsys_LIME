@@ -4,9 +4,7 @@ export function useAuthValidation() {
   /**
    * Validates if the email has a valid format
    */
-  const isValidEmail = (email: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  }
+  const isValidEmail = (email: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
   /**
    * Validates if the password meets minimum requirements
@@ -21,17 +19,11 @@ export function useAuthValidation() {
   const validateLoginForm = (email: string, password: string) => {
     const errors: string[] = []
 
-    if (!email) {
-      errors.push('Email is required')
-    } else if (!isValidEmail(email)) {
-      errors.push('Please enter a valid email address')
-    }
+    if (!email) errors.push('El correo es obligatorio')
+    else if (!isValidEmail(email)) errors.push('Ingrese un correo electrónico válido')
 
-    if (!password) {
-      errors.push('Password is required')
-    } else if (!isValidPassword(password)) {
-      errors.push('Password must have at least 6 characters')
-    }
+    if (!password) errors.push('La contraseña es obligatoria')
+    else if (!isValidPassword(password)) errors.push('La contraseña debe tener al menos 6 caracteres')
 
     return {
       isValid: errors.length === 0,
@@ -45,12 +37,12 @@ export function useAuthValidation() {
   const getFieldError = (field: string, value: string): string => {
     switch (field) {
       case 'email':
-        if (!value) return 'Email is required'
-        if (!isValidEmail(value)) return 'Please enter a valid email address'
+        if (!value) return 'El correo es obligatorio'
+        if (!isValidEmail(value)) return 'Ingrese un correo electrónico válido'
         break
       case 'password':
-        if (!value) return 'Password is required'
-        if (!isValidPassword(value)) return 'Password must have at least 6 characters'
+        if (!value) return 'La contraseña es obligatoria'
+        if (!isValidPassword(value)) return 'La contraseña debe tener al menos 6 caracteres'
         break
     }
     return ''

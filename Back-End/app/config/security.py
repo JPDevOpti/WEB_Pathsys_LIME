@@ -26,8 +26,11 @@ def create_access_token(
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verificar contraseña"""
-    # Si el hash es de bcrypt (empieza con $2b$), truncar la contraseña
-    if hashed_password.startswith('$2b$') and len(plain_password.encode('utf-8')) > 72:
+    try:
+        scheme = pwd_context.identify(hashed_password) or ""
+    except Exception:
+        scheme = ""
+    if (scheme.startswith('bcrypt') or hashed_password.startswith('$2')) and len(plain_password.encode('utf-8')) > 72:
         plain_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
     return pwd_context.verify(plain_password, hashed_password)
 

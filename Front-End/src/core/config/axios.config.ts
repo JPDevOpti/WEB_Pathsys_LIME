@@ -59,9 +59,10 @@ class ApiClient {
               break
               
             case 401:
-              // Token expirado o inválido - manejar de forma más suave
               console.warn('Token expirado detectado en interceptor')
-              // No hacer logout inmediato, dejar que el store lo maneje
+              // No forzar logout ni redirección aquí para evitar romper el flujo
+              // Dejar que la UI o el store reaccionen (p.ej. escuchando 'auth-unauthorized')
+              try { window.dispatchEvent(new CustomEvent('auth-unauthorized')) } catch {}
               break
               
             case 403:

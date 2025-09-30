@@ -1,7 +1,7 @@
 <template>
-  <ComponentCard title="Rendimiento de Patólogos">
+  <ComponentCard title="Rendimiento de Patólogos" description="Comparativa por todos los patólogos.">
     <template #icon>
-      <ChartIcon class="w-5 h-5 text-blue-600 mr-2" />
+      <DoctorIcon class="w-5 h-5 text-blue-600 mr-2" />
     </template>
     <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
       <div class="flex items-center justify-between mb-4">
@@ -18,7 +18,7 @@
 import { computed } from 'vue'
 import { ComponentCard } from '@/shared/components/common'
 import type { PathologistPerformance } from '../../types/opportunity.types'
-import { ChartIcon } from '@/assets/icons'
+import { DoctorIcon } from '@/assets/icons'
 
 const props = defineProps<{ datos: PathologistPerformance[] }>()
 
