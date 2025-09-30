@@ -1,4 +1,6 @@
-# ---- General ----
+# =============================
+# General
+# =============================
 .DS_Store
 Thumbs.db
 *.log
@@ -8,10 +10,11 @@ logs/
 .cache/
 .vscode/
 .idea/
+*.swp
 
-
-
-# ---- Python (Back-End) ----
+# =============================
+# Python (Back-End)
+# =============================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -29,12 +32,15 @@ htmlcov/
 .venv/
 venv/
 ENV/
+Back-End/venv/
 
-# Poetry / pip-tools (if used)
+# Poetry / pip-tools (si aplica)
 poetry.lock
 pip-wheel-metadata/
 
-# ---- Node/Vue (Front-End) ----
+# =============================
+# Node/Vue (Front-End)
+# =============================
 node_modules/
 Front-End/node_modules/
 Front-End/dist/
@@ -48,12 +54,16 @@ Front-End/.vite/
 # Build artifacts
 build/
 
-# ---- Docker ----
+# =============================
+# Docker
+# =============================
 **/.dockerignore
 
-# ---- Project runtime dirs ----
-Back-End/uploads/
-uploads/
+# =============================
+# Env/Secrets
+# =============================
+.env
+.env.*
+Back-End/.env
+!Back-End/config.atlas.env
 
-# ---- OS junk ----
-Icon?

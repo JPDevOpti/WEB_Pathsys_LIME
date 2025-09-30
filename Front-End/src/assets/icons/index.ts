@@ -1,45 +1,109 @@
-export { default as AuxiliarIcon } from './AuxiliarIcon.vue'
-export { default as CheckIcon } from './CheckIcon.vue'
-export { default as ChevronDownIcon } from './ChevronDownIcon.vue'
-export { default as CloseIcon } from './CloseIcon.vue'
-export { default as DolarIcon } from './DolarIcon.vue'
-export { default as DocsIcon } from './DocsIcon.vue'
-export { default as DoctorIcon } from './DoctorIcon.vue'
-export { default as DocumentIcon } from './DocumentIcon.vue'
-export { default as DocumentNewIcon } from './DocumentNewIcon.vue'
-export { default as DocumentOutlinedIcon } from './DocumentOutlinedIcon.vue'
-export { default as EditIcon } from './EditIcon.vue'
-export { default as ErrorIcon } from './ErrorIcon.vue'
-export { default as GridIcon } from './GridIcon.vue'
-export { default as EditUserIcon } from './EditUserIcon.vue'
-export { default as EntityIcon } from './EntityIcon.vue'
-export { default as ChartIcon } from './ChartIcon.vue'
-export { default as SampleIcon } from './SampleIcon.vue'
-export { default as NewUserIcon } from './NewUserIcon.vue'
-export { default as HorizontalDots } from './HorizontalDots.vue'
-export { default as InfoCircleIcon } from './InfoCircleIcon.vue'
-export { default as InfoIcon } from './InfoIcon.vue'
-export { default as ListIcon } from './ListIcon.vue'
-export { default as LogoutIcon } from './LogoutIcon.vue'
-export { default as PageIcon } from './PageIcon.vue'
-export { default as PaperclipIcon } from './PaperclipIcon.vue'
-export { default as PrintIcon } from './PrintIcon.vue'
-export { default as PieChartIcon } from './PieChartIcon.vue'
-export { default as PlugInIcon } from './PlugInIcon.vue'
-export { default as PlusIcon } from './PlusIcon.vue'
-export { default as RefreshIcon } from './RefreshIcon.vue'
-export { default as ResidentIcon } from './ResidentIcon.vue'
-export { default as ResidenteIcon } from './ResidentIcon.vue'
-export { default as SettingsIcon } from './SettingsIcon.vue'
-export { default as SignIcon } from './SignIcon.vue'
-export { default as StatisticsChartIcon } from './StatisticsChartIcon.vue'
-export { default as SuccessIcon } from './SuccessIcon.vue'
-export { default as TableIcon } from './TableIcon.vue'
-export { default as TaskIcon } from './TaskIcon.vue'
-export { default as TestIcon } from './TestIcon.vue'
-export { default as SearchIcon } from './SearchIcon.vue'
-export { default as TrashIcon } from './TrashIcon.vue'
-export { default as UserCircleIcon } from './UserCircleIcon.vue'
-export { default as UserGroupIcon } from './UserGroupIcon.vue'
-export { default as UserSearchIcon } from './UserSearchIcon.vue'
-export { default as WarningIcon } from './WarningIcon.vue'
+import BoxCubeIcon from "./BoxCubeIcon.vue";
+import GridIcon from "./GridIcon.vue";
+import CalenderIcon from "./CalenderIcon.vue";
+import TaskIcon from "./TaskIcon.vue";
+import ChatIcon from "./ChatIcon.vue";
+import MailIcon from "./MailIcon.vue";
+import DocsIcon from "./DocsIcon.vue";
+import PieChartIcon from "./PieChartIcon.vue";
+import UserCircleIcon from "./UserCircleIcon.vue";
+import ChevronDownIcon from "./ChevronDownIcon.vue";
+import HorizontalDots from "./HorizontalDots.vue";
+import PlugInIcon from "./PlugInIcon.vue";
+import PageIcon from "./PageIcon.vue";
+import SuccessIcon from "./SuccessIcon.vue";
+import ErrorIcon from "./ErrorIcon.vue";
+import InfoIcon from "./InfoIcon.vue";
+import WarningIcon from "./WarningIcon.vue";
+import PlusIcon from "./PlusIcon.vue";
+import TrashIconLg from "./TrashIconLg.vue";
+import ListIcon from "./ListIcon.vue";
+import TableIcon from "./TableIcon.vue";
+import LogoutIcon from "./LogoutIcon.vue";
+import InfoCircleIcon from "./InfoCircleIcon.vue";
+import FolderIcon from "./FolderIcon.vue";
+import SettingsIcon from "./SettingsIcon.vue";
+import HomeIcon from "./HomeIcon.vue";
+import ChevronRightIcon from "./ChevronRightIcon.vue";
+import BoxIcon from "./BoxIcon.vue";
+import ErrorHexaIcon from "./ErrorHexaIcon.vue";
+import Calendar2Line from "./Calendar2Line.vue";
+import Message2Line from "./Message2Line.vue";
+import PaperclipIcon from "./PaperclipIcon.vue";
+import PrintIcon from "./PrintIcon.vue";
+import MenuIcon from "./MenuIcon.vue";
+import CheckIcon from "./CheckIcon.vue";
+import MailBox from "./MailBox.vue";
+import SendIcon from "./SendIcon.vue";
+import DraftIcon from "./DraftIcon.vue";
+import TrashIcon from "./TrashIcon.vue";
+import ArchiveIcon from "./ArchiveIcon.vue";
+import FlagIcon from "./FlagIcon.vue";
+import StaredIcon from "./StaredIcon.vue";
+import RefreshIcon from "./RefreshIcon.vue";
+import SupportIcon from "./SupportIcon.vue";
+import LayoutDashboardIcon from "./LayoutDashboardIcon.vue";
+import UserGroupIcon from "./UserGroupIcon.vue";
+import BellIcon from "./BellIcon.vue";
+import BarChartIcon from "./BarChartIcon.vue";
+import AuxiliarIcon from "./AuxiliarIcon.vue";
+import DoctorIcon from "./DoctorIcon.vue";
+import DolarIcon from "./DolarIcon.vue";
+import ResidentIcon from "./ResidentIcon.vue";
+import SampleIcon from "./SampleIcon.vue";
+
+export {
+  BellIcon,
+  BarChartIcon,
+  LayoutDashboardIcon,
+  UserGroupIcon,
+  FolderIcon,
+  TrashIconLg,
+  SupportIcon,
+  HomeIcon,
+  StaredIcon,
+  RefreshIcon,
+  FlagIcon,
+  TrashIcon,
+  ArchiveIcon,
+  Message2Line,
+  PaperclipIcon,
+  BoxIcon,
+  ChevronRightIcon,
+  GridIcon,
+  BoxCubeIcon,
+  CalenderIcon,
+  UserCircleIcon,
+  TaskIcon,
+  ChatIcon,
+  MailIcon,
+  DocsIcon,
+  PieChartIcon,
+  ChevronDownIcon,
+  HorizontalDots,
+  Calendar2Line,
+  PlugInIcon,
+  PageIcon,
+  PrintIcon,
+  TableIcon,
+  ListIcon,
+  LogoutIcon,
+  InfoCircleIcon,
+  SettingsIcon,
+  ErrorIcon,
+  SuccessIcon,
+  InfoIcon,
+  WarningIcon,
+  PlusIcon,
+  ErrorHexaIcon,
+  MenuIcon,
+  CheckIcon,
+  MailBox,
+  SendIcon,
+  DraftIcon,
+  AuxiliarIcon,
+  DoctorIcon,
+  DolarIcon,
+  ResidentIcon,
+  SampleIcon,
+};
