@@ -283,15 +283,17 @@ import { usePermissions } from "@/shared/composables/usePermissions";
 
 import {
   GridIcon,
-  PieChartIcon,
   ChevronDownIcon,
   HorizontalDots,
-  PageIcon,
-  TableIcon,
-  ListIcon,
-  UserCircleIcon,
-  InfoCircleIcon,
 } from "@/assets/icons";
+import PatientsIcon from "@/assets/icons/PatientsIcon.vue";
+import CaseIcon from "@/assets/icons/CaseIcon.vue";
+import EditCaseIcon from "@/assets/icons/EditCaseIcon.vue";
+import SpecialCaseIcon from "@/assets/icons/SpecialCaseIcon.vue";
+import ListIcon from "@/assets/icons/ListIcon.vue";
+import ChartIcon from "@/assets/icons/ChartIcon.vue";
+import ProfileIcon from "@/assets/icons/ProfileIcon.vue";
+import WarningIcon from "@/assets/icons/WarningIcon.vue";
 import { useSidebar } from "@/shared/composables/SidebarControl";
 import logoExpanded from '@/assets/images/Logo-LIME-NoFondo.png'
 import logoCollapsed from '@/assets/images/LOGO-LIME-Inicial.png'
@@ -311,8 +313,8 @@ const canAccessRoute = (path: string): boolean => {
   // Usuario de facturación: solo dashboard, listado de casos, estadísticas, mi perfil y soporte
   if (isFacturacion.value) {
     // Permitir solo las rutas específicas para facturación
-    const result = path.startsWith('/dashboard') || 
-                   path.startsWith('/cases/current') || 
+  const result = path.startsWith('/dashboard') || 
+           path.startsWith('/cases/list') || 
                    path.startsWith('/statistics') || 
                    path === '/profile' ||
                    path.startsWith('/support');
@@ -329,12 +331,11 @@ const canAccessRoute = (path: string): boolean => {
     if (path.startsWith('/statistics/')) return false; // Todos los submenús de estadísticas
     
     // Permitir solo ciertas rutas
-    const result = path.startsWith('/dashboard') || 
-                   path.startsWith('/cases/current') || 
+  const result = path.startsWith('/dashboard') || 
+           path.startsWith('/cases/list') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/sign') || 
                    path.startsWith('/complementary-techniques') ||
-                   path.startsWith('/cases/complementary-techniques') ||
                    path === '/profile' ||
                    path.startsWith('/support');
     return result;
@@ -361,12 +362,11 @@ const canAccessRoute = (path: string): boolean => {
     if (path.startsWith('/results/sign')) return false; // Firmar resultados
     
     // Permitir solo ciertas rutas
-    const result = path.startsWith('/dashboard') || 
-                   path.startsWith('/cases/current') || 
+  const result = path.startsWith('/dashboard') || 
+           path.startsWith('/cases/list') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/perform') || 
                    path.startsWith('/complementary-techniques') ||
-                   path.startsWith('/cases/complementary-techniques') ||
                    path === '/profile' ||
                    path.startsWith('/support');
     return result;
@@ -416,6 +416,7 @@ interface MenuGroup {
 // Computed para filtrar elementos del menú según el rol del usuario
 const filteredMenuItems = computed(() => {
   const baseItems = [
+    // Página Principal
     {
       icon: GridIcon,
       name: "Panel principal",
@@ -423,38 +424,60 @@ const filteredMenuItems = computed(() => {
       pro: false,
       alwaysVisible: true
     },
+    // Gestión de Pacientes
+    {
+      name: "Gestión de pacientes",
+      icon: PatientsIcon,
+      subItems: [
+        { name: "Crear paciente", path: "/patients/new", pro: false, alwaysVisible: true },
+        { name: "Editar paciente", path: "/patients/edit", pro: false, alwaysVisible: true },
+      ],
+      alwaysVisible: true
+    },
+    // Gestión de casos
     {
       name: "Gestión de casos",
-      icon: ListIcon,
+      icon: CaseIcon,
       subItems: [
-        { name: "Nuevo caso", path: "/cases/new", pro: false, alwaysVisible: true },
+        { name: "Crear caso", path: "/cases/new", pro: false, alwaysVisible: true },
         { name: "Editar caso", path: "/cases/edit", pro: false, alwaysVisible: true },
-        { name: "Técnicas Complementarias", path: "/complementary-techniques", pro: false, alwaysVisible: true },
+  { name: "Asignación de patólogos", path: "/pathologist-assignment", pro: false, alwaysVisible: true },
       ],
       alwaysVisible: true
     },
-    {
-      name: "Listado de casos",
-      icon: TableIcon,
-      subItems: [
-        { name: "Casos actuales", path: "/cases/current", pro: false, alwaysVisible: true },
-        { name: "Casos por aprobar", path: "/cases/to-approve", pro: false, alwaysVisible: false },
-        { name: "Técnicas complementarias", path: "/cases/complementary-techniques", pro: false, alwaysVisible: true },
-      ],
-      alwaysVisible: true
-    },
+    // Resultados
     {
       name: "Resultados",
-      icon: PageIcon,
+      icon: EditCaseIcon,
       subItems: [
         { name: "Transcribir resultados", path: "/results/perform", pro: false, alwaysVisible: true },
         { name: "Firmar resultados", path: "/results/sign", pro: false, alwaysVisible: true },
       ],
       alwaysVisible: true
     },
+    // Casos especiales
+    {
+      name: "Casos especiales",
+      icon: SpecialCaseIcon,
+      subItems: [
+        { name: "Casos por aprobar", path: "/cases/to-approve", pro: false, alwaysVisible: false },
+        { name: "Técnicas complementarias", path: "/complementary-techniques", pro: false, alwaysVisible: true },
+      ],
+      alwaysVisible: true
+    },
+    // Listados
+    {
+      name: "Listados",
+      icon: ListIcon,
+      subItems: [
+        { name: "Pacientes", path: "/patients/list", pro: false, alwaysVisible: true },
+        { name: "Casos", path: "/cases/list", pro: false, alwaysVisible: true },
+      ],
+      alwaysVisible: true
+    },
     // Estadísticas - SIEMPRE VISIBLE pero no clickeable para patólogos
     {
-      icon: PieChartIcon,
+      icon: ChartIcon,
       name: "Estadísticas",
       subItems: [
         { name: "Reportes de oportunidad", path: "/statistics/opportunity", pro: false, alwaysVisible: true },
@@ -464,18 +487,20 @@ const filteredMenuItems = computed(() => {
       ],
       alwaysVisible: true
     },
+    // Perfiles
     {
       name: "Perfiles",
-      icon: UserCircleIcon,
+      icon: ProfileIcon,
       subItems: [
         { name: "Mi Perfil", path: "/profile", pro: false, alwaysVisible: true },
         { name: "Gestión de Usuarios", path: "/profile/users", pro: false, alwaysVisible: true }
       ],
       alwaysVisible: true
     },
+    // Soporte
     {
       name: "Soporte",
-      icon: InfoCircleIcon,
+      icon: WarningIcon,
       path: "/support",
       pro: false,
       alwaysVisible: true

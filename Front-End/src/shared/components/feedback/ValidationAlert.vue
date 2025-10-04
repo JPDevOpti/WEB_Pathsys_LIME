@@ -42,7 +42,7 @@ const emit = defineEmits<{
 // Mensaje principal que se muestra en el campo message del Notification
 const message = computed(() => {
   if (props.errors.length === 0) return ''
-  if (props.errors.length === 1) return props.errors[0]
+  if (props.errors.length === 1) return '' // evitar duplicar: la lista mostrará el único error
   return `${props.errors.length} errores encontrados`
 })
 </script>

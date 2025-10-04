@@ -1,6 +1,6 @@
 import BoxCubeIcon from "./BoxCubeIcon.vue";
 import GridIcon from "./GridIcon.vue";
-import CalenderIcon from "./CalenderIcon.vue";
+import CalendarIcon from "./CalendarIcon.vue";
 import TaskIcon from "./TaskIcon.vue";
 import ChatIcon from "./ChatIcon.vue";
 import MailIcon from "./MailIcon.vue";
@@ -14,7 +14,6 @@ import PageIcon from "./PageIcon.vue";
 import SuccessIcon from "./SuccessIcon.vue";
 import ErrorIcon from "./ErrorIcon.vue";
 import InfoIcon from "./InfoIcon.vue";
-import WarningIcon from "./WarningIcon.vue";
 import PlusIcon from "./PlusIcon.vue";
 import TrashIconLg from "./TrashIconLg.vue";
 import ListIcon from "./ListIcon.vue";
@@ -70,6 +69,11 @@ import NewPatientIcon from "./NewPatientIcon.vue";
 import SearchPatientIcon from "./SearchPatientIcon.vue";
 import EditPatientIcon from "./EditPatientIcon.vue";
 import EditCaseIcon from "./EditCaseIcon.vue";
+import PatientsIcon from "./PatientsIcon.vue";
+import SpecialCaseIcon from "./SpecialCaseIcon.vue";
+import DashboardIcon from "./DashboardIcon.vue";
+import WarningIcon from "./WarningIcon.vue";
+import ProfileIcon from "./ProfileIcon.vue";
 
 export {
   BellIcon,
@@ -92,7 +96,8 @@ export {
   ChevronRightIcon,
   GridIcon,
   BoxCubeIcon,
-  CalenderIcon,
+  CalendarIcon,
+  CalendarIcon as CalenderIcon,
   UserCircleIcon,
   TaskIcon,
   ChatIcon,
@@ -114,6 +119,7 @@ export {
   SuccessIcon,
   InfoIcon,
   WarningIcon,
+  
   PlusIcon,
   ErrorHexaIcon,
   MenuIcon,
@@ -144,4 +150,9 @@ export {
   SearchPatientIcon,
   EditPatientIcon,
   EditCaseIcon,
+  PatientsIcon,
+  SpecialCaseIcon,
+  DashboardIcon,
+  WarningIcon as SupportWarningIcon,
+  ProfileIcon,
 };

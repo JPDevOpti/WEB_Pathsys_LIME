@@ -1,27 +1,156 @@
 <template>
   <!-- Register a new patient -->
-  <ComponentCard title="Ingresar un nuevo paciente al sistema" description="Complete la información del paciente para ingresarlo al sistema.">
+  <ComponentCard 
+    title="Registro de Nuevo Paciente" 
+    description="Complete el formulario con la información del paciente. Los campos marcados con asterisco (*) son obligatorios."
+  >
     <template #icon>
-      <NewPatientIcon class="w-5 h-5 mr-2 text-blue-600" />
+      <NewUserIcon class="w-6 h-6 text-blue-600 mr-2" />
     </template>
-
     <div class="space-y-6">
-      <!-- Basic identity fields -->
-      <FormInputField v-model="(formData as any).patientCode" label="Documento de identidad" placeholder="Ejemplo: 12345678" :required="true" :max-length="12" inputmode="numeric" :only-numbers="true" :errors="getDocumentoErrors" @input="handleCedulaInput" />
-      <FormInputField v-model="(formData as any).name" label="Nombre del Paciente" placeholder="Ejemplo: Juan Perez" :required="true" :max-length="200" :only-letters="true" :errors="getNombreErrors" @input="handleNombreInput" />
-      
-      <!-- Demographics -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormInputField v-model="(formData as any).age" label="Edad" placeholder="Edad en años" :required="true" :max-length="3" inputmode="numeric" :only-numbers="true" :errors="getEdadErrors" @input="handleEdadInput" />
-        <FormSelect v-model="(formData as any).gender" label="Sexo" placeholder="Seleccione el sexo" :required="true" :options="sexoOptions" :error="getSexoError" />
+      <!-- Identification Section -->
+      <div class="bg-gray-50 p-6 rounded-lg">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Identificación</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormSelect 
+            v-model="formData.identification_type" 
+            label="Tipo de Identificación" 
+            placeholder="Seleccione el tipo" 
+            :required="true" 
+            :options="identificationTypeOptions" 
+            :error="getIdentificationTypeError" 
+          />
+          <FormInputField 
+            v-model="formData.identification_number" 
+            label="Número de Identificación" 
+            placeholder="Ejemplo: 12345678" 
+            :required="true" 
+            :max-length="12" 
+            inputmode="numeric" 
+            :only-numbers="true" 
+            :errors="getIdentificationNumberErrors" 
+            @input="handleIdentificationInput" 
+          />
+        </div>
       </div>
 
-      <!-- Entity and care type -->
-      <EntityList v-model="(formData as any).entity" label="Entidad" placeholder="Seleciona la entidad" :required="true" :auto-load="true" :errors="entidadErrors" :key="entityListKey" @entity-selected="onEntitySelected" />
-      <FormSelect v-model="(formData as any).careType" label="Tipo de Atención" placeholder="Seleccione el tipo de atención" :required="true" :options="tipoAtencionOptions" :error="getTipoAtencionError" />
+      <!-- Personal Information Section -->
+      <div class="bg-gray-50 p-6 rounded-lg">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Información Personal</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormInputField 
+            v-model="formData.first_name" 
+            label="Primer Nombre" 
+            placeholder="Ejemplo: Juan" 
+            :required="true" 
+            :max-length="50" 
+            :only-letters="true" 
+            :errors="getFirstNameErrors" 
+            @input="handleNameInput" 
+          />
+          <FormInputField 
+            v-model="formData.second_name" 
+            label="Segundo Nombre" 
+            placeholder="Ejemplo: Carlos" 
+            :max-length="50" 
+            :only-letters="true" 
+            :errors="getSecondNameErrors" 
+          />
+          <FormInputField 
+            v-model="formData.first_lastname" 
+            label="Primer Apellido" 
+            placeholder="Ejemplo: Pérez" 
+            :required="true" 
+            :max-length="50" 
+            :only-letters="true" 
+            :errors="getFirstLastnameErrors" 
+            @input="handleNameInput" 
+          />
+          <FormInputField 
+            v-model="formData.second_lastname" 
+            label="Segundo Apellido" 
+            placeholder="Ejemplo: García" 
+            :max-length="50" 
+            :only-letters="true" 
+            :errors="getSecondLastnameErrors" 
+          />
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <DateInputField 
+            v-model="formData.birth_date" 
+            label="Fecha de Nacimiento" 
+            :required="true" 
+            :errors="getBirthDateErrors" 
+            @update:model-value="handleBirthDateInput" 
+          />
+          <FormSelect 
+            v-model="formData.gender" 
+            label="Género" 
+            placeholder="Seleccione el género" 
+            :required="true" 
+            :options="genderOptions" 
+            :error="getGenderError" 
+          />
+        </div>
+      </div>
+
+      <!-- Location Section -->
+      <div class="bg-gray-50 p-6 rounded-lg">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Ubicación</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <MunicipalityList 
+            v-model="formData.municipality_code" 
+            label="Municipio" 
+            placeholder="Buscar y seleccionar municipio..." 
+            :required="true" 
+            :errors="getMunicipalityCodeErrors" 
+            @municipality-code-change="handleMunicipalityCodeChange"
+            @municipality-name-change="handleMunicipalityNameChange"
+            @subregion-change="handleSubregionChange"
+          />
+          <FormInputField 
+            v-model="formData.address" 
+            label="Dirección" 
+            placeholder="Ejemplo: Calle 123 #45-67" 
+            :required="true" 
+            :max-length="200" 
+            :errors="getAddressErrors" 
+          />
+        </div>
+      </div>
+
+      <!-- Entity and Care Type Section -->
+      <div class="bg-gray-50 p-6 rounded-lg">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Atención</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <EntityList
+            v-model="formData.entity_id"
+            label="Entidad de Salud"
+            placeholder="Buscar y seleccionar entidad..."
+            :required="true"
+            :errors="getEntityIdErrors"
+            @entity-selected="handleEntitySelected"
+          />
+          <FormSelect 
+            v-model="formData.care_type" 
+            label="Tipo de Atención" 
+            placeholder="Seleccione el tipo de atención" 
+            :required="true" 
+            :options="careTypeOptions" 
+            :error="getCareTypeError" 
+          />
+        </div>
+      </div>
       
       <!-- Notes -->
-      <FormTextarea v-model="(formData as any).observations" label="Observaciones del paciente" placeholder="Observaciones adicionales del paciente" :rows="3" :max-length="500" />
+      <FormTextarea 
+        v-model="formData.observations" 
+        label="Observaciones del paciente" 
+        placeholder="Observaciones adicionales del paciente" 
+        :rows="3" 
+        :max-length="500" 
+      />
 
       <!-- Actions -->
       <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -29,48 +158,25 @@
         <SaveButton text="Guardar Paciente" @click="handleSaveClick" :disabled="isLoading" :loading="isLoading" />
       </div>
 
-      <!-- Inline notification with success summary -->
+      <!-- Success Card -->
       <div ref="notificationContainer">
-        <Notification :visible="notification.visible" :type="notification.type" :title="notification.title" :message="notification.message" :inline="true" :auto-close="false" @close="closeNotification">
-          <template v-if="notification.type === 'success' && createdPatient" #content>
-            <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div class="space-y-4">
-                <!-- Header -->
-                <div class="mb-4 pb-3 border-b border-gray-100">
-                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ (createdPatient as any)?.nombrePaciente || (createdPatient as any)?.nombre }}</h3>
-                  <p class="text-gray-600">
-                    <span class="font-medium">Documento de identidad:</span> 
-                    <span class="font-mono font-bold text-gray-800 ml-1">{{ (createdPatient as any)?.numeroCedula || (createdPatient as any)?.cedula || 'NO DISPONIBLE' }}</span>
-                  </p>
-                </div>
-                
-                <!-- Key fields -->
-                <div class="space-y-3 text-sm">
-                  <div class="flex justify-between py-2 border-b border-gray-100">
-                    <span class="text-gray-500 font-medium">Edad:</span>
-                    <span class="text-gray-800 font-semibold">{{ (createdPatient as any)?.edad }} años</span>
-                  </div>
-                  
-                  <div class="flex justify-between py-2 border-b border-gray-100">
-                    <span class="text-gray-500 font-medium">Sexo:</span>
-                    <span class="text-gray-800 font-semibold">{{ (createdPatient as any)?.sexo || (createdPatient as any)?.gender }}</span>
-                  </div>
-                  
-                  <div class="flex justify-between py-2 border-b border-gray-100">
-                    <span class="text-gray-500 font-medium">Entidad:</span>
-                    <span class="text-gray-800 font-semibold text-right max-w-64 truncate">{{ (createdPatient as any)?.entidad_info?.nombre || (createdPatient as any)?.entidad }}</span>
-                  </div>
-                  
-                  <div class="flex justify-between py-2">
-                    <span class="text-gray-500 font-medium">Tipo de Atención:</span>
-                    <span class="text-gray-800 font-semibold">{{ (createdPatient as any)?.tipoAtencion || (createdPatient as any)?.tipo_atencion || (createdPatient as any)?.careType }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-        </Notification>
+        <PatientSuccessCard 
+          :visible="showSuccessCard" 
+          :patientData="createdPatient || {}"
+          @close="closeSuccessCard"
+        />
       </div>
+
+      <!-- Error notification -->
+      <Notification 
+        :visible="notification.visible && notification.type === 'error'" 
+        :type="notification.type" 
+        :title="notification.title" 
+        :message="notification.message" 
+        :inline="true" 
+        :auto-close="false" 
+        @close="closeNotification"
+      />
 
       <!-- Global validation -->
       <ValidationAlert :visible="validationState.showValidationError && validationErrors.length > 0" :errors="validationErrors" />
@@ -79,127 +185,456 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { usePatientForm } from '../../composables/usePatientForm'
-import { useNotifications } from '../../composables/useNotifications'
-import { usePatientAPI } from '../../composables/usePatientAPI'
-import type { PatientData } from '../../types'
+import { computed, ref, watch, reactive } from 'vue'
+import { useNotifications } from '../composables/useNotifications'
+import patientsApiService from '../services/patientsApi.service'
+import { IdentificationType } from '../types'
+import type { CreatePatientRequest, PatientData, Gender, CareType, PatientFormData } from '../types'
 import { ComponentCard } from '@/shared/components'
-import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
+import { FormInputField, FormSelect, FormTextarea, DateInputField } from '@/shared/components/forms'
+import { MunicipalityList, EntityList } from '@/shared/components/List'
 import { SaveButton, ClearButton } from '@/shared/components/buttons'
-import { ValidationAlert, Notification } from '@/shared/components/feedback'
-import { EntityList } from '@/shared/components/List'
-import { NewPatientIcon } from '@/assets/icons'
+import { ValidationAlert, Notification, PatientSuccessCard } from '@/shared/components/feedback'
+import { NewUserIcon } from '@/assets/icons'
 
 // UI refs/state
 const notificationContainer = ref<HTMLElement | null>(null)
-const createdPatient = ref<any>(null)
-const selectedEntity = ref<{ codigo: string; nombre: string } | null>(null)
-const entityListKey = ref(0)
+const createdPatient = ref<PatientData | null>(null)
+const showSuccessCard = ref(false)
+const isLoading = ref(false)
+
+// Form data
+const formData = reactive<PatientFormData>({
+  identification_type: '',
+  identification_number: '',
+  first_name: '',
+  second_name: '',
+  first_lastname: '',
+  second_lastname: '',
+  birth_date: '',
+  gender: '',
+  municipality_code: '',
+  municipality_name: '',
+  subregion: '',
+  address: '',
+  entity_id: '',
+  entity_name: '',
+  care_type: '',
+  observations: ''
+})
+
+// Validation state
+const validationState = reactive({
+  hasAttemptedSubmit: false,
+  showValidationError: false
+})
+
+// Validation errors
+const errors = reactive({
+  identification_type: [] as string[],
+  identification_number: [] as string[],
+  first_name: [] as string[],
+  second_name: [] as string[],
+  first_lastname: [] as string[],
+  second_lastname: [] as string[],
+  birth_date: [] as string[],
+  gender: [] as string[],
+  municipality_code: [] as string[],
+  municipality_name: [] as string[],
+  subregion: [] as string[],
+  address: [] as string[],
+  entity_id: [] as string[],
+  entity_name: [] as string[],
+  care_type: [] as string[]
+})
 
 // Composables
-const { formData, validationState, errors, handleCedulaInput, handleNombreInput, handleEdadInput, clearForm, validateForm } = usePatientForm()
 const { notification, showNotification, closeNotification } = useNotifications()
-const { createPatient, isLoading, clearState } = usePatientAPI()
 
 // Select options
-const sexoOptions = [{ value: 'Masculino', label: 'Masculino' }, { value: 'Femenino', label: 'Femenino' }]
-const tipoAtencionOptions = [{ value: 'Ambulatorio', label: 'Ambulatorio' }, { value: 'Hospitalizado', label: 'Hospitalizado' }]
+const identificationTypeOptions = [
+  { value: IdentificationType.CEDULA_CIUDADANIA, label: 'Cédula de Ciudadanía' },
+  { value: IdentificationType.TARJETA_IDENTIDAD, label: 'Tarjeta de Identidad' },
+  { value: IdentificationType.CEDULA_EXTRANJERIA, label: 'Cédula de Extranjería' },
+  { value: IdentificationType.PASAPORTE, label: 'Pasaporte' },
+  { value: IdentificationType.REGISTRO_CIVIL, label: 'Registro Civil' },
+  { value: IdentificationType.DOCUMENTO_EXTRANJERO, label: 'Documento Extranjero' },
+  { value: IdentificationType.NIT, label: 'NIT' }
+]
 
-// Aggregate validation messages for banner (avoid duplicates with field errors)
+const genderOptions = [
+  { value: 'Masculino', label: 'Masculino' },
+  { value: 'Femenino', label: 'Femenino' }
+]
+
+const careTypeOptions = [
+  { value: 'Ambulatorio', label: 'Ambulatorio' },
+  { value: 'Hospitalizado', label: 'Hospitalizado' }
+]
+
+// Validation functions
+const validateForm = (): boolean => {
+  clearErrors()
+  let isValid = true
+
+  // Validate identification type
+  if (!formData.identification_type) {
+    errors.identification_type.push('El tipo de identificación es obligatorio')
+    isValid = false
+  }
+
+  // Validate identification number
+  if (!formData.identification_number.trim()) {
+    errors.identification_number.push('El número de identificación es obligatorio')
+    isValid = false
+  } else if (formData.identification_number.length < 6) {
+    errors.identification_number.push('El número de identificación debe tener al menos 6 caracteres')
+    isValid = false
+  }
+
+  // Validate first name
+  if (!formData.first_name.trim()) {
+    errors.first_name.push('El primer nombre es obligatorio')
+    isValid = false
+  }
+
+  // Validate first lastname
+  if (!formData.first_lastname.trim()) {
+    errors.first_lastname.push('El primer apellido es obligatorio')
+    isValid = false
+  }
+
+  // Validate birth date
+  if (!formData.birth_date) {
+    errors.birth_date.push('La fecha de nacimiento es obligatoria')
+    isValid = false
+  } else {
+    const birthDate = new Date(formData.birth_date)
+    const today = new Date()
+    const age = today.getFullYear() - birthDate.getFullYear()
+    
+    if (birthDate > today) {
+      errors.birth_date.push('La fecha de nacimiento no puede ser futura')
+      isValid = false
+    } else if (age > 120) {
+      errors.birth_date.push('La edad no puede ser mayor a 120 años')
+      isValid = false
+    }
+  }
+
+  // Validate gender
+  if (!formData.gender) {
+    errors.gender.push('El género es obligatorio')
+    isValid = false
+  }
+
+  if (!formData.municipality_code.trim()) {
+    errors.municipality_code.push('El código del municipio es obligatorio')
+    isValid = false
+  }
+
+  if (!formData.municipality_name.trim()) {
+    errors.municipality_name.push('El nombre del municipio es obligatorio')
+    isValid = false
+  }
+
+  if (!formData.subregion.trim()) {
+    errors.subregion.push('La subregión es obligatoria')
+    isValid = false
+  }
+
+  if (!formData.address.trim()) {
+    errors.address.push('La dirección es obligatoria')
+    isValid = false
+  } else if (formData.address.trim().length < 5) {
+    errors.address.push('La dirección debe tener al menos 5 caracteres')
+    isValid = false
+  }
+
+  if (!formData.entity_id.trim()) {
+    errors.entity_id.push('El ID de entidad es obligatorio')
+    isValid = false
+  }
+
+  if (!formData.entity_name.trim()) {
+    errors.entity_name.push('El nombre de entidad es obligatorio')
+    isValid = false
+  }
+
+  if (!formData.care_type) {
+    errors.care_type.push('El tipo de atención es obligatorio')
+    isValid = false
+  }
+
+  return isValid
+}
+
+const clearErrors = () => {
+  Object.keys(errors).forEach(key => {
+    (errors as any)[key] = []
+  })
+}
+
+// Aggregate validation messages for banner
 const validationErrors = computed(() => {
   if (!validationState.hasAttemptedSubmit) return [] as string[]
   const list: string[] = []
-  const form = formData as any
-  const errorObj = errors as any
-  // Prefer specific field errors when present, else show required label
-  if (errorObj.patientCode.length > 0) list.push(`Documento: ${errorObj.patientCode[0]}`)
-  else if (!form.patientCode?.trim()) list.push('Documento de identidad')
+  
+  Object.entries(errors).forEach(([_, fieldErrors]) => {
+    if (fieldErrors.length > 0) {
+      list.push(fieldErrors[0])
+    }
+  })
 
-  if (errorObj.name.length > 0) list.push(`Nombre: ${errorObj.name[0]}`)
-  else if (!form.name?.trim()) list.push('Nombre del paciente')
-
-  if (errorObj.age.length > 0) list.push(`Edad: ${errorObj.age[0]}`)
-  else if (!form.age?.trim()) list.push('Edad')
-
-  if (!form.gender) list.push('Sexo')
-  if (!form.entity) list.push('Entidad')
-  if (!form.careType) list.push('Tipo de atención')
-  return list
+  return Array.from(new Set(list))
 })
 
 // Field-level validation helpers
-const getDocumentoErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : ((errors as any).patientCode.length > 0 ? (errors as any).patientCode : (!(formData as any).patientCode?.trim() ? ['El documento de identidad es obligatorio'] : [])))
-const getNombreErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : ((errors as any).name.length > 0 ? (errors as any).name : (!(formData as any).name?.trim() ? ['El nombre del paciente es obligatorio'] : [])))
-const getEdadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : ((errors as any).age.length > 0 ? (errors as any).age : (!(formData as any).age?.trim() ? ['La edad es obligatoria'] : [])))
-const getSexoError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!(formData as any).gender ? 'Por favor seleccione el sexo' : ''))
-const getTipoAtencionError = computed(() => !validationState.hasAttemptedSubmit ? '' : (!(formData as any).careType ? 'Por favor seleccione el tipo de atención' : ''))
-const entidadErrors = computed(() => !validationState.hasAttemptedSubmit ? [] : (!(formData as any).entity ? ['La entidad es obligatoria'] : []))
+const getIdentificationTypeError = computed(() => 
+  !validationState.hasAttemptedSubmit ? '' : 
+  (errors.identification_type.length > 0 ? errors.identification_type[0] : '')
+)
 
-// Entity selected from list (normalize to expected shape)
-const onEntitySelected = (entity: any) => {
-  if (!entity) { selectedEntity.value = null; return }
-  selectedEntity.value = { codigo: entity.codigo || entity.code || entity.id || '', nombre: entity.nombre || entity.name || '' }
-}
+const getIdentificationNumberErrors = computed(() => 
+  !validationState.hasAttemptedSubmit ? [] : errors.identification_number
+)
 
-// Reset inputs and entity selector
-const handleClearForm = () => { clearForm(); selectedEntity.value = null; entityListKey.value++ }
+const getFirstNameErrors = computed(() => 
+  !validationState.hasAttemptedSubmit ? [] : errors.first_name
+)
 
-// Create patient flow
-const handleSaveClick = async () => {
-  const isValid = validateForm()
-  if (!isValid) { validationState.showValidationError = true; return }
-  validationState.showValidationError = false
-  clearState()
-  try {
-    const form = formData as any
-    const patientData: any = {
-      patientCode: form.patientCode,
-      name: form.name,
-      gender: form.gender === 'Masculino' ? 'masculino' : form.gender === 'Femenino' ? 'femenino' : '',
-      age: form.age,
-      entity: selectedEntity.value?.nombre || form.entity,
-      entityCode: selectedEntity.value?.codigo,
-      careType: form.careType === 'Ambulatorio' ? 'ambulatorio' : form.careType === 'Hospitalizado' ? 'hospitalizado' : '',
-      observations: form.observations
-    }
-    
-    // LOG: Datos que se van a enviar
-    console.log('🔍 [LOG NewPatient] formData:', JSON.stringify(form, null, 2))
-    console.log('🔍 [LOG NewPatient] selectedEntity:', JSON.stringify(selectedEntity.value, null, 2))
-    console.log('🔍 [LOG NewPatient] patientData construido:', JSON.stringify(patientData, null, 2))
-    
-    const result = await createPatient(patientData)
-    
-    // LOG: Resultado del createPatient
-    console.log('🔍 [LOG NewPatient] result del createPatient:', JSON.stringify(result, null, 2))
-    if (result.success && result.patient) {
-      createdPatient.value = result.patient
-      showNotification('success', '¡Paciente Registrado Exitosamente!', '', 15000)
-      emit('patient-saved', patientData)
-      try { window.dispatchEvent(new CustomEvent('patient-created')) } catch {}
-      clearForm(); selectedEntity.value = null; entityListKey.value++
-    } else {
-      if (result.message?.toLowerCase().includes('duplicad') || result.message?.toLowerCase().includes('ya existe') || result.message?.toLowerCase().includes('repetid')) {
-        showNotification('error', 'Documento Duplicado', 'Ya existe un paciente con este documento de identidad. Por favor, verifique el número e intente con otro.', 0)
-      } else {
-        throw new Error(result.message || 'Error desconocido al crear el paciente')
-      }
-    }
-  } catch (error: any) {
-    let errorMessage = 'No se pudo guardar el paciente. Por favor, inténtelo nuevamente.'
-    if (error.message?.includes('ERR_CONNECTION_REFUSED') || error.code === 'ERR_NETWORK') errorMessage = 'Error de conexión: El servidor no está disponible. Verifique que el backend esté ejecutándose.'
-    else if (error.response?.data?.detail) errorMessage = Array.isArray(error.response.data.detail) ? error.response.data.detail.map((err: any) => err.msg || err.message || String(err)).join(', ') : String(error.response.data.detail)
-    else if (error.message?.toLowerCase().includes('duplicad') || error.message?.toLowerCase().includes('ya existe') || error.message?.toLowerCase().includes('repetid')) errorMessage = 'Ya existe un paciente con este documento de identidad. Por favor, verifique el número e intente con otro.'
-    else if (error.response?.data?.message) errorMessage = String(error.response.data.message)
-    else if (error.message) errorMessage = String(error.message)
-    else if (typeof error === 'string') errorMessage = error
-    showNotification('error', 'Error al Guardar Paciente', errorMessage, 0)
+const getSecondNameErrors = computed(() => 
+  !validationState.hasAttemptedSubmit ? [] : errors.second_name
+)
+
+const getFirstLastnameErrors = computed(() => 
+  !validationState.hasAttemptedSubmit ? [] : errors.first_lastname
+)
+
+const getSecondLastnameErrors = computed(() => 
+  !validationState.hasAttemptedSubmit ? [] : errors.second_lastname
+)
+
+const getBirthDateErrors = computed(() => 
+  !validationState.hasAttemptedSubmit ? [] : errors.birth_date
+)
+
+const getGenderError = computed(() => 
+  !validationState.hasAttemptedSubmit ? '' : 
+  (errors.gender.length > 0 ? errors.gender[0] : '')
+)
+
+const getMunicipalityCodeErrors = computed(() => 
+  !validationState.hasAttemptedSubmit ? [] : errors.municipality_code
+)
+
+// const getMunicipalityNameErrors = computed(() => 
+//   !validationState.hasAttemptedSubmit ? [] : errors.municipality_name
+// )
+
+// const getSubregionErrors = computed(() => 
+//   !validationState.hasAttemptedSubmit ? [] : errors.subregion
+// )
+
+const getAddressErrors = computed(() => 
+  !validationState.hasAttemptedSubmit ? [] : errors.address
+)
+
+const getEntityIdErrors = computed(() => 
+  !validationState.hasAttemptedSubmit ? [] : errors.entity_id
+)
+
+// const getEntityNameErrors = computed(() => 
+//   !validationState.hasAttemptedSubmit ? [] : errors.entity_name
+// )
+
+const getCareTypeError = computed(() => 
+  !validationState.hasAttemptedSubmit ? '' : 
+  (errors.care_type.length > 0 ? errors.care_type[0] : '')
+)
+
+// Input handlers
+const handleIdentificationInput = () => {
+  if (validationState.hasAttemptedSubmit) {
+    errors.identification_number = []
   }
 }
 
+const handleNameInput = () => {
+  if (validationState.hasAttemptedSubmit) {
+    errors.first_name = []
+    errors.first_lastname = []
+  }
+}
+
+const handleBirthDateInput = () => {
+  if (validationState.hasAttemptedSubmit) {
+    errors.birth_date = []
+  }
+}
+
+// Municipality handlers
+const handleMunicipalityCodeChange = (code: string) => {
+  formData.municipality_code = code
+}
+
+const handleMunicipalityNameChange = (name: string) => {
+  formData.municipality_name = name
+}
+
+const handleSubregionChange = (subregion: string) => {
+  formData.subregion = subregion
+}
+
+// Helper: convertir fechas DD/MM/YYYY a ISO YYYY-MM-DD
+const toIsoDate = (value: string): string => {
+  const s = (value || '').trim()
+  if (s.includes('/')) {
+    const parts = s.split('/')
+    if (parts.length === 3) {
+      const [dd, mm, yyyy] = parts
+      if (yyyy && mm && dd) return `${yyyy}-${mm}-${dd}`
+    }
+  }
+  return s
+}
+
+// Handle entity selection
+const handleEntitySelected = (entity: any) => {
+  if (entity) {
+    formData.entity_id = entity.codigo || entity.id || ''
+    formData.entity_name = entity.nombre || entity.name || ''
+  } else {
+    formData.entity_id = ''
+    formData.entity_name = ''
+  }
+}
+
+// Clear form
+const clearForm = () => {
+  Object.assign(formData, {
+    identification_type: '',
+    identification_number: '',
+    first_name: '',
+    second_name: '',
+    first_lastname: '',
+    second_lastname: '',
+    birth_date: '',
+    gender: '',
+    municipality_code: '',
+    municipality_name: '',
+    subregion: '',
+    address: '',
+    entity_id: '',
+    entity_name: '',
+    care_type: '',
+    observations: ''
+  })
+  clearErrors()
+  validationState.hasAttemptedSubmit = false
+  validationState.showValidationError = false
+}
+
+// Reset inputs
+const handleClearForm = () => {
+  clearForm()
+}
+
+// Create patient flow
+const handleSaveClick = async () => {
+  validationState.hasAttemptedSubmit = true
+  const isValid = validateForm()
+  
+  if (!isValid) {
+    validationState.showValidationError = true
+    return
+  }
+  
+  validationState.showValidationError = false
+  isLoading.value = true
+  
+  try {
+    const patientData: CreatePatientRequest = {
+      identification_type: formData.identification_type as IdentificationType,
+      identification_number: formData.identification_number.trim(),
+      first_name: formData.first_name.trim(),
+      second_name: formData.second_name.trim() || undefined,
+      first_lastname: formData.first_lastname.trim(),
+      second_lastname: formData.second_lastname.trim() || undefined,
+      birth_date: toIsoDate(formData.birth_date),
+      gender: formData.gender as Gender,
+      location: {
+        municipality_code: formData.municipality_code.trim(),
+        municipality_name: formData.municipality_name.trim(),
+        subregion: formData.subregion.trim(),
+        address: formData.address.trim()
+      },
+      entity_info: {
+        id: formData.entity_id.trim(),
+        name: formData.entity_name.trim()
+      },
+      care_type: formData.care_type as CareType,
+      observations: formData.observations.trim() || undefined
+    }
+    
+    const result = await patientsApiService.createPatient(patientData)
+    
+    createdPatient.value = result
+    showSuccessCard.value = true
+    emit('patient-saved', result)
+    
+    try {
+      window.dispatchEvent(new CustomEvent('patient-created'))
+    } catch {}
+    
+    clearForm()
+    
+  } catch (error: any) {
+    let errorMessage = 'No se pudo guardar el paciente. Por favor, inténtelo nuevamente.'
+    
+    if (error.message?.includes('ERR_CONNECTION_REFUSED') || error.code === 'ERR_NETWORK') {
+      errorMessage = 'Error de conexión: El servidor no está disponible. Verifique que el backend esté ejecutándose.'
+    } else if (Array.isArray(error.response?.data?.errors)) {
+      // Backend 422: estructura { detail: 'Validation error', errors: [...] }
+      const errs = error.response.data.errors
+      errorMessage = errs.map((err: any) => {
+        const field = Array.isArray(err.loc) ? err.loc.join('.') : ''
+        return `${field ? field + ': ' : ''}${err.msg || err.message || String(err)}`
+      }).join(', ')
+    } else if (error.response?.data?.detail) {
+      errorMessage = Array.isArray(error.response.data.detail) 
+        ? error.response.data.detail.map((err: any) => err.msg || err.message || String(err)).join(', ')
+        : String(error.response.data.detail)
+    } else if (error.message?.toLowerCase().includes('duplicad') || 
+               error.message?.toLowerCase().includes('ya existe') || 
+               error.message?.toLowerCase().includes('repetid')) {
+      errorMessage = 'Ya existe un paciente con este documento de identidad. Por favor, verifique el número e intente con otro.'
+    } else if (error.response?.data?.message) {
+      errorMessage = String(error.response.data.message)
+    } else if (error.message) {
+      errorMessage = String(error.message)
+    } else if (typeof error === 'string') {
+      errorMessage = error
+    }
+    
+    showNotification('error', 'Error al Guardar Paciente', errorMessage, 0)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Close success card and clear patient data
+const closeSuccessCard = () => {
+  showSuccessCard.value = false
+  createdPatient.value = null
+}
+
 // Smooth-scroll to notification when visible
-watch(() => notification.visible, (v) => { if (v && notificationContainer.value) notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' }) })
+watch(() => showSuccessCard.value, (v) => {
+  if (v && notificationContainer.value) {
+    notificationContainer.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+})
 
 // Emit for parent listeners
 const emit = defineEmits<{ 'patient-saved': [patient: PatientData] }>()

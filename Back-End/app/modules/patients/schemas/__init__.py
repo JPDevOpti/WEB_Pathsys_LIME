@@ -1,6 +1,7 @@
 from .patient import (
     Gender,
     CareType,
+    IdentificationType,
     PatientBase,
     PatientCreate,
     PatientUpdate,
@@ -11,6 +12,7 @@ from .patient import (
 __all__ = [
     "Gender",
     "CareType",
+    "IdentificationType",
     "PatientBase",
     "PatientCreate",
     "PatientUpdate",

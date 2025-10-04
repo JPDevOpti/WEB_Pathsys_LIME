@@ -91,6 +91,8 @@ class CasePdfService:
             'paciente': {
                 'nombre': case_dict.get('patient_info', {}).get('name', ''),
                 'paciente_code': case_dict.get('patient_info', {}).get('patient_code', ''),
+                'identification_type': case_dict.get('patient_info', {}).get('identification_type', None),
+                'identification_number': case_dict.get('patient_info', {}).get('identification_number', ''),
                 'edad': case_dict.get('patient_info', {}).get('age', ''),
                 'sexo': case_dict.get('patient_info', {}).get('gender', ''),
                 'telefono': case_dict.get('patient_info', {}).get('phone', ''),

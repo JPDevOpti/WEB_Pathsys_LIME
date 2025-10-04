@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
@@ -200,8 +200,8 @@ class OpportunityStatisticsRepository:
         month: int,
         year: int,
         threshold_days: int = 7,
-        entity: str | None = None,
-        pathologist: str | None = None,
+        entity: Union[str, None] = None,
+        pathologist: Union[str, None] = None,
     ) -> dict:
         """Monthly opportunity breakdown for tests and pathologists (English shape).
 

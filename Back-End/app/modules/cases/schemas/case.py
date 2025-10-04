@@ -8,14 +8,25 @@ class EntityInfo(BaseModel):
     name: str = Field(..., max_length=200)
 
 
+class LocationInfo(BaseModel):
+    municipality_code: Optional[str] = Field(None, max_length=10, description="Código del municipio")
+    municipality_name: Optional[str] = Field(None, max_length=100, description="Nombre del municipio")
+    subregion: Optional[str] = Field(None, max_length=100, description="Subregión")
+    address: Optional[str] = Field(None, max_length=200, description="Dirección completa")
+
+
 class PatientInfo(BaseModel):
     patient_code: str = Field(..., max_length=50)
+    identification_type: Optional[int] = Field(None, ge=1, le=9, description="Tipo de identificación (1..9)")
+    identification_number: Optional[str] = Field(None, min_length=1, max_length=12, description="Número de identificación")
     name: str = Field(..., max_length=200)
     age: int = Field(..., ge=0, le=150)
+    birth_date: Optional[datetime] = Field(None, description="Fecha de nacimiento del paciente")
     gender: str = Field(..., max_length=20)
     entity_info: EntityInfo
     care_type: str = Field(..., max_length=50)
     observations: Optional[str] = Field(None, max_length=1000)
+    location: Optional[LocationInfo] = Field(None, description="Información de ubicación del paciente")
 
 
 class SampleTest(BaseModel):

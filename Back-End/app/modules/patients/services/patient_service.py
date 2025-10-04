@@ -1,9 +1,10 @@
-import logging
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from ..schemas import PatientCreate, PatientUpdate, PatientResponse, PatientSearch
 from ..repositories import PatientRepository
 from app.core.exceptions import NotFoundError, BadRequestError, ConflictError
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -13,46 +14,48 @@ class PatientService:
 
     async def create_patient(self, patient: PatientCreate) -> PatientResponse:
         try:
-            await self._validate_patient_data(patient)
-            
-            existing_patient = await self.repository.get_by_id(patient.patient_code)
-            if existing_patient:
-                raise ConflictError(f"Patient with code {patient.patient_code} already exists")
-            
             patient_data = await self.repository.create(patient)
             return PatientResponse(**patient_data)
-        except ConflictError as e:
+        except ConflictError:
             raise
-        except Exception as e:
+        except Exception:
+            logger.exception("[service:create] Error inesperado")
             raise
 
     async def get_patient_by_code(self, patient_code: str) -> PatientResponse:
         patient_data = await self.repository.get_by_id(patient_code)
         if not patient_data:
-            raise NotFoundError(f"Patient with code {patient_code} not found")
+            raise NotFoundError(f"Paciente con código {patient_code} no encontrado")
         return PatientResponse(**patient_data)
 
     async def update_patient(self, patient_code: str, patient_update: PatientUpdate) -> PatientResponse:
-        if patient_update.age is not None and (patient_update.age < 0 or patient_update.age > 150):
-            raise BadRequestError("Age must be between 0 and 150 years")
         patient_data = await self.repository.update(patient_code, patient_update)
         return PatientResponse(**patient_data)
 
-    async def change_patient_code(self, patient_code: str, new_code: str) -> PatientResponse:
-        if not new_code or len(new_code.strip()) < 6 or len(new_code.strip()) > 12:
-            raise BadRequestError("Patient code must be between 6 and 12 characters")
-        cases_collection = None
+    async def change_patient_identification(self, patient_code: str, new_identification_type: str, new_identification_number: str) -> PatientResponse:
+        if not new_identification_number or len(new_identification_number.strip()) == 0:
+            raise BadRequestError("El número de identificación no puede estar vacío")
+        
+        # Usar el valor numérico si viene un Enum; si ya es str/int, conservar
         try:
-            cases_collection = self.repository.collection.database.cases
-        except Exception:
-            cases_collection = None
-        patient_data = await self.repository.change_code(patient_code, new_code.strip(), cases_collection)
+            new_type_value = int(new_identification_type)
+        except (TypeError, ValueError):
+            new_type_value = new_identification_type
+        
+        new_code = f"{new_type_value}-{new_identification_number}"
+        if patient_code == new_code:
+            raise BadRequestError("La nueva identificación debe ser diferente a la actual")
+            
+        cases_collection = getattr(self.repository.collection.database, "cases", None)
+        patient_data = await self.repository.change_identification(patient_code, new_type_value, new_identification_number, cases_collection)
+        if not patient_data:
+            raise NotFoundError("Paciente no encontrado")
         return PatientResponse(**patient_data)
 
     async def delete_patient(self, patient_code: str) -> bool:
         patient_data = await self.repository.get_by_id(patient_code)
         if not patient_data:
-            raise NotFoundError(f"Patient with code {patient_code} not found")
+            raise NotFoundError(f"Paciente con código {patient_code} no encontrado")
         result = await self.repository.delete(patient_code)
         return result
 
@@ -80,26 +83,19 @@ class PatientService:
     async def get_total_count(self) -> int:
         return await self.repository.count_total()
 
-    async def exists(self, patient_code: str) -> bool:
-        patient_data = await self.repository.get_by_id(patient_code)
-        return patient_data is not None
 
-    async def _validate_patient_data(self, patient: PatientCreate) -> None:
-        if patient.age < 0 or patient.age > 150:
-            raise BadRequestError("Age must be between 0 and 150 years")
+
+    # Eliminado: validaciones cubiertas por Pydantic en schemas
 
     async def _validate_date_range(self, date_from: Optional[str], date_to: Optional[str]) -> None:
         if date_from and date_to:
             try:
-                from datetime import datetime
                 start_date = datetime.fromisoformat(date_from)
                 end_date = datetime.fromisoformat(date_to)
                 if start_date > end_date:
-                    raise BadRequestError("Start date cannot be after end date")
+                    raise BadRequestError("La fecha inicial no puede ser posterior a la fecha final")
             except ValueError:
-                raise BadRequestError("Invalid date format. Use YYYY-MM-DD")
-
-patient_service: Optional[PatientService] = None
+                raise BadRequestError("Formato de fecha inválido. Use YYYY-MM-DD")
 
 def get_patient_service(database: AsyncIOMotorDatabase) -> PatientService:
     return PatientService(database)

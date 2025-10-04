@@ -2,7 +2,7 @@
  * Composable para manejar la persistencia de autenticación
  */
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRouter } from 'vue-router'
 
@@ -16,19 +16,28 @@ export function useAuthPersistence() {
    */
   const initializeApp = async () => {
     try {
-      // Inicializar autenticación sin await para no bloquear la app
-      authStore.initializeAuth()
+      // Inicializar autenticación y verificar token antes de habilitar la app
+      await authStore.initializeAuth()
       
-      // Marcar como inicializado inmediatamente
-      isInitialized.value = true
-      
-      // Esperar un poco para que la inicialización termine
-      setTimeout(() => {
-        // Si está autenticado y está en login, redirigir al dashboard
-        if (authStore.isAuthenticated && router.currentRoute.value.path === '/login') {
-          router.replace('/dashboard')
+      // Si hay sesión cargada, verificar inmediatamente que el token sea válido
+      if (authStore.isAuthenticated && authStore.token) {
+        const isValid = await authStore.verifyToken()
+        if (!isValid) {
+          // Logout y redireccionar a login
+          await authStore.logout()
+          if (router.currentRoute.value.path !== '/login') {
+            router.replace('/login')
+          }
         }
-      }, 100)
+      }
+
+      // Marcar como inicializado
+      isInitialized.value = true
+
+      // Si está autenticado y está en login, redirigir al dashboard
+      if (authStore.isAuthenticated && router.currentRoute.value.path === '/login') {
+        router.replace('/dashboard')
+      }
     } catch (error) {
       console.error('Error al inicializar la aplicación:', error)
       isInitialized.value = true
@@ -48,6 +57,8 @@ export function useAuthPersistence() {
           if (!isValid && router.currentRoute.value.path !== '/login') {
             console.warn('Token expirado, redirigiendo a login')
             clearInterval(interval) // Limpiar el intervalo antes de redirigir
+            // Logout para limpiar estado
+            await authStore.logout()
             router.push('/login')
           }
         } catch (error) {
@@ -64,7 +75,17 @@ export function useAuthPersistence() {
   /**
    * Manejar logout automático en caso de error de autenticación
    */
-  const handleAuthError = () => {
+  const handleAuthError = async () => {
+    await authStore.logout()
+    if (router.currentRoute.value.path !== '/login') {
+      router.push('/login')
+    }
+  }
+
+  // Listener para eventos globales de 401 desde Axios
+  const onUnauthorized = async () => {
+    console.warn('Evento global auth-unauthorized recibido: cerrando sesión')
+    await authStore.logout()
     if (router.currentRoute.value.path !== '/login') {
       router.push('/login')
     }
@@ -76,6 +97,13 @@ export function useAuthPersistence() {
     setTimeout(() => {
       startTokenRefreshTimer()
     }, 30000) // Esperar 30 segundos antes de iniciar verificaciones periódicas
+
+    // Escuchar eventos de 401 no autorizado desde axios
+    window.addEventListener('auth-unauthorized', onUnauthorized as EventListener)
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('auth-unauthorized', onUnauthorized as EventListener)
   })
 
   return {

@@ -1,0 +1,7 @@
+export { default as PatientsTable } from './PatientsTable.vue'
+export { default as PatientsView } from './PatientsView.vue'
+export { default as PatientSearchCard } from './PatientSearchCard.vue'
+export { default as PatientInfoCard } from './PatientInfoCard.vue'
+export { default as PatientTableCard } from './PatientTableCard.vue'
+export { default as FiltersBar } from './FiltersBar.vue'
+export { default as PatientDetailsModal } from './PatientDetailsModal.vue'

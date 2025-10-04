@@ -8,6 +8,7 @@
       'rounded-2xl border border-gray-200 bg-white transition-all duration-300 shadow-sm hover:shadow-md',
       { 'cursor-pointer card-hover': clickable },
       { 'opacity-50 cursor-not-allowed': disabled },
+      { 'flex flex-col': $slots.footer },
       customClass,
     ]"
     @click="handleClick"
@@ -38,7 +39,8 @@
       :class="[
         'px-6',
         { 'bg-gray-50': loading },
-        { 'flex-1 flex flex-col min-h-0': fullHeight },
+        { 'flex-1 flex flex-col min-h-0 overflow-hidden': $slots.footer },
+        { 'flex-1 flex flex-col min-h-0': fullHeight && !$slots.footer },
         { 'py-3': dense },
         { 'py-4': !dense && fullHeight },
         { 'py-6': !dense && !fullHeight }
@@ -54,7 +56,7 @@
     </div>
 
     <!-- Card Footer -->
-    <div v-if="$slots.footer" class="px-6 py-4 border-t border-gray-100 bg-gray-50">
+    <div v-if="$slots.footer" class="px-6 py-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 rounded-b-2xl">
       <slot name="footer" />
     </div>
   </div>

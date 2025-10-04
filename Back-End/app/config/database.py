@@ -108,6 +108,8 @@ async def create_basic_indexes():
         # Índices para casos (nuevo backend en inglés)
         await db.cases.create_index("case_code", unique=True)
         await db.cases.create_index("patient_info.patient_code")
+        await db.cases.create_index("patient_info.identification_number")
+        await db.cases.create_index("patient_info.identification_type")
         await db.cases.create_index("state")
         await db.cases.create_index("created_at")
         # Índice de counters de casos

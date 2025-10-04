@@ -9,6 +9,12 @@ import { caseListRoutes } from '@/modules/case-list/routes/caseListRoutes'
 import { resultsRoutes } from '@/modules/results/routes/resultsRoutes'
 import { reportsRoutes } from '@/modules/reports/routes/reportsRoutes'
 import { supportRoutes } from '@/modules/support/routes/supportRoutes'
+import { complementaryTechniquesRoutes } from '@/modules/complementary-techniques/routes/complementaryTechniquesRoutes'
+import { casesApprovalRoutes } from '@/modules/cases-approval/routes/casesApprovalRoutes'
+import { complementaryTechniquesListRoutes } from '@/modules/complementary-techniques-list/routes/ctlRoutes'
+import { patientsRoutes } from '@/modules/patients/routes/patientsRoutes'
+import { patientListRoutes } from '@/modules/patients-list/routes'
+import { pathologistAssignmentRoutes } from '@/modules/pathologist-assignment'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -25,7 +31,13 @@ const router = createRouter({
     ...caseListRoutes,
     ...resultsRoutes,
     ...reportsRoutes,
-    ...supportRoutes
+    ...supportRoutes,
+    ...complementaryTechniquesRoutes,
+    ...complementaryTechniquesListRoutes,
+    ...casesApprovalRoutes,
+    ...patientsRoutes,
+    ...patientListRoutes,
+    ...pathologistAssignmentRoutes
   ]
 })
 
@@ -48,6 +60,16 @@ router.beforeEach(async (to, _from, next) => {
     await authStore.initializeAuth()
   }
   
+  // Verificar expiración del token en cada navegación y forzar logout si está vencido
+  if (authStore.isAuthenticated) {
+    const savedExpiresAt = localStorage.getItem('auth_expires_at')
+    if (savedExpiresAt && Number(savedExpiresAt) > 0 && Date.now() > Number(savedExpiresAt)) {
+      await authStore.logout()
+      next('/login')
+      return
+    }
+  }
+
   // Si la ruta es pública y el usuario está autenticado, redirigir al dashboard
   if (isPublicRoute && authStore.isAuthenticated) {
     next('/dashboard')

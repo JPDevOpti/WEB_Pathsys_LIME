@@ -1,5 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { complementaryTechniquesRoutes } from './complementaryTechniquesRoutes'
 
 export const casesRoutes: RouteRecordRaw[] = [
   {
@@ -27,7 +26,7 @@ export const casesRoutes: RouteRecordRaw[] = [
       {
         path: 'to-approve',
         name: 'cases-to-approve',
-        component: () => import('../../case-list/views/CasesToApproveView.vue'),
+        component: () => import('../../cases-approval/views/CasesToApproveView.vue'),
         meta: {
           title: 'Casos por Aprobar',
           requiresAuth: true
@@ -35,6 +34,5 @@ export const casesRoutes: RouteRecordRaw[] = [
       }
     ]
   },
-  // Técnicas Complementarias
-  ...complementaryTechniquesRoutes
+  // Técnicas Complementarias movidas a special-cases
 ]

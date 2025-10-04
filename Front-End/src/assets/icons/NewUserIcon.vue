@@ -1,9 +1,32 @@
 <template>
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="10" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
-    <path d="M4 20c.8-3 3.2-5 6-5s5.2 2 6 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    <path d="M17 7h4M19 5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <svg 
+    :width="size" 
+    :height="size" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    :class="className"
+  >
+    <path 
+      d="M20 18L17 18M17 18L14 18M17 18V15M17 18V21M11 21H4C4 17.134 7.13401 14 11 14C11.695 14 12.3663 14.1013 13 14.2899M15 7C15 9.20914 13.2091 11 11 11C8.79086 11 7 9.20914 7 7C7 4.79086 8.79086 3 11 3C13.2091 3 15 4.79086 15 7Z" 
+      :stroke="color" 
+      stroke-width="2" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+    />
   </svg>
 </template>
 
+<script setup lang="ts">
+interface Props {
+  size?: string | number
+  color?: string
+  className?: string
+}
 
+withDefaults(defineProps<Props>(), {
+  size: '24',
+  color: 'currentColor',
+  className: ''
+})
+</script>

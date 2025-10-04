@@ -11,6 +11,8 @@ class CaseRepository:
     async def ensure_indexes(self):
         await self.collection.create_index("case_code", unique=True)
         await self.collection.create_index("patient_info.patient_code")
+        await self.collection.create_index("patient_info.identification_number")
+        await self.collection.create_index("patient_info.identification_type")
         await self.collection.create_index("state")
         await self.collection.create_index("created_at")
         await self.collection.create_index("assigned_pathologist.name")

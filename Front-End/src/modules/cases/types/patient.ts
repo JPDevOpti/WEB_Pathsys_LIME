@@ -1,13 +1,26 @@
 export interface PatientData {
   patientCode: string
+  identification_type?: number
+  identification_number?: string
   name: string
   gender: 'masculino' | 'femenino' | ''
   age: string
+  birth_date?: string
   entity: string
   entityCode?: string
   careType: 'ambulatorio' | 'hospitalizado' | ''
   observations: string
   code?: string
+  location?: {
+    municipality_code?: string
+    municipality_name?: string
+    subregion?: string
+    address?: string
+  }
+  municipality_code?: string
+  municipality_name?: string
+  subregion?: string
+  address?: string
 }
 
 export interface PatientFormErrors {

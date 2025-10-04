@@ -25,6 +25,17 @@ class CaseService:
             case_code = await self.seq.generate_case_code(year)
             data = payload.model_dump()
             data["case_code"] = case_code
+
+            # Normalizar patient_code canónico desde identificación
+            patient_info = data.get("patient_info") or {}
+            if patient_info:
+                id_type = patient_info.get("identification_type")
+                id_number = patient_info.get("identification_number")
+                if id_type and id_number:
+                    if not patient_info.get("patient_code"):
+                        patient_info["patient_code"] = f"{id_type}-{id_number}"
+                data["patient_info"] = patient_info
+
             try:
                 doc = await self.repo.create(data)
                 return self._to_response(doc)
@@ -39,9 +50,9 @@ class CaseService:
         if not doc:
             raise NotFoundError(f"Case with code {case_code} not found")
         
-        # Validar que solo se puedan marcar como completados los casos en estado "Por entregar"
+        # Validate only cases in 'Por entregar' can be marked as completed
         if payload.state == "Completado":
-            current_state = doc.get("state") or doc.get("estado") or "En proceso"
+            current_state = doc.get("state") or "En proceso"
             if current_state != "Por entregar":
                 raise BadRequestError(f"No se puede marcar como completado el caso {case_code} que está en estado '{current_state}'. Solo se pueden completar casos en estado 'Por entregar'.")
         
@@ -86,7 +97,8 @@ class CaseService:
             filters["$or"] = [
                 {"case_code": search_regex},
                 {"patient_info.name": search_regex},
-                {"patient_info.patient_code": search_regex}
+                {"patient_info.patient_code": search_regex},
+                {"patient_info.identification_number": search_regex}
             ]
         
         # Filtro por patólogo explícito
@@ -149,54 +161,46 @@ class CaseService:
         return [self._to_response(doc) for doc in docs]
 
     def _to_response(self, doc: Dict[str, Any]) -> CaseResponse:
-        # Normalizar patient_info para tolerar datos legacy o incompletos
-        legacy_patient = doc.get("paciente") or {}
+        # Normalize patient_info using only new structure (no legacy fallbacks)
         patient = doc.get("patient_info") or {}
-        entity_info = patient.get("entity_info") or legacy_patient.get("entidad_info") or {}
+        entity_info = patient.get("entity_info") or {}
         normalized_patient = {
-            "patient_code": patient.get("patient_code") or legacy_patient.get("paciente_code") or legacy_patient.get("cedula") or "",
-            "name": patient.get("name") or legacy_patient.get("nombre") or "",
-            "age": int(patient.get("age") or legacy_patient.get("edad") or 0),
-            "gender": patient.get("gender") or legacy_patient.get("sexo") or "",
+            "patient_code": patient.get("patient_code") or "",
+            "identification_type": patient.get("identification_type") or None,
+            "identification_number": patient.get("identification_number") or None,
+            "name": patient.get("name") or "",
+            "age": int(patient.get("age") or 0),
+            "gender": patient.get("gender") or "",
             "entity_info": {
                 "id": entity_info.get("id") or "",
-                "name": entity_info.get("name") or entity_info.get("nombre") or "",
+                "name": entity_info.get("name") or "",
             },
-            "care_type": patient.get("care_type") or legacy_patient.get("tipo_atencion") or "",
-            "observations": patient.get("observations") or legacy_patient.get("observaciones"),
+            "care_type": patient.get("care_type") or "",
+            "observations": patient.get("observations"),
         }
+        # Derive patient_code if missing and identification is present
+        id_type = normalized_patient.get("identification_type")
+        id_number = normalized_patient.get("identification_number")
+        if not normalized_patient.get("patient_code") and id_type and id_number:
+            normalized_patient["patient_code"] = f"{id_type}-{id_number}"
 
-        # Normalizar samples/tests del documento si vienen en formato legacy
-        samples = doc.get("samples")
-        if not samples and doc.get("muestras"):
-            samples = []
-            for m in doc.get("muestras", []):
-                tests = []
-                for t in m.get("pruebas", []):
-                    tests.append({
-                        "id": t.get("id") or "",
-                        "name": t.get("nombre") or "",
-                        "quantity": int(t.get("cantidad") or 1),
-                    })
-                samples.append({
-                    "body_region": m.get("region_cuerpo") or "",
-                    "tests": tests,
-                })
+        # Use samples only from new structure
+        samples = doc.get("samples") or []
 
         doc_out = {
             "id": str(doc.get("_id")),
-            "case_code": doc.get("case_code") or doc.get("caso_code") or "",
+            "case_code": doc.get("case_code") or "",
             "patient_info": normalized_patient,
-            "requesting_physician": doc.get("requesting_physician") or (doc.get("medico_solicitante") or {}).get("nombre"),
-            "service": doc.get("service") or doc.get("servicio"),
-            "samples": samples or [],
-            "state": doc.get("state") or doc.get("estado") or "En proceso",
+            "requesting_physician": doc.get("requesting_physician"),
+            "service": doc.get("service"),
+            "samples": samples,
+            "state": doc.get("state") or "En proceso",
             "priority": doc.get("priority") or "Normal",
-            "observations": doc.get("observations") or doc.get("observaciones_generales"),
-            "created_at": doc.get("created_at") or doc.get("fecha_creacion"),
-            "updated_at": doc.get("updated_at") or doc.get("fecha_actualizacion"),
-            "signed_at": doc.get("signed_at") or doc.get("fecha_firma"),
-            "assigned_pathologist": doc.get("assigned_pathologist") or doc.get("patologo_asignado"),
+            "observations": doc.get("observations"),
+            "created_at": doc.get("created_at"),
+            "updated_at": doc.get("updated_at"),
+            "signed_at": doc.get("signed_at"),
+            "assigned_pathologist": doc.get("assigned_pathologist"),
             "result": doc.get("result"),
             "delivered_to": doc.get("delivered_to"),
             "delivered_at": doc.get("delivered_at"),

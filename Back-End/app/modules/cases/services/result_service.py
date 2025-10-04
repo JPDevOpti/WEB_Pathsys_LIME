@@ -48,20 +48,52 @@ class ResultService:
         return await self.repo.validate_case_not_completed(case_code)
 
     def _to_case_response(self, doc: Dict[str, Any]) -> CaseResponse:
-        """Convertir documento de MongoDB a CaseResponse"""
-        return CaseResponse(
-            id=str(doc.get("_id")),
-            case_code=doc["case_code"],
-            patient_info=doc["patient_info"],
-            requesting_physician=doc.get("requesting_physician"),
-            service=doc.get("service"),
-            samples=doc.get("samples", []),
-            state=doc.get("state"),
-            priority=doc.get("priority"),
-            observations=doc.get("observations"),
-            created_at=doc.get("created_at"),
-            updated_at=doc.get("updated_at"),
-            signed_at=doc.get("signed_at"),
-            assigned_pathologist=doc.get("assigned_pathologist"),
-            result=doc.get("result"),
-        )
+        """Convert MongoDB document to CaseResponse using only new structure"""
+        # Normalize patient_info using only new structure
+        patient = doc.get("patient_info") or {}
+        entity_info = patient.get("entity_info") or {}
+        normalized_patient = {
+            "patient_code": patient.get("patient_code") or "",
+            "identification_type": patient.get("identification_type") or None,
+            "identification_number": patient.get("identification_number") or None,
+            "name": patient.get("name") or "",
+            "age": int(patient.get("age") or 0),
+            "gender": patient.get("gender") or "",
+            "entity_info": {
+                "id": entity_info.get("id") or "",
+                "name": entity_info.get("name") or "",
+            },
+            "care_type": patient.get("care_type") or "",
+            "observations": patient.get("observations"),
+        }
+        # Derive patient_code if missing and identification present
+        id_type = normalized_patient.get("identification_type")
+        id_number = normalized_patient.get("identification_number")
+        if not normalized_patient.get("patient_code") and id_type and id_number:
+            normalized_patient["patient_code"] = f"{id_type}-{id_number}"
+
+        # Use samples directly from new format
+        samples = doc.get("samples") or []
+
+        doc_out = {
+            "id": str(doc.get("_id")),
+            "case_code": doc.get("case_code") or "",
+            "patient_info": normalized_patient,
+            "requesting_physician": doc.get("requesting_physician"),
+            "service": doc.get("service"),
+            "samples": samples,
+            "state": doc.get("state") or "En proceso",
+            "priority": doc.get("priority") or "Normal",
+            "observations": doc.get("observations"),
+            "created_at": doc.get("created_at"),
+            "updated_at": doc.get("updated_at"),
+            "signed_at": doc.get("signed_at"),
+            "assigned_pathologist": doc.get("assigned_pathologist"),
+            "result": doc.get("result"),
+            "delivered_to": doc.get("delivered_to"),
+            "delivered_at": doc.get("delivered_at"),
+            "business_days": doc.get("business_days"),
+            "additional_notes": doc.get("additional_notes") or [],
+            "complementary_tests": doc.get("complementary_tests") or [],
+        }
+        return CaseResponse(**doc_out)

@@ -1,7 +1,7 @@
 // Patient API composable: create patient, track minimal status/stats
 import { ref, reactive } from 'vue'
-import { patientsApiService } from '../services/patientsApi.service'
-import type { PatientData } from '../types'
+import { patientsApiService } from '@/modules/patients/services'
+import type { CreatePatientRequest } from '@/modules/patients/types'
 
 export function usePatientAPI() {
   const isLoading = ref(false)
@@ -10,33 +10,30 @@ export function usePatientAPI() {
   const stats = reactive({ totalCreated: 0, lastCreatedId: null as string | null })
 
   // Validate and send creation request
-  async function createPatient(patientData: any) {
+  async function createPatient(patientData: CreatePatientRequest) {
     isLoading.value = true
     error.value = null
     success.value = false
 
     try {
-      // LOG: Datos que llegan al createPatient
-      console.log('🔍 [LOG usePatientAPI] patientData recibido:', JSON.stringify(patientData, null, 2))
-      
-      const validation = patientsApiService.validatePatientData(patientData)
-      console.log('🔍 [LOG usePatientAPI] validation result:', JSON.stringify(validation, null, 2))
-      
-      if (!validation.isValid) throw new Error(validation.errors.join(', '))
-
       const newPatient = await patientsApiService.createPatient(patientData)
-      console.log('🔍 [LOG usePatientAPI] newPatient creado:', JSON.stringify(newPatient, null, 2))
-      
-      updateStats(newPatient.id)
+
+      const fullName = [
+        newPatient.first_name,
+        newPatient.second_name,
+        newPatient.first_lastname,
+        newPatient.second_lastname
+      ].filter(Boolean).join(' ')
+
+      updateStats(newPatient.patient_code)
       success.value = true
 
       return {
         success: true,
         patient: newPatient,
-        message: `Paciente ${newPatient.nombre} registrado exitosamente`
+        message: `Paciente ${fullName} registrado exitosamente`
       }
     } catch (err: any) {
-      console.error('❌ [ERROR usePatientAPI] Error al crear paciente:', err)
       const errorMessage = (err?.response?.data?.detail as string) || err.message || 'Error desconocido al crear el paciente'
       const lower = errorMessage.toLowerCase()
       if (lower.includes('duplicad') || lower.includes('ya existe') || lower.includes('repetid')) {

@@ -14,7 +14,7 @@ export function useRoleNavigation() {
     const baseItems = [
       { name: 'Dashboard', path: '/dashboard', icon: 'dashboard', alwaysVisible: true },
       { name: 'Casos', path: '/cases', icon: 'cases', alwaysVisible: true },
-      { name: 'Listado de Casos', path: '/cases/current', icon: 'list', alwaysVisible: true },
+  { name: 'Listado de Casos', path: '/cases/list', icon: 'list', alwaysVisible: true },
       { name: 'Resultados', path: '/results', icon: 'results', alwaysVisible: true },
       { name: 'Perfiles', path: '/profile', icon: 'profile', alwaysVisible: true },
       { name: 'Soporte', path: '/support', icon: 'support', alwaysVisible: true }

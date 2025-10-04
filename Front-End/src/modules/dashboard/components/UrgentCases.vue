@@ -137,9 +137,7 @@
                 <td class="px-1 sm:px-2 py-2 sm:py-3 text-center">
                   <div class="flex gap-1 justify-center min-w-[100px] sm:min-w-[120px]">
                     <button class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="() => emit('show-details', caso)" title="Ver detalles">
-                      <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <InfoListIcon class="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
                     <button v-if="!isPatologo && !isResidente && !isFacturacion" class="p-1 sm:p-1.5 rounded-md hover:bg-gray-100 text-gray-600" @click.stop="handleEdit(caso)" title="Editar caso">
                       <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,9 +230,7 @@
 
               <div class="flex gap-1 sm:gap-2 pt-2 border-t border-gray-100">
                 <button class="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium" @click.stop="() => emit('show-details', caso)">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <InfoListIcon class="w-3 h-3" />
                   <span class="hidden xs:inline">Ver detalles</span>
                   <span class="xs:hidden">Ver</span>
                 </button>
@@ -331,6 +327,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Card } from '@/shared/components/layout'
 import PathologistList from '@/shared/components/List/PathologistList.vue'
+import InfoListIcon from '@/assets/icons/InfoListIcon.vue'
 import { useDashboard } from '../composables/useDashboard'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import type { CasoUrgente } from '../types/dashboard.types'

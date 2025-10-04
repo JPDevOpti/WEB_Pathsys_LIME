@@ -100,7 +100,7 @@ const quickNavItems: QuickNavItem[] = [
   },
   {
     title: 'Listado de Casos (Actuales)',
-    path: '/cases/current',
+    path: '/cases/list',
     keywords: ['listar casos', 'listado de casos', 'casos actuales', 'lista casos', 'current cases', 'bandeja casos']
   },
   {
@@ -257,7 +257,7 @@ const handleSearch = () => {
   // Heurística básica por términos sueltos
   if (q.includes('crear') || q.includes('nuevo')) return router.push('/cases/new')
   if (q.includes('editar')) return router.push('/cases/edit')
-  if (q.includes('listar') || q.includes('listado') || q.includes('lista')) return router.push('/cases/current')
+  if (q.includes('listar') || q.includes('listado') || q.includes('lista')) return router.push('/cases/list')
   if (q.includes('prev')) return router.push('/cases/previous')
   if (q.includes('dashboard') || q.includes('inicio') || q.includes('home')) return router.push('/dashboard')
   if (q.includes('firmar')) return router.push('/results/sign')

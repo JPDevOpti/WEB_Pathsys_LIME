@@ -14,9 +14,7 @@
       ref="container"
     />
     <button type="button" class="absolute right-2 bottom-2 p-1 text-blue-600 hover:text-blue-700" @click="openCalendar" aria-label="Abrir calendario">
-      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M7 11H17M7 15H13M16 3V7M8 3V7M7 21H17C18.1046 21 19 20.1046 19 19V8C19 6.89543 18.1046 6 17 6H7C5.89543 6 5 6.89543 5 8V19C5 20.1046 5.89543 21 7 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <CalendarSearchIcon class="w-6 h-6" aria-hidden="true" />
     </button>
   </div>
   
@@ -25,6 +23,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import FormInputField from './FormInputField.vue'
+import CalendarSearchIcon from '@/assets/icons/CalendarSearchIcon.vue'
 
 interface Props {
   modelValue?: string

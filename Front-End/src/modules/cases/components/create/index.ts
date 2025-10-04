@@ -1,5 +1,0 @@
-export { default as NewCase } from './NewCase.vue'
-export { default as NewPatient } from './NewPatient.vue'
-export { default as AssignPathologistToCase } from './AssignPathologistToCase.vue'
-// export { default as NewTechniqueComplementary } from './NewTechniqueComplementary.vue'
-// export { default as NewTecnica } from './NewTecnica.vue'

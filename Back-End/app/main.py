@@ -6,6 +6,9 @@ from fastapi import APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+import logging
+from app.config.settings import settings
+from fastapi.encoders import jsonable_encoder
 
 # Crear aplicación FastAPI
 app = FastAPI(title="WEB-LIS PathSys - New Backend", version="1.0.0")
@@ -13,7 +16,12 @@ app = FastAPI(title="WEB-LIS PathSys - New Backend", version="1.0.0")
 # CORS para el frontend local
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5174", "http://127.0.0.1:5174"],
+    allow_origins=[
+        "http://localhost:5174", 
+        "http://127.0.0.1:5174",
+        "http://localhost:5175", 
+        "http://127.0.0.1:5175"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,7 +54,9 @@ async def health():
 # Global exception handlers with normalized messages
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(status_code=422, content={"detail": "Validation error", "errors": exc.errors()})
+    # Asegurar que los errores sean JSON-serializables
+    errors = jsonable_encoder(exc.errors())
+    return JSONResponse(status_code=422, content={"detail": "Validation error", "errors": errors})
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
@@ -56,6 +66,12 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    logger = logging.getLogger("app.main")
+    logger.exception("[global] Unhandled exception en %s %s", request.method, request.url.path)
+    detail = "Internal server error"
+    if getattr(settings, "DEBUG", False):
+        # En modo desarrollo, exponer el mensaje para facilitar el diagnóstico
+        detail = f"Internal server error: {str(exc)}"
+    return JSONResponse(status_code=500, content={"detail": detail})
 
 

@@ -1,0 +1,1 @@
+export { patientListRoutes } from './patientListRoutes'

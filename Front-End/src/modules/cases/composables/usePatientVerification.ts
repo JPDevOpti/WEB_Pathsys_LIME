@@ -1,6 +1,6 @@
 // Patient verification: fetch by documento, normalize to form model
 import { ref } from 'vue'
-import { patientsApiService } from '../services'
+import { patientsApiService } from '@/modules/patients/services'
 import type { PatientData } from '../types'
 
 export function usePatientVerification() {

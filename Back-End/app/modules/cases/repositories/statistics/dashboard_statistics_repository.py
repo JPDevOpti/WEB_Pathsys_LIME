@@ -221,8 +221,29 @@ class DashboardStatisticsRepository:
                 }
             },
             {
+                "$addFields": {
+                    "patient_key": {
+                        "$ifNull": [
+                            "$patient_info.patient_code",
+                            {
+                                "$cond": [
+                                    {
+                                        "$and": [
+                                            {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_type", ""]}}, 0]},
+                                            {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_number", ""]}}, 0]}
+                                        ]
+                                    },
+                                    {"$concat": ["$patient_info.identification_type", "-", "$patient_info.identification_number"]},
+                                    "$patient_info.identification_number"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            {
                 "$group": {
-                    "_id": "$patient_info.patient_code",
+                    "_id": "$patient_key",
                     "count": {"$sum": 1}
                 }
             },
@@ -242,8 +263,29 @@ class DashboardStatisticsRepository:
                 }
             },
             {
+                "$addFields": {
+                    "patient_key": {
+                        "$ifNull": [
+                            "$patient_info.patient_code",
+                            {
+                                "$cond": [
+                                    {
+                                        "$and": [
+                                            {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_type", ""]}}, 0]},
+                                            {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_number", ""]}}, 0]}
+                                        ]
+                                    },
+                                    {"$concat": ["$patient_info.identification_type", "-", "$patient_info.identification_number"]},
+                                    "$patient_info.identification_number"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            {
                 "$group": {
-                    "_id": "$patient_info.patient_code",
+                    "_id": "$patient_key",
                     "count": {"$sum": 1}
                 }
             },
@@ -300,14 +342,15 @@ class DashboardStatisticsRepository:
         prev30_start = now - timedelta(days=60)
         prev30_end = last30_start
 
-        # Pacientes últimos 30 días (únicos por patient_code)
+        # Pacientes últimos 30 días (únicos por clave de paciente)
         last30_patients_pipeline = [
             {
                 "$match": {
                     "created_at": {"$gte": last30_start, "$lt": now}
                 }
             },
-            {"$group": {"_id": "$patient_info.patient_code", "count": {"$sum": 1}}},
+            {"$addFields": {"patient_key": {"$ifNull": ["$patient_info.patient_code", {"$cond": [{"$and": [{"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_type", ""]}}, 0]}, {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_number", ""]}}, 0]}]}, {"$concat": ["$patient_info.identification_type", "-", "$patient_info.identification_number"]}, "$patient_info.identification_number"]}]}}},
+            {"$group": {"_id": "$patient_key", "count": {"$sum": 1}}},
             {"$count": "total"}
         ]
         prev30_patients_pipeline = [
@@ -316,7 +359,8 @@ class DashboardStatisticsRepository:
                     "created_at": {"$gte": prev30_start, "$lt": prev30_end}
                 }
             },
-            {"$group": {"_id": "$patient_info.patient_code", "count": {"$sum": 1}}},
+            {"$addFields": {"patient_key": {"$ifNull": ["$patient_info.patient_code", {"$cond": [{"$and": [{"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_type", ""]}}, 0]}, {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_number", ""]}}, 0]}]}, {"$concat": ["$patient_info.identification_type", "-", "$patient_info.identification_number"]}, "$patient_info.identification_number"]}]}}},
+            {"$group": {"_id": "$patient_key", "count": {"$sum": 1}}},
             {"$count": "total"}
         ]
 
@@ -391,9 +435,10 @@ class DashboardStatisticsRepository:
                     "assigned_pathologist.id": pathologist_code
                 }
             },
+            {"$addFields": {"patient_key": {"$ifNull": ["$patient_info.patient_code", {"$cond": [{"$and": [{"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_type", ""]}}, 0]}, {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_number", ""]}}, 0]}]}, {"$concat": ["$patient_info.identification_type", "-", "$patient_info.identification_number"]}, "$patient_info.identification_number"]}]}}},
             {
                 "$group": {
-                    "_id": "$patient_info.patient_code",
+                    "_id": "$patient_key",
                     "count": {"$sum": 1}
                 }
             },
@@ -413,9 +458,10 @@ class DashboardStatisticsRepository:
                     "assigned_pathologist.id": pathologist_code
                 }
             },
+            {"$addFields": {"patient_key": {"$ifNull": ["$patient_info.patient_code", {"$cond": [{"$and": [{"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_type", ""]}}, 0]}, {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_number", ""]}}, 0]}]}, {"$concat": ["$patient_info.identification_type", "-", "$patient_info.identification_number"]}, "$patient_info.identification_number"]}]}}},
             {
                 "$group": {
-                    "_id": "$patient_info.patient_code",
+                    "_id": "$patient_key",
                     "count": {"$sum": 1}
                 }
             },
@@ -481,7 +527,8 @@ class DashboardStatisticsRepository:
                     "assigned_pathologist.id": pathologist_code
                 }
             },
-            {"$group": {"_id": "$patient_info.patient_code", "count": {"$sum": 1}}},
+            {"$addFields": {"patient_key": {"$ifNull": ["$patient_info.patient_code", {"$cond": [{"$and": [{"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_type", ""]}}, 0]}, {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_number", ""]}}, 0]}]}, {"$concat": ["$patient_info.identification_type", "-", "$patient_info.identification_number"]}, "$patient_info.identification_number"]}]}}},
+            {"$group": {"_id": "$patient_key", "count": {"$sum": 1}}},
             {"$count": "total"}
         ]
         prev30_patients_pipeline = [
@@ -491,7 +538,8 @@ class DashboardStatisticsRepository:
                     "assigned_pathologist.id": pathologist_code
                 }
             },
-            {"$group": {"_id": "$patient_info.patient_code", "count": {"$sum": 1}}},
+            {"$addFields": {"patient_key": {"$ifNull": ["$patient_info.patient_code", {"$cond": [{"$and": [{"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_type", ""]}}, 0]}, {"$gt": [{"$strLenCP": {"$ifNull": ["$patient_info.identification_number", ""]}}, 0]}]}, {"$concat": ["$patient_info.identification_type", "-", "$patient_info.identification_number"]}, "$patient_info.identification_number"]}]}}},
+            {"$group": {"_id": "$patient_key", "count": {"$sum": 1}}},
             {"$count": "total"}
         ]
 

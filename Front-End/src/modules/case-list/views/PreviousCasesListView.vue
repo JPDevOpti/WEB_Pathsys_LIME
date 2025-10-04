@@ -2,8 +2,6 @@
   <AdminLayout>
     <PageBreadcrumb :pageTitle="pageTitle" />
     <div class="space-y-4">
-      
-
       <Card v-if="isLoading">
         <div class="p-8 text-center">
           <LoadingSpinner />
@@ -32,6 +30,8 @@
         <div class="bg-white rounded-xl border border-gray-200">
           <CasesTable
             :cases="paginatedCases"
+            :selected-ids="selectedCaseIds"
+            :is-all-selected="isAllSelected"
             :columns="columns"
             :sort-key="sortKey"
             :sort-order="sortOrder"
@@ -40,12 +40,15 @@
             :items-per-page="itemsPerPage"
             :total-items="filteredCases.length"
             :no-results-message="hasActiveFilters ? 'No se encontraron casos anteriores con los filtros aplicados' : 'No hay casos anteriores disponibles'"
+            @toggle-select="toggleSelect"
+            @toggle-select-all="toggleSelectAll"
+            @clear-selection="selectedCaseIds = []"
             @sort="(k: any) => sortBy(k)"
             @show-details="showDetails"
             @edit="editCase"
             @validate="validateCase"
             @perform="performCase"
-            @update-items-per-page="(v: number) => itemsPerPage = v"
+            @update-items-per-page="(v: number) => (itemsPerPage = v)"
             @prev-page="() => currentPage--"
             @next-page="() => currentPage++"
           />
@@ -55,30 +58,23 @@
       </template>
     </div>
   </AdminLayout>
-  
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
-import { AdminLayout } from '@/shared/components/layout'
 import { useRouter } from 'vue-router'
+import { AdminLayout } from '@/shared/components/layout'
 import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import Card from '@/shared/components/layout/Card.vue'
 import { BaseButton } from '@/shared/components'
-import { RefreshIcon } from '@/assets/icons'
 import LoadingSpinner from '@/shared/components/feedback/LoadingSpinner.vue'
-
-import FiltersBar from '../components/CurrentCases/FiltersBar.vue'
-import CasesTable from '../components/CurrentCases/CasesTable.vue'
-import CaseDetailsModal from '../components/CurrentCases/CaseDetailsModal.vue'
-
+import { FiltersBar, CasesTable, CaseDetailsModal } from '../components'
 import { useCaseList } from '../composables/useCaseList'
 import { useExcelExport } from '../composables/useExcelExport'
 
 const pageTitle = 'Casos Anteriores'
 
 const {
-  // state
   cases,
   isLoading,
   error,
@@ -87,38 +83,62 @@ const {
   sortOrder,
   currentPage,
   itemsPerPage,
+  selectedCaseIds,
   selectedCase,
-  // derived
   filteredCases,
   paginatedCases,
   totalPages,
-  // actions
+  isAllSelected,
   loadCases,
+  toggleSelectAll,
+  toggleSelect,
   sortBy,
   showDetails,
   closeDetails,
   validateCase,
-  markAsCompleted,
 } = useCaseList()
 
-const { exportExcel } = useExcelExport()
+const { exportCasesToExcel } = useExcelExport()
+const router = useRouter()
 
-// Listener para detectar cuando se crea un nuevo caso
-const handleCaseCreated = (event: CustomEvent) => {
+const hasActiveFilters = computed(() => {
+  return !!(
+    filters.value.searchQuery ||
+    filters.value.searchPathologist ||
+    filters.value.dateFrom ||
+    filters.value.dateTo ||
+    filters.value.selectedEntity ||
+    filters.value.selectedStatus ||
+    filters.value.selectedTest
+  )
+})
+
+function reload() {
+  loadCases(false)
+}
+function exportExcel() {
+  exportCasesToExcel(filteredCases.value)
+}
+function performCase(_c: any) {}
+function editCase(c: any) {
+  const code = c?.caseCode || c?.id || ''
+  if (!code) return
+  router.push({ name: 'cases-edit', params: { code }, query: { auto: '1' } })
+}
+function previewCase(_c: any) {}
+
+const handleCaseCreated = (_event: CustomEvent) => {
   loadCases()
 }
 
 onMounted(() => {
-  // Agregar listener para eventos de creación de casos
   window.addEventListener('case-created', handleCaseCreated as EventListener)
 })
 
 onUnmounted(() => {
-  // Limpiar listener al desmontar el componente
   window.removeEventListener('case-created', handleCaseCreated as EventListener)
 })
 
-// Configuración de columnas para la tabla
 const columns = [
   { key: 'select', label: '', sortable: false, width: 'w-12' },
   { key: 'caseCode', label: 'Código', sortable: true, width: 'w-32' },
@@ -128,7 +148,7 @@ const columns = [
   { key: 'status', label: 'Estado', sortable: true, width: 'w-32' },
   { key: 'receivedAt', label: 'Recibido', sortable: true, width: 'w-32' },
   { key: 'deliveredAt', label: 'Entregado', sortable: true, width: 'w-32' },
-  { key: 'actions', label: 'Acciones', sortable: false, width: 'w-32' }
+  { key: 'actions', label: 'Acciones', sortable: false, width: 'w-32' },
 ]
 </script>
 

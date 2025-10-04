@@ -9,7 +9,7 @@ class ApiClient {
 
   constructor() {
     this.instance = axios.create({
-      baseURL: `${API_CONFIG.BASE_URL}${API_CONFIG.VERSION}`,
+      baseURL: import.meta.env.DEV ? API_CONFIG.VERSION : `${API_CONFIG.BASE_URL}${API_CONFIG.VERSION}`,
       timeout: API_CONFIG.TIMEOUT,
       headers: API_CONFIG.DEFAULT_HEADERS,
       // Configuración para manejar redirects
@@ -30,6 +30,16 @@ class ApiClient {
     // Request interceptor - agregar token de autenticación
     this.instance.interceptors.request.use(
       (config: any) => {
+        try {
+          // Log básico de request
+          const method = (config.method || 'GET').toUpperCase()
+          const url = `${config.baseURL || ''}${config.url || ''}`
+          if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+            console.debug(`➡️ [HTTP:${method}] ${url}`, { data: config.data })
+          } else {
+            console.debug(`➡️ [HTTP:${method}] ${url}`, { params: config.params })
+          }
+        } catch {}
         const token = localStorage.getItem('auth_token')
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
@@ -38,6 +48,7 @@ class ApiClient {
         return config
       },
       (error: any) => {
+        try { console.error('❌ [HTTP:request] Error preparando request', error) } catch {}
         return Promise.reject(error)
       }
     )
@@ -45,6 +56,12 @@ class ApiClient {
     // Response interceptor - manejo de errores globales
     this.instance.interceptors.response.use(
       (response: any) => {
+        try {
+          const { config, status } = response || {}
+          const method = (config?.method || 'GET').toUpperCase()
+          const url = `${config?.baseURL || ''}${config?.url || ''}`
+          console.debug(`✅ [HTTP:${method} ${status}] ${url}`, { data: response?.data })
+        } catch {}
         return response
       },
       (error: any) => {
@@ -85,9 +102,16 @@ class ApiClient {
           // Normalizar el mensaje de error
           const errorMessage = data?.detail || data?.message || `Error HTTP ${status}`
           error.message = errorMessage
+          try {
+            const { config } = error.response
+            const method = (config?.method || 'GET').toUpperCase()
+            const url = `${config?.baseURL || ''}${config?.url || ''}`
+            console.error(`🛑 [HTTP:${method} ${status}] ${url}`, { detail: errorMessage, data })
+          } catch {}
         } else if (error.request) {
           // Error de red
           error.message = 'Error de conexión con el servidor'
+          try { console.error('🛑 [HTTP] Error de red sin respuesta del servidor') } catch {}
         }
         
         return Promise.reject(error)

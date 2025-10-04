@@ -54,7 +54,8 @@ export const API_CONFIG = {
 
 // Función para construir URLs completas
 export function buildApiUrl(endpoint: string): string {
-  return `${API_CONFIG.BASE_URL}${API_CONFIG.VERSION}${endpoint}`
+  const base = import.meta.env.DEV ? '' : API_CONFIG.BASE_URL
+  return `${base}${API_CONFIG.VERSION}${endpoint}`
 }
 
 // Función para obtener headers con autenticación

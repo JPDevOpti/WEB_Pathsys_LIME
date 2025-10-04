@@ -230,8 +230,8 @@
 import { onMounted } from 'vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { InfoCircleIcon, SettingsIcon } from '@/assets/icons'
-import { useComplementaryTechniques } from '../../composables/useComplementaryTechniques'
-import type { TecnicaComplementaria } from '../../types/complementaryTechniques.types'
+import { useComplementaryTechniques } from '../composables/useComplementaryTechniques'
+import type { TecnicaComplementaria } from '../types/ctl.types'
 
 // Events emitted to parent
 const emit = defineEmits<{

@@ -1,7 +1,6 @@
 // Case creation API composable: normalize form, call backend, map response
 import { ref } from 'vue'
 import { casesApiService, entitiesApiService } from '../services'
-import type { CaseFormData, CaseCreationResult, CreatedCase } from '../types'
 
 export function useCaseAPI() {
   const isLoading = ref(false)
@@ -47,15 +46,19 @@ export function useCaseAPI() {
     return {
       patient_info: {
         patient_code: (verifiedPatient as any)?.patientCode || (verifiedPatient as any)?.codigo || '',
+        identification_type: (verifiedPatient as any)?.identification_type || undefined,
+        identification_number: (verifiedPatient as any)?.identification_number || undefined,
         name: (verifiedPatient as any)?.name || '',
         age: Number.parseInt(String((verifiedPatient as any)?.age || 0)) || 0,
+        birth_date: (verifiedPatient as any)?.birth_date || undefined,
         gender: normalizeSexo((verifiedPatient as any)?.gender),
         entity_info: {
           id: (formData as any).patientEntity || (verifiedPatient as any)?.entityCode || 'ent_default',
           name: entityName
         },
         care_type: normalizeTipoAtencion((formData as any)?.patientCareType),
-        observations: (verifiedPatient as any)?.observations || undefined
+        observations: (verifiedPatient as any)?.observations || undefined,
+        location: (verifiedPatient as any)?.location || undefined
       },
       requesting_physician: (formData as any)?.requestingPhysician || undefined,
       service: (formData as any)?.service || undefined,
@@ -91,14 +94,24 @@ export function useCaseAPI() {
     
     return {
       id: apiResponse._id || apiResponse.id || codigoCaso,
-      codigo: codigoCaso,
-      paciente: {
+      code: codigoCaso,
+      case_code: codigoCaso,
+      entity_info: apiResponse.patient_info?.entity_info || { 
+        id: (caseData as any).patientEntity || '',
+        name: apiResponse.patient_info?.entity_info?.name || (verifiedPatient as any).entity || 'No especificada'
+      },
+      patient: {
         patient_code: apiResponse.patient_info?.patient_code || (verifiedPatient as any).patientCode,
         cedula: apiResponse.patient_info?.patient_code || (verifiedPatient as any).patientCode,
         name: apiResponse.patient_info?.name || (verifiedPatient as any).name,
         age: apiResponse.patient_info?.age || Number.parseInt(String((verifiedPatient as any).age || 0)) || 0,
         gender: apiResponse.patient_info?.gender || (verifiedPatient as any).gender,
         entity: apiResponse.patient_info?.entity_info?.name || (verifiedPatient as any).entity,
+        entity_info: apiResponse.patient_info?.entity_info || { 
+          id: (caseData as any).patientEntity || '',
+          name: apiResponse.patient_info?.entity_info?.name || (verifiedPatient as any).entity || 'No especificada'
+        },
+        care_type: apiResponse.patient_info?.care_type || (caseData as any).patientCareType,
         careType: apiResponse.patient_info?.care_type || (caseData as any).patientCareType
       },
       entryDate: (caseData as any).entryDate,

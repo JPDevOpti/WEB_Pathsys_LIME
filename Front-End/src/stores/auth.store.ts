@@ -41,7 +41,11 @@ export const useAuthStore = defineStore('auth', () => {
       // Guardar en localStorage siempre para persistencia de sesión
       localStorage.setItem('auth_token', response.access_token)
       localStorage.setItem('auth_user', JSON.stringify(response.user))
-      
+      // Guardar timestamp de expiración si está disponible
+      if (response.expires_in && response.expires_in > 0) {
+        const expiresAt = Date.now() + response.expires_in * 1000
+        localStorage.setItem('auth_expires_at', String(expiresAt))
+      }
 
       
       // Debug del estado completo
@@ -73,6 +77,7 @@ export const useAuthStore = defineStore('auth', () => {
       // Limpiar localStorage
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
+      localStorage.removeItem('auth_expires_at')
       
       isLoading.value = false
     }
@@ -111,11 +116,8 @@ export const useAuthStore = defineStore('auth', () => {
         if (!user.value) user.value = result.user || null
         return true
       } else {
-        // Token inválido, limpiar estado sin llamar logout para evitar bucles
-        user.value = null
-        token.value = null
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('auth_user')
+        // Token inválido, realizar logout para limpiar estado de forma consistente
+        await logout()
         return false
       }
     } catch (err) {
@@ -146,6 +148,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     if (savedToken && savedUser) {
       try {
+        // Si el token está vencido, cerrar sesión inmediatamente
+        const savedExpiresAt = localStorage.getItem('auth_expires_at')
+        if (savedExpiresAt && Number(savedExpiresAt) > 0 && Date.now() > Number(savedExpiresAt)) {
+          await logout()
+          return
+        }
+
         // Establecer los valores para que isAuthenticated sea true
         token.value = savedToken
         user.value = JSON.parse(savedUser)

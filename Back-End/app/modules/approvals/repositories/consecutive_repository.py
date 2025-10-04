@@ -1,6 +1,7 @@
 """Repositorio para manejo de códigos consecutivos de aprobaciones."""
 
 from datetime import datetime
+from typing import Union
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
@@ -31,7 +32,7 @@ class ApprovalConsecutiveRepository:
         doc = await self.collection.find_one({"year": year})
         return int(doc.get("last_number", 0)) + 1 if doc else 1
 
-    async def generate_approval_code(self, year: int | None = None) -> str:
+    async def generate_approval_code(self, year: Union[int, None] = None) -> str:
         """Generar código completo de aprobación (AP-YYYY-NNN)."""
         y = year or datetime.utcnow().year
         n = await self.get_next_number(y)

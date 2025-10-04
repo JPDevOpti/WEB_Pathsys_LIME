@@ -2,12 +2,17 @@ import { RouteRecordRaw } from 'vue-router'
 
 export const caseListRoutes: RouteRecordRaw[] = [
   {
-    path: '/cases/current',
+    path: '/cases/list',
     name: 'case-list.current',
     component: () => import('../views/CurrentCasesListView.vue'),
     meta: {
       title: 'Casos Actuales'
     }
+  },
+  // Redirect old URL to new list path for backward compatibility
+  {
+    path: '/cases/current',
+    redirect: '/cases/list'
   },
   {
     path: '/cases/previous',
@@ -20,19 +25,9 @@ export const caseListRoutes: RouteRecordRaw[] = [
   {
     path: '/cases/to-approve',
     name: 'case-list.to-approve',
-    component: () => import('../views/CasesToApproveView.vue'),
+    component: () => import('../../cases-approval/views/CasesToApproveView.vue'),
     meta: {
       title: 'Casos por Aprobar'
-    }
-  },
-  {
-    path: '/cases/complementary-techniques',
-    name: 'case-list.complementary-techniques',
-    component: () => import('../views/ComplementaryTechniquesView.vue'),
-    meta: {
-      title: 'Técnicas Complementarias',
-      requiresAuth: true,
-      requiresRole: ['admin', 'pathologist', 'resident']
     }
   }
 ]

@@ -1,62 +1,63 @@
 import type { CaseModel, CaseListItem, CaseStatistics, CaseState } from './case'
 
 export interface CreateCaseRequest {
-  paciente: {
-    paciente_code: string
-    nombre: string
-    edad: number
-    sexo: string
-    entidad_info: { id: string; nombre: string }
-    tipo_atencion: string
-    observaciones?: string
+  patient_info: {
+    patient_code: string
+    name: string
+    age: number
+    gender: string
+    entity_info: { id: string; name: string }
+    care_type: string
+    observations?: string
   }
-  medico_solicitante?: string
-  servicio?: string
-  muestras: Array<{
-    region_cuerpo: string
-    pruebas: Array<{ id: string; nombre: string; cantidad: number }>
+  requesting_physician?: string
+  service?: string
+  samples: Array<{
+    body_region: string
+    tests: Array<{ id: string; name: string; quantity: number }>
   }>
-  estado: CaseState
-  prioridad?: string
-  observaciones_generales?: string
+  state: CaseState
+  priority?: string
+  observations?: string
 }
 
 export interface UpdateCaseRequest {
-  patologo_asignado?: { codigo: string; nombre: string }
-  medico_solicitante?: string
-  muestras?: Array<{
-    region_cuerpo: string
-    pruebas: Array<{ id: string; nombre: string; cantidad: number }>
+  assigned_pathologist?: { id: string; name: string } | null
+  requesting_physician?: string
+  samples?: Array<{
+    body_region: string
+    tests: Array<{ id: string; name?: string; quantity: number }>
   }>
-  resultado?: {
-    tipo_resultado?: string
-    resultado_macro?: string
-    resultado_micro?: string
-    diagnostico?: string
-    firmado?: boolean
-    fecha_firma?: string
-    patologo_firma?: string
+  result?: {
+    method?: string[]
+    macro_result?: string
+    micro_result?: string
+    diagnosis?: string
+    observations?: string
+    signed?: boolean
+    signed_at?: string
+    signed_by?: string
   }
-  estado?: CaseState
-  prioridad?: string
-  observaciones_generales?: string
-  entidad_info?: { id: string; nombre: string }
-  paciente?: {
-    paciente_code: string
-    nombre: string
-    edad: number
-    sexo: string
-    entidad_info: { id: string; nombre: string }
-    tipo_atencion: string
-    observaciones?: string
-    fecha_actualizacion?: string
+  state?: CaseState
+  priority?: string
+  observations?: string
+  entity_info?: { id: string; name: string }
+  patient_info?: {
+    patient_code: string
+    name: string
+    age: number
+    gender: string
+    entity_info: { id: string; name: string }
+    care_type: string
+    observations?: string
+    updated_at?: string
   }
 }
 
 export interface CreateCaseResponse {
   success: boolean
   message: string
-  caso_code: string
+  case_code: string
   case: CaseModel
 }
 export interface UpdateCaseResponse extends CaseModel {}

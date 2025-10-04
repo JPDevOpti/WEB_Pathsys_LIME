@@ -23,7 +23,7 @@ class UrgentCasesRepository:
             {"$match": match_stage},
             {
                 "$addFields": {
-                    "dias_en_sistema": {
+                    "days_in_system": {
                         "$dateDiff": {
                             "startDate": "$created_at",
                             "endDate": "$$NOW",
@@ -32,7 +32,7 @@ class UrgentCasesRepository:
                     }
                 }
             },
-            {"$match": {"dias_en_sistema": {"$gte": int(min_days)}}},
+            {"$match": {"days_in_system": {"$gte": int(min_days)}}},
             {"$unwind": {"path": "$samples", "preserveNullAndEmptyArrays": True}},
             {"$unwind": {"path": "$samples.tests", "preserveNullAndEmptyArrays": True}},
             {
@@ -66,21 +66,37 @@ class UrgentCasesRepository:
                     }
                 }
             },
-            {"$sort": {"doc.dias_en_sistema": -1, "doc.created_at": 1}},
+            {"$sort": {"doc.days_in_system": -1, "doc.created_at": 1}},
             {"$limit": int(limit)},
             {
                 "$project": {
                     "_id": 0,
-                    "caso_code": "$_id",
-                    "paciente_nombre": "$doc.patient_info.name",
-                    "paciente_documento": "$doc.patient_info.patient_code",
-                    "entidad_nombre": "$doc.patient_info.entity_info.name",
-                    "pruebas": "$tests_list",
-                    "patologo_nombre": "$doc.assigned_pathologist.name",
-                    "fecha_creacion": "$doc.created_at",
-                    "estado": "$doc.state",
-                    "prioridad": "$doc.priority",
-                    "dias_habiles_transcurridos": "$doc.dias_en_sistema"
+                    "case_code": "$_id",
+                    "patient_name": "$doc.patient_info.name",
+                    "patient_code": {
+                        "$ifNull": [
+                            "$doc.patient_info.patient_code",
+                            {
+                                "$cond": [
+                                    {
+                                        "$and": [
+                                            {"$gt": [{"$strLenCP": {"$ifNull": ["$doc.patient_info.identification_type", ""]}}, 0]},
+                                            {"$gt": [{"$strLenCP": {"$ifNull": ["$doc.patient_info.identification_number", ""]}}, 0]}
+                                        ]
+                                    },
+                                    {"$concat": ["$doc.patient_info.identification_type", "-", "$doc.patient_info.identification_number"]},
+                                    "$doc.patient_info.identification_number"
+                                ]
+                            }
+                        ]
+                    },
+                    "entity_name": "$doc.patient_info.entity_info.name",
+                    "tests": "$tests_list",
+                    "pathologist_name": "$doc.assigned_pathologist.name",
+                    "created_at": "$doc.created_at",
+                    "state": "$doc.state",
+                    "priority": "$doc.priority",
+                    "days_in_system": "$doc.days_in_system"
                 }
             }
         ]
