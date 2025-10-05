@@ -326,7 +326,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Card } from '@/shared/components/layout'
-import PathologistList from '@/shared/components/List/PathologistList.vue'
+import PathologistList from '@/shared/components/ui/lists/PathologistList.vue'
 import InfoListIcon from '@/assets/icons/InfoListIcon.vue'
 import { useDashboard } from '../composables/useDashboard'
 import { usePermissions } from '@/shared/composables/usePermissions'

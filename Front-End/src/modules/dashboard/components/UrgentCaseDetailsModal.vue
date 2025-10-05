@@ -90,7 +90,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { CasoUrgente } from '../types/dashboard.types'
-import { CloseButton, PrintPdfButton } from '@/shared/components/buttons'
+import { CloseButton, PrintPdfButton } from '@/shared/components/ui/buttons'
 import { Modal } from '@/shared/components/layout'
 
 // Selected urgent case to display

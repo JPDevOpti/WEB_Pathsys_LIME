@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { useAuthPersistence } from './composables/useAuthPersistence'
-import ToastContainer from '@/shared/components/feedback/ToastContainer.vue'
+import ToastContainer from '@/shared/components/ui/feedback/ToastContainer.vue'
 
 // Inicializar persistencia de autenticación
 const { isInitialized } = useAuthPersistence()

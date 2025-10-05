@@ -132,9 +132,9 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { TaskIcon } from '@/assets/icons'
-import { FormSelect, FormInputField } from '@/shared/components/forms'
-import { RemoveButton } from '@/shared/components/buttons'
-import { ConfirmDialog } from '@/shared/components/feedback'
+import { FormSelect, FormInputField } from '@/shared/components/ui/forms'
+import { RemoveButton } from '@/shared/components/ui/buttons'
+import { ConfirmDialog } from '@/shared/components/ui/feedback'
 import { useToasts } from '@/shared/composables/useToasts'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { ticketsService } from '@/shared/services/tickets.service'

@@ -156,32 +156,6 @@
           </div>
         </div>
 
-        <!-- Location Section -->
-        <div class="bg-gray-50 p-6 rounded-lg">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Ubicación</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <MunicipalityList 
-              v-model="form.municipality_code" 
-              :selectedName="form.municipality_name"
-              label="Municipio" 
-              placeholder="Buscar y seleccionar municipio..." 
-              :required="true" 
-              :errors="getMunicipalityCodeErrors"
-              @municipality-code-change="handleMunicipalityCodeChange"
-              @municipality-name-change="handleMunicipalityNameChange"
-              @subregion-change="handleSubregionChange"
-            />
-            <FormInputField 
-              v-model="form.address" 
-              label="Dirección" 
-              placeholder="Ejemplo: Calle 123 #45-67" 
-              :required="true" 
-              :max-length="200" 
-              :errors="getAddressErrors"
-            />
-          </div>
-        </div>
-
         <!-- Entity and Care Type Section -->
         <div class="bg-gray-50 p-6 rounded-lg">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Atención</h3>
@@ -201,6 +175,30 @@
               :required="true" 
               :options="careTypeOptions" 
               :error="getCareTypeError"
+            />
+          </div>
+        </div>
+
+        <!-- Location Section -->
+        <div class="bg-gray-50 p-6 rounded-lg">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Ubicación</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MunicipalityList 
+              v-model="form.municipality_code" 
+              :selectedName="form.municipality_name"
+              label="Municipio" 
+              placeholder="Buscar y seleccionar municipio..." 
+              :errors="getMunicipalityCodeErrors"
+              @municipality-code-change="handleMunicipalityCodeChange"
+              @municipality-name-change="handleMunicipalityNameChange"
+              @subregion-change="handleSubregionChange"
+            />
+            <FormInputField 
+              v-model="form.address" 
+              label="Dirección" 
+              placeholder="Ejemplo: Calle 123 #45-67" 
+              :max-length="200" 
+              :errors="getAddressErrors"
             />
           </div>
         </div>
@@ -248,12 +246,12 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed, watch } from 'vue'
-import { FormInputField, FormSelect, FormTextarea, DateInputField } from '@/shared/components/forms'
-import { MunicipalityList, EntityList } from '@/shared/components/List'
-import { SaveButton, ClearButton, SearchButton } from '@/shared/components/buttons'
+import { FormInputField, FormSelect, FormTextarea, DateInputField } from '@/shared/components/ui/forms'
+import { MunicipalityList, EntityList } from '@/shared/components/ui/lists'
+import { SaveButton, ClearButton, SearchButton } from '@/shared/components/ui/buttons'
 import { useNotifications } from '../composables/useNotifications'
 import patientsApiService from '../services/patientsApi.service'
-import { Notification, PatientSuccessCard, ValidationAlert } from '@/shared/components/feedback'
+import { Notification, PatientSuccessCard, ValidationAlert } from '@/shared/components/ui/feedback'
 import SearchPatientIcon from '@/assets/icons/SearchPatientIcon.vue'
 import { IdentificationType, IDENTIFICATION_TYPE_NAMES } from '../types'
 import type { PatientData, UpdatePatientRequest, Gender, CareType } from '../types'
@@ -405,25 +403,9 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  if (!form.municipality_code.trim()) {
-    errors.municipality_code.push('El código del municipio es obligatorio')
-    isValid = false
-  }
-
-  if (!form.municipality_name.trim()) {
-    errors.municipality_name.push('El nombre del municipio es obligatorio')
-    isValid = false
-  }
-
-  if (!form.subregion.trim()) {
-    errors.subregion.push('La subregión es obligatoria')
-    isValid = false
-  }
-
-  if (!form.address.trim()) {
-    errors.address.push('La dirección es obligatoria')
-    isValid = false
-  } else if (form.address.trim().length < 5) {
+  // Municipality, subregion and address are now optional fields
+  // Only validate length if address is provided
+  if (form.address.trim() && form.address.trim().length < 5) {
     errors.address.push('La dirección debe tener al menos 5 caracteres')
     isValid = false
   }

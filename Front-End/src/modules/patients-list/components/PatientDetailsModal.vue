@@ -1,206 +1,303 @@
 <template>
-  <div v-if="isVisible" class="fixed inset-0 z-50 overflow-y-auto" @click="handleBackdropClick">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <!-- Backdrop -->
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-
-      <!-- Modal -->
-      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-        <!-- Header -->
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-blue-100 rounded-lg">
-                <PatientsIcon class="w-6 h-6 text-blue-600" />
+  <transition name="fade-scale">
+    <div 
+      v-if="isVisible" 
+      :class="['fixed right-0 bottom-0 z-[10000] flex items-center justify-center p-4 bg-black/40 top-16', overlayLeftClass]"
+      @click.self="$emit('close')"
+    >
+      <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <!-- Close button absolute -->
+        <button
+          @click="$emit('close')"
+          class="absolute top-4 right-4 z-10 p-2 rounded-lg bg-white/90 hover:bg-white transition-all duration-200 text-gray-600 hover:text-gray-800 ring-1 ring-transparent hover:ring-gray-200 hover:scale-105"
+          title="Cerrar"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        <!-- Header fijo -->
+        <div class="flex-shrink-0 px-4 py-4 pr-12 border-b border-gray-200 bg-white rounded-t-2xl">
+          <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+              <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
+                <PatientsIcon class="w-5 h-5 text-blue-600" />
               </div>
-              <div>
-                <h3 class="text-lg font-medium text-gray-900">
-                  Detalles del Paciente
-                </h3>
-                <p class="text-sm text-gray-500">
-                  {{ patient?.full_name }}
-                </p>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">Detalles del Paciente</h3>
+              <p class="text-gray-600 text-xs mt-1">Información completa del paciente</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contenido scrolleable -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- Información Principal -->
+            <div class="bg-white rounded-lg p-3 border border-gray-200">
+              <div class="mb-3 pb-3 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500 font-medium mb-1">Nombre del Paciente</p>
+                    <h4 class="text-lg font-semibold text-gray-900">{{ patient?.full_name }}</h4>
+                  </div>
+                  <div class="flex items-center space-x-2 bg-gray-100 px-2 py-1 rounded-full">
+                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                    <span class="text-xs font-medium text-gray-700">Activo</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <div class="flex items-center space-x-2">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                        <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Documento</p>
+                      <p class="text-sm font-bold text-gray-900 font-mono">{{ patient?.identification_number }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <div class="flex items-center space-x-2">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                        <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Edad</p>
+                      <p class="text-sm font-bold text-gray-900">{{ patient?.age }} años</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Género y Tipo de Atención -->
+              <div class="grid grid-cols-2 gap-3 mt-3">
+                <div v-if="patient?.gender" class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <div class="flex items-center space-x-2">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                        <GerdenIcon size="16" color="#374151" />
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Género</p>
+                      <p class="text-sm font-bold text-gray-900">{{ patient?.gender }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="patient?.care_type" class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <div class="flex items-center space-x-2">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                        <AtentionTypeIcon size="16" color="#374151" />
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Atención</p>
+                      <p class="text-sm font-bold text-gray-900">{{ patient?.care_type }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Entidad -->
+            <div v-if="patient?.entity_info?.name" class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div class="flex items-start space-x-2">
+                <div class="flex-shrink-0">
+                  <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                    <EntityIcon class="w-4 h-4 text-gray-700" />
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="text-xs uppercase tracking-wide text-gray-500 font-medium mb-1">Entidad de Salud</p>
+                  <p class="text-sm font-semibold text-gray-900">{{ patient?.entity_info?.name }}</p>
+                  <p v-if="patient?.entity_info?.id" class="text-xs text-gray-600 font-mono mt-1">
+                    Código: {{ patient?.entity_info?.id }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información de Ubicación -->
+            <div v-if="patient?.location?.municipality_name || patient?.location?.subregion || patient?.location?.address" class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div class="flex items-start space-x-2 mb-3">
+                <div class="flex-shrink-0">
+                  <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                    <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="text-xs uppercase tracking-wide text-gray-500 font-medium mb-2">Información de Ubicación</p>
+                  
+                  <div class="grid grid-cols-2 gap-1">
+                    <!-- Municipio (Izquierda) -->
+                    <div v-if="patient?.location?.municipality_name" class="space-y-1 flex flex-col justify-center">
+                      <p class="text-xs text-gray-500 font-medium">Municipio</p>
+                      <p class="text-sm font-semibold text-gray-900">{{ patient?.location?.municipality_name }}</p>
+                    </div>
+                    
+                    <!-- Subregión y Dirección (Derecha) -->
+                    <div class="space-y-2">
+                      <!-- Subregión (Arriba) -->
+                      <div v-if="patient?.location?.subregion">
+                        <p class="text-xs text-gray-500 font-medium">Subregión</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ patient?.location?.subregion }}</p>
+                      </div>
+                      
+                      <!-- Dirección (Abajo) -->
+                      <div v-if="patient?.location?.address">
+                        <p class="text-xs text-gray-500 font-medium">Dirección</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ patient?.location?.address }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Observaciones (si existen) -->
+            <div v-if="patient?.observations" class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div class="flex items-start space-x-2">
+                <div class="flex-shrink-0">
+                  <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                    <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="text-xs uppercase tracking-wide text-gray-500 font-medium mb-1">Observaciones</p>
+                  <p class="text-xs text-gray-700 leading-relaxed">{{ patient?.observations }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información del Sistema -->
+            <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div class="flex items-start space-x-2">
+                <div class="flex-shrink-0">
+                  <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                    <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="text-xs uppercase tracking-wide text-gray-500 font-medium mb-2">Información del Sistema</p>
+                  <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                      <span class="text-xs text-gray-500">Creado:</span>
+                      <span class="text-xs font-medium text-gray-900">{{ formatDateTime(patient?.created_at || '') }}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span class="text-xs text-gray-500">Actualizado:</span>
+                      <span class="text-xs font-medium text-gray-900">{{ formatDateTime(patient?.updated_at || '') }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Patient Cases -->
+            <div class="border-t border-gray-200 pt-4">
+              <div class="flex items-center space-x-2 mb-4">
+                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                  <CaseIcon class="w-4 h-4 text-gray-700" />
+                </div>
+                <h4 class="text-lg font-semibold text-gray-900">Casos del Paciente</h4>
+              </div>
+
+              <!-- Cases List -->
+              <div v-if="isLoadingCases" class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+
+              <div v-else-if="patientCases.length === 0" class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+                <CaseIcon class="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p class="text-sm">No hay casos registrados para este paciente</p>
+              </div>
+
+              <div v-else class="space-y-3">
+                <div
+                  v-for="case_ in patientCases"
+                  :key="case_._id || case_.id"
+                  class="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow"
+                >
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-semibold text-gray-900">{{ case_.case_code || 'Sin código' }}</span>
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                            :class="getCaseStatusClass(case_.state || 'pendiente')">
+                        {{ case_.state || 'Pendiente' }}
+                      </span>
+                    </div>
+                    <span class="text-xs text-gray-500 font-medium">{{ case_.created_at ? formatDate(case_.created_at) : 'Fecha no disponible' }}</span>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white rounded-lg p-2 border border-gray-200">
+                      <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Prioridad</p>
+                      <p class="text-sm font-semibold text-gray-900">{{ case_.priority || 'Normal' }}</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-2 border border-gray-200">
+                      <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Patólogo Asignado</p>
+                      <p class="text-sm font-semibold text-gray-900">{{ case_.assigned_pathologist?.name || 'No asignado' }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer fijo -->
+          <div class="flex-shrink-0 flex items-center justify-between pt-3 border-t border-gray-200 px-4 pb-4 bg-white rounded-b-2xl">
+            <div class="flex flex-col space-y-1 text-xs text-gray-500">
+              <div class="flex items-center space-x-2">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Información actualizada</span>
               </div>
             </div>
             <button
               @click="$emit('close')"
-              class="rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold border border-blue-500 text-blue-500 bg-white hover:bg-blue-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              Cerrar
             </button>
           </div>
-
-          <!-- Patient Information -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Basic Info -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <h4 class="text-sm font-medium text-gray-900 mb-3">Información Básica</h4>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Código:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ patient?.patient_code }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Documento:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ patient?.identification_number }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Género:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ patient?.gender }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Edad:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ patient?.age }} años</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Fecha de Nacimiento:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ formatDate(patient?.birth_date || '') }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Contact Info -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <h4 class="text-sm font-medium text-gray-900 mb-3">Información de Contacto</h4>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Municipio:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ patient?.location?.municipality_name || 'N/A' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Subregión:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ patient?.location?.subregion || 'N/A' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Dirección:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ patient?.location?.address || 'N/A' }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Medical Info -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <h4 class="text-sm font-medium text-gray-900 mb-3">Información Médica</h4>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Entidad:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ patient?.entity_info?.name || 'N/A' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Tipo de Atención:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ patient?.care_type }}</span>
-                </div>
-                <div v-if="patient?.observations" class="pt-2 border-t border-gray-200">
-                  <p class="text-xs font-medium text-gray-700 mb-1">Observaciones:</p>
-                  <p class="text-xs text-gray-600">{{ patient.observations }}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- System Info -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <h4 class="text-sm font-medium text-gray-900 mb-3">Información del Sistema</h4>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Creado:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ formatDateTime(patient?.created_at || '') }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">Actualizado:</span>
-                  <span class="text-sm font-medium text-gray-900">{{ formatDateTime(patient?.updated_at || '') }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Patient Cases -->
-          <div class="border-t border-gray-200 pt-6">
-            <div class="flex items-center justify-between mb-4">
-              <h4 class="text-lg font-medium text-gray-900">Casos del Paciente</h4>
-              <div class="flex items-center gap-2">
-                <button
-                  @click="loadPatientCases"
-                  :disabled="isLoadingCases"
-                  class="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <RefreshIcon class="w-4 h-4" :class="{ 'animate-spin': isLoadingCases }" />
-                  {{ isLoadingCases ? 'Cargando...' : 'Actualizar' }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Cases List -->
-            <div v-if="isLoadingCases" class="flex items-center justify-center py-8">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-
-            <div v-else-if="patientCases.length === 0" class="text-center py-8 text-gray-500">
-              <CaseIcon class="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No hay casos registrados para este paciente</p>
-            </div>
-
-            <div v-else class="space-y-3">
-              <div
-                v-for="case_ in patientCases"
-                :key="case_.id"
-                class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
-              >
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium text-gray-900">{{ case_.caseCode || case_.id }}</span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                          :class="getCaseStatusClass(case_.status)">
-                      {{ case_.status }}
-                    </span>
-                  </div>
-                  <span class="text-xs text-gray-500">{{ formatDate(case_.receivedAt) }}</span>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span class="text-gray-600">Tipo de Muestra:</span>
-                    <span class="ml-1 font-medium text-gray-900">{{ case_.sampleType }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-600">Solicitante:</span>
-                    <span class="ml-1 font-medium text-gray-900">{{ case_.requester }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-600">Patólogo:</span>
-                    <span class="ml-1 font-medium text-gray-900">{{ case_.pathologist || 'No asignado' }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-600">Pruebas:</span>
-                    <span class="ml-1 font-medium text-gray-900">{{ case_.tests.join(', ') }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            @click="$emit('close')"
-            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-          >
-            Cerrar
-          </button>
         </div>
       </div>
-    </div>
-  </div>
+  </transition>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { Patient, PatientCase } from '../types/patient.types'
-import { PatientsIcon, RefreshIcon, CaseIcon } from '@/assets/icons'
+import { PatientsIcon, CaseIcon, EntityIcon } from '@/assets/icons'
+import GerdenIcon from '@/assets/icons/GerdenIcon.vue'
+import AtentionTypeIcon from '@/assets/icons/AtentionTypeIcon.vue'
 import { formatDate, formatDateTime } from '../utils/dateUtils'
 import { getPatientCases } from '../services/patientListApi'
+import { useSidebar } from '@/shared/composables/SidebarControl'
 
 interface Props {
   patient: Patient | null
@@ -211,6 +308,13 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'close': []
 }>()
+
+// Sidebar integration
+const { isExpanded, isMobileOpen, isHovered } = useSidebar()
+const overlayLeftClass = computed(() => {
+  const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
+  return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
+})
 
 const patientCases = ref<PatientCase[]>([])
 const isLoadingCases = ref(false)
@@ -233,8 +337,11 @@ const loadPatientCases = async () => {
   
   isLoadingCases.value = true
   try {
-    patientCases.value = await getPatientCases(props.patient.id)
+    // Use patient_code or identification_number as the identifier for fetching cases
+    const patientId = props.patient.patient_code || props.patient.identification_number || props.patient.id
+    patientCases.value = await getPatientCases(patientId)
   } catch (error) {
+    console.error('Error loading patient cases:', error)
     patientCases.value = []
   } finally {
     isLoadingCases.value = false
@@ -243,6 +350,13 @@ const loadPatientCases = async () => {
 
 const getCaseStatusClass = (status: string) => {
   const statusClasses = {
+    // Database states (Spanish with spaces)
+    'En proceso': 'bg-blue-100 text-blue-800',
+    'Pendiente': 'bg-yellow-100 text-yellow-800',
+    'Completado': 'bg-green-100 text-green-800',
+    'Entregado': 'bg-gray-100 text-gray-800',
+    'Cancelado': 'bg-red-100 text-red-800',
+    // Legacy states (for backward compatibility)
     'pendiente': 'bg-yellow-100 text-yellow-800',
     'en_proceso': 'bg-blue-100 text-blue-800',
     'completado': 'bg-green-100 text-green-800',
@@ -252,9 +366,10 @@ const getCaseStatusClass = (status: string) => {
   return statusClasses[status as keyof typeof statusClasses] || 'bg-gray-100 text-gray-800'
 }
 
-const handleBackdropClick = (event: MouseEvent) => {
-  if (event.target === event.currentTarget) {
-    emit('close')
-  }
-}
 </script>
+
+<style scoped>
+.fade-scale-enter-active { transition: all 0.18s ease-out; }
+.fade-scale-leave-active { transition: all 0.12s ease-in; }
+.fade-scale-enter-from, .fade-scale-leave-to { opacity: 0; transform: scale(.95); }
+</style>

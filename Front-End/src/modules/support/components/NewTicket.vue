@@ -121,8 +121,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { PlusIcon, PaperclipIcon } from '@/assets/icons'
-import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
-import { ClearButton, SaveButton } from '@/shared/components/buttons'
+import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/ui/forms'
+import { ClearButton, SaveButton } from '@/shared/components/ui/buttons'
 import { useToasts } from '@/shared/composables/useToasts'
 import { ticketsService } from '@/shared/services/tickets.service'
 import type { NewTicketForm, TicketCategoryEnum } from '../types/support.types'

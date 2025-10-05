@@ -14,7 +14,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { AdminLayout } from '@/shared'
-import { PageBreadcrumb } from '@/shared/components/common'
+import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import { EditCase } from '../components'
 import type { CaseModel } from '../types'
 

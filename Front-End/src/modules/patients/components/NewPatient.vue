@@ -95,31 +95,6 @@
         </div>
       </div>
 
-      <!-- Location Section -->
-      <div class="bg-gray-50 p-6 rounded-lg">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Ubicación</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <MunicipalityList 
-            v-model="formData.municipality_code" 
-            label="Municipio" 
-            placeholder="Buscar y seleccionar municipio..." 
-            :required="true" 
-            :errors="getMunicipalityCodeErrors" 
-            @municipality-code-change="handleMunicipalityCodeChange"
-            @municipality-name-change="handleMunicipalityNameChange"
-            @subregion-change="handleSubregionChange"
-          />
-          <FormInputField 
-            v-model="formData.address" 
-            label="Dirección" 
-            placeholder="Ejemplo: Calle 123 #45-67" 
-            :required="true" 
-            :max-length="200" 
-            :errors="getAddressErrors" 
-          />
-        </div>
-      </div>
-
       <!-- Entity and Care Type Section -->
       <div class="bg-gray-50 p-6 rounded-lg">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Atención</h3>
@@ -139,6 +114,31 @@
             :required="true" 
             :options="careTypeOptions" 
             :error="getCareTypeError" 
+          />
+        </div>
+      </div>
+
+      <!-- Location Section -->
+      <div class="bg-gray-50 p-6 rounded-lg">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Ubicación</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <MunicipalityList 
+            v-model="formData.municipality_code" 
+            label="Municipio" 
+            placeholder="Buscar y seleccionar municipio..." 
+            :required="false" 
+            :errors="getMunicipalityCodeErrors" 
+            @municipality-code-change="handleMunicipalityCodeChange"
+            @municipality-name-change="handleMunicipalityNameChange"
+            @subregion-change="handleSubregionChange"
+          />
+          <FormInputField 
+            v-model="formData.address" 
+            label="Dirección" 
+            placeholder="Ejemplo: Calle 123 #45-67" 
+            :required="false" 
+            :max-length="200" 
+            :errors="getAddressErrors" 
           />
         </div>
       </div>
@@ -191,10 +191,10 @@ import patientsApiService from '../services/patientsApi.service'
 import { IdentificationType } from '../types'
 import type { CreatePatientRequest, PatientData, Gender, CareType, PatientFormData } from '../types'
 import { ComponentCard } from '@/shared/components'
-import { FormInputField, FormSelect, FormTextarea, DateInputField } from '@/shared/components/forms'
-import { MunicipalityList, EntityList } from '@/shared/components/List'
-import { SaveButton, ClearButton } from '@/shared/components/buttons'
-import { ValidationAlert, Notification, PatientSuccessCard } from '@/shared/components/feedback'
+import { FormInputField, FormSelect, FormTextarea, DateInputField } from '@/shared/components/ui/forms'
+import { MunicipalityList, EntityList } from '@/shared/components/ui/lists'
+import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import { ValidationAlert, Notification, PatientSuccessCard } from '@/shared/components/ui/feedback'
 import { NewUserIcon } from '@/assets/icons'
 
 // UI refs/state
@@ -328,25 +328,9 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  if (!formData.municipality_code.trim()) {
-    errors.municipality_code.push('El código del municipio es obligatorio')
-    isValid = false
-  }
-
-  if (!formData.municipality_name.trim()) {
-    errors.municipality_name.push('El nombre del municipio es obligatorio')
-    isValid = false
-  }
-
-  if (!formData.subregion.trim()) {
-    errors.subregion.push('La subregión es obligatoria')
-    isValid = false
-  }
-
-  if (!formData.address.trim()) {
-    errors.address.push('La dirección es obligatoria')
-    isValid = false
-  } else if (formData.address.trim().length < 5) {
+  // Municipality, subregion and address are now optional fields
+  // Only validate length if address is provided
+  if (formData.address.trim() && formData.address.trim().length < 5) {
     errors.address.push('La dirección debe tener al menos 5 caracteres')
     isValid = false
   }

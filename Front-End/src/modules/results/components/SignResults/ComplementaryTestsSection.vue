@@ -89,9 +89,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { FormCheckbox, FormTextareaUnlimited, FormInputField } from '@/shared/components/forms'
-import { SaveButton, AddButton, RemoveButton } from '@/shared/components/buttons'
-import { TestList } from '@/shared/components/List'
+import { FormCheckbox, FormTextareaUnlimited, FormInputField } from '@/shared/components/ui/forms'
+import { SaveButton, AddButton, RemoveButton } from '@/shared/components/ui/buttons'
+import { TestList } from '@/shared/components/ui/lists'
 import type { ComplementaryTestInfo } from '@/shared/services/approval.service'
 
 // Props

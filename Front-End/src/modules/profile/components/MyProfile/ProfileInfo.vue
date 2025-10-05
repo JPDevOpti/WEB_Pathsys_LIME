@@ -110,7 +110,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { UserProfile, UserRole } from '../../types/userProfile.types'
-import { ComponentCard } from '@/shared/components/common'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import InfoCard from './InfoCard.vue'
 
 interface Props {

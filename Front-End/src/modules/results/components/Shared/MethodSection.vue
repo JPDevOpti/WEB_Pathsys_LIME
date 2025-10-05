@@ -28,8 +28,8 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue'
-import { AddButton, RemoveButton } from '@/shared/components/buttons'
-import { MethodSelector } from '@/shared/components/List'
+import { AddButton, RemoveButton } from '@/shared/components/ui/buttons'
+import { MethodSelector } from '@/shared/components/ui/lists'
 import { TaskIcon } from '@/assets/icons'
 import { AVAILABLE_METHODS, normalizeMethod } from '@/shared/data/methods'
 

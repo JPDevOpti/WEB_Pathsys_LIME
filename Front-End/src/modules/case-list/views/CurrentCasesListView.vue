@@ -47,7 +47,7 @@ import { useRouter } from 'vue-router'
 import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import Card from '@/shared/components/layout/Card.vue'
 import { BaseButton } from '@/shared/components'
-import LoadingSpinner from '@/shared/components/feedback/LoadingSpinner.vue'
+import LoadingSpinner from '@/shared/components/ui/feedback/LoadingSpinner.vue'
 
 import { FiltersBar, CasesTable, CaseDetailsModal } from '../components'
 

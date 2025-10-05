@@ -182,7 +182,7 @@
 
 <script setup lang="ts">
 import { BaseButton } from '@/shared/components'
-import { ConfirmDialog } from '@/shared/components/feedback'
+import { ConfirmDialog } from '@/shared/components/ui/feedback'
 import { computed, ref } from 'vue'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import type { ApprovalRequestResponse } from '@/shared/services/approval.service'

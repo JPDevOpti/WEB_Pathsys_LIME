@@ -15,7 +15,8 @@
 
 <script setup lang="ts">
 import { AdminLayout } from '@/shared'
-import { PageBreadcrumb, ComponentCard } from '@/shared/components/common'
+import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import { SearchPatientIcon } from '@/assets/icons'
 import { EditPatientForm } from '../components'
 </script>

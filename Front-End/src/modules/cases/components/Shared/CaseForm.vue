@@ -198,9 +198,9 @@
 </template>
 
 <script setup lang="ts">
-import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/forms'
-import { AddButton, RemoveButton } from '@/shared/components/buttons'
-import { EntityList, TestList, BodyRegionList, PathologistList } from '@/shared/components/List'
+import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/ui/forms'
+import { AddButton, RemoveButton } from '@/shared/components/ui/buttons'
+import { EntityList, TestList, BodyRegionList, PathologistList } from '@/shared/components/ui/lists'
 import { SampleIcon } from '@/assets/icons'
 
 const props = withDefaults(defineProps<{

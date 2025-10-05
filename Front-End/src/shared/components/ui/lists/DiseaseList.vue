@@ -178,7 +178,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue'
-import { useDiseaseAPI } from '../../composables/useDiseaseAPI'
+import { useDiseaseAPI } from '@/shared/composables/useDiseaseAPI'
 import { FormCheckbox } from '../forms'
 
 // Types

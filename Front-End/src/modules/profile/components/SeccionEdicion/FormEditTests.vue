@@ -173,9 +173,9 @@
 
 <script setup lang="ts">
 import { reactive, computed, watch, nextTick, ref, onMounted } from 'vue'
-import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
-import { SaveButton, ClearButton } from '@/shared/components/buttons'
-import { Notification, ValidationAlert } from '@/shared/components/feedback'
+import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/ui/forms'
+import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import { Notification, ValidationAlert } from '@/shared/components/ui/feedback'
 import { useTestEdition } from '../../composables/useTestEdition'
 import type { TestEditFormModel, TestUpdateResponse } from '../../types/test.types'
 import { RefreshIcon } from '@/assets/icons'

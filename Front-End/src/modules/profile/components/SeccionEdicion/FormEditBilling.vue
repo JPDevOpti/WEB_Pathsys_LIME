@@ -137,9 +137,9 @@
 <script setup lang="ts">
 // Edit billing user form: validates edits, updates via API, and shows inline notifications
 import { reactive, computed, watch, nextTick, ref } from 'vue'
-import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
-import { SaveButton, ClearButton } from '@/shared/components/buttons'
-import { Notification, ValidationAlert } from '@/shared/components/feedback'
+import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/ui/forms'
+import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import { Notification, ValidationAlert } from '@/shared/components/ui/feedback'
 import { useBillingEdition } from '../../composables/useBillingEdition'
 import type { BillingEditFormModel } from '../../types/billing.types'
 

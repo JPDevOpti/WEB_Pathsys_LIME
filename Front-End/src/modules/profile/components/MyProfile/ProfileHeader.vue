@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { PencilIcon } from '@heroicons/vue/24/outline'
 import type { UserProfile, UserRole } from '../../types/userProfile.types'
-import { ComponentCard } from '@/shared/components/common'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 
 interface Props {
   user: UserProfile

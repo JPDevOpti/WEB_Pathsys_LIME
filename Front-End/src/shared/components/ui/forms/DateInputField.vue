@@ -12,9 +12,16 @@
       :max="maxIso"
       v-model="innerValue"
       ref="container"
+      class="date-input-field"
     />
-    <button type="button" class="absolute right-2 bottom-2 p-1 text-blue-600 hover:text-blue-700" @click="openCalendar" aria-label="Abrir calendario">
-      <CalendarSearchIcon class="w-6 h-6" aria-hidden="true" />
+    <button 
+      type="button" 
+      class="absolute right-2 top-0 h-full flex items-center p-1 text-blue-600 hover:text-blue-700 z-10" 
+      @click="openCalendar" 
+      aria-label="Abrir calendario"
+      :style="buttonStyle"
+    >
+      <CalendarSearchIcon class="w-5 h-5" aria-hidden="true" />
     </button>
   </div>
   
@@ -108,6 +115,24 @@ const maxIso = computed(() => {
 })
 
 const container = ref<any>(null)
+
+// Calculate button position to align with input field
+const buttonStyle = computed(() => {
+  // Position the button to align with the input field area only
+  // The button will span the full height of the input area and center the icon
+  const labelHeight = props.label ? '1.5rem' : '0rem' // text-sm line height
+  const labelSpacing = props.label ? '0.25rem' : '0rem' // space-y-1 spacing after label
+  const inputHeight = '2.5rem' // h-10 input field height (40px)
+  
+  // Start position: after label and its spacing
+  const topOffset = `calc(${labelHeight} + ${labelSpacing})`
+  
+  return {
+    top: topOffset,
+    height: inputHeight
+  }
+})
+
 function openCalendar() {
   const root: any = container.value?.$el ?? container.value
   const input = (root && typeof root.querySelector === 'function') ? (root.querySelector('input') as HTMLInputElement | null) : null

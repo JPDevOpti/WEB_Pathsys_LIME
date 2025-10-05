@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { AdminLayout } from '@/shared'
-import { PageBreadcrumb } from '@/shared/components/common'
+import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import UserCreationTabs from '../components/SeccionCreacion/UserCreationTabs.vue'
 import UserEditionTabs from '../components/SeccionEdicion/UserEditionTabs.vue'
 

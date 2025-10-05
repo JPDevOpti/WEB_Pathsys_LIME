@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ComponentCard } from '@/shared/components/common'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import type { TestStats } from '../../types/tests.types'
 import { ChartIcon } from '@/assets/icons'
 

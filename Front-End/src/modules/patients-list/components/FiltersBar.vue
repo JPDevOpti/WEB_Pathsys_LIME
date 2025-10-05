@@ -117,9 +117,9 @@
 import { reactive, ref, watch } from 'vue'
 import { ComponentCard } from '@/shared/components'
 import { RefreshIcon, DocsIcon, TrashIcon } from '@/assets/icons'
-import { FormInputField, FormSelect, DateInputField } from '@/shared/components/forms'
-import { SearchButton, BaseButton } from '@/shared/components/buttons'
-import { EntityList, MunicipalityList } from '@/shared/components/List'
+import { FormInputField, FormSelect, DateInputField } from '@/shared/components/ui/forms'
+import { SearchButton, BaseButton } from '@/shared/components/ui/buttons'
+import { EntityList, MunicipalityList } from '@/shared/components/ui/lists'
 import type { PatientFilters, Gender, CareType } from '../types/patient.types'
 
 interface Props {

@@ -55,8 +55,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { FormSelect } from '@/shared/components'
-import { SaveButton, ClearButton } from '@/shared/components/buttons'
-import { ComponentCard } from '@/shared/components/common'
+import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import { RefreshIcon, TestIcon, StatisticsIcon } from '@/assets/icons'
 import OpportunitySummary from './OpportunitySummary.vue'
 import TestsOpportunityPanel from './TestsOpportunityPanel.vue'

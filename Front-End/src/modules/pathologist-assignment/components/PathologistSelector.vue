@@ -120,7 +120,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { PathologistList } from '@/shared/components/List'
+import { PathologistList } from '@/shared/components/ui/lists'
 import type { FormPathologistInfo } from '@/modules/cases/types'
 import { DoctorIcon } from '@/assets/icons'
 

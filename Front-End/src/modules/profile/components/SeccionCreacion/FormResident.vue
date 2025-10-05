@@ -168,9 +168,9 @@
 <script setup lang="ts">
 // Resident creation form: validates inputs, submits to API, and shows inline notifications
 import { reactive, computed, watch, nextTick, ref } from 'vue'
-import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/forms'
-import { SaveButton, ClearButton } from '@/shared/components/buttons'
-import { Notification, ValidationAlert } from '@/shared/components/feedback'
+import { FormInputField, FormCheckbox, FormTextarea } from '@/shared/components/ui/forms'
+import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import { Notification, ValidationAlert } from '@/shared/components/ui/feedback'
 import { useResidentCreation } from '../../composables/useResidentCreation'
 import type { ResidentFormModel, ResidentCreateResponse } from '../../types/resident.types'
 

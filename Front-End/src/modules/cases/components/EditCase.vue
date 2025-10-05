@@ -182,10 +182,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { ComponentCard } from '@/shared/components'
-import { SaveButton, ClearButton } from '@/shared/components/buttons'
+import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
 import { useNotifications } from '../composables/useNotifications'
-import Notification from '@/shared/components/feedback/Notification.vue'
-import { CaseSuccessCard } from '@/shared/components/feedback'
+import Notification from '@/shared/components/ui/feedback/Notification.vue'
+import { CaseSuccessCard } from '@/shared/components/ui/feedback'
 import { useCaseForm } from '../composables/useCaseForm'
 import { casesApiService } from '../services/casesApi.service'
 import pathologistApi from '../services/pathologistApi.service'

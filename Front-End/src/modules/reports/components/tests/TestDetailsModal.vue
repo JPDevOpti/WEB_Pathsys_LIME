@@ -143,7 +143,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
-import { CloseButton } from '@/shared/components/buttons'
+import { CloseButton } from '@/shared/components/ui/buttons'
 import { Modal } from '@/shared/components/layout'
 import type { TestStats, TestDetails, PeriodSelection } from '../../types/tests.types'
 import { testsApiService } from '../../services/tests.service'

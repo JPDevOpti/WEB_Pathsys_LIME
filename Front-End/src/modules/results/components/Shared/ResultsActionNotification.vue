@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import Notification from '@/shared/components/feedback/Notification.vue'
+import Notification from '@/shared/components/ui/feedback/Notification.vue'
 import { computed } from 'vue'
 
 type NotificationType = 'success' | 'error' | 'warning' | 'info'

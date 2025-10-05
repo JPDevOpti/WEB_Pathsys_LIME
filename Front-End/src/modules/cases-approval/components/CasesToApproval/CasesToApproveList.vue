@@ -240,9 +240,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { ComponentCard, FormInputField, BaseButton, SearchButton } from '@/shared/components'
-import ConfirmDialog from '@/shared/components/feedback/ConfirmDialog.vue'
+import ConfirmDialog from '@/shared/components/ui/feedback/ConfirmDialog.vue'
 import CaseApprovalDetailsModal from './CaseApprovalDetailsModal.vue'
-import CaseCreatedToast from '../CurrentCases/CaseCreatedToast.vue'
+import { CaseCreatedToast } from '@/modules/case-list/components'
 import approvalService from '@/shared/services/approval.service'
 import type { 
   ApprovalRequestResponse, 

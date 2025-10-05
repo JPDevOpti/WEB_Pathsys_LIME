@@ -13,8 +13,8 @@
 </template>
 
 <script setup lang="ts">
-import { FormInputField, FormTextarea } from '@/shared/components/forms'
-import { SaveButton } from '@/shared/components/buttons'
+import { FormInputField, FormTextarea } from '@/shared/components/ui/forms'
+import { SaveButton } from '@/shared/components/ui/buttons'
 </script>
 
 

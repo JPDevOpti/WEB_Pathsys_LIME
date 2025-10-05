@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { AdminLayout } from '@/shared'
-import { PageBreadcrumb } from '@/shared/components/common'
+import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import { NewPatient } from '../components'
 </script>
 

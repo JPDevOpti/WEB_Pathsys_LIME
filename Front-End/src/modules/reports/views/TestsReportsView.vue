@@ -17,8 +17,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { AdminLayout } from '@/shared'
-import { PageBreadcrumb, ComponentCard } from '@/shared/components/common'
-import AccessDeniedAlert from '@/shared/components/feedback/AccessDeniedAlert.vue'
+import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
+import AccessDeniedAlert from '@/shared/components/ui/feedback/AccessDeniedAlert.vue'
 import TestsReport from '../components/tests/TestsReport.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 

@@ -32,7 +32,7 @@ import {
   CogIcon
 } from '@heroicons/vue/24/outline'
 import type { ActionItem } from '../../types/userProfile.types'
-import { ComponentCard } from '@/shared/components/common'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 
 interface Props {
   availableActions?: string[]

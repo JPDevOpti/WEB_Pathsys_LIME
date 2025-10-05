@@ -186,9 +186,9 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { ComponentCard } from '@/shared/components'
-import { ErrorMessage, ValidationAlert } from '@/shared/components/feedback'
-import { FormInputField } from '@/shared/components/forms'
-import { SearchButton, ClearButton, SaveButton } from '@/shared/components/buttons'
+import { ErrorMessage, ValidationAlert } from '@/shared/components/ui/feedback'
+import { FormInputField } from '@/shared/components/ui/forms'
+import { SearchButton, ClearButton, SaveButton } from '@/shared/components/ui/buttons'
 import ResultEditor from '../Shared/ResultEditor.vue'
 import PatientInfoCard from '../Shared/PatientInfoCard.vue'
 import CaseDetailsCard from '../Shared/CaseDetailsCard.vue'

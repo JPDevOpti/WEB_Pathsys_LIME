@@ -47,18 +47,28 @@ export interface Patient {
 }
 
 export interface PatientCase {
-  id: string
+  _id?: string
+  id?: string
+  case_code?: string
+  state?: string
+  priority?: string
+  assigned_pathologist?: {
+    id: string
+    name: string
+  }
+  created_at?: string
+  updated_at?: string
+  // Legacy fields for backward compatibility
   caseCode?: string
-  sampleType: string
-  status: string
-  receivedAt: string
+  sampleType?: string
+  status?: string
+  receivedAt?: string
   deliveredAt?: string
   signedAt?: string
-  tests: string[]
+  tests?: string[]
   pathologist?: string
-  requester: string
-  entity: string
-  priority?: string
+  requester?: string
+  entity?: string
 }
 
 // Filtros de búsqueda (coincide con /search/advanced del backend)

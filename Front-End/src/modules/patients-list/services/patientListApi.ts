@@ -1,6 +1,7 @@
 import { apiClient } from '../../../core/config/axios.config'
 import { API_CONFIG } from '../../../core/config/api.config'
 import type { PatientFilters, IdentificationType } from '../types/patient.types'
+import { casesApiService } from '../../cases/services/casesApi.service'
 
 const PATIENTS_BASE = '/patients'
 
@@ -197,12 +198,12 @@ export async function getPatientByCode(patientCode: string): Promise<BackendPati
 
 /**
  * Obtener casos de un paciente
- * Nota: Este endpoint debe existir en el backend
+ * Uses the cases module API service to get cases by patient identification
  */
 export async function getPatientCases(patientCode: string): Promise<any[]> {
   try {
-    const response = await apiClient.get(`${PATIENTS_BASE}/${patientCode}/cases`)
-    return response.data || []
+    const cases = await casesApiService.getCasesByPatient(patientCode)
+    return cases || []
   } catch (error) {
     console.error('Error al obtener casos del paciente:', error)
     return []

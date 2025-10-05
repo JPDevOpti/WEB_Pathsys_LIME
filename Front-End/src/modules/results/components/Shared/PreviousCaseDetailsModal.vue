@@ -199,7 +199,7 @@
 import { computed } from 'vue'
 import type { CaseModel } from '@/modules/cases/types/case'
 import { Modal } from '@/shared/components/layout'
-import { CloseButton, PrintPdfButton } from '@/shared/components/buttons'
+import { CloseButton, PrintPdfButton } from '@/shared/components/ui/buttons'
 
 const props = defineProps<{ caseItem: CaseModel | null }>()
 defineEmits<{ (e: 'close'): void }>()

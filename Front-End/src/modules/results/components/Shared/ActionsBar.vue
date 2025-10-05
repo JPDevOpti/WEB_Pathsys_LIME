@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { SaveButton, ClearButton } from '@/shared/components/buttons'
+import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
 
 defineProps<{ saving?: boolean, previewing?: boolean, lastSavedAt?: string, disabled?: boolean, canSave?: boolean }>()
 defineEmits<{ (e: 'save-draft'): void, (e: 'preview'): void, (e: 'clear'): void }>()

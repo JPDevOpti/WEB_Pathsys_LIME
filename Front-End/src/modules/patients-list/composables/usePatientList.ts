@@ -269,18 +269,25 @@ export function usePatientList() {
     try {
       const cases = await getPatientCases(patient.patient_code)
       selectedPatientCases.value = cases.map((c: any) => ({
+        _id: c._id,
         id: c.id || c._id,
+        case_code: c.case_code,
+        state: c.state,
+        priority: c.priority,
+        assigned_pathologist: c.assigned_pathologist,
+        created_at: c.created_at,
+        updated_at: c.updated_at,
+        // Legacy fields for backward compatibility
         caseCode: c.case_code || c.caso_code,
         sampleType: c.sample_type || c.tipo_muestra || '',
-        status: c.status || c.estado || '',
-        receivedAt: c.received_at || c.fecha_creacion || '',
+        status: c.status || c.estado || c.state || '',
+        receivedAt: c.received_at || c.fecha_creacion || c.created_at || '',
         deliveredAt: c.delivered_at || c.fecha_entrega || '',
         signedAt: c.signed_at || c.fecha_firma || '',
         tests: c.tests || [],
-        pathologist: c.pathologist || c.patologo || '',
+        pathologist: c.pathologist || c.patologo || c.assigned_pathologist?.name || '',
         requester: c.requester || c.medico_solicitante || '',
-        entity: c.entity || c.entidad || '',
-        priority: c.priority || c.prioridad || 'Normal'
+        entity: c.entity || c.entidad || ''
       }))
     } catch (e) {
       console.error('Error al cargar casos:', e)

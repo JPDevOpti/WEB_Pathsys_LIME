@@ -32,9 +32,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { AdminLayout } from '@/shared'
-import { PageBreadcrumb, ComponentCard } from '@/shared/components/common'
+import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import { DocumentNewIcon, EditIcon } from '@/assets/icons'
-import { CreateComplementaryTechnique, EditComplementaryTechnique } from '../components/complementary_techniques'
+import { CreateComplementaryTechnique, EditComplementaryTechnique } from '../components'
 
 const currentPageTitle = ref('Técnicas Complementarias')
 </script>

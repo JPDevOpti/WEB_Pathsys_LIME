@@ -50,8 +50,8 @@
 
 <script setup lang="ts">
 import { defineEmits } from 'vue'
-import { FormInputField, FormSelect } from '@/shared/components/forms'
-import { SearchButton, ClearButton } from '@/shared/components/buttons'
+import { FormInputField, FormSelect } from '@/shared/components/ui/forms'
+import { SearchButton, ClearButton } from '@/shared/components/ui/buttons'
 import { SearchPatientIcon } from '@/assets/icons'
 
 defineProps({

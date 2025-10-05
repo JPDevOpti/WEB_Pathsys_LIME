@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { FormTextarea } from '@/shared/components/forms'
+import { FormTextarea } from '@/shared/components/ui/forms'
 import MethodSection from '../Shared/MethodSection.vue'
 
 type EditorSectionKey = 'method' | 'macro' | 'micro' | 'diagnosis'

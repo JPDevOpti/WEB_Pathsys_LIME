@@ -59,7 +59,7 @@
 import { watch, onMounted, computed, ref } from 'vue'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import { DocsIcon } from '@/assets/icons'
-import { FormTextareaUnlimited } from '@/shared/components/forms'
+import { FormTextareaUnlimited } from '@/shared/components/ui/forms'
 
 interface Props {
   modelValue: boolean

@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import type { Attachment } from '../../types/results.types'
-import { AddButton, RemoveButton } from '@/shared/components/buttons'
+import { AddButton, RemoveButton } from '@/shared/components/ui/buttons'
 
 defineProps<{ attachments: Attachment[] }>()
 defineEmits<{ (e: 'add-attachment'): void, (e: 'remove-attachment', id: string): void }>()

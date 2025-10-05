@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ComponentCard } from '@/shared/components/common'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import type { PathologistPerformance } from '../../types/opportunity.types'
 import { DoctorIcon } from '@/assets/icons'
 

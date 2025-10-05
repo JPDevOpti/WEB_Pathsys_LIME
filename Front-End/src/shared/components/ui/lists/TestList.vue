@@ -132,8 +132,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue'
-import type { TestDetails, TestSelectOption } from '../../../modules/cases/types/test'
-import { useTestAPI } from '../../../modules/cases/composables/useTestAPI'
+import type { TestDetails, TestSelectOption } from '@/modules/cases/types/test'
+import { useTestAPI } from '@/modules/cases/composables'
 
 // Props
 interface Props {

@@ -72,7 +72,7 @@
 
 <script setup lang="ts">
 import { watch } from 'vue'
-import { ComponentCard } from '@/shared/components/common'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import { useSignatureManager } from '../../composables/useSignatureManager'
 
 interface Props {

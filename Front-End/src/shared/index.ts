@@ -1,11 +1,13 @@
-// Composables
-export * from './composables/SidebarControl'
-
-// Layout Components
-export * from './components/layout'
-
-// Utils
+// Export all shared modules
+export * from './composables'
+export * from './components'
 export * from './utils/formatting'
+export * from './types'
+export * from './constants'
 
-// Icons
-export * from '../assets/icons'
+// Services (explicit exports to avoid naming conflicts)
+export { diseaseService } from './services/disease.service'
+export { signatureService } from './services/signatureService'
+
+// Data
+export * from './data/methods'

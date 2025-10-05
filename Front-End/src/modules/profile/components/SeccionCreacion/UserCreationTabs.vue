@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ComponentCard } from '@/shared/components/common'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import NewUserIcon from '@/assets/icons/NewUserIcon.vue'
 import FormAuxiliary from './FormAuxiliary.vue'
 import FormBilling from './FormBilling.vue'

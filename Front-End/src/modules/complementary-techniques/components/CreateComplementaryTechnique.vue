@@ -156,8 +156,8 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
-import { FormInputField, FormTextarea, FormSelect } from '@/shared/components/forms'
-import { SaveButton, ClearButton } from '@/shared/components/buttons'
+import { FormInputField, FormTextarea, FormSelect } from '@/shared/components/ui/forms'
+import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
 
 // Form data
 const form = reactive({

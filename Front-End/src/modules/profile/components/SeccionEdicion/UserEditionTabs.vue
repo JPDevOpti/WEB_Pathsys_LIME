@@ -64,7 +64,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ComponentCard } from '@/shared/components/common'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import EditUserIcon from '@/assets/icons/EditUserIcon.vue'
 import UserSearch from './UserSearch.vue'
 import SearchResults from './SearchResults.vue'

@@ -167,7 +167,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { CloseButton } from '@/shared/components/buttons'
+import { CloseButton } from '@/shared/components/ui/buttons'
 import { Modal } from '@/shared/components/layout'
 import type { PathologistMetrics, PeriodSelection } from '../../types/pathologists.types'
 import { pathologistsApiService } from '../../services/pathologists.service'

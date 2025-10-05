@@ -104,7 +104,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ActionButton } from '@/shared/components/buttons'
+import { ActionButton } from '@/shared/components/ui/buttons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import type { SupportTicket } from '../types/support.types'
 

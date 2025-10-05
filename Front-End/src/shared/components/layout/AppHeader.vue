@@ -108,7 +108,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useSidebar } from '../../composables/SidebarControl'
+import { useSidebar } from '@/shared/composables/SidebarControl'
 import SearchBar from './SearchBar.vue'
 import HeaderLogo from './HeaderLogo.vue'
 import UserMenu from './UserMenu.vue'

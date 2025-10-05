@@ -136,9 +136,9 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue'
 import { FormSelect } from '@/shared/components'
-import { EntityList } from '@/shared/components/List'
-import { SaveButton, ClearButton } from '@/shared/components/buttons'
-import { ComponentCard } from '@/shared/components/common'
+import { EntityList } from '@/shared/components/ui/lists'
+import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import { RefreshIcon, SampleIcon, TableIcon } from '@/assets/icons'
 import TestsSummary from './TestsSummary.vue'
 import TestsPerformanceChart from './TestsPerformanceChart.vue'

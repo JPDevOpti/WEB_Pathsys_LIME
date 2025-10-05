@@ -26,8 +26,8 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { FormInput } from '@/shared/components/forms'
-import { SearchButton, ClearButton } from '@/shared/components/buttons'
+import { FormInput } from '@/shared/components/ui/forms'
+import { SearchButton, ClearButton } from '@/shared/components/ui/buttons'
 
 type TipoBusqueda = 'auxiliar' | 'facturacion' | 'patologo' | 'residente' | 'entidad' | 'pruebas'
 

@@ -1,25 +1,15 @@
-// Forms
-export * from './forms'
+// UI Components
+export * from './ui/buttons'
+export * from './ui/forms'
+export * from './ui/feedback'
+export * from './ui/lists'
 
-// Buttons
-export * from './buttons'
-
-// Feedback
-export * from './feedback'
-
-// Layout
+// Layout and Navigation (back in main components folder)
 export * from './layout'
-
-// Navigation
 export * from './navigation'
 
-// Lists
-export * from './List'
-
-// Common components
-export * from './common'
-
-// Re-export PageBreadcrumb for backward compatibility
-export { PageBreadcrumb } from './navigation'
+// Legacy exports for backward compatibility (temporary)
+export { default as PageBreadcrumb } from './navigation/PageBreadcrumb.vue'
+export { default as ComponentCard } from './layout/ComponentCard.vue'
 
 

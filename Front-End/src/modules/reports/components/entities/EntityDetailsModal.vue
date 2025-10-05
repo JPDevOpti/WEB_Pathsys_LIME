@@ -199,7 +199,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { UserGroupIcon } from '@/assets/icons'
-import { CloseButton } from '@/shared/components/buttons'
+import { CloseButton } from '@/shared/components/ui/buttons'
 import { Modal } from '@/shared/components/layout'
 import type { EntityStats, EntityDetails, PeriodSelection } from '../../types/entities.types'
 import { entitiesApiService } from '../../services/entities.service'

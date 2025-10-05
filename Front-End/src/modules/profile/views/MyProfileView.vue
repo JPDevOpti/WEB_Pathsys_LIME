@@ -83,7 +83,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { AdminLayout } from '@/shared'
-import { PageBreadcrumb } from '@/shared/components/common'
+import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import { ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import ProfileHeader from '../components/MyProfile/ProfileHeader.vue'
 import ProfileInfo from '../components/MyProfile/ProfileInfo.vue'

@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ComponentCard } from '@/shared/components/common'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
 import type { OpportunityTest } from '../../types/opportunity.types'
 import { StatisticsIcon } from '@/assets/icons'
 

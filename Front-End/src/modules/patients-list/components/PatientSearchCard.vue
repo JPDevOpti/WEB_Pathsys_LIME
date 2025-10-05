@@ -181,8 +181,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { ComponentCard } from '@/shared/components'
-import { FormInputField, FormSelect } from '@/shared/components/forms'
-import { SearchButton, ClearButton } from '@/shared/components/buttons'
+import { FormInputField, FormSelect } from '@/shared/components/ui/forms'
+import { SearchButton, ClearButton } from '@/shared/components/ui/buttons'
 
 // Types
 interface SearchFilters {
