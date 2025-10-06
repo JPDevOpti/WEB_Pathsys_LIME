@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer
+from typing import Optional
 from app.config.security import verify_token
 from app.modules.auth.schemas.login import LoginRequest, LoginResponse
 from app.modules.auth.services.auth_service import AuthService
@@ -7,6 +8,7 @@ from app.modules.auth.services.auth_service import AuthService
 
 auth_router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+http_bearer = HTTPBearer(auto_error=False)
 
 
 @auth_router.post("/login", response_model=LoginResponse)
@@ -27,6 +29,18 @@ async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
     if subject is None:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     return subject
+
+
+async def get_current_user_id_optional(credentials = Depends(http_bearer)) -> Optional[str]:
+    """Obtener user_id del token si existe y es válido, o None si no hay token/expiró"""
+    if not credentials:
+        return None
+    
+    try:
+        subject = verify_token(credentials.credentials)
+        return subject
+    except Exception:
+        return None
 
 
 @auth_router.get("/me")

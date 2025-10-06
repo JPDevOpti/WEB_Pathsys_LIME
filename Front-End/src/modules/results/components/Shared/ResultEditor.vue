@@ -1,5 +1,8 @@
 <template>
-  <div class="bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col h-96">
+  <div
+    class="bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col"
+    :style="{ minHeight: containerMinHeight }"
+  >
     <!-- Header con tabs -->
     <div class="p-4 border-b border-gray-200 flex-shrink-0">
       <div class="flex flex-wrap items-center gap-4">
@@ -15,44 +18,47 @@
       </div>
     </div>
 
-    <!-- Contenido principal -->
-    <div class="flex-1 min-h-0 p-4">
+  <!-- Contenido principal (adaptable) -->
+  <div :class="contentWrapperClass">
       <!-- Sección de métodos cuando la pestaña activa es 'method' -->
-      <div v-if="activeSection === 'method'" class="h-full">
+  <div v-if="activeSection === 'method'" class="p-4">
         <MethodSection
           :model-value="Array.isArray(modelValue) ? modelValue : []"
+          :show-validation="showValidation"
           @update:model-value="$emit('update:modelValue', $event)"
         />
       </div>
       
-      <!-- Textarea para otras secciones -->
-      <FormTextareaUnlimited 
-        v-else
-        :model-value="typeof modelValue === 'string' ? modelValue : ''" 
-        @update:model-value="$emit('update:modelValue', $event)" 
-        class="w-full h-full resize-none transition-colors"
-        :class="getTextareaClasses()"
-        :rows="8"
-        :preview-text="getPreviewText(activeSection)"
-      />
+      <!-- RichTextEditor para otras secciones -->
+      <div v-else class="h-full p-4">
+        <RichTextEditor
+          :model-value="typeof modelValue === 'string' ? modelValue : ''" 
+          @update:model-value="$emit('update:modelValue', $event)" 
+          :placeholder="getPlaceholder(activeSection)"
+          :min-height="editorMinHeight"
+          :max-height="editorMaxHeight"
+        />
+      </div>
     </div>
 
-    <!-- Footer con botones -->
-    <div class="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-      <slot name="footer"></slot>
+    <!-- Footer con acciones (slot) -->
+    <div v-if="$slots.footer" class="px-4 py-3 border-t border-gray-200 bg-gray-50 flex-shrink-0 sticky bottom-0 z-10">
+      <slot name="footer" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { FormTextareaUnlimited } from '@/shared/components/ui/forms'
+import { computed } from 'vue'
+import { RichTextEditor } from '@/shared/components/ui/forms'
 import MethodSection from './MethodSection.vue'
 
 type EditorSectionKey = 'method' | 'macro' | 'micro' | 'diagnosis'
 const props = defineProps<{ 
   modelValue: string | string[], 
   activeSection: EditorSectionKey,
-  sections?: { method: string[]; macro: string; micro: string; diagnosis: string }
+  sections?: { method: string[]; macro: string; micro: string; diagnosis: string },
+  showValidation?: boolean
 }>()
 defineEmits<{ (e: 'update:modelValue', value: string | string[]): void, (e: 'update:activeSection', value: EditorSectionKey): void }>()
 
@@ -74,12 +80,8 @@ function getTabClasses(tabKey: EditorSectionKey): string {
   return 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
 }
 
-function getTextareaClasses(): string {
-  return 'border-gray-300 focus:border-blue-400 focus:ring-blue-400'
-}
-
-// Función para obtener el texto de previsualización según la sección
-function getPreviewText(section: EditorSectionKey): string {
+// Función para obtener el placeholder según la sección
+function getPlaceholder(section: EditorSectionKey): string {
   switch (section) {
     case 'macro':
       return 'Describa aquí los hallazgos macroscópicos observados en la muestra. Incluya características como tamaño, forma, color, consistencia, superficie, bordes, y cualquier otra característica relevante visible a simple vista...'
@@ -91,6 +93,14 @@ function getPreviewText(section: EditorSectionKey): string {
       return ''
   }
 }
+
+// Altura adaptable según la sección activa (método: auto)
+const containerMinHeight = computed(() => (props.activeSection === 'method' ? 'auto' : '520px'))
+// Contenedor adaptable: en método no forzar flex-1 ni altura mínima
+const contentWrapperClass = computed(() => props.activeSection === 'method' ? '' : 'flex-1 min-h-0 overflow-auto')
+// Editor ligeramente menos alto para macro/micro/diagnóstico
+const editorMinHeight = computed(() => (props.activeSection === 'method' ? 0 : 320))
+const editorMaxHeight = computed(() => (props.activeSection === 'method' ? 0 : 480))
 </script>
 
 

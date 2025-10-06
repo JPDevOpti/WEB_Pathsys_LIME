@@ -4,8 +4,9 @@
       <ComponentCard 
         :class="[
           'flex flex-col',
-          caseFound ? 'lg:col-span-2 min-h-[600px]' : 'lg:col-span-2 min-h-[160px]'
+          'lg:col-span-2'
         ]" 
+        :style="{ minHeight: caseFound ? (activeSection === 'method' ? 'auto' : '600px') : '160px' }"
         :dense="false"
       >
         <div class="flex items-center justify-between mb-2">
@@ -92,22 +93,22 @@
         <!-- Editor de resultados - Solo visible cuando se encuentra un caso -->
         <div v-if="caseFound" class="flex-1 flex flex-col min-h-0 mt-0">
           <ResultEditor
-            class="flex-1 min-h-0"
             :model-value="activeSection === 'method' ? (Array.isArray(sections[activeSection]) ? [...sections[activeSection]] : []) : sections[activeSection]"
             @update:model-value="updateSectionContent"
             :active-section="activeSection"
             @update:activeSection="activeSection = $event"
             :sections="sections"
+            :show-validation="showValidation"
           >
             <template #footer>
               <div class="flex flex-wrap items-center gap-3 justify-end">
-                <ClearButton :disabled="loading" @click="handleClearResults" />
+                <ClearButton :disabled="loading" @click="() => { showValidation = false; handleClearResults() }" />
                 <SaveButton 
                   :disabled="saving || loading || !canSaveProgress || !canTranscribeByStatus" 
                   :loading="saving" 
                   :text="!canTranscribeByStatus ? 'No se puede guardar' : (canComplete ? 'Completar para Firma' : 'Guardar Progreso')" 
                   :loading-text="canComplete ? 'Completando...' : 'Guardando...'" 
-                  @click="handleSaveAction"
+                  @click="() => { showValidation = true; handleSaveAction() }"
                 />
               </div>
             </template>
@@ -219,6 +220,9 @@ const {
   onSaveDraft, onCompleteForSigning,
   loadCaseByCode
 } = usePerformResults(props.sampleId)
+
+// Mostrar validación en Método solo al intentar guardar/completar
+const showValidation = ref(false)
 
 // Composable para permisos y autenticación
 const { isPatologo } = usePermissions()

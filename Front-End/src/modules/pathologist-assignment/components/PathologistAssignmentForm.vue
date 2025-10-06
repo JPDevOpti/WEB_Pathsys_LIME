@@ -90,7 +90,7 @@
     </ComponentCard>
 
     <!-- Cards 2 & 3: Side by side - Pathologist Assignment (left) and Case Details (right) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
+    <div ref="assignmentSection" class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
       <!-- Card 2: Pathologist Assignment with Actions (LEFT) -->
       <PathologistSelector
         v-model="formData.patologoId"
@@ -123,24 +123,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, watch } from 'vue'
+import { ref, computed, watch, reactive, nextTick } from 'vue'
 import { usePathologistAssignment } from '../composables/usePathologistAssignment'
-import { usePathologistAPI } from '../../cases/composables/usePathologistAPI'
-import { useNotifications } from '../../cases/composables/useNotifications'
+import { usePathologistAPI } from '@/modules/cases/composables/usePathologistAPI'
+import { useNotifications } from '@/modules/cases/composables/useNotifications'
 import type { PathologistAssignmentFormData, CaseModel } from '../types'
-import { ComponentCard } from '@/shared/components'
-import { FormInputField } from '@/shared/components/ui/forms'
-import { SearchButton, ClearButton } from '@/shared/components/ui/buttons'
-import { ValidationAlert, Notification } from '@/shared/components/ui/feedback'
-import type { FormPathologistInfo } from '@/modules/cases/types'
-import CaseDetailCard from './CaseDetailCard.vue'
+import type { FormPathologistInfo } from '@/modules/cases/types/pathologist'
+import ComponentCard from '@/shared/components/layout/ComponentCard.vue'
+import FormInputField from '@/shared/components/ui/forms/FormInputField.vue'
+import SearchButton from '@/shared/components/ui/buttons/SearchButton.vue'
+import ClearButton from '@/shared/components/ui/buttons/ClearButton.vue'
+import Notification from '@/shared/components/ui/feedback/Notification.vue'
+import ValidationAlert from '@/shared/components/ui/feedback/ValidationAlert.vue'
 import PathologistSelector from './PathologistSelector.vue'
+import CaseDetailCard from './CaseDetailCard.vue'
 
 // UI state
 const codigoCaso = ref('')
 const hasAttemptedSubmit = ref(false)
 const showValidationError = ref(false)
 const isLoadingAssignment = ref(false)
+const assignmentSection = ref<HTMLElement>()
 
 // Form state
 const formData = reactive<PathologistAssignmentFormData>({ 
@@ -389,6 +392,18 @@ watch(casoInfo, (newCase) => {
     }
   }
 }, { immediate: true })
+
+// Auto-scroll when case is found
+watch(casoEncontrado, (found) => {
+  if (found && assignmentSection.value) {
+    nextTick(() => {
+      assignmentSection.value?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      })
+    })
+  }
+})
 
 // Emit assignment event for parent usage
 const emit = defineEmits<{ 

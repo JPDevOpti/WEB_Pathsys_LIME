@@ -13,7 +13,7 @@ from app.modules.approvals.schemas.approval import (
     ApprovalStateEnum
 )
 from app.modules.approvals.services.approval_service import ApprovalService
-from app.modules.auth.routes.auth_routes import get_current_user_id
+from app.modules.auth.routes.auth_routes import get_current_user_id, get_current_user_id_optional
 from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 
 router = APIRouter(tags=["Solicitudes de Aprobación"])
@@ -30,10 +30,19 @@ def get_approval_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> Ap
 async def create_approval_request(
     approval_data: ApprovalRequestCreate,
     service: ApprovalService = Depends(get_approval_service),
-    current_user_id: str = Depends(get_current_user_id)
+    current_user_id: Optional[str] = Depends(get_current_user_id_optional)
 ):
-    """Crear nueva solicitud de aprobación."""
+    """
+    Crear nueva solicitud de aprobación.
+    Usa autenticación opcional para permitir operaciones con tokens expirados.
+    """
     try:
+        # Log para debugging
+        print(f"Creating approval request for case {approval_data.original_case_code}")
+        if current_user_id:
+            print(f"Requested by user: {current_user_id}")
+        else:
+            print("User ID not available (token expired or missing)")
         approval = await service.create_approval_request(approval_data)
         return approval
     except ConflictError as e:

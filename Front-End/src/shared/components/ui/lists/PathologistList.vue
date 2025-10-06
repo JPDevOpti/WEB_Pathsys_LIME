@@ -139,10 +139,10 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  'pathologist-selected': [pathologist: FormPathologistInfo | null]
-  'load-error': [error: string]
-  'load-success': [pathologists: FormPathologistInfo[]]
+  (e: 'update:modelValue', value: string): void
+  (e: 'pathologist-selected', pathologist: FormPathologistInfo | null): void
+  (e: 'load-error', error: string): void
+  (e: 'load-success', pathologists: FormPathologistInfo[]): void
 }>()
 
 // Composables
@@ -173,7 +173,7 @@ const hasValue = computed(() => {
 // Convertir patólogos a opciones del select
 const pathologistOptions = computed((): (SelectOption & { pathologist: FormPathologistInfo })[] => {
   return pathologists.value.map(pathologist => ({
-    value: pathologist.patologo_code, // Usar patologo_code como valor
+    value: pathologist.patologo_code || '', // Usar patologo_code como valor
     label: pathologist.iniciales
       ? `${pathologist.iniciales} - ${pathologist.nombre}`
       : pathologist.nombre,
@@ -341,7 +341,7 @@ const buscarPatologoUsuario = () => {
     const codigoPatologoUsuario = (authStore.user as any).pathologist_code || (authStore.user as any).patologo_code
     if (codigoPatologoUsuario && pathologists.value.length > 0) {
       const porCodigo = pathologists.value.find(p => p.patologo_code === codigoPatologoUsuario)
-      if (porCodigo) {
+      if (porCodigo && porCodigo.patologo_code) {
         selectedPathologist.value = porCodigo.patologo_code
         emit('update:modelValue', porCodigo.patologo_code)
         emit('pathologist-selected', porCodigo)
@@ -371,7 +371,7 @@ const buscarPatologoUsuario = () => {
         )
       })
 
-      if (patologoEncontrado) {
+      if (patologoEncontrado && patologoEncontrado.patologo_code) {
         selectedPathologist.value = patologoEncontrado.patologo_code
         emit('update:modelValue', patologoEncontrado.patologo_code)
         emit('pathologist-selected', patologoEncontrado)

@@ -9,15 +9,19 @@ class ResultRepository:
         self.collection = db.cases
 
     async def update_result(self, case_code: str, result_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Actualizar resultado de un caso"""
+        """Actualizar resultado de un caso (merge con datos existentes)"""
         now = datetime.utcnow()
         
-        # Preparar los datos del resultado
+        # Obtener resultado existente para hacer merge
+        existing_doc = await self.collection.find_one({"case_code": case_code})
+        existing_result = existing_doc.get("result", {}) if existing_doc else {}
+        
+        # Merge: mantener campos existentes y actualizar solo los nuevos
+        merged_result = {**existing_result, **result_data, "updated_at": now}
+        
+        # Preparar actualización
         result_update = {
-            "result": {
-                **result_data,
-                "updated_at": now
-            },
+            "result": merged_result,
             "updated_at": now
         }
         

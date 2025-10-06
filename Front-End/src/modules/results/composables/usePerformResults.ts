@@ -59,7 +59,17 @@ export function usePerformResults(sampleId: string) {
   // Validaciones de campos requeridos para completar (marcar como "Por firmar")
   const missingFields = computed<string[]>(() => {
     const faltantes: string[] = []
-    if (!sections.value.method.length || sections.value.method.every(m => !m.trim())) faltantes.push('Método')
+    const methods = sections.value.method || []
+    
+    // Validar que haya al menos un método
+    if (!methods.length || methods.every(m => !m || !m.trim())) {
+      faltantes.push('Método')
+    }
+    // Validar que NO haya métodos vacíos (si hay alguno, todos deben estar llenos)
+    else if (methods.some(m => !m || !m.trim())) {
+      faltantes.push('Métodos vacíos (elimina o completa)')
+    }
+    
     if (!sections.value.macro.trim()) faltantes.push('Corte Macro')
     if (!sections.value.micro.trim()) faltantes.push('Corte Micro')
     if (!sections.value.diagnosis.trim()) faltantes.push('Diagnóstico')
@@ -68,8 +78,9 @@ export function usePerformResults(sampleId: string) {
   
   // Para guardar progreso - siempre se puede guardar si hay algún contenido
   const canSaveProgress = computed<boolean>(() => {
+    // Se puede guardar si hay cualquier contenido, aunque haya métodos vacíos.
     return !!(
-      (sections.value.method.length && sections.value.method.some(m => m.trim())) ||
+      (sections.value.method && sections.value.method.length) ||
       sections.value.macro.trim() ||
       sections.value.micro.trim() ||
       sections.value.diagnosis.trim()

@@ -4,8 +4,9 @@
       <ComponentCard 
         :class="[
           'flex flex-col',
-          caseFound ? 'lg:col-span-2 min-h-[640px]' : 'lg:col-span-2 min-h-[160px]'
+          'lg:col-span-2'
         ]" 
+        :style="{ minHeight: caseFound ? (activeSection === 'method' ? 'auto' : '640px') : '160px' }"
         :dense="false"
       >
         <div class="flex items-center justify-between mb-2">
@@ -84,7 +85,7 @@
         </div>
 
         <div v-if="caseFound" class="flex-1 flex flex-col min-h-0 mt-0">
-          <ResultEditor class="flex-1 min-h-0" :model-value="sections[activeSection]"
+          <ResultEditor :model-value="sections[activeSection]"
             @update:model-value="updateSectionContent" :active-section="activeSection"
             @update:activeSection="activeSection = $event" :sections="sections" />
 
@@ -797,6 +798,13 @@ const requestedComplementaryTestsReason = ref('')
 // Crear solicitud de aprobación (sin lógica de firma ni CIE-10 aquí)
 const handleCreateApprovalRequest = async (payload: { case_code: string; reason: string; complementary_tests: ComplementaryTestInfo[] }) => {
   try {
+    // Verificar token antes de operación crítica
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+    if (!token) {
+      showError('Sesión expirada', 'Por favor, inicia sesión nuevamente para continuar.', 0)
+      return
+    }
+    
     if (!payload?.case_code || !/^[0-9]{4}-[0-9]{5}$/.test(payload.case_code)) throw new Error('Código de caso inválido')
     if (!payload?.reason?.trim()) throw new Error('Motivo requerido')
     if (!payload?.complementary_tests?.length) throw new Error('Debe seleccionar al menos una prueba')

@@ -1,10 +1,21 @@
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ResultUpdate(BaseModel):
     method: Optional[List[str]] = Field(None, description="Lista de métodos utilizados")
+    
+    @field_validator('method')
+    @classmethod
+    def validate_methods_not_empty(cls, v):
+        if v is not None:
+            # Filtrar métodos vacíos y validar que quede al menos uno
+            non_empty = [m.strip() for m in v if m and m.strip()]
+            if len(v) > 0 and len(non_empty) == 0:
+                raise ValueError('Los métodos no pueden estar vacíos')
+            return non_empty if non_empty else None
+        return v
     macro_result: Optional[str] = Field(None, max_length=5000, description="Resultado macroscópico")
     micro_result: Optional[str] = Field(None, max_length=5000, description="Resultado microscópico")
     diagnosis: Optional[str] = Field(None, max_length=2000, description="Diagnóstico")

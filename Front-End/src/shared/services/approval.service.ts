@@ -79,10 +79,30 @@ class ApprovalService {
 
   async createApprovalRequest(data: ApprovalRequestCreate): Promise<ApprovalRequestResponse> {
     try {
+      console.log('📤 Enviando solicitud de aprobación:', data)
+      
+      // Verificar que tenemos token antes de hacer la petición
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+      if (!token) {
+        throw new Error('No hay sesión activa. Por favor, inicia sesión nuevamente.')
+      }
+      
       const response = await apiClient.post(this.baseUrl, data)
+      console.log('✅ Solicitud de aprobación creada:', response)
       return this.sanitizeResponse<ApprovalRequestResponse>(response)
     } catch (error: any) {
-      console.error('Error en createApprovalRequest:', error)
+      console.error('❌ Error en createApprovalRequest:', {
+        message: error.message,
+        status: error.response?.status,
+        detail: error.response?.data?.detail,
+        data: error.response?.data
+      })
+      
+      // Si es error 401, dar mensaje más claro
+      if (error.response?.status === 401) {
+        throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente para continuar.')
+      }
+      
       throw error
     }
   }
