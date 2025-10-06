@@ -1,11 +1,20 @@
-export interface CaseApprovalItem {
-  id: string
-  caseCode: string
-  entity: string
-  patient: string
-  test: string
-  status: 'pending' | 'approved' | 'rejected'
-}
+// Re-export tipos compartidos
+export type {
+  ApprovalState,
+  ApprovalRequestResponse,
+  ApprovalRequestCreate,
+  ApprovalRequestUpdate,
+  ApprovalRequestSearch,
+  ApprovalStats,
+  ApprovalInfo,
+  ComplementaryTestInfo,
+  AssignedPathologistInfo,
+  ApprovalApproveResult
+} from '@/shared/services/approval.service'
+
+// Export tipos locales del módulo
+export type { CaseToApproveViewModel } from '../services/approval.adapter'
+
 
 
 

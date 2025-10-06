@@ -1,11 +1,8 @@
-import { ref } from 'vue'
+export { useApprovalFilters } from './useApprovalFilters'
+export { useApprovalPagination } from './useApprovalPagination'
+export { useApprovalOperations } from './useApprovalOperations'
+export { useApprovalActions } from './useApprovalActions'
 
-export function useCasesApproval() {
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-
-  return { loading, error }
-}
 
 
 
