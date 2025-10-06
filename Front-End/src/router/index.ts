@@ -52,7 +52,7 @@ router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   
   // Rutas públicas que no requieren autenticación
-  const publicRoutes = ['/login', '/auth/login']
+  const publicRoutes = ['/login']
   const isPublicRoute = publicRoutes.includes(to.path)
   
   // Si no está autenticado, intentar inicializar desde localStorage solo una vez
@@ -60,9 +60,9 @@ router.beforeEach(async (to, _from, next) => {
     await authStore.initializeAuth()
   }
   
-  // Verificar expiración del token en cada navegación y forzar logout si está vencido
+  // Check token expiration and force logout if expired (read from storage decoded from JWT exp)
   if (authStore.isAuthenticated) {
-    const savedExpiresAt = localStorage.getItem('auth_expires_at')
+    const savedExpiresAt = localStorage.getItem('auth_expires_at') || sessionStorage.getItem('auth_expires_at')
     if (savedExpiresAt && Number(savedExpiresAt) > 0 && Date.now() > Number(savedExpiresAt)) {
       await authStore.logout()
       next('/login')

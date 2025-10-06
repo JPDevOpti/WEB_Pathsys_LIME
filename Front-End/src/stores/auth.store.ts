@@ -26,29 +26,49 @@ export const useAuthStore = defineStore('auth', () => {
   const isPatient = computed(() => userRole.value === 'patient')
   const isBilling = computed(() => userRole.value === 'billing')
 
-  // Acciones
-  const login = async (credentials: LoginRequest): Promise<boolean> => {
+  // Actions
+  const login = async (credentials: LoginRequest, rememberMe: boolean = false): Promise<boolean> => {
     isLoading.value = true
     error.value = null
 
     try {
       const response = await authApiService.login(credentials)
       
-      // Guardar token y usuario
+      // Save token and user
       token.value = response.access_token
       user.value = response.user
 
-      // Guardar en localStorage siempre para persistencia de sesión
-      localStorage.setItem('auth_token', response.access_token)
-      localStorage.setItem('auth_user', JSON.stringify(response.user))
-      // Guardar timestamp de expiración si está disponible
-      if (response.expires_in && response.expires_in > 0) {
-        const expiresAt = Date.now() + response.expires_in * 1000
-        localStorage.setItem('auth_expires_at', String(expiresAt))
+      // Persist session based on rememberMe: localStorage if true, sessionStorage if false
+      const storage = rememberMe ? window.localStorage : window.sessionStorage
+      storage.setItem('auth_token', response.access_token)
+      storage.setItem('auth_user', JSON.stringify(response.user))
+      // Save expiration timestamp by decoding JWT 'exp' claim if available
+      try {
+        const parts = response.access_token?.split('.') || []
+        if (parts.length === 3) {
+          const payloadJson = JSON.parse(atob(parts[1]))
+          const expSec = Number(payloadJson?.exp)
+          if (!Number.isNaN(expSec) && expSec > 0) {
+            const expiresAt = expSec * 1000
+            storage.setItem('auth_expires_at', String(expiresAt))
+          } else if (response.expires_in && response.expires_in > 0) {
+            const expiresAt = Date.now() + response.expires_in * 1000
+            storage.setItem('auth_expires_at', String(expiresAt))
+          }
+        } else if (response.expires_in && response.expires_in > 0) {
+          const expiresAt = Date.now() + response.expires_in * 1000
+          storage.setItem('auth_expires_at', String(expiresAt))
+        }
+      } catch (_e) {
+        // Fallback to expires_in on decode errors
+        if (response.expires_in && response.expires_in > 0) {
+          const expiresAt = Date.now() + response.expires_in * 1000
+          storage.setItem('auth_expires_at', String(expiresAt))
+        }
       }
 
       
-      // Debug del estado completo
+      // Debug full state
       debugUserState()
 
       return true
@@ -66,18 +86,21 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      // No hay logout en backend nuevo; solo limpiar cliente
+      // No server-side logout; just clear client state
     } catch (err) {
-      // Error al cerrar sesión
+      // Error while logging out
     } finally {
-      // Limpiar estado local
+      // Clear local state
       user.value = null
       token.value = null
       
-      // Limpiar localStorage
+      // Clear both storages
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
       localStorage.removeItem('auth_expires_at')
+      sessionStorage.removeItem('auth_token')
+      sessionStorage.removeItem('auth_user')
+      sessionStorage.removeItem('auth_expires_at')
       
       isLoading.value = false
     }
@@ -88,17 +111,18 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const currentUser = await authApiService.getCurrentUser(token.value)
-      // Solo actualizar el usuario si obtenemos información más completa
+      // Only update user if we get more complete information
       if (currentUser && Object.keys(currentUser).length > Object.keys(user.value || {}).length) {
         user.value = currentUser
-        // Actualizar también en localStorage
-        localStorage.setItem('auth_user', JSON.stringify(currentUser))
+        // Update also in persistent storage (prefer localStorage, fallback to sessionStorage)
+        const storage = localStorage.getItem('auth_token') ? localStorage : sessionStorage
+        storage.setItem('auth_user', JSON.stringify(currentUser))
       }
       return true
     } catch (err) {
-      // Error al obtener usuario actual
-      // Si hay error, NO limpiar estado automáticamente
-      // Solo limpiar si es un error de autenticación específico
+      // Error getting current user
+      // If there is an error, DO NOT clear state automatically
+      // Only clear if it is a specific authentication error
       if (err instanceof Error && (err.message.includes('401') || err.message.includes('403'))) {
         await logout()
       }
@@ -112,63 +136,65 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const result = await authApiService.verifyToken(token.value)
       if (result.valid) {
-        // No sobrescribir si ya hay usuario con info
+        // Do not overwrite if there is already user info
         if (!user.value) user.value = result.user || null
         return true
       } else {
-        // Token inválido, realizar logout para limpiar estado de forma consistente
+        // Invalid token, perform logout to clear state consistently
         await logout()
         return false
       }
     } catch (err) {
-      // Error al verificar token (posible error de red)
-      // En caso de error de red, mantener la sesión activa
-      // No limpiar el estado automáticamente para evitar logout constante
-      // Solo retornar false si es un error 401/403
+      // Error verifying token (possible network error)
+      // In case of network error, keep the session active
+      // Do not clear the state automatically to avoid constant logout
+      // Only return false if it is a 401/403 error
       if (err instanceof Error && err.message.includes('401')) {
         user.value = null
         token.value = null
         localStorage.removeItem('auth_token')
         localStorage.removeItem('auth_user')
+        sessionStorage.removeItem('auth_token')
+        sessionStorage.removeItem('auth_user')
         return false
       }
-      return true // Mantener sesión en caso de error de red
+      return true // Keep session on network error
     }
   }
 
   const initializeAuth = async (): Promise<void> => {
-    // Si ya está autenticado, no hacer nada
+    // If already authenticated, do nothing
     if (isAuthenticated.value) {
       return
     }
 
-    // Intentar cargar desde localStorage
-    const savedToken = localStorage.getItem('auth_token')
-    const savedUser = localStorage.getItem('auth_user')
+    // Try loading from either localStorage or sessionStorage
+    const savedToken = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+    const savedUser = localStorage.getItem('auth_user') || sessionStorage.getItem('auth_user')
 
     if (savedToken && savedUser) {
       try {
-        // Si el token está vencido, cerrar sesión inmediatamente
-        const savedExpiresAt = localStorage.getItem('auth_expires_at')
+        // If the token is expired, logout immediately
+        const savedExpiresAt = localStorage.getItem('auth_expires_at') || sessionStorage.getItem('auth_expires_at')
         if (savedExpiresAt && Number(savedExpiresAt) > 0 && Date.now() > Number(savedExpiresAt)) {
           await logout()
           return
         }
 
-        // Establecer los valores para que isAuthenticated sea true
+        // Set values so isAuthenticated becomes true
         token.value = savedToken
         user.value = JSON.parse(savedUser)
         
-        // Debug del estado completo
+        // Debug full state
         console.log('AuthStore - Initialized user:', user.value)
         console.log('AuthStore - User role:', user.value?.role)
         debugUserState()
 
-        // NO ejecutar verificación inmediatamente para preservar los datos del usuario
-        // La verificación se hará en el timer periódico si es necesario
+        // DO NOT execute verification immediately to preserve user data
+        // Verification will be done by a periodic timer if necessary
       } catch (err) {
-        // Error al parsear datos guardados
-        // Solo limpiar si hay error de parsing
+        // Error parsing saved data
+        // Only clear if there is parsing error
         await logout()
       }
     }

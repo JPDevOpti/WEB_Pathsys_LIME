@@ -193,7 +193,7 @@
               :class="['px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2', (loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700']"
               @click="handleSign"
             >
-              <SignIcon :size="16" />
+              <EditCaseIcon class="w-4 h-4" />
               {{ signing ? 'Firmando...' : 'Firmar' }}
             </button>
           </div>
@@ -254,7 +254,7 @@ import { DiseaseList } from '@/shared/components/ui/lists'
 import DocsIcon from '@/assets/icons/DocsIcon.vue'
 import WarningIcon from '@/assets/icons/WarningIcon.vue'
 import ErrorIcon from '@/assets/icons/ErrorIcon.vue'
-import SignIcon from '@/assets/icons/SignIcon.vue'
+import EditCaseIcon from '@/assets/icons/EditCaseIcon.vue'
 import ResultEditor from '../Shared/ResultEditor.vue'
 import PatientInfoCard from '../Shared/PatientInfoCard.vue'
 import CaseDetailsCard from '../Shared/CaseDetailsCard.vue'

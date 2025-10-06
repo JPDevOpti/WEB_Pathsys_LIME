@@ -4,7 +4,7 @@
       for="password"
       class="mb-1.5 block text-sm font-semibold text-gray-700"
     >
-      Password<span class="text-error-500">*</span>
+      Contraseña<span class="text-error-500">*</span>
     </label>
     <div class="relative">
       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-500 transition-colors duration-300">
@@ -16,14 +16,17 @@
         v-model="passwordValue"
         :type="showPassword ? 'text' : 'password'"
         id="password"
-        placeholder="Enter your password"
+        placeholder="Ingrese su contraseña"
         class="h-12 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-10 pr-11 text-base text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-200/40 transition-all duration-300 outline-none"
         :class="{'border-success-500': passwordValue && passwordValue.length >= 6}"
       />
       <!-- Botón de toggle de visibilidad de contraseña -->
-      <span
+      <button
+        type="button"
         @click="togglePasswordVisibility"
-        class="absolute z-30 text-gray-400 -translate-y-1/2 cursor-pointer right-4 top-1/2 transition-colors duration-300 hover:text-brand-500"
+        class="absolute z-30 text-gray-400 -translate-y-1/2 cursor-pointer right-4 top-1/2 transition-colors duration-300 hover:text-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-300 rounded-md"
+        :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+        :aria-pressed="showPassword"
       >
         <svg
           v-if="!showPassword"
@@ -57,7 +60,7 @@
             fill="currentColor"
           />
         </svg>
-      </span>
+      </button>
     </div>
   </div>
 </template>
@@ -85,4 +88,4 @@ const passwordValue = computed({
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
 }
-</script> 
+</script>

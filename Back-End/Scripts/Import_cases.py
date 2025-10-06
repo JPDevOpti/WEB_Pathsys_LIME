@@ -228,21 +228,55 @@ async def load_patients(db, batch_size: int = 1000) -> List[Dict]:
     cursor = db.patients.find({}, {
         "_id": 1, 
         "patient_code": 1, 
-        "name": 1, 
-        "age": 1, 
+        "identification_type": 1,
+        "identification_number": 1,
+        "first_name": 1,
+        "second_name": 1,
+        "first_lastname": 1,
+        "second_lastname": 1,
+        "birth_date": 1,
         "gender": 1, 
         "entity_info": 1, 
-        "care_type": 1
+        "care_type": 1,
+        "location": 1
     })
     while True:
         chunk = await cursor.to_list(length=batch_size)
         if not chunk:
             break
         for doc in chunk:
+            # Construir nombre completo desde los campos separados
+            name_parts = [doc.get("first_name", "")]
+            if doc.get("second_name"):
+                name_parts.append(doc["second_name"])
+            name_parts.append(doc.get("first_lastname", ""))
+            if doc.get("second_lastname"):
+                name_parts.append(doc["second_lastname"])
+            doc["name"] = " ".join(filter(None, name_parts)) or "Paciente Sin Nombre"
+            
+            # Calcular edad desde birth_date si existe
+            if "birth_date" in doc and doc["birth_date"]:
+                from datetime import date
+                birth_date = doc["birth_date"]
+                if isinstance(birth_date, datetime):
+                    birth_date = birth_date.date()
+                today = date.today()
+                age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+                doc["age"] = max(0, min(150, age))
+            else:
+                doc["age"] = 30  # Valor por defecto si no hay fecha de nacimiento
+            
             # Asegurar que entity_info tenga la estructura correcta
             if "entity_info" in doc and isinstance(doc["entity_info"], dict):
                 if "name" not in doc["entity_info"]:
                     doc["entity_info"]["name"] = "Entidad Desconocida"
+            else:
+                doc["entity_info"] = {"id": "default", "name": "Entidad Desconocida"}
+            
+            # Asegurar que location existe (puede ser None u opcional)
+            if "location" not in doc or doc["location"] is None:
+                doc["location"] = None
+            
             patients.append(doc)
         if len(chunk) < batch_size:
             break
@@ -353,14 +387,43 @@ async def seed_cases(count: int, year: int, start_number: int, dry_run: bool) ->
             else:
                 genero_valido = genero_original
             
+            # Obtener birth_date si existe
+            birth_date_value = p.get("birth_date")
+            if birth_date_value and isinstance(birth_date_value, datetime):
+                birth_date_datetime = birth_date_value
+            elif birth_date_value:
+                # Convertir a datetime si es date
+                from datetime import date as date_type
+                if isinstance(birth_date_value, date_type):
+                    birth_date_datetime = datetime.combine(birth_date_value, datetime.min.time())
+                else:
+                    birth_date_datetime = None
+            else:
+                birth_date_datetime = None
+            
+            # Construir LocationInfo desde el paciente
+            location_info = None
+            if p.get("location") and isinstance(p["location"], dict):
+                from app.modules.cases.schemas.case import LocationInfo
+                location_info = LocationInfo(
+                    municipality_code=p["location"].get("municipality_code"),
+                    municipality_name=p["location"].get("municipality_name"),
+                    subregion=p["location"].get("subregion"),
+                    address=p["location"].get("address")
+                )
+            
             patient_info = PatientInfo(
                 patient_code=str(p.get("patient_code")),
+                identification_type=p.get("identification_type"),
+                identification_number=p.get("identification_number"),
                 name=p.get("name", "Paciente Sin Nombre"),
                 age=max(1, int(p.get("age", 30))),
+                birth_date=birth_date_datetime,
                 gender=genero_valido,
                 entity_info=entity_info,
                 care_type=tipo_atencion_valido,
                 observations=f"Paciente ingresado para estudio histopatológico - {tipo_atencion_valido}",
+                location=location_info,
             )
 
             # Muestras (1-3), con pruebas (1-4, con duplicados posibles)

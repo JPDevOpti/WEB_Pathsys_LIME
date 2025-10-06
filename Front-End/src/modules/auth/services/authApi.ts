@@ -1,6 +1,7 @@
 import type { LoginRequest, LoginResponse, User } from '../types/auth.types'
+import { API_CONFIG, getAuthHeaders } from '@/core/config/api.config'
 
-const API_BASE_URL = 'http://localhost:8000/api/v1'
+const API_BASE_URL = `${API_CONFIG.BASE_URL}${API_CONFIG.VERSION}`
 
 export class AuthApiService {
   private static instance: AuthApiService
@@ -18,15 +19,13 @@ export class AuthApiService {
   }
 
   /**
-   * Iniciar sesión
+   * Sign in
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { ...API_CONFIG.DEFAULT_HEADERS },
         body: JSON.stringify(credentials),
       })
 
@@ -65,16 +64,13 @@ export class AuthApiService {
   }
 
   /**
-   * Obtener información del usuario actual
+   * Get current user info
    */
   async getCurrentUser(token: string): Promise<User> {
     try {
       const response = await fetch(`${this.baseUrl}/auth/me`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...getAuthHeaders(token) },
       })
 
       if (!response.ok) {
@@ -105,17 +101,14 @@ export class AuthApiService {
   }
 
   /**
-   * Verificar validez del token
+   * Verify token validity
    */
   async verifyToken(token: string): Promise<{ valid: boolean; user?: User }> {
     try {
       // No hay endpoint /auth/verify en el back nuevo; usamos /auth/me
       const response = await fetch(`${this.baseUrl}/auth/me`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...getAuthHeaders(token) },
       })
 
       if (!response.ok) {
@@ -144,35 +137,9 @@ export class AuthApiService {
     }
   }
 
-  /**
-   * Renovar token
-   */
-  async refreshToken(refreshToken: string): Promise<{ access_token: string; expires_in: number }> {
-    try {
-      const response = await fetch(`${this.baseUrl}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Error al renovar token')
-      }
-
-      return await response.json()
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error
-      }
-      throw new Error('Error de conexión')
-    }
-  }
 
   /**
-   * Cerrar sesión
+   * Sign out
    */
   async logout(token: string): Promise<void> {
     try {
@@ -187,4 +154,4 @@ export class AuthApiService {
   }
 }
 
-export const authApiService = AuthApiService.getInstance() 
+export const authApiService = AuthApiService.getInstance()

@@ -40,7 +40,8 @@ class ApiClient {
             console.debug(`➡️ [HTTP:${method}] ${url}`, { params: config.params })
           }
         } catch {}
-        const token = localStorage.getItem('auth_token')
+        // Read token from either localStorage or sessionStorage to support rememberMe persistence
+        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
         }

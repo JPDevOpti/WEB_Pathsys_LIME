@@ -73,7 +73,8 @@ async function generatePdf() {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+        // Read token from either localStorage or sessionStorage to support rememberMe persistence
+        'Authorization': `Bearer ${(localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '')}`,
         'Content-Type': 'application/json'
       }
     })

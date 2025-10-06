@@ -4,7 +4,7 @@
       for="email"
       class="mb-1.5 block text-sm font-semibold text-gray-700"
     >
-      Email Address<span class="text-error-500">*</span>
+      Correo electrónico<span class="text-error-500">*</span>
     </label>
     <div class="relative">
       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-500 transition-colors duration-300">
@@ -16,9 +16,13 @@
         v-model="emailValue"
         type="email"
         id="email"
-        placeholder="info@gmail.com"
+        name="email"
+        autocomplete="email"
+        placeholder="correo@ejemplo.com"
         class="h-12 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-10 pr-10 text-base text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-200/40 transition-all duration-300 outline-none"
         :class="{'border-success-500': emailValue && isValidEmail(emailValue), 'border-error-500': emailValue && !isValidEmail(emailValue)}"
+        :aria-invalid="Boolean(emailError)"
+        :aria-describedby="emailError ? errorId : undefined"
       />
       <!-- Iconos de validación de email -->
       <span v-if="emailValue" class="absolute right-3 top-1/2 -translate-y-1/2">
@@ -31,8 +35,8 @@
       </span>
     </div>
     
-    <!-- Mensaje de error -->
-    <p v-if="emailError" class="mt-1 text-sm text-error-500">
+    <!-- Error message -->
+    <p v-if="emailError" class="mt-1 text-sm text-error-500" :id="errorId">
       {{ emailError }}
     </p>
   </div>
@@ -40,6 +44,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useAuthValidation } from '../composables/useAuthValidation'
+
+// Use centralized validation from composable
+const { isValidEmail } = useAuthValidation()
 
 interface Props {
   modelValue: string
@@ -56,15 +64,14 @@ const emailValue = computed({
   set: (value: string) => emit('update:modelValue', value)
 })
 
+const errorId = 'email-error'
+
 const emailError = computed(() => {
   if (!emailValue.value) return ''
   if (!isValidEmail(emailValue.value)) {
-    return 'Please enter a valid email address'
+    // Show error message in Spanish for the user
+    return 'Ingrese un correo electrónico válido'
   }
   return ''
 })
-
-const isValidEmail = (email: string) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-</script> 
+</script>

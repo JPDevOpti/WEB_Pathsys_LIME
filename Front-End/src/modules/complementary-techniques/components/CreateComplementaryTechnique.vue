@@ -1,8 +1,7 @@
 <template>
-  <!-- Create complementary technique form -->
+  <!-- Create complementary technique form (Excel-aligned) -->
   <div class="space-y-6">
     <form class="space-y-6" @submit.prevent="onSubmit">
-
       <!-- Basic Information -->
       <div class="bg-white rounded-lg border border-gray-200 p-4">
         <h4 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
@@ -11,54 +10,15 @@
           </svg>
           Información Básica
         </h4>
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInputField
-            v-model="form.nombre"
-            label="Nombre de la técnica"
-            placeholder="Ej: Inmunohistoquímica CD20"
-            :required="true"
-            :max-length="100"
-            :error="errors.nombre"
-          />
-          
-          <FormSelect
-            v-model="form.tipo"
-            label="Tipo de técnica"
-            :required="true"
-            :options="tipoOptions"
-            :error="errors.tipo"
-          />
-        </div>
-
-        <div class="mt-4">
-          <FormTextarea
-            v-model="form.descripcion"
-            label="Descripción"
-            placeholder="Descripción detallada de la técnica complementaria"
-            :required="true"
-            :max-length="500"
-            :rows="3"
-            :error="errors.descripcion"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <FormSelect
-            v-model="form.categoria"
-            label="Categoría"
-            :required="true"
-            :options="categoriaOptions"
-            :error="errors.categoria"
-          />
-          
-          <FormSelect
-            v-model="form.estado"
-            label="Estado inicial"
-            :required="true"
-            :options="estadoOptions"
-            :error="errors.estado"
-          />
+          <FormInputField v-model="form.date" label="Fecha" type="date" :required="true" :error="errors.date" />
+          <FormInputField v-model="form.elaboratedBy" label="Elaboró" :required="true" :max-length="50" :error="errors.elaboratedBy" />
+          <FormInputField v-model="form.caseNumber" label="N° Caso" :required="true" :max-length="20" :error="errors.caseNumber" />
+          <FormInputField v-model="form.patientDocument" label="Documento del paciente" :required="true" :max-length="20" :error="errors.patientDocument" />
+          <FormInputField v-model="form.patientName" label="Nombre del paciente" :required="true" :max-length="100" :error="errors.patientName" />
+          <FormInputField v-model="form.institution" label="Institución" :required="true" :max-length="50" :error="errors.institution" />
+          <FormInputField v-model.number="form.receivedSlidesCount" label="Número de placas recibe" type="number" :required="true" :error="errors.receivedSlidesCount" />
+          <FormInputField v-model="form.receivedBy" label="Recibe" :max-length="50" :error="errors.receivedBy" />
         </div>
       </div>
 
@@ -70,25 +30,9 @@
           </svg>
           Asociación con Caso
         </h4>
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInputField
-            v-model="form.casoAsociado"
-            label="Código de caso asociado"
-            placeholder="Ej: 2025-00001"
-            :required="true"
-            :max-length="10"
-            :error="errors.casoAsociado"
-            @update:model-value="validateCaseCode"
-          />
-          
-          <FormInputField
-            v-model="form.fechaEntrega"
-            label="Fecha de entrega esperada"
-            type="date"
-            :required="true"
-            :error="errors.fechaEntrega"
-          />
+          <FormInputField v-model="form.deliveryDate" label="Fecha entrega" type="date" :required="true" :error="errors.deliveryDate" />
+          <FormInputField v-model="form.deliveredBy" label="Entrega" :required="true" :max-length="50" :error="errors.deliveredBy" />
         </div>
       </div>
 
@@ -100,38 +44,24 @@
           </svg>
           Información Adicional
         </h4>
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInputField
-            v-model="form.observaciones"
-            label="Observaciones"
-            placeholder="Observaciones adicionales (opcional)"
-            :max-length="300"
-            :error="errors.observaciones"
-          />
-          
-          <FormSelect
-            v-model="form.prioridad"
-            label="Prioridad"
-            :options="prioridadOptions"
-            :error="errors.prioridad"
-          />
+          <FormTextarea v-model="form.lowComplexityIHQ" label="IHQ baja complejidad" placeholder="ALK-1, TOXOPLASMA, CMV, TDT, SINAPTOFISINA, ..." :rows="2" :error="errors.lowComplexityIHQ" />
+          <FormInputField v-model.number="form.lowComplexitySlidesCount" label="# Placas (baja complejidad)" type="number" :error="errors.lowComplexitySlidesCount" />
+          <FormTextarea v-model="form.highComplexityIHQ" label="IHQ alta complejidad" placeholder="SOX-11, C4D, SV40, HER2, RE, RP, CICLINA D1, ..." :rows="2" :error="errors.highComplexityIHQ" />
+          <FormInputField v-model.number="form.highComplexitySlidesCount" label="# Placas (alta complejidad)" type="number" :error="errors.highComplexitySlidesCount" />
+          <FormTextarea v-model="form.specialIHQ" label="IHQ especiales" placeholder="ATRX, IDH1, MUC1, PD1, PD-L1, ..." :rows="2" :error="errors.specialIHQ" />
+          <FormInputField v-model.number="form.specialIHQSlidesCount" label="# Placas (especiales)" type="number" :error="errors.specialIHQSlidesCount" />
+          <FormTextarea v-model="form.histochemical" label="Histoquímicas" placeholder="PAS, ROJO CONGO, ZN, ..." :rows="2" :error="errors.histochemical" />
+          <FormInputField v-model.number="form.histochemicalSlidesCount" label="# Placas (histoquímicas)" type="number" :error="errors.histochemicalSlidesCount" />
+          <FormSelect v-model="form.receiptStatus" label="Recibo" :options="receiptStatusOptions" :required="true" :error="errors.receiptStatus" />
+          <FormTextarea v-model="form.notes" label="Observaciones" placeholder="Observaciones adicionales (opcional)" :rows="2" :error="errors.notes" />
         </div>
       </div>
 
       <!-- Action Buttons -->
       <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4 border-t border-gray-200">
-        <ClearButton 
-          text="Limpiar formulario" 
-          @click="onReset" 
-          :disabled="isSubmitting"
-        />
-        <SaveButton 
-          text="Crear Técnica" 
-          :loading="isSubmitting"
-          :disabled="!isFormValid"
-          @click="onSubmit"
-        />
+        <ClearButton text="Limpiar formulario" @click="onReset" :disabled="isSubmitting" />
+        <SaveButton text="Crear Técnica" :loading="isSubmitting" :disabled="!isFormValid" @click="onSubmit" />
       </div>
     </form>
 
@@ -155,21 +85,37 @@
 </template>
 
 <script setup lang="ts">
+// Imports
 import { ref, computed, reactive } from 'vue'
 import { FormInputField, FormTextarea, FormSelect } from '@/shared/components/ui/forms'
 import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import type { ComplementaryTechnique } from '../types/special-cases.types'
 
-// Form data
+// Emits created event so parent can append to list
+const emit = defineEmits<{ (e: 'created', payload: ComplementaryTechnique): void }>()
+
+// Form data (English keys; values displayed to user in Spanish)
 const form = reactive({
-  nombre: '',
-  descripcion: '',
-  tipo: '',
-  categoria: '',
-  estado: 'En proceso',
-  casoAsociado: '',
-  fechaEntrega: '',
-  observaciones: '',
-  prioridad: 'Normal'
+  date: '',
+  elaboratedBy: '',
+  caseNumber: '',
+  patientDocument: '',
+  patientName: '',
+  institution: '',
+  receivedSlidesCount: 0,
+  receivedBy: '',
+  deliveryDate: '',
+  deliveredBy: '',
+  lowComplexityIHQ: '',
+  lowComplexitySlidesCount: 0,
+  highComplexityIHQ: '',
+  highComplexitySlidesCount: 0,
+  specialIHQ: '',
+  specialIHQSlidesCount: 0,
+  histochemical: '',
+  histochemicalSlidesCount: 0,
+  receiptStatus: 'FACTURAR',
+  notes: ''
 })
 
 // Form state
@@ -177,133 +123,121 @@ const isSubmitting = ref(false)
 const showSuccessModal = ref(false)
 const successMessage = ref('')
 
-// Validation errors
-const errors = reactive({
-  nombre: '',
-  descripcion: '',
-  tipo: '',
-  categoria: '',
-  estado: '',
-  casoAsociado: '',
-  fechaEntrega: '',
-  observaciones: '',
-  prioridad: ''
+// Validation errors (English keys)
+const errors = reactive<Record<string, string>>({
+  date: '',
+  elaboratedBy: '',
+  caseNumber: '',
+  patientDocument: '',
+  patientName: '',
+  institution: '',
+  receivedSlidesCount: '',
+  receivedBy: '',
+  deliveryDate: '',
+  deliveredBy: '',
+  lowComplexityIHQ: '',
+  lowComplexitySlidesCount: '',
+  highComplexityIHQ: '',
+  highComplexitySlidesCount: '',
+  specialIHQ: '',
+  specialIHQSlidesCount: '',
+  histochemical: '',
+  histochemicalSlidesCount: '',
+  receiptStatus: '',
+  notes: ''
 })
 
 // Options for select fields
-const tipoOptions = [
-  { value: 'inmunohistoquimica', label: 'Inmunohistoquímica' },
-  { value: 'molecular', label: 'Técnica Molecular' },
-  { value: 'citogenetica', label: 'Citogenética' },
-  { value: 'bioquimica', label: 'Bioquímica' },
-  { value: 'microbiologia', label: 'Microbiología' },
-  { value: 'otra', label: 'Otra' }
-]
-
-const categoriaOptions = [
-  { value: 'Oncología', label: 'Oncología' },
-  { value: 'Linfoma', label: 'Linfoma' },
-  { value: 'Hematología', label: 'Hematología' },
-  { value: 'Inflamación', label: 'Inflamación' },
-  { value: 'Infecciosa', label: 'Infecciosa' },
-  { value: 'Metabólica', label: 'Metabólica' },
-  { value: 'Otra', label: 'Otra' }
-]
-
-const estadoOptions = [
-  { value: 'En proceso', label: 'En proceso' },
-  { value: 'Por entregar', label: 'Por entregar' },
-  { value: 'Completado', label: 'Completado' }
-]
-
-const prioridadOptions = [
-  { value: 'Baja', label: 'Baja' },
-  { value: 'Normal', label: 'Normal' },
-  { value: 'Alta', label: 'Alta' },
-  { value: 'Urgente', label: 'Urgente' }
+const receiptStatusOptions = [
+  { value: 'FACTURAR', label: 'FACTURAR' },
+  { value: 'PENDIENTE', label: 'PENDIENTE' },
+  { value: 'ANULADO', label: 'ANULADO' }
 ]
 
 // Computed properties
 const isFormValid = computed(() => {
-  return form.nombre.trim() &&
-         form.descripcion.trim() &&
-         form.tipo &&
-         form.categoria &&
-         form.casoAsociado.trim() &&
-         form.fechaEntrega &&
-         !Object.values(errors).some(error => error !== '')
+  const required = [
+    form.date,
+    form.elaboratedBy,
+    form.caseNumber,
+    form.patientDocument,
+    form.patientName,
+    form.institution,
+    String(form.receivedSlidesCount),
+    form.deliveryDate,
+    form.deliveredBy,
+    form.receiptStatus
+  ]
+  return required.every(v => String(v).trim() !== '') && !Object.values(errors).some(error => error !== '')
 })
 
-// Methods
-const validateCaseCode = (value: string) => {
-  const caseCodePattern = /^\d{4}-\d{5}$/
-  if (value && !caseCodePattern.test(value)) {
-    errors.casoAsociado = 'El código debe tener el formato YYYY-NNNNN (Ej: 2025-00001)'
-  } else {
-    errors.casoAsociado = ''
-  }
-}
-
+// Validate form inputs
 const validateForm = () => {
   // Clear previous errors
-  Object.keys(errors).forEach(key => {
-    errors[key as keyof typeof errors] = ''
-  })
+  Object.keys(errors).forEach(key => { errors[key] = '' })
 
-  // Validate required fields
-  if (!form.nombre.trim()) {
-    errors.nombre = 'El nombre es requerido'
-  }
-  if (!form.descripcion.trim()) {
-    errors.descripcion = 'La descripción es requerida'
-  }
-  if (!form.tipo) {
-    errors.tipo = 'El tipo es requerido'
-  }
-  if (!form.categoria) {
-    errors.categoria = 'La categoría es requerida'
-  }
-  if (!form.casoAsociado.trim()) {
-    errors.casoAsociado = 'El código de caso es requerido'
-  }
-  if (!form.fechaEntrega) {
-    errors.fechaEntrega = 'La fecha de entrega es requerida'
-  }
+  // Basic required checks (messages in Spanish for user)
+  if (!form.date) errors.date = 'La fecha es requerida'
+  if (!form.elaboratedBy.trim()) errors.elaboratedBy = 'Elaboró es requerido'
+  if (!form.caseNumber.trim()) errors.caseNumber = 'El número de caso es requerido'
+  if (!form.patientDocument.trim()) errors.patientDocument = 'El documento del paciente es requerido'
+  if (!form.patientName.trim()) errors.patientName = 'El nombre del paciente es requerido'
+  if (!form.institution.trim()) errors.institution = 'La institución es requerida'
+  if (!form.receivedSlidesCount || form.receivedSlidesCount < 0) errors.receivedSlidesCount = 'Número de placas inválido'
+  if (!form.deliveryDate) errors.deliveryDate = 'La fecha de entrega es requerida'
+  if (!form.deliveredBy.trim()) errors.deliveredBy = 'Entrega es requerido'
+  if (!form.receiptStatus) errors.receiptStatus = 'El recibo es requerido'
 
-  // Validate case code format
-  validateCaseCode(form.casoAsociado)
-
-  // Validate date
-  if (form.fechaEntrega) {
-    const deliveryDate = new Date(form.fechaEntrega)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    if (deliveryDate < today) {
-      errors.fechaEntrega = 'La fecha de entrega no puede ser anterior a hoy'
-    }
+  // Validate date not in past for deliveryDate
+  if (form.deliveryDate) {
+    const delivery = new Date(form.deliveryDate)
+    const today = new Date(); today.setHours(0,0,0,0)
+    if (delivery < today) errors.deliveryDate = 'La fecha de entrega no puede ser anterior a hoy'
   }
 
   return Object.values(errors).every(error => error === '')
 }
 
+// Submit handler
 const onSubmit = async () => {
-  if (!validateForm()) {
-    return
-  }
+  if (!validateForm()) return
 
   isSubmitting.value = true
-  
   try {
-    // TODO: Replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Simulate successful creation
-    const newTechniqueCode = `C2025-${String(Date.now()).slice(-5)}`
-    
-    successMessage.value = `La técnica complementaria "${form.nombre}" ha sido creada exitosamente con el código ${newTechniqueCode}.`
+    // Simulate async submit (front only per your request)
+    await new Promise(resolve => setTimeout(resolve, 800))
+
+    // Create technique object (values in Spanish per workspace rule)
+    const newTechnique: ComplementaryTechnique = {
+      id: `CT-${Date.now()}`,
+      date: form.date,
+      elaboratedBy: form.elaboratedBy,
+      caseNumber: form.caseNumber,
+      patientDocument: form.patientDocument,
+      patientName: form.patientName,
+      institution: form.institution,
+      receivedSlidesCount: Number(form.receivedSlidesCount) || 0,
+      receivedBy: form.receivedBy,
+      deliveryDate: form.deliveryDate,
+      deliveredBy: form.deliveredBy,
+      lowComplexityIHQ: form.lowComplexityIHQ,
+      lowComplexitySlidesCount: Number(form.lowComplexitySlidesCount) || 0,
+      highComplexityIHQ: form.highComplexityIHQ,
+      highComplexitySlidesCount: Number(form.highComplexitySlidesCount) || 0,
+      specialIHQ: form.specialIHQ,
+      specialIHQSlidesCount: Number(form.specialIHQSlidesCount) || 0,
+      histochemical: form.histochemical,
+      histochemicalSlidesCount: Number(form.histochemicalSlidesCount) || 0,
+      receiptStatus: form.receiptStatus,
+      notes: form.notes
+    }
+
+    // Emit created to parent
+    emit('created', newTechnique)
+
+    // Success message to user in Spanish
+    successMessage.value = `El registro con N° Caso "${form.caseNumber}" ha sido creado exitosamente.`
     showSuccessModal.value = true
-    
   } catch (error) {
     console.error('Error creating technique:', error)
   } finally {
@@ -311,34 +245,39 @@ const onSubmit = async () => {
   }
 }
 
+// Reset form
 const onReset = () => {
-  Object.keys(form).forEach(key => {
-    if (key === 'estado') {
-      form[key as keyof typeof form] = 'En proceso'
-    } else if (key === 'prioridad') {
-      form[key as keyof typeof form] = 'Normal'
-    } else {
-      form[key as keyof typeof form] = ''
-    }
-  })
-  
-  Object.keys(errors).forEach(key => {
-    errors[key as keyof typeof errors] = ''
-  })
+  form.date = ''
+  form.elaboratedBy = ''
+  form.caseNumber = ''
+  form.patientDocument = ''
+  form.patientName = ''
+  form.institution = ''
+  form.receivedSlidesCount = 0
+  form.receivedBy = ''
+  form.deliveryDate = ''
+  form.deliveredBy = ''
+  form.lowComplexityIHQ = ''
+  form.lowComplexitySlidesCount = 0
+  form.highComplexityIHQ = ''
+  form.highComplexitySlidesCount = 0
+  form.specialIHQ = ''
+  form.specialIHQSlidesCount = 0
+  form.histochemical = ''
+  form.histochemicalSlidesCount = 0
+  form.receiptStatus = 'FACTURAR'
+  form.notes = ''
+
+  Object.keys(errors).forEach(key => { errors[key] = '' })
 }
 
-const closeSuccessModal = () => {
-  showSuccessModal.value = false
-}
-
-const handleSuccessConfirm = () => {
-  closeSuccessModal()
-  onReset()
-}
+// Modal handlers
+const closeSuccessModal = () => { showSuccessModal.value = false }
+const handleSuccessConfirm = () => { closeSuccessModal(); onReset() }
 </script>
 
 <style scoped>
-/* Estilos específicos si es necesario */
+/* Module-specific styles if needed */
 </style>
 
 

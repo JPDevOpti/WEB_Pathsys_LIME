@@ -73,7 +73,7 @@
                 text="Ingresar"
                 loading-text="Ingresando..."
                 :loading="isLoading"
-                :disabled="!isFormValid"
+                :disabled="!isFormValid || isLoading"
                 icon="ArrowRightIcon"
               />
             </div>

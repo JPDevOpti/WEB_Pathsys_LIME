@@ -47,7 +47,7 @@ export function useLoginForm() {
         password: password.value
       }
 
-      const success = await authStore.login(credentials)
+      const success = await authStore.login(credentials, rememberMe.value)
       
       if (success) {
         // Limpiar formulario
@@ -113,4 +113,4 @@ export function useLoginForm() {
     loadSavedData,
     saveData
   }
-} 
+}
