@@ -139,8 +139,8 @@ const handleBlur = (event: Event) => {
 
 const inputClasses = computed(() => {
   const baseClasses = props.dense
-    ? "w-full px-2 py-1.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors text-sm"
-    : "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors"
+    ? "w-full px-2 py-1.5 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors text-sm"
+    : "w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors"
   
   if (props.errors.length > 0) {
     return `${baseClasses} !border-red-500 !focus:border-red-500 !focus:ring-red-200`

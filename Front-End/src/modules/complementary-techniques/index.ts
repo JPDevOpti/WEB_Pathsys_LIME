@@ -1,4 +1,8 @@
+// Routes
 export * from './routes/complementaryTechniquesRoutes'
-export * from './types/special-cases.types'
 
+// Components
+export * from './components'
 
+// Types
+export * from './types'

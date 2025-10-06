@@ -45,7 +45,7 @@
       <!-- Dropdown options -->
       <div
         v-if="isOpen && !disabled"
-        class="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        class="absolute z-[99999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       >
         <!-- No results -->
         <div v-if="filteredOptions.length === 0" class="px-3 py-2 text-sm text-gray-500 text-center">

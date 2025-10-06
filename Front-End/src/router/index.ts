@@ -11,7 +11,6 @@ import { reportsRoutes } from '@/modules/reports/routes/reportsRoutes'
 import { supportRoutes } from '@/modules/support/routes/supportRoutes'
 import { complementaryTechniquesRoutes } from '@/modules/complementary-techniques/routes/complementaryTechniquesRoutes'
 import { casesApprovalRoutes } from '@/modules/cases-approval/routes/casesApprovalRoutes'
-import { complementaryTechniquesListRoutes } from '@/modules/complementary-techniques-list/routes/ctlRoutes'
 import { patientsRoutes } from '@/modules/patients/routes/patientsRoutes'
 import { patientListRoutes } from '@/modules/patients-list/routes'
 import { pathologistAssignmentRoutes } from '@/modules/pathologist-assignment'
@@ -33,7 +32,6 @@ const router = createRouter({
     ...reportsRoutes,
     ...supportRoutes,
     ...complementaryTechniquesRoutes,
-    ...complementaryTechniquesListRoutes,
     ...casesApprovalRoutes,
     ...patientsRoutes,
     ...patientListRoutes,

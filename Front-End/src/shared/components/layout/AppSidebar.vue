@@ -289,7 +289,6 @@ import {
 import PatientsIcon from "@/assets/icons/PatientsIcon.vue";
 import CaseIcon from "@/assets/icons/CaseIcon.vue";
 import EditCaseIcon from "@/assets/icons/EditCaseIcon.vue";
-import SpecialCaseIcon from "@/assets/icons/SpecialCaseIcon.vue";
 import ListIcon from "@/assets/icons/ListIcon.vue";
 import ChartIcon from "@/assets/icons/ChartIcon.vue";
 import ProfileIcon from "@/assets/icons/ProfileIcon.vue";
@@ -441,7 +440,8 @@ const filteredMenuItems = computed(() => {
       subItems: [
         { name: "Crear caso", path: "/cases/new", pro: false, alwaysVisible: true },
         { name: "Editar caso", path: "/cases/edit", pro: false, alwaysVisible: true },
-  { name: "Asignación de patólogos", path: "/pathologist-assignment", pro: false, alwaysVisible: true },
+        { name: "Casos por aprobar", path: "/cases/to-approve", pro: false, alwaysVisible: false },
+        { name: "Asignación de patólogos", path: "/pathologist-assignment", pro: false, alwaysVisible: true },
       ],
       alwaysVisible: true
     },
@@ -455,16 +455,6 @@ const filteredMenuItems = computed(() => {
       ],
       alwaysVisible: true
     },
-    // Casos especiales
-    {
-      name: "Casos especiales",
-      icon: SpecialCaseIcon,
-      subItems: [
-        { name: "Casos por aprobar", path: "/cases/to-approve", pro: false, alwaysVisible: false },
-        { name: "Técnicas complementarias", path: "/complementary-techniques", pro: false, alwaysVisible: true },
-      ],
-      alwaysVisible: true
-    },
     // Listados
     {
       name: "Listados",
@@ -472,6 +462,8 @@ const filteredMenuItems = computed(() => {
       subItems: [
         { name: "Pacientes", path: "/patients/list", pro: false, alwaysVisible: true },
         { name: "Casos", path: "/cases/list", pro: false, alwaysVisible: true },
+        { name: "Técnicas complementarias", path: "/complementary-techniques", pro: false, alwaysVisible: true }
+
       ],
       alwaysVisible: true
     },

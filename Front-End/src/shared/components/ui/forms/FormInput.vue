@@ -26,7 +26,7 @@
         :required="required"
         :disabled="disabled"
         :class="[
-          'h-12 w-full rounded-lg border bg-transparent py-2.5 text-base text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-200/40 transition-all duration-300 outline-none',
+          'h-12 w-full rounded-lg border bg-white py-2.5 text-base text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-200/40 transition-all duration-300 outline-none',
           leftIcon ? 'pl-10' : 'pl-3',
           rightIcon ? 'pr-10' : 'pr-3',
           error ? 'border-error-500 focus:border-error-500 focus:ring-error-200/40' : 'border-gray-300',

@@ -108,7 +108,7 @@ const computedPlaceholder = computed(() => {
 })
 
 const textareaClasses = computed(() => {
-  const baseClasses = "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors resize-none"
+  const baseClasses = "w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors resize-none"
   
   if (props.error) {
     return `${baseClasses} border-red-500`

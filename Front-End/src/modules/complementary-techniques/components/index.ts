@@ -1,4 +1,4 @@
-export { default as CreateComplementaryTechnique } from './CreateComplementaryTechnique.vue'
-export { default as EditComplementaryTechnique } from './EditComplementaryTechnique.vue'
-
-
+// List components
+export * from './ListComplementaryTechniques'
+export * from './NewComplementaryTechniques'
+export * from './EditComplementaryTechniques'
