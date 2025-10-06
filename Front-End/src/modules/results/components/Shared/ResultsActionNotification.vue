@@ -1,5 +1,6 @@
 <template>
   <Notification
+    ref="rootEl"
     :visible="props.visible"
     :type="props.type"
     :title="props.title || ''"
@@ -91,7 +92,7 @@
 
 <script setup lang="ts">
 import Notification from '@/shared/components/ui/feedback/Notification.vue'
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch, onMounted } from 'vue'
 
 type NotificationType = 'success' | 'error' | 'warning' | 'info'
 type ContextType = 'sign' | 'save'
@@ -119,6 +120,26 @@ const props = withDefaults(defineProps<{
 defineEmits<{ (e: 'close'): void }>()
 
 const headerTitle = computed(() => props.title || (props.context === 'sign' ? 'Resumen de resultados firmados' : 'Resumen de resultados guardados'))
+
+// Auto scroll into view when shown (only for inline success notifications)
+const rootEl = ref<any>(null)
+
+function scrollIntoViewIfNeeded() {
+  if (!props.visible || props.type !== 'success' || props.inline === false) return
+  nextTick(() => {
+    const el = (rootEl.value && (rootEl.value.$el ?? rootEl.value)) as HTMLElement | null
+    if (!el) return
+    try {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+    } catch {
+      el.scrollIntoView()
+    }
+  })
+}
+
+watch(() => props.visible, (v) => { if (v) scrollIntoViewIfNeeded() })
+watch(() => props.type, () => scrollIntoViewIfNeeded())
+onMounted(() => { if (props.visible) scrollIntoViewIfNeeded() })
 </script>
 
 

@@ -556,7 +556,7 @@ function formatDateTime(date: Date) {
 
 const handleGoToCases = () => {
   emit('close')
-  router.push('/cases')
+  router.push('/cases/list')
 }
 
 function onKey(event: KeyboardEvent) {

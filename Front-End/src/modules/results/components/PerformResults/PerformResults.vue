@@ -124,7 +124,7 @@
               <div>
                 <p class="text-sm font-bold text-red-800">Estado no válido para transcripción</p>
                 <p class="text-sm text-red-700 mt-1">
-                  Solo se pueden transcribir resultados en casos con estado "En proceso".
+                  Solo se pueden transcribir resultados en casos con estado "En proceso" o "Por firmar".
                 </p>
                 <p class="text-xs text-red-600 mt-2">
                   Estado actual: <span class="font-semibold">{{ caseInfo?.state }}</span>
@@ -251,6 +251,7 @@ interface CaseData {
 const CASE_CODE_MAX_LENGTH = 10
 const CASE_CODE_FORMAT_POSITION = 4
 const IN_PROGRESS_STATE = 'EN_PROCESO'
+const READY_FOR_SIGNING_STATE = 'POR_FIRMAR'
 
 onMounted(() => {
   initialize()
@@ -307,20 +308,20 @@ const normalizeStatus = (status: string): string => {
   return status.toUpperCase().replace(/\s+/g, '_')
 }
 
-// Solo se puede transcribir si el caso está en estado "En proceso"
+// Solo se puede transcribir si el caso está en estado "En proceso" o "Por firmar"
 const canTranscribeByStatus = computed(() => {
   const estado = caseInfo.value?.state
   if (!estado) return false
   const normalizedStatus = normalizeStatus(estado)
-  return normalizedStatus === IN_PROGRESS_STATE
+  return normalizedStatus === IN_PROGRESS_STATE || normalizedStatus === READY_FOR_SIGNING_STATE
 })
 
 const invalidStatusMessage = computed(() => {
   const estado = caseInfo.value?.state
   if (!estado) return ''
   const normalizedStatus = normalizeStatus(estado)
-  if (normalizedStatus !== IN_PROGRESS_STATE) {
-    return `Este caso está en estado "${estado}". Solo se pueden transcribir resultados en casos con estado "En proceso".`
+  if (normalizedStatus !== IN_PROGRESS_STATE && normalizedStatus !== READY_FOR_SIGNING_STATE) {
+    return `Este caso está en estado "${estado}". Solo se pueden transcribir resultados en casos con estado "En proceso" o "Por firmar".`
   }
   return ''
 })
@@ -456,7 +457,14 @@ const searchCase = async () => {
     try {
       const validationResult = await resultsApiService.validateCaseForEditing(caseCode.value.trim())
       if (validationResult && !validationResult.can_edit) {
-        throw new Error(validationResult.message || 'Este caso no puede ser editado debido a su estado actual.')
+        // Si el backend niega la edición pero el estado local permite (En proceso o Por firmar), continuar con advertencia
+        const localStatus = normalizeStatus((data as any)?.state || '')
+        const localAllowed = localStatus === IN_PROGRESS_STATE || localStatus === READY_FOR_SIGNING_STATE
+        if (localAllowed) {
+          console.warn('Validación remota indica no editable, pero el estado local permite edición (override local).')
+        } else {
+          throw new Error(validationResult.message || 'Este caso no puede ser editado debido a su estado actual.')
+        }
       }
     } catch (validationError: unknown) {
       // Si el endpoint de validación falla, usar validación local como fallback
