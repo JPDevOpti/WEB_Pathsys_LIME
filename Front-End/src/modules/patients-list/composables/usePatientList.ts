@@ -44,11 +44,16 @@ const transformBackendPatient = (bk: BackendPatient): Patient => {
     second_lastname: bk.second_lastname,
     birth_date: bk.birth_date,
     gender: bk.gender,
-    location: {
+    location: bk.location ? {
       municipality_code: bk.location.municipality_code,
       municipality_name: bk.location.municipality_name,
       subregion: bk.location.subregion,
       address: bk.location.address
+    } : {
+      municipality_code: '',
+      municipality_name: '',
+      subregion: '',
+      address: ''
     },
     entity_info: {
       id: bk.entity_info.id,

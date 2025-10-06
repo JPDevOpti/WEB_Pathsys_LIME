@@ -142,6 +142,7 @@
               v-model="form.birth_date" 
               label="Fecha de Nacimiento" 
               :required="true" 
+              :max="maxBirthDate" 
               :errors="getBirthDateErrors"
               @update:model-value="handleBirthDateInput"
             />
@@ -346,6 +347,12 @@ const careTypeOptions = [
   { value: 'Ambulatorio', label: 'Ambulatorio' },
   { value: 'Hospitalizado', label: 'Hospitalizado' }
 ]
+
+// Fecha máxima para el campo de nacimiento (hoy)
+const maxBirthDate = computed(() => {
+  const today = new Date()
+  return today.toISOString().split('T')[0]
+})
 
 // Validation functions
 const validateForm = (): boolean => {
@@ -566,10 +573,10 @@ const loadPatientData = (patient: PatientData) => {
     second_lastname: patient.second_lastname || '',
     birth_date: patient.birth_date,
     gender: patient.gender,
-    municipality_code: patient.location.municipality_code,
-    municipality_name: patient.location.municipality_name,
-    subregion: patient.location.subregion,
-    address: patient.location.address,
+    municipality_code: patient.location?.municipality_code || '',
+    municipality_name: patient.location?.municipality_name || '',
+    subregion: patient.location?.subregion || '',
+    address: patient.location?.address || '',
     entity_id: patient.entity_info.id,
     entity_name: patient.entity_info.name,
     care_type: patient.care_type,
@@ -701,6 +708,12 @@ const onSubmit = async () => {
   isLoading.value = true
 
   try {
+    // Preparar objeto location solo si al menos un campo tiene contenido válido
+    const hasLocation = form.municipality_code?.trim() || 
+                        form.municipality_name?.trim() || 
+                        form.subregion?.trim() || 
+                        form.address?.trim()
+    
     const updateData: UpdatePatientRequest = {
       first_name: form.first_name.trim(),
       second_name: form.second_name.trim() || undefined,
@@ -708,17 +721,11 @@ const onSubmit = async () => {
       second_lastname: form.second_lastname.trim() || undefined,
       birth_date: form.birth_date,
       gender: form.gender as Gender,
-      // Enviar ubicación sólo si todos los campos están completos
-      location: (
-        form.municipality_code?.trim() &&
-        form.municipality_name?.trim() &&
-        form.subregion?.trim() &&
-        form.address?.trim()
-      ) ? {
-        municipality_code: form.municipality_code.trim(),
-        municipality_name: form.municipality_name.trim(),
-        subregion: form.subregion.trim(),
-        address: form.address.trim()
+      location: hasLocation ? {
+        municipality_code: form.municipality_code?.trim() || '',
+        municipality_name: form.municipality_name?.trim() || '',
+        subregion: form.subregion?.trim() || '',
+        address: form.address?.trim() || ''
       } : undefined,
       // Enviar entidad sólo si ambos campos están completos
       entity_info: (

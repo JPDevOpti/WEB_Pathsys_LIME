@@ -81,6 +81,7 @@
             v-model="formData.birth_date" 
             label="Fecha de Nacimiento" 
             :required="true" 
+            :max="maxBirthDate" 
             :errors="getBirthDateErrors" 
             @update:model-value="handleBirthDateInput" 
           />
@@ -271,6 +272,12 @@ const careTypeOptions = [
   { value: 'Ambulatorio', label: 'Ambulatorio' },
   { value: 'Hospitalizado', label: 'Hospitalizado' }
 ]
+
+// Fecha máxima para el campo de nacimiento (hoy)
+const maxBirthDate = computed(() => {
+  const today = new Date()
+  return today.toISOString().split('T')[0]
+})
 
 // Validation functions
 const validateForm = (): boolean => {
@@ -538,6 +545,12 @@ const handleSaveClick = async () => {
   isLoading.value = true
   
   try {
+    // Preparar objeto location solo si al menos un campo tiene contenido
+    const hasLocation = formData.municipality_code.trim() || 
+                        formData.municipality_name.trim() || 
+                        formData.subregion.trim() || 
+                        formData.address.trim()
+    
     const patientData: CreatePatientRequest = {
       identification_type: formData.identification_type as IdentificationType,
       identification_number: formData.identification_number.trim(),
@@ -547,12 +560,12 @@ const handleSaveClick = async () => {
       second_lastname: formData.second_lastname.trim() || undefined,
       birth_date: toIsoDate(formData.birth_date),
       gender: formData.gender as Gender,
-      location: {
+      location: hasLocation ? {
         municipality_code: formData.municipality_code.trim(),
         municipality_name: formData.municipality_name.trim(),
         subregion: formData.subregion.trim(),
         address: formData.address.trim()
-      },
+      } : undefined,
       entity_info: {
         id: formData.entity_id.trim(),
         name: formData.entity_name.trim()

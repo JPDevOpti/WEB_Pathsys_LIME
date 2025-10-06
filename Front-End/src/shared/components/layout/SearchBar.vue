@@ -42,7 +42,7 @@
         <!-- Dropdown de sugerencias -->
         <div
           v-if="isOpen && filteredItems.length"
-          class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden"
+          class="absolute z-[9999] mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden"
           role="listbox"
         >
           <ul class="max-h-72 overflow-auto">

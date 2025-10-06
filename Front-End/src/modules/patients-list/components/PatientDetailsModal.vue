@@ -77,7 +77,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Edad</p>
-                      <p class="text-sm font-bold text-gray-900">{{ patient?.age }} años</p>
+                      <p class="text-sm font-bold" :class="patient?.age && patient.age < 0 ? 'text-red-600' : 'text-gray-900'">{{ displayAge }}</p>
                     </div>
                   </div>
                 </div>
@@ -347,6 +347,16 @@ const loadPatientCases = async () => {
     isLoadingCases.value = false
   }
 }
+
+// Computed property para manejar la edad y detectar fechas futuras
+const displayAge = computed(() => {
+  if (!props.patient?.age) return '0 años'
+  const age = props.patient.age
+  if (age < 0) {
+    return 'Error: Fecha futura'
+  }
+  return `${age} años`
+})
 
 const getCaseStatusClass = (status: string) => {
   const statusClasses = {

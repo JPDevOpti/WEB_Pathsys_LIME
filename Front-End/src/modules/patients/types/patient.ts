@@ -41,7 +41,7 @@ export interface PatientData {
   birth_date: string
   age?: number
   gender: Gender
-  location: Location
+  location?: Location
   entity_info: EntityInfo
   care_type: CareType
   observations?: string
@@ -59,7 +59,7 @@ export interface CreatePatientRequest {
   second_lastname?: string
   birth_date: string
   gender: Gender
-  location: Location
+  location?: Location
   entity_info: EntityInfo
   care_type: CareType
   observations?: string

@@ -26,7 +26,7 @@
     <!-- Menú desplegable -->
     <div
       v-if="isOpen"
-      class="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+      class="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
     >
       <div class="py-1">
         <button

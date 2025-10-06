@@ -54,7 +54,7 @@
       <!-- Dropdown options -->
       <div
         v-if="isOpen && !disabled"
-        class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        class="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       >
         <!-- Loading state -->
         <div v-if="isLoadingTests" class="px-3 py-2 text-sm text-gray-500 text-center">

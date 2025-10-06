@@ -13,6 +13,8 @@
         @blur="handleBlur"
         :placeholder="placeholder"
         :maxlength="maxLength"
+        :min="min"
+        :max="max"
         :disabled="disabled"
         :class="inputClasses"
         :style="errors.length > 0 ? 'border-color: #ef4444 !important;' : ''"
@@ -71,6 +73,8 @@ interface Props {
   required?: boolean
   disabled?: boolean
   maxLength?: number
+  min?: string
+  max?: string
   showCounter?: boolean
   counterStyle?: string
   errors?: string[]

@@ -39,7 +39,7 @@
       :class="[
         'px-6',
         { 'bg-gray-50': loading },
-        { 'flex-1 flex flex-col min-h-0 overflow-hidden': $slots.footer },
+        { 'flex-1 flex flex-col min-h-0': $slots.footer },
         { 'flex-1 flex flex-col min-h-0': fullHeight && !$slots.footer },
         { 'py-3': dense },
         { 'py-4': !dense && fullHeight },

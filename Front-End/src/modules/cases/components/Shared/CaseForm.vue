@@ -1,6 +1,5 @@
 <template>
-  <div class="overflow-y-auto custom-scrollbar pr-2" style="max-height: 650px;">
-    <div class="space-y-6">
+  <div class="space-y-6">
       <!-- Entity and care type -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         <EntityList
@@ -70,16 +69,16 @@
       <!-- Edit mode fields: Case state and assigned pathologist -->
       <div v-if="editMode" class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         <FormSelect
-          :model-value="state"
+          :model-value="state || ''"
           @update:model-value="(value: string) => $emit('update:state', value)"
           label="Estado del Caso"
           placeholder="Seleccione el estado"
           :required="true"
-          :options="estadoOptions"
+          :options="estadoOptions || []"
           help-text="Estado actual del proceso"
         />
         <PathologistList
-          :model-value="assignedPathologist"
+          :model-value="assignedPathologist || ''"
           @update:model-value="(value: string) => $emit('update:assignedPathologist', value)"
           label="Patólogo Asignado"
           placeholder="Buscar y seleccionar patólogo"
@@ -96,7 +95,7 @@
           v-model.number="formData.numberOfSamples"
           label="Número de Muestras"
           type="number"
-          :min="1"
+          min="1"
           :required="true"
           :errors="errors?.numberOfSamples"
           :warnings="warnings?.numberOfSamples"
@@ -166,7 +165,7 @@
                       v-model.number="test.quantity" 
                       label="Cantidad" 
                       type="number" 
-                      :min="1" 
+                      min="1" 
                       placeholder="Cantidad" 
                     />
                   </div>
@@ -194,7 +193,6 @@
         help-text="Información adicional relevante para el procesamiento del caso"
       />
     </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -219,17 +217,7 @@ const props = withDefaults(defineProps<{
   getRegionErrors?: (sampleIndex: number) => string[]
   getPruebaErrors?: (sampleIndex: number, testIndex: number) => string[]
 }>(), {
-  editMode: false,
-  validationState: null,
-  errors: () => ({}),
-  warnings: () => ({}),
-  estadoOptions: () => [],
-  state: '',
-  assignedPathologist: '',
-  getMedicoErrors: () => [],
-  getServicioErrors: () => [],
-  getRegionErrors: () => () => [],
-  getPruebaErrors: () => () => []
+  editMode: false
 })
 
 const emit = defineEmits<{
