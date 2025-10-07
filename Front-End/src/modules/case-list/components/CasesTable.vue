@@ -29,8 +29,8 @@
           </button>
           
           <button
+            v-if="!isPatologo && !isResidente && !isFacturacion"
             @click="handleBatchMarkDelivered"
-            :disabled="isPatologo || isFacturacion"
             class="inline-flex items-center gap-2 px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -432,7 +432,7 @@ const handleBatchDownloadExcel = async () => {
 }
 
 const handleBatchMarkDelivered = () => {
-  if (isPatologo?.value || isFacturacion?.value) return
+  if (isPatologo?.value || isResidente?.value || isFacturacion?.value) return
   
   const selectedCases = props.cases.filter(c => props.selectedIds.includes(c.id))
   const invalidCases = selectedCases.filter(c => c.status !== 'Por entregar')

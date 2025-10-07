@@ -6,31 +6,31 @@
       @click.self="$emit('close')"
     >
       <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <!-- Close button -->
-        <button
-          @click="$emit('close')"
-          class="absolute top-4 right-4 z-10 p-2 rounded-lg bg-white hover:bg-gray-100 transition-all duration-200 text-gray-600 hover:text-gray-800 shadow-sm border border-gray-200 hover:border-gray-300"
-          title="Cerrar"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        
         <!-- Header -->
-        <div class="flex-shrink-0 px-4 py-4 pr-12 border-b border-gray-200 bg-white rounded-t-2xl">
-          <div class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+        <div class="flex-shrink-0 px-6 py-5 border-b border-gray-200 bg-white rounded-t-2xl">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
+                  <SpecialCaseIcon class="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Detalles de la Técnica Complementaria</h3>
+                <p class="text-gray-600 text-xs mt-1">Información completa de la técnica</p>
               </div>
             </div>
-            <div>
-              <h3 class="text-lg font-bold text-gray-900">Detalles de la Técnica Complementaria</h3>
-              <p class="text-gray-600 text-xs mt-1">Información completa de la técnica</p>
-            </div>
+            
+            <!-- Close button -->
+            <button
+              @click="$emit('close')"
+              class="flex-shrink-0 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-200 text-gray-600 hover:text-gray-800"
+              title="Cerrar"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -42,9 +42,7 @@
               <div class="flex items-start gap-4">
                 <div class="flex-shrink-0">
                   <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                    <SpecialCaseIcon class="w-6 h-6 text-blue-600" />
                   </div>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -312,6 +310,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ComplementaryTechnique } from '../../types'
+import SpecialCaseIcon from '@/assets/icons/SpecialCaseIcon.vue'
 
 interface Props {
   technique: ComplementaryTechnique | null

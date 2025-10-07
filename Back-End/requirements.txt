@@ -3,6 +3,7 @@ fastapi==0.117.1
 uvicorn[standard]==0.32.1
 pydantic==2.10.0
 pydantic-settings==2.1.0
+pydantic-core==2.27.0
 
 # Base de datos MongoDB
 motor==3.7.1
@@ -11,8 +12,11 @@ dnspython==2.7.0
 
 # Autenticación y seguridad
 python-jose[cryptography]==3.3.0
+cryptography==46.0.1
 passlib[bcrypt]==1.7.4
-argon2-cffi==23.1.0
+bcrypt==5.0.0
+argon2-cffi==25.1.0
+argon2-cffi-bindings==25.1.0
 python-multipart==0.0.6
 
 # CORS y middleware
@@ -32,9 +36,11 @@ python-json-logger==2.0.7
 # Cliente HTTP para testing
 httpx==0.25.2
  
-# Lectura de Excel para scripts de importación
+# Procesamiento de datos para scripts de importación
 openpyxl==3.1.5
+pandas==2.2.3
 
-# PDF generation
+# Generación de PDFs
 playwright==1.48.0
 jinja2==3.1.2
+markupsafe==3.0.2

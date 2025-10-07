@@ -52,16 +52,14 @@
 
     <template #footer>
       <div class="flex flex-col sm:flex-row justify-between gap-3">
-        <!-- Botón de Nuevo Caso (Izquierda) -->
+        <!-- Botón de Nuevo Caso Especial (Izquierda) -->
         <div class="flex">
           <button
             @click="$emit('new-technique')"
             class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-600 bg-transparent border border-green-600 rounded-lg hover:bg-green-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Nuevo Caso
+            <SpecialCaseIcon class="w-4 h-4 mr-1.5" />
+            Nuevo Caso Especial
           </button>
         </div>
 
@@ -97,6 +95,7 @@ import { reactive, watch, onMounted } from 'vue'
 import { BaseButton, ComponentCard } from '@/shared/components'
 import { RefreshIcon, DocsIcon, TrashIcon } from '@/assets/icons'
 import TestIcon from '@/assets/icons/TestIcon.vue'
+import SpecialCaseIcon from '@/assets/icons/SpecialCaseIcon.vue'
 import { FormInputField, FormSelect, DateInputField } from '@/shared/components/ui/forms'
 import { SearchButton } from '@/shared/components/ui/buttons'
 

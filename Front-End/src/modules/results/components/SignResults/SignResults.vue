@@ -135,7 +135,7 @@
             </div>
           </div>
 
-          <div v-if="caseDetails?.case_code && !caseDetails.assigned_pathologist?.name && (authStore.user?.role === 'administrator' || authStore.user?.role === 'administrador')"
+          <div v-if="caseDetails?.case_code && !caseDetails.assigned_pathologist?.name && authStore.user?.role === 'administrator'"
             class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div class="flex items-center">
               <svg class="w-5 h-5 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +155,7 @@
               <div>
                 <p class="text-sm font-medium text-red-800">No autorizado para firmar</p>
                 <p class="text-sm text-red-700">
-                  <template v-if="authStore.user?.role === 'patologo'">
+                  <template v-if="authStore.user?.role === 'pathologist'">
                     Este caso está asignado a <strong>{{ caseDetails.assigned_pathologist.name }}</strong>. 
                     Solo el patólogo asignado o un administrador pueden firmar este resultado.
                   </template>
@@ -294,7 +294,7 @@ onMounted(() => {
   // Refrescar firma del patólogo desde backend si no está en memoria
   try {
     const email = authStore.user?.email
-    if (authStore.user?.role === 'patologo' && email) {
+    if (authStore.user?.role === 'pathologist' && email) {
       const current = (authStore.user as any).firma || (authStore.user as any).firma_url || (authStore.user as any).signatureUrl || (authStore.user as any).firmaDigital
       if (!current) {
         profileApiService.getByRoleAndEmail('patologo', email).then((pb: any) => {
@@ -354,16 +354,16 @@ const isAssignedPathologist = computed(() => {
 const canUserSign = computed(() => {
   if (!authStore.user) return false
   // Los administradores pueden firmar cualquier caso
-  if (authStore.user.role === 'administrator' || authStore.user.role === 'administrador') return true
+  if (authStore.user.role === 'administrator') return true
   // Los patólogos solo pueden firmar sus casos asignados
-  if (authStore.user.role === 'patologo') return isAssignedPathologist.value
+  if (authStore.user.role === 'pathologist') return isAssignedPathologist.value
   return false
 })
 
 // Patólogo sin firma digital configurada
 const isPathologistWithoutSignature = computed(() => {
   if (!authStore.user) return false
-  if (authStore.user.role !== 'patologo') return false
+  if (authStore.user.role !== 'pathologist') return false
   let firma = (authStore.user as any).firma || (authStore.user as any).firma_url || (authStore.user as any).signatureUrl || (authStore.user as any).firmaDigital
   if (!firma) {
     try { firma = localStorage.getItem('signature_url') || firma } catch {}
@@ -376,7 +376,7 @@ const isPathologistWithoutSignature = computed(() => {
 const needsAssignedPathologist = computed(() => {
   if (!authStore.user || !caseDetails.value?.case_code) return false
   // Los administradores pueden firmar casos sin patólogo asignado
-  if (authStore.user.role === 'administrator' || authStore.user.role === 'administrador') return false
+  if (authStore.user.role === 'administrator') return false
   // Todos los demás usuarios requieren que el caso tenga un patólogo asignado
   return !caseDetails.value.assigned_pathologist?.name
 })
@@ -816,13 +816,14 @@ const handleCreateApprovalRequest = async (payload: { case_code: string; reason:
     }
     
     // Validar que el caso tenga método, corte macro, micro y diagnósticos completos
-    if (!caseDetails.value?.result?.macro_result?.trim()) {
+    // Verificar en el editor local (sections) en lugar del estado guardado
+    if (!sections.value?.macro?.trim()) {
       throw new Error('El caso debe tener un resultado macroscópico antes de solicitar pruebas complementarias')
     }
-    if (!caseDetails.value?.result?.micro_result?.trim()) {
+    if (!sections.value?.micro?.trim()) {
       throw new Error('El caso debe tener un resultado microscópico antes de solicitar pruebas complementarias')
     }
-    if (!caseDetails.value?.result?.diagnosis?.trim()) {
+    if (!sections.value?.diagnosis?.trim()) {
       throw new Error('El caso debe tener un diagnóstico antes de solicitar pruebas complementarias')
     }
     

@@ -6,29 +6,31 @@
       @click.self="$emit('close')"
     >
       <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <!-- Close button absolute -->
-        <button
-          @click="$emit('close')"
-          class="absolute top-4 right-4 z-10 p-2 rounded-lg bg-white/90 hover:bg-white transition-all duration-200 text-gray-600 hover:text-gray-800 ring-1 ring-transparent hover:ring-gray-200 hover:scale-105"
-          title="Cerrar"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        
         <!-- Header fijo -->
-        <div class="flex-shrink-0 px-4 py-4 pr-12 border-b border-gray-200 bg-white rounded-t-2xl">
-          <div class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-                <CaseIcon class="w-5 h-5 text-blue-600" />
+        <div class="flex-shrink-0 px-6 py-5 border-b border-gray-200 bg-white rounded-t-2xl">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
+                  <CaseIcon class="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Detalles del Caso</h3>
+                <p class="text-gray-600 text-xs mt-1">Información completa del caso</p>
               </div>
             </div>
-            <div>
-              <h3 class="text-lg font-bold text-gray-900">Detalles del Caso</h3>
-              <p class="text-gray-600 text-xs mt-1">Información completa del caso</p>
-            </div>
+            
+            <!-- Close button -->
+            <button
+              @click="$emit('close')"
+              class="flex-shrink-0 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-200 text-gray-600 hover:text-gray-800"
+              title="Cerrar"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -473,8 +475,7 @@ import { computed, ref } from 'vue'
 import type { Case } from '../types/case.types'
 import { DocsIcon } from '@/assets/icons'
 import { NotesDialog } from '@/shared/components/ui/feedback'
-import { CloseButton, PrintPdfButton } from '@/shared/components/ui/buttons'
-import { Modal } from '@/shared/components/layout'
+import { PrintPdfButton } from '@/shared/components/ui/buttons'
 import { casesApiService } from '@/modules/cases/services/casesApi.service'
 import { useNotifications } from '@/modules/cases/composables/useNotifications'
 import { useSidebar } from '@/shared/composables/SidebarControl'

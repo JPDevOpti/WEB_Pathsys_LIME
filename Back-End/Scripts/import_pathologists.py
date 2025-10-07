@@ -25,7 +25,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.config.database import get_database, close_mongo_connection
 from app.modules.pathologists.schemas.pathologist import PathologistCreate
 from app.modules.pathologists.services.pathologist_service import PathologistService
-from app.shared.services.user_management import UserManagementService
 
 
 def derive_initials(raw_initials: Optional[str], raw_name: str) -> str:
@@ -42,8 +41,15 @@ def compose_email(code: str, initials: str) -> str:
 
 
 def generate_default_password(code: str, initials: str) -> str:
-    # Generate a default password using only the code
-    return code
+    # Generate a default password using the code
+    # Ensure minimum 6 characters
+    password = code
+    if len(password) < 6:
+        # Pad with initials if code is too short
+        password = f"{code}{initials}"
+        if len(password) < 6:
+            password = password.ljust(6, '0')
+    return password[:128]  # Ensure max 128 characters
 
 
 # Embedded list of pathologists (Teachers) provided
@@ -58,7 +64,7 @@ PATHOLOGISTS_DOCENTES: List[Dict[str, str]] = [
     {"raw_code": "30582655", "raw_name": "Dilia Rosa Díaz Macea", "raw_siglas": "DRD", "registro_medico": "R-5-1161-10", "email": "diliadiazm@yahoo.com"},
     {"raw_code": "1144050050", "raw_name": "Luis Eduardo Muñoz Rayo", "raw_siglas": "LEM", "registro_medico": "R-1144050050", "email": "luis.munoz2@udea.edu.co"},
     {"raw_code": "1017233614", "raw_name": "Janine Orejuela Erazo", "raw_siglas": "JOE", "registro_medico": "R-1017233614", "email": "janine.orejuela@udea.edu.co"},
-    {"raw_code": "10102849456", "raw_name": "Emil de Jesús Jiménez Berastegui", "raw_siglas": "EJB", "registro_medico": "R-1102849456", "email": "emil.jimenezb@udea.edu.co"},
+    {"raw_code": "1102849456", "raw_name": "Emil de Jesús Jiménez Berastegui", "raw_siglas": "EJB", "registro_medico": "R-1102849456", "email": "emil.jimenezb@udea.edu.co"},
     {"raw_code": "1036636079", "raw_name": "Julieth Alexandra Franco Mira", "raw_siglas": "JFM", "registro_medico": "R-1036636079", "email": "juliethfranco13@gmail.com"},
     {"raw_code": "1130613519", "raw_name": "Andrés Lozano Camayo", "raw_siglas": "ALC", "registro_medico": "R-1130613519", "email": "feloza@gmail.com"},
     {"raw_code": "70092000", "raw_name": "German de Jesus Osorio Sandoval", "raw_siglas": "GOS", "registro_medico": "R-2863", "email": "osoriosandoval2000@yahoo.es"},
@@ -143,7 +149,6 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
     db = await get_database()
     try:
         service = PathologistService(db)
-        user_service = UserManagementService(db)
 
         for i, row in enumerate(PATHOLOGISTS_DOCENTES, 1):
             raw_code = str(row.get("raw_code", "")).strip()
@@ -183,8 +188,15 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                     skipped += 1
                     continue
 
-                # Create payload using validation schema
+                # Generate default password for user creation
                 default_password = generate_default_password(raw_code, initials)
+                
+                # Validate password length
+                if len(default_password) < 6:
+                    print(f"  [ERROR] Generated password is too short (min 6 chars): {default_password}")
+                    errors += 1
+                    continue
+                
                 payload = PathologistCreate(
                     pathologist_code=raw_code,
                     pathologist_name=raw_name,
@@ -197,41 +209,24 @@ async def import_pathologists(dry_run: bool) -> Tuple[int, int]:
                     password=default_password
                 )
 
-                # Create pathologist
+                # Create pathologist (this also creates the user account automatically)
                 await service.create_pathologist(payload)
                 print(f"  [OK] Pathologist created successfully")
                 print(f"    - Code: {raw_code}")
                 print(f"    - Email: {email}")
                 print(f"    - Initials: {initials}")
                 print(f"    - Medical License: {registro_medico}")
+                print(f"    - Password: {default_password} (encrypted in database)")
                 created += 1
-                
-                # Create user account
-                default_password = generate_default_password(raw_code, initials)
-                user = await user_service.create_user_for_pathologist(
-                    name=raw_name,
-                    email=email,
-                    password=default_password,
-                    pathologist_code=raw_code,
-                    is_active=True
-                )
-                
-                if user:
-                    print(f"  [OK] User account created successfully")
-                    print(f"    - User ID: {user.get('id', 'N/A')}")
-                    print(f"    - Email: {user.get('email', 'N/A')}")
-                    print(f"    - Role: {user.get('role', 'N/A')}")
-                    print(f"    - Password: {default_password} (encrypted in database)")
-                    users_created += 1
-                else:
-                    print(f"  [WARNING] User account already exists or could not be created")
-                    users_skipped += 1
+                users_created += 1
                 
             except ValueError as e:
                 print(f"  [SKIP] Validation error: {str(e)}")
                 skipped += 1
             except Exception as e:
-                print(f"  [ERROR] Unexpected error: {str(e)}")
+                print(f"  [ERROR] Unexpected error: {type(e).__name__}: {str(e)}")
+                import traceback
+                print(f"  Traceback: {traceback.format_exc()}")
                 errors += 1
 
         # Final summary

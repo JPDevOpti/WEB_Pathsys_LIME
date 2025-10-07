@@ -1,8 +1,19 @@
 # =============================
-# General
+# General - OS Files
 # =============================
 .DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# =============================
+# General - Editor Files
+# =============================
 *.log
 logs/
 .tmp/
@@ -11,42 +22,81 @@ logs/
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
+.*.swp
+.*.swo
 
 # =============================
 # Python (Back-End)
 # =============================
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
+.Python
+
+# Testing
 .pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage*
+.tox/
+.nox/
+.coverage
+.coverage.*
 coverage.xml
 htmlcov/
+*.cover
+.hypothesis/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Linting
+.ruff_cache/
+.pylint.d/
+
+# Distribution / packaging
 .eggs/
 *.egg-info/
+*.egg
+dist/
+build/
 .build/
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Virtual environments
 .venv/
 venv/
 ENV/
+env/
 Back-End/venv/
+Back-End/.venv/
 
-# Poetry / pip-tools (si aplica)
+# Poetry / pip-tools
 poetry.lock
 pip-wheel-metadata/
+Pipfile.lock
 
 # =============================
 # Node/Vue (Front-End)
 # =============================
+# Dependencies
 node_modules/
 Front-End/node_modules/
+jspm_packages/
+
+# Build outputs
 Front-End/dist/
 dist/
 .next/
 .nuxt/
+out/
 .vite/
 Front-End/.vite/
 .cache-loader/
@@ -55,15 +105,60 @@ Front-End/.vite/
 build/
 
 # =============================
-# Docker
-# =============================
-**/.dockerignore
-
-# =============================
 # Env/Secrets
 # =============================
+# Environment files
 .env
-.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
 Back-End/.env
+Front-End/.env
+
+# Allowed config file
 !Back-End/config.atlas.env
+
+# =============================
+# Uploads & User Content
+# =============================
+Back-End/uploads/signatures/*
+!Back-End/uploads/signatures/.gitkeep
+
+# =============================
+# Database Files
+# =============================
+*.sqlite
+*.sqlite3
+*.db
+dump.rdb
+*.mdb
+
+# =============================
+# Certificates & Keys
+# =============================
+*.pem
+*.key
+*.cert
+*.crt
+!**/test-*.pem
+!**/test-*.key
+
+# =============================
+# IDE Specific
+# =============================
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+!.vscode/recommended-extensions.json
+.idea/
+
+# =============================
+# Temporary Files
+# =============================
+*.bak
+*.tmp
+*.temp
+.~*
 
