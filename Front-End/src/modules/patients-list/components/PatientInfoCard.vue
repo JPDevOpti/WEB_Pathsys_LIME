@@ -85,6 +85,7 @@
             </button>
             
             <button
+              v-if="canEditPatient"
               @click="handleEdit"
               class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
@@ -116,6 +117,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { ComponentCard } from '@/shared/components'
 
 // Types
@@ -158,6 +160,10 @@ const emit = defineEmits<{
 
 // Computed
 const hasSelectedPatient = computed(() => props.selectedPatient !== null)
+
+// Ocultar acción de editar para patólogos
+const { isPatologo } = usePermissions()
+const canEditPatient = computed(() => !isPatologo.value)
 
 // Methods
 const formatDate = (dateString: string): string => {

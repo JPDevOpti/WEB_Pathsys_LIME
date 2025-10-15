@@ -330,8 +330,9 @@ const canAccessRoute = (path: string): boolean => {
     if (path.startsWith('/statistics/')) return false; // Todos los submenús de estadísticas
     
     // Permitir solo ciertas rutas
-  const result = path.startsWith('/dashboard') || 
+    const result = path.startsWith('/dashboard') || 
            path.startsWith('/cases/list') || 
+                   path.startsWith('/patients/list') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/sign') || 
                    path.startsWith('/complementary-techniques') ||
@@ -361,8 +362,9 @@ const canAccessRoute = (path: string): boolean => {
     if (path.startsWith('/results/sign')) return false; // Firmar resultados
     
     // Permitir solo ciertas rutas
-  const result = path.startsWith('/dashboard') || 
+    const result = path.startsWith('/dashboard') || 
            path.startsWith('/cases/list') || 
+                   path.startsWith('/patients/list') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/perform') || 
                    path.startsWith('/complementary-techniques') ||
@@ -428,6 +430,7 @@ const filteredMenuItems = computed(() => {
       name: "Gestión de pacientes",
       icon: PatientsIcon,
       subItems: [
+        { name: "Lista de pacientes", path: "/patients/list", pro: false, alwaysVisible: true },
         { name: "Crear paciente", path: "/patients/new", pro: false, alwaysVisible: true },
         { name: "Editar paciente", path: "/patients/edit", pro: false, alwaysVisible: true },
       ],

@@ -15,7 +15,8 @@ import type {
 } from '@/modules/support/types/support.types'
 
 export class TicketsService {
-  private baseURL = '/tickets'
+  // Use trailing slash to match FastAPI routes and avoid 3xx redirects
+  private baseURL = '/tickets/'
 
   /**
    * Listar tickets con paginación y filtros
@@ -36,7 +37,7 @@ export class TicketsService {
    * Obtener ticket específico por código
    */
   async getTicketByCode(ticketCode: string): Promise<SupportTicket> {
-    const response = await apiClient.get(`${this.baseURL}/${ticketCode}`)
+    const response = await apiClient.get(`${this.baseURL}${ticketCode}`)
     return response
   }
 
@@ -81,7 +82,7 @@ export class TicketsService {
     if (data.category !== undefined) updateData.category = data.category
     if (data.description !== undefined) updateData.description = data.description
 
-    const response = await apiClient.put(`${this.baseURL}/${ticketCode}`, updateData)
+    const response = await apiClient.put(`${this.baseURL}${ticketCode}`, updateData)
     return response
   }
 
@@ -89,14 +90,14 @@ export class TicketsService {
    * Eliminar ticket (solo administradores)
    */
   async deleteTicket(ticketCode: string): Promise<void> {
-    await apiClient.delete(`${this.baseURL}/${ticketCode}`)
+    await apiClient.delete(`${this.baseURL}${ticketCode}`)
   }
 
   /**
    * Cambiar estado de ticket (solo administradores)
    */
   async changeStatus(ticketCode: string, status: TicketStatusEnum): Promise<SupportTicket> {
-    const response = await apiClient.patch(`${this.baseURL}/${ticketCode}/status`, { status })
+    const response = await apiClient.patch(`${this.baseURL}${ticketCode}/status`, { status })
     return response
   }
 
@@ -107,7 +108,8 @@ export class TicketsService {
     filters: TicketSearch,
     skip: number = 0,
     limit: number = 20,
-    sortBy: string = 'fecha_ticket',
+    // Align with backend field name
+    sortBy: string = 'ticket_date',
     sortOrder: string = 'desc'
   ): Promise<SupportTicket[]> {
     const params = { 
@@ -117,7 +119,7 @@ export class TicketsService {
       sort_order: sortOrder 
     }
     
-    const response = await apiClient.post(`${this.baseURL}/search`, filters, { params })
+    const response = await apiClient.post(`${this.baseURL}search`, filters, { params })
     return response
   }
 
@@ -125,7 +127,7 @@ export class TicketsService {
    * Contar tickets que coinciden con filtros
    */
   async countTickets(filters: TicketSearch = {}): Promise<number> {
-    const response = await apiClient.get(`${this.baseURL}/count`, { params: filters })
+    const response = await apiClient.get(`${this.baseURL}count`, { params: filters })
     return response.total
   }
 
@@ -137,11 +139,9 @@ export class TicketsService {
     formData.append('image', file)
     
     const response = await apiClient.post(
-      `${this.baseURL}/${ticketCode}/upload-image`, 
+      `${this.baseURL}${ticketCode}/upload-image`, 
       formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      }
+      { headers: { 'Content-Type': 'multipart/form-data' } }
     )
     
     return (response as any).image_url
@@ -151,14 +151,15 @@ export class TicketsService {
    * Eliminar imagen de ticket
    */
   async deleteImage(ticketCode: string): Promise<void> {
-    await apiClient.delete(`${this.baseURL}/${ticketCode}/image`)
+    await apiClient.delete(`${this.baseURL}${ticketCode}/image`)
   }
 
   /**
    * Obtener siguiente consecutivo (consulta sin consumir)
    */
   async getNextConsecutive(): Promise<string> {
-    const response = await apiClient.get(`${this.baseURL}/siguiente-consecutivo`)
+    // Correct backend endpoint name
+    const response = await apiClient.get(`${this.baseURL}next-consecutive`)
     return (response as any).codigo_consecutivo
   }
 
@@ -167,7 +168,7 @@ export class TicketsService {
    */
   async testConnection(): Promise<boolean> {
     try {
-      const response = await apiClient.get(`${this.baseURL}/test`)
+      const response = await apiClient.get(`${this.baseURL}test`)
       return (response as any).message === 'Tickets router funcionando correctamente'
     } catch {
       return false
@@ -204,7 +205,7 @@ export class TicketsService {
     filters: TicketFilters,
     skip: number = 0,
     limit: number = 20,
-    sortBy: string = 'fecha_ticket',
+    sortBy: string = 'ticket_date',
     sortOrder: string = 'desc'
   ): Promise<SupportTicket[]> {
     const searchParams = this.convertFiltersToSearch(filters)

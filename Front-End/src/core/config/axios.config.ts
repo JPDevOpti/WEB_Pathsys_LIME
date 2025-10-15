@@ -41,9 +41,19 @@ class ApiClient {
           }
         } catch {}
         // Read token from either localStorage or sessionStorage to support rememberMe persistence
-        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+        const localToken = localStorage.getItem('auth_token')
+        const sessionToken = sessionStorage.getItem('auth_token')
+        const token = localToken || sessionToken
+        
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
+          console.log('🔑 [AXIOS] Token found and added to request:', {
+            source: localToken ? 'localStorage' : 'sessionStorage',
+            tokenLength: token.length,
+            url: config.url
+          })
+        } else {
+          console.warn('⚠️ [AXIOS] No token found in storage for request:', config.url)
         }
         
         return config

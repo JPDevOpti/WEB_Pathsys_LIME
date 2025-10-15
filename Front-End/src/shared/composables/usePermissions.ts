@@ -4,7 +4,7 @@
 
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
-import type { RolEnum } from '@/modules/auth/types/auth.types'
+import type { RoleEnum } from '@/modules/auth/types/auth.types'
 
 export function usePermissions() {
   const authStore = useAuthStore()
@@ -14,7 +14,7 @@ export function usePermissions() {
   const isAuxiliar = computed(() => authStore.isAuxiliary)
   const isPatologo = computed(() => authStore.isPathologist)
   const isResidente = computed(() => authStore.isResident)
-  const isRecepcionista = computed(() => authStore.userRole === 'recepcionista')
+  const isRecepcionista = computed(() => authStore.userRole === 'receptionist')
   const isFacturacion = computed(() => authStore.isBilling)
 
   // Permisos específicos por funcionalidad
@@ -36,17 +36,17 @@ export function usePermissions() {
   const canAccessStatistics = computed(() => isAdmin.value || isFacturacion.value) // Admin y facturación pueden acceder a estadísticas
 
   // Función para verificar si un usuario tiene un rol específico
-  const hasRole = (role: RolEnum): boolean => {
+  const hasRole = (role: RoleEnum): boolean => {
     return authStore.userRole === role
   }
 
   // Función para verificar si un usuario tiene alguno de los roles especificados
-  const hasAnyRole = (roles: RolEnum[]): boolean => {
-    return roles.includes(authStore.userRole as RolEnum)
+  const hasAnyRole = (roles: RoleEnum[]): boolean => {
+    return roles.includes(authStore.userRole as RoleEnum)
   }
 
   // Función para verificar si un usuario tiene todos los roles especificados
-  const hasAllRoles = (roles: RolEnum[]): boolean => {
+  const hasAllRoles = (roles: RoleEnum[]): boolean => {
     return roles.every(role => authStore.userRole === role)
   }
 

@@ -437,21 +437,19 @@
     {% endif %}
 
     <!-- Pruebas Complementarias -->
-    {% if case.complementary_tests and case.complementary_tests|length > 0 %}
+    {% if pruebas_complementarias and pruebas_complementarias.pruebas and pruebas_complementarias.pruebas|length > 0 %}
     <div class="content-section">
       <div class="section-title">SE NECESITAN PRUEBAS COMPLEMENTARIAS PARA COMPLETAR EL DIAGNÓSTICO:</div>
-      <div style="margin: ; padding: 0mm; line-height: 1.6; font-size: 12px;">
+      <div style="margin: 0; padding: 0mm; line-height: 1.6; font-size: 12px;">
         <strong>Pruebas solicitadas:</strong><br/>
-        {% for test in case.complementary_tests %}
-          {% if test.code and test.name %}
-          • {{ test.code }} - {{ test.name }}{% if test.quantity and test.quantity > 1 %} (Cantidad: {{ test.quantity }}){% endif %}<br/>
+        {% for test in pruebas_complementarias.pruebas %}
+          {% if test.codigo and test.nombre %}
+          • {{ test.codigo }} - {{ test.nombre }}{% if test.cantidad and test.cantidad > 1 %} (Cantidad: {{ test.cantidad }}){% endif %}<br/>
           {% endif %}
         {% endfor %}
-        {% for test in case.complementary_tests %}
-          {% if test.reason %}
-          <strong>Motivo:</strong> {{ test.reason }}
-          {% endif %}
-        {% endfor %}
+        {% if pruebas_complementarias.motivo %}
+        <br/><strong>Motivo:</strong> {{ pruebas_complementarias.motivo }}
+        {% endif %}
       </div>
     </div>
     {% endif %}

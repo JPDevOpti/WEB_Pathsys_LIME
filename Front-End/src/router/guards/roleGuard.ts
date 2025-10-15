@@ -16,7 +16,9 @@ export function roleGuard(
     next()
     return
   }
-  const userRole = authStore.userRole
+  // Normalizar rol para evitar discrepancias por mayúsculas/minúsculas o acentos
+  const rawRole = authStore.userRole || ''
+  const userRole = rawRole.toString().trim().toLowerCase()
   
   // SIEMPRE permitir acceso al dashboard para evitar bucles infinitos
   if (to.path === '/dashboard') {
@@ -30,7 +32,26 @@ export function roleGuard(
   }
   // Definir las rutas permitidas para cada rol
   const roleRoutes: Record<string, string[]> = {
+    // Patólogo (inglés y español)
     pathologist: [
+      '/dashboard',
+      '/cases',
+      '/results',
+      '/complementary-techniques',
+      '/patients',
+      '/profile',
+      '/support'
+    ],
+    patologo: [
+      '/dashboard',
+      '/cases',
+      '/results',
+      '/complementary-techniques',
+      '/patients',
+      '/profile',
+      '/support'
+    ],
+    'patólogo': [
       '/dashboard',
       '/cases',
       '/results',
@@ -60,7 +81,33 @@ export function roleGuard(
       '/reports',
       '/support'
     ],
+    // Alias en español para residente
+    residente: [
+      '/dashboard',
+      '/cases',
+      '/results',
+      '/complementary-techniques',
+      '/patients',
+      '/profile',
+      '/reports',
+      '/support'
+    ],
     billing: [
+      '/dashboard',
+      '/cases/list',
+      '/statistics',
+      '/profile',
+      '/support'
+    ],
+    // Alias en español para facturación
+    facturacion: [
+      '/dashboard',
+      '/cases/list',
+      '/statistics',
+      '/profile',
+      '/support'
+    ],
+    'facturación': [
       '/dashboard',
       '/cases/list',
       '/statistics',
@@ -74,6 +121,7 @@ export function roleGuard(
       '/profile',
       '/support'
     ],
+    // Administrador (inglés y español)
     administrator: [
       '/dashboard',
       '/cases',
@@ -86,17 +134,69 @@ export function roleGuard(
       '/support',
       '/pathologist-assignment'
     ],
+    administrador: [
+      '/dashboard',
+      '/cases',
+      '/results',
+      '/complementary-techniques',
+      '/patients',
+      '/profile',
+      '/reports',
+      '/statistics',
+      '/support',
+      '/pathologist-assignment'
+    ],
+    // Paciente (inglés y español)
     patient: [
       '/dashboard',
       '/cases/list',
       '/profile',
       '/support'
     ],
+    paciente: [
+      '/dashboard',
+      '/cases/list',
+      '/profile',
+      '/support'
+    ],
+    // Recepcionista (inglés y español)
     receptionist: [
       '/dashboard',
       '/cases/list',
       '/profile',
       '/support'
+    ],
+    recepcionista: [
+      '/dashboard',
+      '/cases/list',
+      '/profile',
+      '/support'
+    ],
+    // Additional role mappings for potential backend role variations
+    // Auxiliar (variaciones)
+    auxiliary: [
+      '/dashboard',
+      '/cases',
+      '/results',
+      '/complementary-techniques',
+      '/patients',
+      '/profile',
+      '/reports',
+      '/statistics',
+      '/support'
+    ],
+    // Admin (alias)
+    admin: [
+      '/dashboard',
+      '/cases',
+      '/results',
+      '/complementary-techniques',
+      '/patients',
+      '/profile',
+      '/reports',
+      '/statistics',
+      '/support',
+      '/pathologist-assignment'
     ]
   }
 
@@ -104,9 +204,15 @@ export function roleGuard(
   const allowedRoutes = roleRoutes[userRole] || []
   
   // Verificar si la ruta actual está permitida para el rol
-  const isRouteAllowed = allowedRoutes.some((route: string) => 
+  let isRouteAllowed = allowedRoutes.some((route: string) => 
     to.path.startsWith(route)
   )
+
+  // Fallback: Allow access to support for any authenticated user, regardless of role
+  if (!isRouteAllowed && to.path === '/support') {
+    console.log('🔍 [DEBUG RoleGuard] Permitiendo acceso a soporte como fallback para usuario autenticado')
+    isRouteAllowed = true
+  }
 
   // Debug para la ruta de asignación de patólogos
   if (to.path === '/pathologist-assignment') {
@@ -114,6 +220,15 @@ export function roleGuard(
     console.log('🔍 [DEBUG RoleGuard] Rol del usuario:', userRole)
     console.log('🔍 [DEBUG RoleGuard] Rutas permitidas:', allowedRoutes)
     console.log('🔍 [DEBUG RoleGuard] ¿Ruta permitida?:', isRouteAllowed)
+  }
+
+  // Debug para la ruta de soporte
+  if (to.path === '/support') {
+    console.log('🔍 [DEBUG RoleGuard] Intentando acceder a soporte:', to.path)
+    console.log('🔍 [DEBUG RoleGuard] Rol del usuario:', userRole)
+    console.log('🔍 [DEBUG RoleGuard] Rutas permitidas:', allowedRoutes)
+    console.log('🔍 [DEBUG RoleGuard] ¿Ruta permitida?:', isRouteAllowed)
+    console.log('🔍 [DEBUG RoleGuard] Roles disponibles en roleRoutes:', Object.keys(roleRoutes))
   }
 
   if (!isRouteAllowed) {

@@ -5,6 +5,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApiService } from '@/modules/auth/services/authApi'
+import { TokenRefreshService } from '@/services/tokenRefreshService'
 import type { LoginRequest, User, AuthError } from '@/modules/auth/types/auth.types'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -15,16 +16,33 @@ export const useAuthStore = defineStore('auth', () => {
   const error = ref<string | null>(null)
 
   // Getters
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const isAuthenticated = computed(() => {
+    const hasToken = !!token.value
+    const hasUser = !!user.value
+    const result = hasToken && hasUser
+    
+    // Debug authentication state
+    if (!result) {
+      console.log('🔍 [DEBUG AuthStore] isAuthenticated = false')
+      console.log('🔍 [DEBUG AuthStore] - hasToken:', hasToken)
+      console.log('🔍 [DEBUG AuthStore] - hasUser:', hasUser)
+      console.log('🔍 [DEBUG AuthStore] - token value:', token.value ? 'exists' : 'null')
+      console.log('🔍 [DEBUG AuthStore] - user value:', user.value ? 'exists' : 'null')
+    }
+    
+    return result
+  })
   const userRole = computed(() => {
     return user.value?.role || null
   })
-  const isAdministrator = computed(() => userRole.value === 'administrator')
-  const isAuxiliary = computed(() => userRole.value === 'auxiliar')
-  const isPathologist = computed(() => userRole.value === 'pathologist')
-  const isResident = computed(() => userRole.value === 'resident')
-  const isPatient = computed(() => userRole.value === 'patient')
-  const isBilling = computed(() => userRole.value === 'billing')
+  // Normalizar rol para compatibilidad con variantes en español e inglés
+  const normalizedRole = computed(() => (userRole.value || '').toString().trim().toLowerCase())
+  const isAdministrator = computed(() => ['administrator', 'admin', 'administrador'].includes(normalizedRole.value))
+  const isAuxiliary = computed(() => ['auxiliar', 'auxiliary', 'assistant'].includes(normalizedRole.value))
+  const isPathologist = computed(() => ['pathologist', 'patologo', 'patólogo'].includes(normalizedRole.value))
+  const isResident = computed(() => ['resident', 'residente'].includes(normalizedRole.value))
+  const isPatient = computed(() => ['patient', 'paciente'].includes(normalizedRole.value))
+  const isBilling = computed(() => ['billing', 'facturacion', 'facturación'].includes(normalizedRole.value))
 
   // Actions
   const login = async (credentials: LoginRequest, rememberMe: boolean = false): Promise<boolean> => {
@@ -162,9 +180,83 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const refreshToken = async (): Promise<boolean> => {
+    if (!token.value) {
+      console.log('🔄 [TOKEN REFRESH] No token available for refresh')
+      return false
+    }
+
+    try {
+      console.log('🔄 [TOKEN REFRESH] Starting token refresh process...')
+      
+      const refreshResponse = await TokenRefreshService.refreshToken()
+      
+      // Calculate new expiration time
+      const expiresAt = Date.now() + (refreshResponse.expires_in * 1000)
+      
+      // Update in persistent storage first (prefer localStorage, fallback to sessionStorage)
+      const storage = localStorage.getItem('auth_token') ? localStorage : sessionStorage
+      storage.setItem('auth_token', refreshResponse.access_token)
+      storage.setItem('auth_expires_at', expiresAt.toString())
+      
+      // Then update the token in the store
+      token.value = refreshResponse.access_token
+      
+      console.log('✅ [TOKEN REFRESH] Token refreshed successfully')
+      console.log('🔄 [TOKEN REFRESH] New expiration:', new Date(expiresAt).toLocaleString())
+      console.log('🔄 [TOKEN REFRESH] Token stored in:', storage === localStorage ? 'localStorage' : 'sessionStorage')
+      
+      return true
+    } catch (error: any) {
+      console.error('❌ [TOKEN REFRESH] Failed to refresh token:', error)
+      
+      // If refresh fails due to authentication error, logout
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        console.log('🔄 [TOKEN REFRESH] Authentication error, logging out')
+        await logout()
+      }
+      
+      return false
+    }
+  }
+
+  const checkAndRefreshToken = async (): Promise<boolean> => {
+    if (!token.value) return false
+
+    try {
+      // Check if token is near expiration (within 15 minutes)
+      if (TokenRefreshService.isTokenNearExpiration(token.value)) {
+        console.log('⚠️ [TOKEN REFRESH] Token is near expiration, attempting refresh...')
+        const refreshResult = await refreshToken()
+        
+        if (refreshResult) {
+          // Verify the token was properly stored
+          const storedToken = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+          if (storedToken && storedToken === token.value) {
+            console.log('✅ [TOKEN REFRESH] Token verified in storage after refresh')
+            return true
+          } else {
+            console.warn('⚠️ [TOKEN REFRESH] Token mismatch between store and storage after refresh')
+            return false
+          }
+        }
+        
+        return refreshResult
+      }
+      
+      return true
+    } catch (error) {
+      console.error('Error checking token expiration:', error)
+      return false
+    }
+  }
+
   const initializeAuth = async (): Promise<void> => {
+    console.log('🔍 [DEBUG AuthStore] ===== INITIALIZE AUTH START =====')
+    
     // If already authenticated, do nothing
     if (isAuthenticated.value) {
+      console.log('🔍 [DEBUG AuthStore] Already authenticated, skipping initialization')
       return
     }
 
@@ -172,11 +264,20 @@ export const useAuthStore = defineStore('auth', () => {
     const savedToken = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
     const savedUser = localStorage.getItem('auth_user') || sessionStorage.getItem('auth_user')
 
+    console.log('🔍 [DEBUG AuthStore] Saved token exists:', !!savedToken)
+    console.log('🔍 [DEBUG AuthStore] Saved user exists:', !!savedUser)
+
     if (savedToken && savedUser) {
       try {
+        console.log('🔍 [DEBUG AuthStore] Found saved credentials, processing...')
+        
         // If the token is expired, logout immediately
         const savedExpiresAt = localStorage.getItem('auth_expires_at') || sessionStorage.getItem('auth_expires_at')
+        console.log('🔍 [DEBUG AuthStore] Saved expiration:', savedExpiresAt)
+        console.log('🔍 [DEBUG AuthStore] Current time:', Date.now())
+        
         if (savedExpiresAt && Number(savedExpiresAt) > 0 && Date.now() > Number(savedExpiresAt)) {
+          console.log('🔍 [DEBUG AuthStore] Token expired, logging out')
           await logout()
           return
         }
@@ -184,6 +285,12 @@ export const useAuthStore = defineStore('auth', () => {
         // Set values so isAuthenticated becomes true
         token.value = savedToken
         user.value = JSON.parse(savedUser)
+        
+        console.log('🔍 [DEBUG AuthStore] Successfully restored auth state')
+        console.log('🔍 [DEBUG AuthStore] Token set:', !!token.value)
+        console.log('🔍 [DEBUG AuthStore] User set:', !!user.value)
+        console.log('🔍 [DEBUG AuthStore] User role:', user.value?.role)
+        console.log('🔍 [DEBUG AuthStore] isAuthenticated computed:', isAuthenticated.value)
         
         // Debug full state
         console.log('AuthStore - Initialized user:', user.value)
@@ -193,11 +300,16 @@ export const useAuthStore = defineStore('auth', () => {
         // DO NOT execute verification immediately to preserve user data
         // Verification will be done by a periodic timer if necessary
       } catch (err) {
+        console.log('🔍 [DEBUG AuthStore] Error parsing saved data:', err)
         // Error parsing saved data
         // Only clear if there is parsing error
         await logout()
       }
+    } else {
+      console.log('🔍 [DEBUG AuthStore] No saved credentials found')
     }
+    
+    console.log('🔍 [DEBUG AuthStore] ===== INITIALIZE AUTH END =====')
   }
 
   const clearError = (): void => {
@@ -231,6 +343,8 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     getCurrentUser,
     verifyToken,
+    refreshToken,
+    checkAndRefreshToken,
     initializeAuth,
     clearError,
     debugUserState

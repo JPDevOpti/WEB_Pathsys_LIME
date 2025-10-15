@@ -55,3 +55,16 @@ async def me(user_id: str = Depends(get_current_user_id)):
         raise HTTPException(status_code=500, detail="Internal error")
 
 
+@auth_router.post("/refresh")
+async def refresh_token(user_id: str = Depends(get_current_user_id)):
+    """Refresh the access token for the current user"""
+    try:
+        service = await AuthService.build()
+        token_data = await service.refresh_token(user_id)
+        return token_data
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal error")
+
+

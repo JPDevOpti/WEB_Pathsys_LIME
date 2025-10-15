@@ -49,6 +49,24 @@ class AuthService:
             "user": public_user,
         }
 
+    async def refresh_token(self, user_id: str) -> Dict[str, Any]:
+        """Refresh an access token for an authenticated user"""
+        user = await self.repo.get_user_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+
+        if not user.get("is_active", True):
+            raise ValueError("User account is inactive")
+
+        expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        token = create_access_token(subject=user["_id"], expires_delta=expires_delta)
+
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "expires_in": int(expires_delta.total_seconds()),
+        }
+
     async def get_user_public_by_id(self, user_id: str) -> Dict[str, Any]:
         user = await self.repo.get_user_by_id(user_id)
         if not user:

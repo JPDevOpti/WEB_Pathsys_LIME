@@ -113,6 +113,7 @@
                       </svg>
                     </button>
                     <button
+                      v-if="canEditPatient"
                       @click.stop="handleEdit(patient)"
                       class="text-green-600 hover:text-green-900"
                       title="Editar"
@@ -163,6 +164,7 @@
                 </svg>
               </button>
               <button
+                v-if="canEditPatient"
                 @click.stop="handleEdit(patient)"
                 class="text-green-600 hover:text-green-900"
                 title="Editar"
@@ -281,6 +283,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { ComponentCard } from '@/shared/components'
 
 // Types
@@ -368,6 +371,10 @@ const visiblePages = computed(() => {
   
   return pages
 })
+
+// Permisos: ocultar edición para patólogos
+const { isPatologo } = usePermissions()
+const canEditPatient = computed(() => !isPatologo.value)
 
 // Methods
 const formatDate = (dateString: string): string => {

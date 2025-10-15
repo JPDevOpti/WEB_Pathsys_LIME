@@ -90,6 +90,7 @@ import PageBreadcrumb from '@/shared/components/navigation/PageBreadcrumb.vue'
 import Card from '@/shared/components/layout/Card.vue'
 import { BaseButton } from '@/shared/components'
 import LoadingSpinner from '@/shared/components/ui/feedback/LoadingSpinner.vue'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import {
   ComplementaryTechniquesTable,
   ComplementaryTechniquesFilters,
@@ -108,6 +109,9 @@ const selectedTechnique = ref<ComplementaryTechnique | null>(null)
 const isNewTechniqueDrawerOpen = ref(false)
 const isEditTechniqueDrawerOpen = ref(false)
 const techniqueToEdit = ref<ComplementaryTechnique | null>(null)
+
+// Permisos
+const { isPatologo } = usePermissions()
 
 // Filters
 const filters = ref<ComplementaryTechniqueFilters>({
@@ -515,6 +519,7 @@ const editTechnique = (technique: ComplementaryTechnique) => {
 
 // New Technique Drawer functions
 const openNewTechniqueDrawer = () => {
+  if (isPatologo.value) return
   isNewTechniqueDrawerOpen.value = true
 }
 

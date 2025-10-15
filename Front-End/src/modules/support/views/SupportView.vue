@@ -28,9 +28,11 @@ import { AdminLayout } from '@/shared'
 import { PageBreadcrumb } from '@/shared/components/navigation'
 import { NewTicket, ActualTickets } from '../components'
 import { ticketsService } from '@/shared/services/tickets.service'
+import { useAuthStore } from '@/stores/auth.store'
 import type { SupportTicket } from '../types/support.types'
 
 const currentPageTitle = ref('Soporte')
+const authStore = useAuthStore()
 
 // Estado de tickets (datos reales desde API)
 const tickets = ref<SupportTicket[]>([])
@@ -42,6 +44,21 @@ const loadTickets = async () => {
   try {
     isLoading.value = true
     error.value = null
+    
+    // Proactively check and refresh token before making API call
+    console.log('🔍 [SUPPORT] Checking token before loading tickets...')
+    const tokenRefreshed = await authStore.checkAndRefreshToken()
+    
+    if (!tokenRefreshed && !authStore.isAuthenticated) {
+      console.warn('⚠️ [SUPPORT] Token refresh failed and user not authenticated')
+      error.value = 'Sesión expirada. Por favor, inicia sesión nuevamente.'
+      return
+    }
+    
+    // Add a small delay to ensure token is properly stored before API call
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    console.log('✅ [SUPPORT] Token verified/refreshed, proceeding with API call')
     tickets.value = await ticketsService.getTickets()
   } catch (err: any) {
     console.error('Error cargando tickets:', err)

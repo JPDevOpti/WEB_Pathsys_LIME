@@ -196,32 +196,45 @@ class CasePdfService:
         try:
             # Buscar solicitudes de aprobación para este caso
             from app.modules.approvals.schemas.approval import ApprovalRequestSearch
+            from app.modules.approvals.models.approval_request import ApprovalStateEnum
+            
             search_params = ApprovalRequestSearch(
                 original_case_code=case_code,
-                approval_state=['request_made', 'pending_approval']
+                approval_state=ApprovalStateEnum.REQUEST_MADE
             )
             approval_requests = await self.approval_service.search_approvals(search_params)
             
             if not approval_requests or len(approval_requests) == 0:
-                return None
+                # Intentar buscar en pending_approval también
+                search_params.approval_state = ApprovalStateEnum.PENDING_APPROVAL
+                approval_requests = await self.approval_service.search_approvals(search_params)
+                
+                if not approval_requests or len(approval_requests) == 0:
+                    return None
             
             # Tomar la primera solicitud pendiente
             approval = approval_requests[0]
             
+            # Extraer motivo del approval_info
+            motivo = ''
+            if approval.approval_info:
+                motivo = approval.approval_info.reason or ''
+            
             # Mapear al formato esperado por la plantilla
             complementary_tests = {
                 'pruebas': [],
-                'motivo': approval.reason or '',
+                'motivo': motivo,
                 'fecha_solicitud': approval.created_at,
-                'estado': approval.approval_state or ''
+                'estado': approval.approval_state.value if hasattr(approval.approval_state, 'value') else str(approval.approval_state)
             }
             
             # Mapear pruebas complementarias
             for test in approval.complementary_tests or []:
+                # test es un objeto ComplementaryTestInfo
                 mapped_test = {
-                    'codigo': test.get('code', ''),
-                    'nombre': test.get('name', ''),
-                    'cantidad': test.get('quantity', 1)
+                    'codigo': test.code if hasattr(test, 'code') else test.get('code', ''),
+                    'nombre': test.name if hasattr(test, 'name') else test.get('name', ''),
+                    'cantidad': test.quantity if hasattr(test, 'quantity') else test.get('quantity', 1)
                 }
                 complementary_tests['pruebas'].append(mapped_test)
             
@@ -229,6 +242,8 @@ class CasePdfService:
             
         except Exception as e:
             print(f"Error obteniendo pruebas complementarias: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     async def _get_pathologist_signature(self, case_data: dict) -> Optional[str]:

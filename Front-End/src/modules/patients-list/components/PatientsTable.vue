@@ -103,6 +103,7 @@
                   <InfoCircleIcon class="w-4 h-4" />
                 </button>
                 <button
+                  v-if="canEditPatient"
                   @click.stop="$emit('edit', patient)"
                   class="p-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
                   title="Editar paciente"
@@ -154,6 +155,7 @@
                 <InfoCircleIcon class="w-5 h-5" />
               </button>
               <button
+                v-if="canEditPatient"
                 @click="$emit('edit', patient)"
                 class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
                 title="Editar paciente"
@@ -218,7 +220,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Patient } from '../types/patient.types'
 import { FormCheckbox } from '@/shared/components'
 import { DocsIcon } from '@/assets/icons'
@@ -226,6 +228,7 @@ import InfoCircleIcon from '@/assets/icons/InfoCircleIcon.vue'
 import EditPatientIcon from '@/assets/icons/EditPatientIcon.vue'
 import { usePatientExcelExport } from '../composables/usePatientExcelExport'
 import { formatDate } from '../utils/dateUtils'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 interface Column {
   key: string
@@ -264,6 +267,8 @@ const emit = defineEmits<{
 
 const { exportSelectedPatients } = usePatientExcelExport()
 const isDownloadingExcel = ref(false)
+const { isPatologo } = usePermissions()
+const canEditPatient = computed(() => !isPatologo.value)
 
 const isPatientSelected = (patientId: string) => {
   return props.selectedIds.includes(patientId)

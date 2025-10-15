@@ -53,7 +53,7 @@
     <template #footer>
       <div class="flex flex-col sm:flex-row justify-between gap-3">
         <!-- Botón de Nuevo Caso Especial (Izquierda) -->
-        <div class="flex">
+        <div class="flex" v-if="canCreateSpecialCase">
           <button
             @click="$emit('new-technique')"
             class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-600 bg-transparent border border-green-600 rounded-lg hover:bg-green-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -91,13 +91,14 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, onMounted } from 'vue'
+import { reactive, watch, onMounted, computed } from 'vue'
 import { BaseButton, ComponentCard } from '@/shared/components'
 import { RefreshIcon, DocsIcon, TrashIcon } from '@/assets/icons'
 import TestIcon from '@/assets/icons/TestIcon.vue'
 import SpecialCaseIcon from '@/assets/icons/SpecialCaseIcon.vue'
 import { FormInputField, FormSelect, DateInputField } from '@/shared/components/ui/forms'
 import { SearchButton } from '@/shared/components/ui/buttons'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 interface Filters {
   searchQuery: string
@@ -154,6 +155,10 @@ onMounted(() => {
     local.dateTo = new Date().toLocaleDateString('es-ES')
   }
 })
+
+// Ocultar "Nuevo Caso Especial" para patólogos
+const { isPatologo } = usePermissions()
+const canCreateSpecialCase = computed(() => !isPatologo.value)
 
 const clearAll = () => {
   local.searchQuery = ''
