@@ -21,8 +21,6 @@ export function useAuthPersistence() {
       
       // Si hay sesión cargada, verificar inmediatamente que el token sea válido y refrescarlo si es necesario
       if (authStore.isAuthenticated && authStore.token) {
-        console.log('🔍 [AUTH PERSISTENCE] Checking token during app initialization...')
-        
         // First try to refresh if near expiration
         const refreshed = await authStore.checkAndRefreshToken()
         
@@ -30,15 +28,12 @@ export function useAuthPersistence() {
           // If refresh failed, verify the token
           const isValid = await authStore.verifyToken()
           if (!isValid) {
-            console.warn('⚠️ [AUTH PERSISTENCE] Token invalid during initialization, logging out')
             // Logout y redireccionar a login
             await authStore.logout()
             if (router.currentRoute.value.path !== '/login') {
               router.replace('/login')
             }
           }
-        } else {
-          console.log('✅ [AUTH PERSISTENCE] Token verified/refreshed during initialization')
         }
       }
 
@@ -65,13 +60,10 @@ export function useAuthPersistence() {
           // First try to refresh the token if it's near expiration
           const refreshed = await authStore.checkAndRefreshToken()
           
-          if (refreshed) {
-            console.log('🔄 [AUTH PERSISTENCE] Token checked/refreshed successfully')
-          } else {
+          if (!refreshed) {
             // If refresh failed, verify the token
             const isValid = await authStore.verifyToken()
             if (!isValid) {
-              console.warn('Token inválido detectado en verificación periódica')
               // Logout para limpiar estado
               await authStore.logout()
               router.push('/login')
@@ -100,7 +92,6 @@ export function useAuthPersistence() {
 
   // Listener para eventos globales de 401 desde Axios
   const onUnauthorized = async () => {
-    console.warn('Evento global auth-unauthorized recibido: cerrando sesión')
     await authStore.logout()
     if (router.currentRoute.value.path !== '/login') {
       router.push('/login')

@@ -19,11 +19,9 @@ app.use(VueApexCharts as any)
 
 // Initialize auth store after Pinia is set up
 const authStore = useAuthStore()
-console.log('🔍 [DEBUG Main] Initializing auth store on app startup')
 authStore.initializeAuth().then(() => {
-  console.log('🔍 [DEBUG Main] Auth store initialized, mounting app')
   app.mount('#app')
 }).catch((error) => {
-  console.error('🔍 [DEBUG Main] Error initializing auth store:', error)
+  console.error('Error initializing auth store:', error)
   app.mount('#app') // Mount anyway to avoid blocking the app
 })

@@ -430,7 +430,6 @@ const filteredMenuItems = computed(() => {
       name: "Gestión de pacientes",
       icon: PatientsIcon,
       subItems: [
-        { name: "Lista de pacientes", path: "/patients/list", pro: false, alwaysVisible: true },
         { name: "Crear paciente", path: "/patients/new", pro: false, alwaysVisible: true },
         { name: "Editar paciente", path: "/patients/edit", pro: false, alwaysVisible: true },
       ],
@@ -443,8 +442,9 @@ const filteredMenuItems = computed(() => {
       subItems: [
         { name: "Crear caso", path: "/cases/new", pro: false, alwaysVisible: true },
         { name: "Editar caso", path: "/cases/edit", pro: false, alwaysVisible: true },
-        { name: "Casos por aprobar", path: "/cases/to-approve", pro: false, alwaysVisible: false },
         { name: "Asignación de patólogos", path: "/pathologist-assignment", pro: false, alwaysVisible: true },
+        { name: "Casos por aprobar", path: "/cases/to-approve", pro: false, alwaysVisible: false },
+        
       ],
       alwaysVisible: true
     },

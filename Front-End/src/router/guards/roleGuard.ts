@@ -210,30 +210,11 @@ export function roleGuard(
 
   // Fallback: Allow access to support for any authenticated user, regardless of role
   if (!isRouteAllowed && to.path === '/support') {
-    console.log('🔍 [DEBUG RoleGuard] Permitiendo acceso a soporte como fallback para usuario autenticado')
     isRouteAllowed = true
-  }
-
-  // Debug para la ruta de asignación de patólogos
-  if (to.path === '/pathologist-assignment') {
-    console.log('🔍 [DEBUG RoleGuard] Intentando acceder a:', to.path)
-    console.log('🔍 [DEBUG RoleGuard] Rol del usuario:', userRole)
-    console.log('🔍 [DEBUG RoleGuard] Rutas permitidas:', allowedRoutes)
-    console.log('🔍 [DEBUG RoleGuard] ¿Ruta permitida?:', isRouteAllowed)
-  }
-
-  // Debug para la ruta de soporte
-  if (to.path === '/support') {
-    console.log('🔍 [DEBUG RoleGuard] Intentando acceder a soporte:', to.path)
-    console.log('🔍 [DEBUG RoleGuard] Rol del usuario:', userRole)
-    console.log('🔍 [DEBUG RoleGuard] Rutas permitidas:', allowedRoutes)
-    console.log('🔍 [DEBUG RoleGuard] ¿Ruta permitida?:', isRouteAllowed)
-    console.log('🔍 [DEBUG RoleGuard] Roles disponibles en roleRoutes:', Object.keys(roleRoutes))
   }
 
   if (!isRouteAllowed) {
     // Redirigir al dashboard sin mensaje de error
-    console.log('🔍 [DEBUG RoleGuard] Redirigiendo al dashboard desde:', to.path)
     next({ path: '/dashboard' })
     return
   }

@@ -36,11 +36,8 @@ export class TokenRefreshService {
    */
   private static async performRefresh(): Promise<TokenRefreshResponse> {
     try {
-      console.log('🔄 [TOKEN REFRESH] Attempting to refresh token...')
-      
       const response = await apiClient.post('/auth/refresh')
       
-      console.log('✅ [TOKEN REFRESH] Token refreshed successfully')
       return response.data as TokenRefreshResponse
     } catch (error: any) {
       console.error('❌ [TOKEN REFRESH] Failed to refresh token:', error)

@@ -397,7 +397,17 @@ const updatedAtFormatted = computed(() => {
 
 const handleCreateCase = () => {
   emit('close')
-  router.push('/cases/new')
+  const p: any = props.patientData || {}
+  const idType = p.identification_type
+  const idNumber = p.identification_number
+  // Navegar al flujo de nuevo caso con búsqueda prellenada
+  router.push({
+    name: 'cases-new',
+    query: {
+      idType: idType != null ? String(idType) : '',
+      idNumber: idNumber || ''
+    }
+  })
 }
 
 function onKey(e: KeyboardEvent) {

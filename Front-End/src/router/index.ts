@@ -49,44 +49,19 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   
-  console.log('🔍 [DEBUG Navigation Guard] ===== NAVIGATION GUARD START =====')
-  console.log('🔍 [DEBUG Navigation Guard] Navigating to:', to.path)
-  console.log('🔍 [DEBUG Navigation Guard] Initial isAuthenticated:', authStore.isAuthenticated)
-  console.log('🔍 [DEBUG Navigation Guard] Initial user:', authStore.user)
-  console.log('🔍 [DEBUG Navigation Guard] Initial token exists:', !!authStore.token)
-  
-  // Check storage state
-  const localToken = localStorage.getItem('auth_token')
-  const sessionToken = sessionStorage.getItem('auth_token')
-  const localUser = localStorage.getItem('auth_user')
-  const sessionUser = sessionStorage.getItem('auth_user')
-  
-  console.log('🔍 [DEBUG Navigation Guard] localStorage token exists:', !!localToken)
-  console.log('🔍 [DEBUG Navigation Guard] sessionStorage token exists:', !!sessionToken)
-  console.log('🔍 [DEBUG Navigation Guard] localStorage user exists:', !!localUser)
-  console.log('🔍 [DEBUG Navigation Guard] sessionStorage user exists:', !!sessionUser)
-  
   // Rutas públicas que no requieren autenticación
   const publicRoutes = ['/login']
   const isPublicRoute = publicRoutes.includes(to.path)
   
-  console.log('🔍 [DEBUG Navigation Guard] Is public route:', isPublicRoute)
-  
   // Si no está autenticado, intentar inicializar desde localStorage solo una vez
   if (!authStore.isAuthenticated) {
-    console.log('🔍 [DEBUG Navigation Guard] Not authenticated, initializing auth...')
     await authStore.initializeAuth()
-    console.log('🔍 [DEBUG Navigation Guard] After initialization - isAuthenticated:', authStore.isAuthenticated)
-    console.log('🔍 [DEBUG Navigation Guard] After initialization - user:', authStore.user)
-    console.log('🔍 [DEBUG Navigation Guard] After initialization - userRole:', authStore.userRole)
   }
   
   // Check token expiration and force logout if expired (read from storage decoded from JWT exp)
   if (authStore.isAuthenticated) {
     const savedExpiresAt = localStorage.getItem('auth_expires_at') || sessionStorage.getItem('auth_expires_at')
-    console.log('🔍 [DEBUG Navigation Guard] Token expiration check - savedExpiresAt:', savedExpiresAt)
     if (savedExpiresAt && Number(savedExpiresAt) > 0 && Date.now() > Number(savedExpiresAt)) {
-      console.log('🔍 [DEBUG Navigation Guard] Token expired, logging out')
       await authStore.logout()
       next('/login')
       return
@@ -95,27 +70,22 @@ router.beforeEach(async (to, _from, next) => {
 
   // Si la ruta es pública y el usuario está autenticado, redirigir al dashboard
   if (isPublicRoute && authStore.isAuthenticated) {
-    console.log('🔍 [DEBUG Navigation Guard] Public route + authenticated -> redirecting to dashboard')
     next('/dashboard')
     return
   }
   
   // Si la ruta requiere autenticación y el usuario no está autenticado
   if (!isPublicRoute && !authStore.isAuthenticated) {
-    console.log('🔍 [DEBUG Navigation Guard] Protected route + not authenticated -> redirecting to login')
     next('/login')
     return
   }
   
   // Aplicar restricciones de rol si está autenticado
   if (authStore.isAuthenticated) {
-    console.log('🔍 [DEBUG Navigation Guard] Authenticated, applying role guard')
-    console.log('🔍 [DEBUG Navigation Guard] User role before role guard:', authStore.userRole)
     roleGuard(to, _from, next)
     return
   }
   
-  console.log('🔍 [DEBUG Navigation Guard] Continuing with navigation (fallback)')
   // Continuar con la navegación
   next()
 })

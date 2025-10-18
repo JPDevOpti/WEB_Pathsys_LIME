@@ -47,13 +47,6 @@ class ApiClient {
         
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
-          console.log('🔑 [AXIOS] Token found and added to request:', {
-            source: localToken ? 'localStorage' : 'sessionStorage',
-            tokenLength: token.length,
-            url: config.url
-          })
-        } else {
-          console.warn('⚠️ [AXIOS] No token found in storage for request:', config.url)
         }
         
         return config
@@ -87,7 +80,6 @@ class ApiClient {
               break
               
             case 401:
-              console.warn('Token expirado detectado en interceptor')
               // No forzar logout ni redirección aquí para evitar romper el flujo
               // Dejar que la UI o el store reaccionen (p.ej. escuchando 'auth-unauthorized')
               try { window.dispatchEvent(new CustomEvent('auth-unauthorized')) } catch {}

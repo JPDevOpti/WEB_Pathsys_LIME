@@ -155,7 +155,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick, watch } from 'vue'
+import { computed, ref, nextTick, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useCaseForm } from '../composables/useCaseForm'
 import { usePatientVerification } from '../composables/usePatientVerification'
 import { useNotifications } from '../composables/useNotifications'
@@ -173,14 +174,40 @@ const patientVerifiedSection = ref<HTMLElement | null>(null)
 const createdCase = ref<CreatedCase | null>(null)
 const showCaseSuccessCard = ref(false)
 const emit = defineEmits(['case-saved', 'patient-verified'])
+const route = useRoute()
 
 const { formData, validationState, errors, warnings, validateForm, clearForm: clearCaseForm, handleNumberOfSamplesChange, addTestToSample, removeTestFromSample } = useCaseForm()
-const { searchError, patientVerified, verifiedPatient, useNewPatient, clearVerification } = usePatientVerification()
+const { searchError, patientVerified, verifiedPatient, useNewPatient, clearVerification, searchPatientByDocumento } = usePatientVerification()
 const { notification, showNotification, closeNotification } = useNotifications()
 const { createCase, error: apiError, clearState } = useCaseAPI()
 
 const searchIdentificationType = ref<string | number>('')
 const searchIdentificationNumber = ref('')
+
+// Normaliza códigos de documento string (ej: 'CC', 'CE') a números del enum
+const CODE_TO_IDENTIFICATION_TYPE: Record<string, number> = {
+  CC: 1,
+  CE: 2,
+  TI: 3,
+  PA: 4,
+  RC: 5,
+  DE: 6,
+  NIT: 7,
+  CD: 8,
+  SC: 9
+}
+
+const normalizeIdType = (val: unknown): number | undefined => {
+  if (val == null) return undefined
+  if (typeof val === 'number' && !isNaN(val)) return val
+  const s = String(val).trim().toUpperCase()
+  if (!s) return undefined
+  // Si es un número en string, conviértelo
+  const asNum = Number(s)
+  if (!isNaN(asNum) && asNum > 0) return asNum
+  // Si es un código conocido, mapea
+  return CODE_TO_IDENTIFICATION_TYPE[s]
+}
 
 const identificationTypeOptions = [
   { value: 1, label: 'Cédula de Ciudadanía' },
@@ -396,6 +423,35 @@ watch(() => patientVerified.value, (v) => {
 
 watch(() => showCaseSuccessCard.value, (v) => { 
   if (v) scrollToNotification() 
+})
+
+// Prefill and auto-search when arriving with query params from PatientSuccessCard
+onMounted(async () => {
+  const q: any = route.query || {}
+  const rawType = q.idType ?? q.identification_type
+  const rawNumber = q.idNumber ?? q.identification_number
+  const normalizedType = normalizeIdType(rawType)
+
+  if (normalizedType && rawNumber) {
+    searchIdentificationType.value = normalizedType
+    searchIdentificationNumber.value = String(rawNumber)
+    await searchPatient()
+    return
+  }
+
+  // Respaldo: si solo tenemos el número, intenta búsqueda directa por documento
+  if (rawNumber) {
+    try {
+      const result = await searchPatientByDocumento(String(rawNumber))
+      if (result.found && result.patient) {
+        useNewPatient(result.patient as any)
+        updateFormDataWithPatient(result.patient as any)
+        emit('patient-verified', result.patient as any)
+      }
+    } catch (e) {
+      // Ignorar errores aquí; se mostrarán mediante searchError si corresponde
+    }
+  }
 })
 
 const clearForm = () => { 
