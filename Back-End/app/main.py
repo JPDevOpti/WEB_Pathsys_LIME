@@ -13,15 +13,21 @@ from fastapi.encoders import jsonable_encoder
 # Crear aplicación FastAPI
 app = FastAPI(title="WEB-LIS PathSys - New Backend", version="1.0.0")
 
-# CORS para el frontend local
+# CORS para el frontend local y producción
+allowed_origins = [
+    "http://localhost:5174", 
+    "http://127.0.0.1:5174",
+    "http://localhost:5175", 
+    "http://127.0.0.1:5175"
+]
+
+# Agregar dominios de producción si están configurados
+if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL:
+    allowed_origins.append(settings.FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5174", 
-        "http://127.0.0.1:5174",
-        "http://localhost:5175", 
-        "http://127.0.0.1:5175"
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

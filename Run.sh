@@ -145,7 +145,7 @@ EOF
   
   echo "✅ Configuración de MongoDB Atlas completada"
   echo "📁 Archivos .env creados para ATLAS"
-  echo "⚠️  Para usar Atlas, ejecuta: ./Run.sh docker-atlas"
+  echo "⚠️  Para usar Atlas sin Docker, ejecuta: ./Run.sh local-atlas"
 }
 
 function start_docker() {
@@ -410,6 +410,132 @@ EOF
   echo "✅ Sistema completo iniciado en LOCAL."
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "📊 MongoDB:     mongodb://localhost:27017"
+  echo "🔧 API:         http://localhost:8000"
+  echo "📖 Docs API:    http://localhost:8000/docs"
+  echo "🌐 Frontend:    http://localhost:5174"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "💡 Usa './Run.sh stop' para detener todos los servicios"
+}
+
+function start_local_atlas() {
+  echo "🚀 Iniciando sistema en LOCAL usando MongoDB Atlas (sin Docker)..."
+  
+  echo "🧹 Limpiando archivos de configuración previos..."
+  rm -f Back-End/.env Back-End/.env.example Back-End/.env.development Back-End/.env.production
+  rm -f Front-End/.env Front-End/.env.development Front-End/.env.production Front-End/.env.local
+  
+  echo "🔧 Configurando Back-End ATLAS..."
+  if [ -f "Back-End/config.atlas.env" ]; then
+    cp Back-End/config.atlas.env Back-End/.env
+  else
+    cat > Back-End/.env << EOF
+MONGODB_URL=mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/
+DATABASE_NAME=lime_pathsys
+ENVIRONMENT=development
+DEBUG=True
+SECRET_KEY=dev-secret-key-please-change-in-prod-32-chars-min
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+EOF
+  fi
+  echo "✅ Back-End/.env creado para ATLAS (local)"
+  
+  echo "🔧 Configurando Front-End LOCAL (Atlas)..."
+  cat > Front-End/.env << EOF
+VITE_API_BASE_URL=http://localhost:8000
+VITE_APP_TITLE=WEB-LIS PathSys (Atlas Local)
+VITE_APP_ENV=development
+VITE_DEV_MODE=true
+EOF
+  echo "✅ Front-End/.env creado para Atlas Local"
+  
+  # No iniciar MongoDB local
+  
+  # Verificar dependencias del frontend
+  if [ ! -d "Front-End/node_modules" ]; then
+    echo "📦 Instalando dependencias del Frontend..."
+    cd Front-End && npm install && cd ..
+  fi
+  
+  # Verificar dependencias del backend
+  if [ ! -d "Back-End/venv" ]; then
+    echo "🐍 Configurando entorno virtual para Back-End con Python 3.12..."
+    cd Back-End
+    /opt/homebrew/bin/python3.12 -m venv venv
+    source venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    cd ..
+  fi
+  
+  # Verificar si el puerto 8000 ya está en uso
+  if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then
+    echo "⚠️  El puerto 8000 ya está en uso. Deteniendo proceso..."
+    pkill -f "uvicorn.*8000" || true
+    pkill -f "python3.*uvicorn" || true
+    lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+    sleep 2
+  fi
+  
+  # Verificar si el puerto 5174 ya está en uso
+  if lsof -Pi :5174 -sTCP:LISTEN -t >/dev/null ; then
+    echo "⚠️  Puerto 5174 en uso. Deteniendo proceso..."
+    pkill -f "npm run dev" || true
+    pkill -f "vite" || true
+    lsof -ti:5174 | xargs kill -9 2>/dev/null || true
+    sleep 2
+  fi
+  
+  # Iniciar backend local usando Atlas
+  echo "🔧 Iniciando Backend (Atlas) en puerto 8000 con Python 3.12..."
+  cd Back-End
+  if [ ! -d "venv" ]; then
+    /opt/homebrew/bin/python3.12 -m venv venv
+  fi
+  if [ -f requirements.txt ]; then
+    echo "  • Asegurando dependencias en venv..."
+    ./venv/bin/python -m pip install --upgrade pip >/dev/null 2>&1
+    ./venv/bin/python -m pip install -r requirements.txt >/dev/null 2>&1 || ./venv/bin/python -m pip install -r requirements.txt
+  fi
+  ./venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
+  BACKEND_PID=$!
+  cd ..
+  
+  # Iniciar frontend local
+  echo "🌐 Iniciando Frontend local..."
+  cd Front-End
+  npm run dev &
+  FRONTEND_PID=$!
+  cd ..
+  
+  echo "⏳ Esperando que los servicios estén listos..."
+  sleep 5
+  
+  # Verificar que el frontend esté respondiendo
+  echo "🔍 Verificando conexión frontend-backend..."
+  if curl -s http://localhost:5174 >/dev/null 2>&1; then
+    echo "✅ Frontend respondiendo en puerto 5174"
+  else
+    echo "⚠️  Frontend no responde en puerto 5174"
+  fi
+  
+  if curl -s http://localhost:8000/docs >/dev/null 2>&1; then
+    echo "✅ Backend respondiendo en puerto 8000"
+  else
+    echo "⚠️  Backend no responde en puerto 8000"
+  fi
+  
+  # Verificar configuración CORS
+  echo "🔍 Verificando configuración CORS..."
+  if curl -s -H "Origin: http://localhost:5174" http://localhost:8000/health >/dev/null 2>&1; then
+    echo "✅ CORS configurado correctamente para puerto 5174"
+  else
+    echo "⚠️  CORS no configurado correctamente para puerto 5174"
+  fi
+  
+  echo ""
+  echo "✅ Sistema iniciado en LOCAL con MongoDB Atlas."
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "📊 MongoDB:     Atlas (SRV)"
   echo "🔧 API:         http://localhost:8000"
   echo "📖 Docs API:    http://localhost:8000/docs"
   echo "🌐 Frontend:    http://localhost:5174"
@@ -687,6 +813,7 @@ function help() {
   echo ""
   echo " Inicio:"
   echo "  local        - Inicia servicios en LOCAL (MongoDB local)"
+  echo "  local-atlas  - Inicia servicios en LOCAL con MongoDB Atlas (sin Docker)"
   echo "  docker       - Inicia servicios Docker (MongoDB local)"
   echo "  docker-atlas - Inicia servicios Docker con MongoDB Atlas"
   echo ""
@@ -738,6 +865,9 @@ case "$1" in
     ;;
   local)
     start_local
+    ;;
+  local-atlas)
+    start_local_atlas
     ;;
   docker)
     start_docker

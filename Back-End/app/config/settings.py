@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     # Environment
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "")
     
     # Database Indexes
     CREATE_INDEXES_ON_STARTUP: bool = os.getenv("CREATE_INDEXES_ON_STARTUP", "True").lower() == "true"

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: web-lis-pathsys-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://web-lis-pathsys-backend.onrender.com
+      - key: VITE_APP_TITLE
+        value: WEB-LIS PathSys
+      - key: VITE_APP_ENV
+        value: production
+      - key: VITE_DEV_MODE
+        value: false
+
