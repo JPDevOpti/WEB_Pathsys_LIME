@@ -10,7 +10,7 @@
    - **Repository:** `https://github.com/JPDevOpti/WEB_Pathsys_LIME`
    - **Branch:** `production`
    - **Root Directory:** `Front-End` ⭐ **IMPORTANTE: Esto hace que Render ejecute comandos desde la carpeta Front-End**
-   - **Build Command:** `npm install && npm run build`
+   - **Build Command:** `npm run build`
    - **Publish Directory:** `dist`
    - **Environment Variables:**
      ```
