@@ -124,7 +124,7 @@ function setup_atlas() {
   # Crear UN SOLO archivo .env para Back-End ATLAS
   echo "🔧 Configurando Back-End ATLAS..."
   cat > Back-End/.env << EOF
-MONGODB_URL=mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/
+MONGODB_URL=mongodb+srv://juanrestrepo183:whbyaZSbhn4H7PpO@cluster0.o8uta.mongodb.net/?retryWrites=true&w=majority&tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true
 DATABASE_NAME=lime_pathsys
 ENVIRONMENT=production
 DEBUG=False
@@ -221,7 +221,7 @@ function start_docker_atlas() {
   # Crear UN SOLO archivo .env para Back-End ATLAS
   echo "🔧 Configurando Back-End ATLAS..."
   cat > Back-End/.env << EOF
-MONGODB_URL=mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/
+MONGODB_URL=mongodb+srv://juanrestrepo183:whbyaZSbhn4H7PpO@cluster0.o8uta.mongodb.net/?retryWrites=true&w=majority&tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true
 DATABASE_NAME=lime_pathsys
 ENVIRONMENT=production
 DEBUG=False
@@ -429,7 +429,7 @@ function start_local_atlas() {
     cp Back-End/config.atlas.env Back-End/.env
   else
     cat > Back-End/.env << EOF
-MONGODB_URL=mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/
+MONGODB_URL=mongodb+srv://juanrestrepo183:whbyaZSbhn4H7PpO@cluster0.o8uta.mongodb.net/?retryWrites=true&w=majority&tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true
 DATABASE_NAME=lime_pathsys
 ENVIRONMENT=development
 DEBUG=True
