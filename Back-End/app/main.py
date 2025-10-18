@@ -18,7 +18,10 @@ allowed_origins = [
     "http://localhost:5174", 
     "http://127.0.0.1:5174",
     "http://localhost:5175", 
-    "http://127.0.0.1:5175"
+    "http://127.0.0.1:5175",
+    # URLs de producción específicas
+    "https://pathsys-frontend.onrender.com",
+    "https://web-lis-pathsys-frontend.onrender.com"
 ]
 
 # Agregar dominios de producción si están configurados

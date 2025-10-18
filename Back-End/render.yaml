@@ -14,8 +14,8 @@ services:
       - key: DEBUG
         value: False
       - key: SECRET_KEY
-        value: your-production-secret-key-change-this-in-production
+        value: Pm-cEMixcQnyVp-5eaXYFxVfEoiwo2KTef4XaujP0Qk
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "240"
       - key: FRONTEND_URL
-        value: https://web-lis-pathsys-frontend.onrender.com
+        value: https://pathsys-frontend.onrender.com

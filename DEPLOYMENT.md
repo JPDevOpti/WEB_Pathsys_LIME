@@ -10,7 +10,7 @@
    - **Repository:** `https://github.com/JPDevOpti/WEB_Pathsys_LIME`
    - **Branch:** `production`
    - **Root Directory:** `Front-End` ⭐ **IMPORTANTE: Esto hace que Render ejecute comandos desde la carpeta Front-End**
-   - **Build Command:** `npm run build`
+   - **Build Command:** `npm install && npm run build`
    - **Publish Directory:** `dist`
    - **Environment Variables:**
      ```
@@ -24,16 +24,20 @@
 
 1. **Crear un nuevo servicio Web Service en Render**
 2. **Configuración:**
+   - **Name:** `web-lis-pathsys-backend`
+   - **Repository:** `https://github.com/JPDevOpti/WEB_Pathsys_LIME`
+   - **Branch:** `production`
+   - **Root Directory:** `Back-End` ⭐ **IMPORTANTE: Esto hace que Render ejecute comandos desde la carpeta Back-End**
    - **Environment:** Python
-   - **Build Command:** `cd Back-End && pip install -r requirements.txt`
-   - **Start Command:** `cd Back-End && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
    - **Environment Variables:**
      ```
      MONGODB_URL=mongodb+srv://practicantedoslime:xC4Nmj3LDU3t89HJ@cluster0.dujsqez.mongodb.net/
      DATABASE_NAME=lime_pathsys
      ENVIRONMENT=production
      DEBUG=False
-     SECRET_KEY=your-production-secret-key-change-this-in-production
+     SECRET_KEY=Pm-cEMixcQnyVp-5eaXYFxVfEoiwo2KTef4XaujP0Qk
      ACCESS_TOKEN_EXPIRE_MINUTES=240
      FRONTEND_URL=https://web-lis-pathsys-frontend.onrender.com
      ```
