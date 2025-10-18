@@ -2,6 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from app.config.settings import settings
 from typing import Optional
 import logging
+import certifi
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,9 @@ class DatabaseManager:
             "minPoolSize": 1,
             "maxIdleTimeMS": 30000,
             "retryWrites": True,
-            "retryReads": True
+            "retryReads": True,
+            # Forzar uso de almacén de certificados confiable
+            "tlsCAFile": certifi.where(),
         }
 
 database_manager = DatabaseManager()
