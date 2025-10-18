@@ -3,7 +3,7 @@ services:
   - type: web
     name: web-lis-pathsys-frontend
     env: static
-    buildCommand: cd Front-End && npm install && npm run build
+    buildCommand: npm run build:frontend
     staticPublishPath: ./Front-End/dist
     routes:
       - type: rewrite

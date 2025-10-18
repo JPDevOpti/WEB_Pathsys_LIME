@@ -6,6 +6,10 @@
 
 1. **Crear un nuevo servicio Static Site en Render**
 2. **Configuración:**
+   - **Name:** `pathsys-frontend`
+   - **Repository:** `https://github.com/JPDevOpti/WEB_Pathsys_LIME`
+   - **Branch:** `production`
+   - **Root Directory:** `Front-End` ⭐ **IMPORTANTE: Esto hace que Render ejecute comandos desde la carpeta Front-End**
    - **Build Command:** `npm install && npm run build`
    - **Publish Directory:** `dist`
    - **Environment Variables:**

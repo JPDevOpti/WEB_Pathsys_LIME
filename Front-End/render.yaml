@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: web-lis-pathsys-frontend
+    name: pathsys-frontend
     env: static
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist

@@ -1,4 +1,12 @@
 {
+  "name": "web-lis-pathsys",
+  "version": "1.0.0",
+  "description": "WEB-LIS PathSys - Sistema de Información de Laboratorio de Patología",
+  "scripts": {
+    "build:frontend": "cd Front-End && npm install && npm run build",
+    "dev:frontend": "cd Front-End && npm run dev",
+    "install:frontend": "cd Front-End && npm install"
+  },
   "dependencies": {
     "apexcharts": "^5.3.2",
     "vue3-apexcharts": "^1.8.0"
