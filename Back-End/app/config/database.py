@@ -3,6 +3,8 @@ from app.config.settings import settings
 from typing import Optional
 import logging
 import certifi
+import os
+import ssl
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +14,10 @@ class DatabaseManager:
     def __init__(self):
         self.client: Optional[AsyncIOMotorClient] = None
         self.database: Optional[AsyncIOMotorDatabase] = None
+        
+        # Configuración SSL específica para diferentes entornos
+        ssl_options = self._get_ssl_options()
+        
         self._connection_options = {
             "serverSelectionTimeoutMS": 5000,
             "connectTimeoutMS": 10000,
@@ -21,9 +27,24 @@ class DatabaseManager:
             "maxIdleTimeMS": 30000,
             "retryWrites": True,
             "retryReads": True,
-            # Forzar uso de almacén de certificados confiable
-            "tlsCAFile": certifi.where(),
+            **ssl_options
         }
+    
+    def _get_ssl_options(self):
+        """Obtener opciones SSL según el entorno"""
+        env = os.getenv("ENVIRONMENT", "development")
+        
+        if env == "production":
+            # Para Render y otros entornos de producción - configuración mínima
+            return {
+                "tls": True
+            }
+        else:
+            # Para desarrollo local
+            return {
+                "tls": True,
+                "tlsCAFile": certifi.where()
+            }
 
 database_manager = DatabaseManager()
 
@@ -31,15 +52,45 @@ async def connect_to_mongo():
     """Crear conexión a la base de datos"""
     try:
         if database_manager.client is None:
-            database_manager.client = AsyncIOMotorClient(
-                settings.MONGODB_URL, 
-                **database_manager._connection_options
-            )
-            database_manager.database = database_manager.client[settings.DATABASE_NAME]
+            # Intentar diferentes configuraciones según el entorno
+            mongodb_url = _get_mongodb_url()
             
-            # Verificar conexión
-            await database_manager.client.admin.command('ping')
-            logger.info(f"Conectado a MongoDB: {settings.DATABASE_NAME}")
+            try:
+                database_manager.client = AsyncIOMotorClient(
+                    mongodb_url, 
+                    **database_manager._connection_options
+                )
+                database_manager.database = database_manager.client[settings.DATABASE_NAME]
+                
+                # Verificar conexión
+                await database_manager.client.admin.command('ping')
+                logger.info(f"Conectado a MongoDB: {settings.DATABASE_NAME}")
+                
+            except Exception as ssl_error:
+                logger.warning(f"Error SSL inicial: {ssl_error}")
+                # Fallback: intentar con configuración más permisiva
+                if os.getenv("ENVIRONMENT") == "production":
+                    logger.info("Intentando conexión con configuración SSL permisiva...")
+                    fallback_options = {
+                        "serverSelectionTimeoutMS": 10000,
+                        "connectTimeoutMS": 15000,
+                        "socketTimeoutMS": 30000,
+                        "maxPoolSize": 5,
+                        "minPoolSize": 1,
+                        "retryWrites": True,
+                        "retryReads": True,
+                        "tls": True
+                    }
+                    
+                    database_manager.client = AsyncIOMotorClient(
+                        mongodb_url, 
+                        **fallback_options
+                    )
+                    database_manager.database = database_manager.client[settings.DATABASE_NAME]
+                    
+                    # Verificar conexión
+                    await database_manager.client.admin.command('ping')
+                    logger.info(f"Conectado a MongoDB con fallback: {settings.DATABASE_NAME}")
             
         return database_manager.database
     except Exception as e:
@@ -47,6 +98,20 @@ async def connect_to_mongo():
         database_manager.client = None
         database_manager.database = None
         raise
+
+def _get_mongodb_url():
+    """Obtener URL de MongoDB según el entorno"""
+    env = os.getenv("ENVIRONMENT", "development")
+    base_url = settings.MONGODB_URL
+    
+    if env == "production":
+        # Para producción, usar configuración más permisiva
+        if "?" in base_url:
+            base_url += "&tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true"
+        else:
+            base_url += "?tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true"
+    
+    return base_url
 
 async def close_mongo_connection():
     """Cerrar conexión a la base de datos"""
