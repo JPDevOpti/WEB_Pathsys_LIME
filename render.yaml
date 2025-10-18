@@ -1,9 +1,9 @@
 services:
   # Frontend Service
   - type: web
-    name: web-lis-pathsys-frontend
+    name: pathsys-frontend
     env: static
-    buildCommand: npm run build:frontend
+    buildCommand: cd Front-End && npm ci && npm run build
     staticPublishPath: ./Front-End/dist
     routes:
       - type: rewrite
@@ -11,7 +11,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://web-lis-pathsys-backend.onrender.com
+        value: https://pathsys-backend.onrender.com
       - key: VITE_APP_TITLE
         value: WEB-LIS PathSys
       - key: VITE_APP_ENV
@@ -21,7 +21,7 @@ services:
 
   # Backend Service
   - type: web
-    name: web-lis-pathsys-backend
+    name: pathsys-backend
     env: python
     buildCommand: cd Back-End && pip install -r requirements.txt
     startCommand: cd Back-End && uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -39,4 +39,4 @@ services:
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "240"
       - key: FRONTEND_URL
-        value: https://web-lis-pathsys-frontend.onrender.com
+        value: https://pathsys-frontend.onrender.com
