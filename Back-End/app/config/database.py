@@ -9,38 +9,46 @@ import ssl
 logger = logging.getLogger(__name__)
 
 class DatabaseManager:
-    """Gestor de conexión a MongoDB"""
+    """Database connection manager for MongoDB"""
     
     def __init__(self):
         self.client: Optional[AsyncIOMotorClient] = None
         self.database: Optional[AsyncIOMotorDatabase] = None
         
-        # Configuración SSL específica para diferentes entornos
+        # SSL configuration specific for different environments
         ssl_options = self._get_ssl_options()
         
         self._connection_options = {
-            "serverSelectionTimeoutMS": 5000,
-            "connectTimeoutMS": 10000,
-            "socketTimeoutMS": 20000,
-            "maxPoolSize": 10,
+            "serverSelectionTimeoutMS": 30000,  # Increased timeout for Render
+            "connectTimeoutMS": 30000,          # Increased timeout for Render
+            "socketTimeoutMS": 30000,           # Increased timeout for Render
+            "maxPoolSize": 5,                   # Reduced pool size for Render
             "minPoolSize": 1,
-            "maxIdleTimeMS": 30000,
+            "maxIdleTimeMS": 60000,
             "retryWrites": True,
             "retryReads": True,
+            "heartbeatFrequencyMS": 30000,      # Added for better connection monitoring
             **ssl_options
         }
     
     def _get_ssl_options(self):
-        """Obtener opciones SSL según el entorno"""
+        """Get SSL options based on environment"""
         env = os.getenv("ENVIRONMENT", "development")
         
         if env == "production":
-            # Para Render y otros entornos de producción - configuración mínima
+            # Specific configuration for Render and production environments
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+            
             return {
-                "tls": True
+                "tls": True,
+                "tlsAllowInvalidCertificates": True,
+                "tlsAllowInvalidHostnames": True,
+                "ssl_context": ssl_context
             }
         else:
-            # Para desarrollo local
+            # For local development
             return {
                 "tls": True,
                 "tlsCAFile": certifi.where()
@@ -49,97 +57,170 @@ class DatabaseManager:
 database_manager = DatabaseManager()
 
 async def connect_to_mongo():
-    """Crear conexión a la base de datos"""
+    """Create connection to database with enhanced error handling for Render"""
     try:
         if database_manager.client is None:
-            # Intentar diferentes configuraciones según el entorno
             mongodb_url = _get_mongodb_url()
+            env = os.getenv("ENVIRONMENT", "development")
             
-            try:
+            if env == "production":
+                # For Render deployment - try multiple connection strategies
+                connection_strategies = [
+                    # Strategy 1: Full SSL configuration
+                    {
+                        **database_manager._connection_options,
+                        "serverSelectionTimeoutMS": 60000,
+                        "connectTimeoutMS": 60000,
+                        "socketTimeoutMS": 60000,
+                    },
+                    # Strategy 2: Minimal SSL configuration
+                    {
+                        "serverSelectionTimeoutMS": 60000,
+                        "connectTimeoutMS": 60000,
+                        "socketTimeoutMS": 60000,
+                        "maxPoolSize": 3,
+                        "minPoolSize": 1,
+                        "retryWrites": True,
+                        "retryReads": True,
+                        "tls": True,
+                        "tlsAllowInvalidCertificates": True,
+                        "tlsAllowInvalidHostnames": True,
+                    },
+                    # Strategy 3: Basic configuration
+                    {
+                        "serverSelectionTimeoutMS": 60000,
+                        "connectTimeoutMS": 60000,
+                        "socketTimeoutMS": 60000,
+                        "maxPoolSize": 1,
+                        "retryWrites": True,
+                        "tls": True,
+                    }
+                ]
+                
+                last_error = None
+                for i, strategy in enumerate(connection_strategies, 1):
+                    try:
+                        logger.info(f"Attempting connection strategy {i} for Render deployment...")
+                        database_manager.client = AsyncIOMotorClient(mongodb_url, **strategy)
+                        database_manager.database = database_manager.client[settings.DATABASE_NAME]
+                        
+                        # Test connection with longer timeout
+                        await database_manager.client.admin.command('ping')
+                        logger.info(f"Successfully connected to MongoDB using strategy {i}: {settings.DATABASE_NAME}")
+                        break
+                        
+                    except Exception as strategy_error:
+                        logger.warning(f"Strategy {i} failed: {str(strategy_error)}")
+                        last_error = strategy_error
+                        if database_manager.client:
+                            database_manager.client.close()
+                            database_manager.client = None
+                            database_manager.database = None
+                        continue
+                
+                if database_manager.client is None:
+                    raise last_error or Exception("All connection strategies failed")
+                    
+            else:
+                # For development environment
                 database_manager.client = AsyncIOMotorClient(
                     mongodb_url, 
                     **database_manager._connection_options
                 )
                 database_manager.database = database_manager.client[settings.DATABASE_NAME]
                 
-                # Verificar conexión
+                # Test connection
                 await database_manager.client.admin.command('ping')
-                logger.info(f"Conectado a MongoDB: {settings.DATABASE_NAME}")
-                
-            except Exception as ssl_error:
-                logger.warning(f"Error SSL inicial: {ssl_error}")
-                # Fallback: intentar con configuración más permisiva
-                if os.getenv("ENVIRONMENT") == "production":
-                    logger.info("Intentando conexión con configuración SSL permisiva...")
-                    fallback_options = {
-                        "serverSelectionTimeoutMS": 10000,
-                        "connectTimeoutMS": 15000,
-                        "socketTimeoutMS": 30000,
-                        "maxPoolSize": 5,
-                        "minPoolSize": 1,
-                        "retryWrites": True,
-                        "retryReads": True,
-                        "tls": True
-                    }
-                    
-                    database_manager.client = AsyncIOMotorClient(
-                        mongodb_url, 
-                        **fallback_options
-                    )
-                    database_manager.database = database_manager.client[settings.DATABASE_NAME]
-                    
-                    # Verificar conexión
-                    await database_manager.client.admin.command('ping')
-                    logger.info(f"Conectado a MongoDB con fallback: {settings.DATABASE_NAME}")
+                logger.info(f"Connected to MongoDB: {settings.DATABASE_NAME}")
             
         return database_manager.database
     except Exception as e:
-        logger.error(f"Error al conectar con MongoDB: {str(e)}")
+        logger.error(f"Error connecting to MongoDB: {str(e)}")
         database_manager.client = None
         database_manager.database = None
         raise
 
 def _get_mongodb_url():
-    """Obtener URL de MongoDB según el entorno"""
+    """Get MongoDB URL based on environment with proper SSL parameters"""
     env = os.getenv("ENVIRONMENT", "development")
     base_url = settings.MONGODB_URL
     
     if env == "production":
-        # Para producción, usar configuración más permisiva
+        # For production (Render), ensure SSL parameters are present
+        required_params = [
+            "retryWrites=true",
+            "w=majority",
+            "tlsAllowInvalidCertificates=true",
+            "tlsAllowInvalidHostnames=true",
+            "ssl=true",
+            "authSource=admin"
+        ]
+        
+        # Check if URL already has parameters
         if "?" in base_url:
-            base_url += "&tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true"
+            # Add missing parameters
+            existing_params = base_url.split("?")[1] if "?" in base_url else ""
+            for param in required_params:
+                param_name = param.split("=")[0]
+                if param_name not in existing_params:
+                    base_url += f"&{param}"
         else:
-            base_url += "?tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true"
+            # Add all parameters
+            base_url += "?" + "&".join(required_params)
     
     return base_url
 
 async def close_mongo_connection():
-    """Cerrar conexión a la base de datos"""
-    if database_manager.client:
-        database_manager.client.close()
+    """Close database connection safely"""
+    try:
+        if database_manager.client:
+            database_manager.client.close()
+            logger.info("MongoDB connection closed successfully")
+    except Exception as e:
+        logger.warning(f"Error closing MongoDB connection: {str(e)}")
+    finally:
         database_manager.client = None
         database_manager.database = None
-        logger.info("Conexión a MongoDB cerrada")
 
 async def get_database() -> AsyncIOMotorDatabase:
-    """Obtener instancia de la base de datos"""
-    if database_manager.database is None:
-        logger.info("Base de datos no inicializada, conectando...")
-        await connect_to_mongo()
+    """Get database instance with enhanced reconnection logic"""
+    max_retries = 3
+    retry_count = 0
     
-    if database_manager.database is None:
-        logger.error("No se pudo establecer conexión con la base de datos")
-        raise Exception("No se pudo establecer conexión con la base de datos")
+    while retry_count < max_retries:
+        try:
+            if database_manager.database is None:
+                logger.info("Database not initialized, connecting...")
+                await connect_to_mongo()
+            
+            if database_manager.database is None:
+                raise Exception("Could not establish database connection")
+            
+            # Test connection with timeout
+            await database_manager.client.admin.command('ping')
+            return database_manager.database
+            
+        except Exception as e:
+            retry_count += 1
+            logger.warning(f"Connection attempt {retry_count} failed: {str(e)}")
+            
+            # Clean up failed connection
+            if database_manager.client:
+                database_manager.client.close()
+            database_manager.client = None
+            database_manager.database = None
+            
+            if retry_count >= max_retries:
+                logger.error(f"Failed to connect to database after {max_retries} attempts")
+                raise Exception(f"Could not establish database connection after {max_retries} attempts: {str(e)}")
+            
+            # Wait before retry (exponential backoff)
+            import asyncio
+            wait_time = 2 ** retry_count
+            logger.info(f"Waiting {wait_time} seconds before retry...")
+            await asyncio.sleep(wait_time)
     
-    try:
-        await database_manager.client.admin.command('ping')
-    except Exception:
-        logger.warning("Conexión perdida, reconectando...")
-        database_manager.client = None
-        database_manager.database = None
-        await connect_to_mongo()
-        
-    return database_manager.database
+    raise Exception("Unexpected error in database connection")
 
 def get_database_sync() -> Optional[AsyncIOMotorDatabase]:
     """Obtener instancia de la base de datos de forma síncrona (para scripts)"""
