@@ -37,15 +37,12 @@ class DatabaseManager:
         
         if env == "production":
             # Specific configuration for Render and production environments
-            ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
-            
+            # Using only Motor-compatible SSL options
             return {
                 "tls": True,
                 "tlsAllowInvalidCertificates": True,
                 "tlsAllowInvalidHostnames": True,
-                "ssl_context": ssl_context
+                "tlsInsecure": True
             }
         else:
             # For local development
@@ -60,66 +57,39 @@ async def connect_to_mongo():
     """Create connection to database with enhanced error handling for Render"""
     try:
         if database_manager.client is None:
-            mongodb_url = _get_mongodb_url()
+            mongodb_url = self._get_mongodb_url(env)
             env = os.getenv("ENVIRONMENT", "development")
             
             if env == "production":
-                # For Render deployment - try multiple connection strategies
-                connection_strategies = [
-                    # Strategy 1: Full SSL configuration
-                    {
-                        **database_manager._connection_options,
-                        "serverSelectionTimeoutMS": 60000,
-                        "connectTimeoutMS": 60000,
-                        "socketTimeoutMS": 60000,
-                    },
-                    # Strategy 2: Minimal SSL configuration
-                    {
-                        "serverSelectionTimeoutMS": 60000,
-                        "connectTimeoutMS": 60000,
-                        "socketTimeoutMS": 60000,
-                        "maxPoolSize": 3,
+                # For Render deployment - use simplified direct connection
+                mongodb_url = _get_mongodb_url()
+                
+                try:
+                    logger.info("Attempting direct MongoDB connection for Render deployment...")
+                    
+                    # Simple, direct connection configuration for Render
+                    connection_options = {
+                        "serverSelectionTimeoutMS": 30000,
+                        "connectTimeoutMS": 30000,
+                        "socketTimeoutMS": 30000,
+                        "maxPoolSize": 10,
                         "minPoolSize": 1,
+                        "maxIdleTimeMS": 45000,
+                        "waitQueueTimeoutMS": 30000,
                         "retryWrites": True,
-                        "retryReads": True,
-                        "tls": True,
-                        "tlsAllowInvalidCertificates": True,
-                        "tlsAllowInvalidHostnames": True,
-                    },
-                    # Strategy 3: Basic configuration
-                    {
-                        "serverSelectionTimeoutMS": 60000,
-                        "connectTimeoutMS": 60000,
-                        "socketTimeoutMS": 60000,
-                        "maxPoolSize": 1,
-                        "retryWrites": True,
-                        "tls": True,
+                        "retryReads": True
                     }
-                ]
-                
-                last_error = None
-                for i, strategy in enumerate(connection_strategies, 1):
-                    try:
-                        logger.info(f"Attempting connection strategy {i} for Render deployment...")
-                        database_manager.client = AsyncIOMotorClient(mongodb_url, **strategy)
-                        database_manager.database = database_manager.client[settings.DATABASE_NAME]
-                        
-                        # Test connection with longer timeout
-                        await database_manager.client.admin.command('ping')
-                        logger.info(f"Successfully connected to MongoDB using strategy {i}: {settings.DATABASE_NAME}")
-                        break
-                        
-                    except Exception as strategy_error:
-                        logger.warning(f"Strategy {i} failed: {str(strategy_error)}")
-                        last_error = strategy_error
-                        if database_manager.client:
-                            database_manager.client.close()
-                            database_manager.client = None
-                            database_manager.database = None
-                        continue
-                
-                if database_manager.client is None:
-                    raise last_error or Exception("All connection strategies failed")
+                    
+                    database_manager.client = AsyncIOMotorClient(mongodb_url, **connection_options)
+                    database_manager.database = database_manager.client[settings.DATABASE_NAME]
+                    
+                    # Test connection
+                    await database_manager.client.admin.command('ping')
+                    logger.info(f"Successfully connected to MongoDB: {settings.DATABASE_NAME}")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to connect to MongoDB: {str(e)}")
+                    raise e
                     
             else:
                 # For development environment
@@ -146,14 +116,12 @@ def _get_mongodb_url():
     base_url = settings.MONGODB_URL
     
     if env == "production":
-        # For production (Render), ensure SSL parameters are present
+        # For Render deployment, ensure minimal SSL parameters are present
         required_params = [
-            "retryWrites=true",
-            "w=majority",
-            "tlsAllowInvalidCertificates=true",
-            "tlsAllowInvalidHostnames=true",
             "ssl=true",
-            "authSource=admin"
+            "authSource=admin",
+            "tlsAllowInvalidCertificates=true",
+            "tlsAllowInvalidHostnames=true"
         ]
         
         # Check if URL already has parameters
