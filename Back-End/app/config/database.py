@@ -57,13 +57,11 @@ async def connect_to_mongo():
     """Create connection to database with enhanced error handling for Render"""
     try:
         if database_manager.client is None:
-            mongodb_url = self._get_mongodb_url(env)
             env = os.getenv("ENVIRONMENT", "development")
+            mongodb_url = _get_mongodb_url()
             
             if env == "production":
                 # For Render deployment - use simplified direct connection
-                mongodb_url = _get_mongodb_url()
-                
                 try:
                     logger.info("Attempting direct MongoDB connection for Render deployment...")
                     

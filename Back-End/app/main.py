@@ -64,6 +64,29 @@ except Exception:
 async def health():
     return {"status": "ok"}
 
+@app.post("/create-admin")
+async def create_admin():
+    """Endpoint temporal para crear administrador"""
+    try:
+        from app.config.database import get_database
+        from app.shared.services.user_management import UserManagementService
+        
+        db = await get_database()
+        user_service = UserManagementService(db)
+        
+        # Crear administrador por defecto
+        user = await user_service.create_user_for_administrator(
+            name="System Administrator",
+            email="admin@lime.edu.co",
+            password="admin123",
+            is_active=True,
+            administrator_code="admin"
+        )
+        
+        return {"message": "Administrator created successfully", "user": user}
+    except Exception as e:
+        return {"error": str(e)}
+
 # Global exception handlers with normalized messages
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
