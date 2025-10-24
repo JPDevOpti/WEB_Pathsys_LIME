@@ -40,3 +40,5 @@ services:
         value: "240"
       - key: FRONTEND_URL
         value: https://web-lis-pathsys-frontend.onrender.com
+      - key: VERCEL_FRONTEND_URL
+        value: https://tu-proyecto.vercel.app

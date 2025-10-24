@@ -74,6 +74,7 @@ import SpecialCaseIcon from "./SpecialCaseIcon.vue";
 import DashboardIcon from "./DashboardIcon.vue";
 import WarningIcon from "./WarningIcon.vue";
 import ProfileIcon from "./ProfileIcon.vue";
+import LoginIcon from "./LoginIcon.vue";
 
 export {
   BellIcon,
@@ -155,4 +156,5 @@ export {
   DashboardIcon,
   WarningIcon as SupportWarningIcon,
   ProfileIcon,
+  LoginIcon,
 };
