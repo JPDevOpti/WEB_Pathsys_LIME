@@ -1,0 +1,17 @@
+{
+  "buildCommand": "cd Front-End && npm run build",
+  "outputDirectory": "Front-End/dist",
+  "installCommand": "cd Front-End && npm install",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "produccion": true,
+      "main": false
+    }
+  }
+}
