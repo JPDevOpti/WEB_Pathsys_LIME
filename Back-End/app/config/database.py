@@ -55,9 +55,15 @@ async def connect_to_mongo():
             mongodb_url = _get_mongodb_url()
             
             if env == "production":
-                # For Render deployment - avoid TLS overrides, rely on SRV defaults
+                # For Render deployment - use explicit SSL context to fix TLS handshake
                 try:
-                    logger.info("Attempting MongoDB connection (Render/production)...")
+                    logger.info("Attempting MongoDB connection (Render/production) with SSL context...")
+                    
+                    # Create SSL context for compatibility
+                    ssl_context = ssl.create_default_context()
+                    ssl_context.check_hostname = False
+                    ssl_context.verify_mode = ssl.CERT_NONE
+                    
                     connection_options = {
                         "serverSelectionTimeoutMS": 15000,
                         "connectTimeoutMS": 15000,
@@ -65,7 +71,10 @@ async def connect_to_mongo():
                         "maxPoolSize": 5,
                         "minPoolSize": 1,
                         "retryWrites": True,
-                        "retryReads": True
+                        "retryReads": True,
+                        "ssl": True,
+                        "ssl_cert_reqs": ssl.CERT_NONE,
+                        "tlsInsecure": True
                     }
                     database_manager.client = AsyncIOMotorClient(mongodb_url, **connection_options)
                     database_manager.database = database_manager.client[settings.DATABASE_NAME]
