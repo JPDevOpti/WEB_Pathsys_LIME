@@ -59,7 +59,7 @@ async def connect_to_mongo():
                 try:
                     logger.info("Attempting MongoDB connection (Render/production) with SSL context...")
                     
-                    # Create SSL context for compatibility
+                    # Create SSL context for compatibility with Render
                     ssl_context = ssl.create_default_context()
                     ssl_context.check_hostname = False
                     ssl_context.verify_mode = ssl.CERT_NONE
@@ -72,8 +72,9 @@ async def connect_to_mongo():
                         "minPoolSize": 1,
                         "retryWrites": True,
                         "retryReads": True,
-                        "ssl": True,
-                        "ssl_cert_reqs": ssl.CERT_NONE,
+                        "tls": True,
+                        "tlsAllowInvalidCertificates": True,
+                        "tlsAllowInvalidHostnames": True,
                         "tlsInsecure": True
                     }
                     database_manager.client = AsyncIOMotorClient(mongodb_url, **connection_options)
