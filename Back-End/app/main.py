@@ -22,10 +22,9 @@ allowed_origins = [
     # URLs de producción específicas
     "https://pathsys-frontend.onrender.com",
     "https://web-lis-pathsys-frontend.onrender.com",
-    # URLs de Vercel - DOMINIO EXACTO
+    # Dominios de Vercel - producción y previews
     "https://web-pathsys-lime.vercel.app",
-    # Dominios de Vercel genéricos
-    "https://*.vercel.app"
+    "https://web-pathsys-lime-git-production-jpdevoptis-projects.vercel.app",
 ]
 
 # Agregar dominios de producción si están configurados

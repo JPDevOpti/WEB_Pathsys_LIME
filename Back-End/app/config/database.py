@@ -36,17 +36,10 @@ class DatabaseManager:
         env = os.getenv("ENVIRONMENT", "development")
         
         if env == "production":
-            # Specific configuration for Render and production environments
-            # Simplified SSL configuration for Render
-            return {
-                "tls": True,
-                "tlsAllowInvalidCertificates": True,
-                "tlsAllowInvalidHostnames": True,
-                "tlsInsecure": True,
-                "tlsDisableCertificateValidation": True
-            }
+            # Use default SSL handling for Atlas in production (no insecure overrides)
+            return {}
         else:
-            # For local development
+            # For local development you can validate with system CA bundle
             return {
                 "tls": True,
                 "tlsCAFile": certifi.where()
@@ -62,32 +55,23 @@ async def connect_to_mongo():
             mongodb_url = _get_mongodb_url()
             
             if env == "production":
-                # For Render deployment - use simplified direct connection
+                # For Render deployment - avoid TLS overrides, rely on SRV defaults
                 try:
-                    logger.info("Attempting direct MongoDB connection for Render deployment...")
-                    
-                    # Ultra-simple connection configuration for Render
+                    logger.info("Attempting MongoDB connection (Render/production)...")
                     connection_options = {
-                        "serverSelectionTimeoutMS": 10000,
-                        "connectTimeoutMS": 10000,
-                        "socketTimeoutMS": 10000,
+                        "serverSelectionTimeoutMS": 15000,
+                        "connectTimeoutMS": 15000,
+                        "socketTimeoutMS": 15000,
                         "maxPoolSize": 5,
                         "minPoolSize": 1,
                         "retryWrites": True,
-                        "retryReads": True,
-                        "tls": True,
-                        "tlsAllowInvalidCertificates": True,
-                        "tlsAllowInvalidHostnames": True,
-                        "tlsInsecure": True
+                        "retryReads": True
                     }
-                    
                     database_manager.client = AsyncIOMotorClient(mongodb_url, **connection_options)
                     database_manager.database = database_manager.client[settings.DATABASE_NAME]
-                    
                     # Test connection
                     await database_manager.client.admin.command('ping')
                     logger.info(f"Successfully connected to MongoDB: {settings.DATABASE_NAME}")
-                    
                 except Exception as e:
                     logger.error(f"Failed to connect to MongoDB: {str(e)}")
                     raise e
@@ -112,19 +96,9 @@ async def connect_to_mongo():
         raise
 
 def _get_mongodb_url():
-    """Get MongoDB URL based on environment with proper SSL parameters"""
-    env = os.getenv("ENVIRONMENT", "development")
+    """Return MongoDB URL. For Atlas SRV, TLS is handled implicitly."""
     base_url = settings.MONGODB_URL
-    
-    if env == "production":
-        # For Render deployment, use simplified URL with minimal SSL parameters
-        if "?" in base_url:
-            # Remove existing parameters and add simplified ones
-            base_url = base_url.split("?")[0]
-        
-        # Add minimal SSL parameters for Render
-        base_url += "?retryWrites=true&w=majority&tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true"
-    
+    # Do not force insecure TLS params; rely on Atlas defaults
     return base_url
 
 async def close_mongo_connection():
