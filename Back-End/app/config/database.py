@@ -37,12 +37,13 @@ class DatabaseManager:
         
         if env == "production":
             # Specific configuration for Render and production environments
-            # Using only Motor-compatible SSL options
+            # Simplified SSL configuration for Render
             return {
                 "tls": True,
                 "tlsAllowInvalidCertificates": True,
                 "tlsAllowInvalidHostnames": True,
-                "tlsInsecure": True
+                "tlsInsecure": True,
+                "tlsDisableCertificateValidation": True
             }
         else:
             # For local development
@@ -65,17 +66,19 @@ async def connect_to_mongo():
                 try:
                     logger.info("Attempting direct MongoDB connection for Render deployment...")
                     
-                    # Simple, direct connection configuration for Render
+                    # Ultra-simple connection configuration for Render
                     connection_options = {
-                        "serverSelectionTimeoutMS": 30000,
-                        "connectTimeoutMS": 30000,
-                        "socketTimeoutMS": 30000,
-                        "maxPoolSize": 10,
+                        "serverSelectionTimeoutMS": 10000,
+                        "connectTimeoutMS": 10000,
+                        "socketTimeoutMS": 10000,
+                        "maxPoolSize": 5,
                         "minPoolSize": 1,
-                        "maxIdleTimeMS": 45000,
-                        "waitQueueTimeoutMS": 30000,
                         "retryWrites": True,
-                        "retryReads": True
+                        "retryReads": True,
+                        "tls": True,
+                        "tlsAllowInvalidCertificates": True,
+                        "tlsAllowInvalidHostnames": True,
+                        "tlsInsecure": True
                     }
                     
                     database_manager.client = AsyncIOMotorClient(mongodb_url, **connection_options)
@@ -114,25 +117,13 @@ def _get_mongodb_url():
     base_url = settings.MONGODB_URL
     
     if env == "production":
-        # For Render deployment, ensure minimal SSL parameters are present
-        required_params = [
-            "ssl=true",
-            "authSource=admin",
-            "tlsAllowInvalidCertificates=true",
-            "tlsAllowInvalidHostnames=true"
-        ]
-        
-        # Check if URL already has parameters
+        # For Render deployment, use simplified URL with minimal SSL parameters
         if "?" in base_url:
-            # Add missing parameters
-            existing_params = base_url.split("?")[1] if "?" in base_url else ""
-            for param in required_params:
-                param_name = param.split("=")[0]
-                if param_name not in existing_params:
-                    base_url += f"&{param}"
-        else:
-            # Add all parameters
-            base_url += "?" + "&".join(required_params)
+            # Remove existing parameters and add simplified ones
+            base_url = base_url.split("?")[0]
+        
+        # Add minimal SSL parameters for Render
+        base_url += "?retryWrites=true&w=majority&tlsAllowInvalidCertificates=true&tlsAllowInvalidHostnames=true"
     
     return base_url
 
