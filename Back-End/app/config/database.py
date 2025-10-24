@@ -55,14 +55,9 @@ async def connect_to_mongo():
             mongodb_url = _get_mongodb_url()
             
             if env == "production":
-                # For Render deployment - use explicit SSL context to fix TLS handshake
+                # For Render deployment - simplified connection without conflicting SSL options
                 try:
-                    logger.info("Attempting MongoDB connection (Render/production) with SSL context...")
-                    
-                    # Create SSL context for compatibility with Render
-                    ssl_context = ssl.create_default_context()
-                    ssl_context.check_hostname = False
-                    ssl_context.verify_mode = ssl.CERT_NONE
+                    logger.info("Attempting MongoDB connection (Render/production)...")
                     
                     connection_options = {
                         "serverSelectionTimeoutMS": 15000,
@@ -71,11 +66,7 @@ async def connect_to_mongo():
                         "maxPoolSize": 5,
                         "minPoolSize": 1,
                         "retryWrites": True,
-                        "retryReads": True,
-                        "tls": True,
-                        "tlsAllowInvalidCertificates": True,
-                        "tlsAllowInvalidHostnames": True,
-                        "tlsInsecure": True
+                        "retryReads": True
                     }
                     database_manager.client = AsyncIOMotorClient(mongodb_url, **connection_options)
                     database_manager.database = database_manager.client[settings.DATABASE_NAME]
@@ -106,9 +97,17 @@ async def connect_to_mongo():
         raise
 
 def _get_mongodb_url():
-    """Return MongoDB URL. For Atlas SRV, TLS is handled implicitly."""
+    """Return MongoDB URL with SSL parameters for Render compatibility"""
     base_url = settings.MONGODB_URL
-    # Do not force insecure TLS params; rely on Atlas defaults
+    env = os.getenv("ENVIRONMENT", "development")
+    
+    if env == "production":
+        # For Render, add SSL parameters directly to URL to force proper TLS
+        if "?" in base_url:
+            base_url = base_url.split("?")[0]
+        # Add SSL parameters that work with Render
+        base_url += "?ssl=true&ssl_cert_reqs=CERT_NONE&retryWrites=true&w=majority"
+    
     return base_url
 
 async def close_mongo_connection():
