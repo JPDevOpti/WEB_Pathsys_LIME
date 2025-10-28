@@ -56,6 +56,21 @@
             <h4 class="text-sm font-semibold text-green-800">Paciente encontrado y cargado</h4>
           </div>
         </div>
+
+        <!-- Delete button below banner -->
+        <div v-if="patientFound" class="mt-2 flex justify-end">
+          <BaseButton
+            size="xs"
+            variant="ghost"
+            :custom-class="'border border-red-600 text-red-600 bg-white hover:bg-red-50 focus:ring-red-500'"
+            @click="openDeleteConfirm"
+          >
+            <template #icon-left>
+              <TrashIcon class="w-4 h-4 mr-1" />
+            </template>
+            Eliminar paciente
+          </BaseButton>
+        </div>
       </div>
 
       <!-- Helper when nothing loaded -->
@@ -221,27 +236,51 @@
 
         <!-- Global validation -->
         <ValidationAlert :visible="validationState.showValidationError && validationErrors.length > 0" :errors="validationErrors" />
-      </div>
+  </div>
 
-      <!-- Success Card -->
-      <div ref="notificationContainer">
-        <PatientSuccessCard 
-          :visible="showSuccessCard" 
-          :patientData="updatedPatient || {}"
-          @close="closeSuccessCard"
-        />
-      </div>
+  <!-- Success Card -->
+  <div ref="notificationContainer">
+    <PatientSuccessCard 
+      :visible="showSuccessCard" 
+      :patientData="updatedPatient || {}"
+      @close="closeSuccessCard"
+    />
+  </div>
 
-      <!-- Error notification -->
-      <Notification 
-        :visible="notification.visible && notification.type === 'error'" 
-        :type="notification.type" 
+  <!-- Delete Success Card -->
+  <div ref="notificationContainer">
+    <PatientDeleteSuccessCard
+      :visible="showDeleteSuccessCard"
+      :patientData="patientDeleted || {}"
+      @close="closeDeleteSuccessCard"
+    />
+  </div>
+
+  <!-- Error notification -->
+  <Notification 
+    :visible="notification.visible && notification.type === 'error'" 
+    :type="notification.type" 
         :title="notification.title" 
         :message="notification.message" 
         :inline="true" 
         :auto-close="false" 
         @close="closeNotification"
       />
+
+  <!-- Confirm deletion dialog -->
+  <ConfirmDialog
+    :model-value="showConfirmDelete"
+    title="Eliminar paciente"
+    subtitle="Esta acción no se puede deshacer"
+    :message="`¿Está seguro de eliminar al paciente ${originalData?.first_name || ''} ${originalData?.first_lastname || ''}?\nDocumento: ${IDENTIFICATION_TYPE_NAMES[originalData?.identification_type as IdentificationType] || originalData?.identification_type} - ${originalData?.identification_number || ''}`"
+    confirm-text="Eliminar"
+    cancel-text="Cancelar"
+    :loading-confirm="isDeleting"
+    :icon="TrashIcon"
+    @update:modelValue="v => showConfirmDelete = v as boolean"
+    @confirm="confirmDelete"
+    @cancel="showConfirmDelete = false"
+  />
     </div>
 </template>
 
@@ -249,11 +288,13 @@
 import { reactive, ref, computed, watch } from 'vue'
 import { FormInputField, FormSelect, FormTextarea, DateInputField } from '@/shared/components/ui/forms'
 import { MunicipalityList, EntityList } from '@/shared/components/ui/lists'
-import { SaveButton, ClearButton, SearchButton } from '@/shared/components/ui/buttons'
+import { SaveButton, ClearButton, SearchButton, BaseButton } from '@/shared/components/ui/buttons'
 import { useNotifications } from '../composables/useNotifications'
 import patientsApiService from '../services/patientsApi.service'
-import { Notification, PatientSuccessCard, ValidationAlert } from '@/shared/components/ui/feedback'
+import { Notification, PatientSuccessCard, ValidationAlert, ConfirmDialog } from '@/shared/components/ui/feedback'
+import PatientDeleteSuccessCard from '@/shared/components/ui/feedback/PatientDeleteSuccessCard.vue'
 import SearchPatientIcon from '@/assets/icons/SearchPatientIcon.vue'
+import { TrashIcon } from '@/assets/icons'
 import { IdentificationType, IDENTIFICATION_TYPE_NAMES } from '../types'
 import type { PatientData, UpdatePatientRequest, Gender, CareType } from '../types'
 
@@ -274,12 +315,16 @@ const isLoading = ref(false)
 const originalData = ref<PatientData | null>(null)
 const notificationContainer = ref<HTMLElement | null>(null)
 const updatedPatient = ref<PatientData | null>(null)
+const patientDeleted = ref<PatientData | null>(null)
 const searchIdentificationType = ref<IdentificationType | ''>('')
 const searchIdentificationNumber = ref('')
 const isSearching = ref(false)
 const searchError = ref('')
 const patientFound = ref(false)
 const showSuccessCard = ref(false)
+const showDeleteSuccessCard = ref(false)
+const showConfirmDelete = ref(false)
+const isDeleting = ref(false)
 
 // Form data
 const form = reactive({
@@ -830,6 +875,41 @@ const closeSuccessCard = () => {
   showSuccessCard.value = false
 }
 
+// Delete patient flow
+const openDeleteConfirm = () => {
+  showConfirmDelete.value = true
+}
+
+const confirmDelete = async () => {
+  if (!form.patient_code) {
+    showConfirmDelete.value = false
+    return
+  }
+  isDeleting.value = true
+  try {
+    // Preserve data for success card before reset
+    patientDeleted.value = originalData.value ? { ...originalData.value } : null
+    await patientsApiService.deletePatient(form.patient_code)
+    showConfirmDelete.value = false
+    showNotification('success', 'Paciente eliminado', 'El paciente ha sido eliminado correctamente', 4000)
+    // Reset UI state as if clearing
+    const prevNotification = { ...notification }
+    onReset()
+    Object.assign(notification, prevNotification)
+    showDeleteSuccessCard.value = true
+  } catch (error: any) {
+    const msg = error.response?.data?.detail || error.message || 'Error al eliminar el paciente'
+    showNotification('error', 'Error al eliminar', msg, 0)
+    showConfirmDelete.value = false
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+const closeDeleteSuccessCard = () => {
+  showDeleteSuccessCard.value = false
+}
+
 // Watch for case code prop changes
 watch(
   () => props.caseCodeProp,
@@ -851,4 +931,5 @@ watch(
     }
   }
 )
+
 </script>

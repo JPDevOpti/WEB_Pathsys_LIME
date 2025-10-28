@@ -26,7 +26,7 @@
         <div 
           v-if="caseFound && foundCaseInfo && !isCaseCompleted" 
           ref="caseVerifiedSection"
-          class="mt-4 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg"
+          class="mt-4 p-3 sm:p-4 pb-0 bg-green-50 border border-green-200 rounded-lg"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center">
@@ -84,6 +84,24 @@
           </div>
         </div>
       </div>
+
+      <template #footer>
+        <div class="flex justify-end">
+          <BaseButton 
+            v-if="caseFound && foundCaseInfo && !isCaseCompleted"
+            size="xs" 
+            variant="ghost"
+            :custom-class="'border border-red-600 text-red-600 bg-white hover:bg-red-50 focus:ring-red-500'"
+            @click="openDeleteConfirm"
+            :disabled="isDeleting"
+          >
+            <template #icon-left>
+              <TrashIcon class="w-4 h-4 mr-1" />
+            </template>
+            Eliminar caso
+          </BaseButton>
+        </div>
+      </template>
     </ComponentCard>
 
     <!-- Cards 2 & 3: Side by side - Edit Form (left 60%) and Patient Info (right 40%) -->
@@ -147,6 +165,22 @@
             empty-state-message="No hay información del caso"
             empty-state-subtext="Busque un caso para continuar"
           />
+
+          <template #footer>
+            <div class="flex justify-end">
+              <BaseButton 
+                size="sm" 
+                variant="outline"
+                :disabled="!patientDisplayInfo || !patientDisplayInfo.patientCode"
+                @click="openEditPatientModal"
+              >
+                <template #icon-left>
+                  <EditPatientIcon class="w-4 h-4 mr-2" />
+                </template>
+                Editar datos del paciente
+              </BaseButton>
+            </div>
+          </template>
         </ComponentCard>
       </div>
     </div>
@@ -177,12 +211,143 @@
       />
     </div>
   </div>
+
+  <!-- Modal: Editar Paciente -->
+  <Modal v-model="isEditPatientOpen" title="Editar datos del paciente" size="lg">
+    <div v-if="isEditPatientLoading" class="p-6 text-center text-sm text-gray-600">Cargando datos del paciente...</div>
+    <div v-else class="space-y-6">
+      <!-- Encabezado visual del paciente -->
+      <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+        <div class="px-6 py-5 border-b border-gray-200">
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                <EditPatientIcon class="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                <div class="min-w-0">
+                  <h3 class="text-xl font-bold text-gray-900 mb-1">
+                    {{ patientDisplayInfo ? patientDisplayInfo.name : 'Paciente' }}
+                  </h3>
+                  <div class="flex items-center flex-wrap gap-3">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Código</span>
+                      <span class="text-lg font-bold text-gray-900 font-mono">
+                        {{ patientDisplayInfo ? patientDisplayInfo.patientCode : '' }}
+                      </span>
+                    </div>
+                    <div v-if="patientDisplayInfo?.entity" class="flex items-center gap-1.5">
+                      <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Entidad</span>
+                      <span class="text-sm font-semibold text-gray-900">{{ patientDisplayInfo.entity }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contenido del formulario -->
+        <div class="px-6 py-5 space-y-6">
+          <!-- Sección: Datos Personales -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Datos Personales</span>
+              <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <FormInputField v-model="editPatientForm.first_name" label="Primer nombre" placeholder="Ingrese primer nombre" />
+              <FormInputField v-model="editPatientForm.second_name" label="Segundo nombre" placeholder="Ingrese segundo nombre" />
+              <FormInputField v-model="editPatientForm.first_lastname" label="Primer apellido" placeholder="Ingrese primer apellido" />
+              <FormInputField v-model="editPatientForm.second_lastname" label="Segundo apellido" placeholder="Ingrese segundo apellido" />
+              <FormInputField v-model="editPatientForm.birth_date" type="date" label="Fecha de nacimiento" placeholder="Seleccione fecha" />
+              <FormSelect v-model="editPatientForm.gender" label="Sexo" :options="genderOptions" placeholder="Seleccione sexo" />
+            </div>
+          </div>
+
+          <!-- Sección: Ubicación y Contacto -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Ubicación y Contacto</span>
+              <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <MunicipalityList 
+                v-model="editPatientForm.municipality_code"
+                label="Municipio"
+                placeholder="Buscar y seleccionar municipio"
+                @municipality-code-change="handleMunicipalityCodeChange"
+                @municipality-name-change="handleMunicipalityNameChange"
+                @subregion-change="handleSubregionChange"
+              />
+              <FormInputField v-model="editPatientForm.address" label="Dirección" placeholder="Dirección del paciente" />
+            </div>
+          </div>
+
+          <!-- Sección: Cobertura y Atención -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Cobertura y Atención</span>
+              <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <EntityList 
+                v-model="editPatientForm.entity_id"
+                label="Entidad"
+                placeholder="Buscar y seleccionar entidad"
+                @entity-selected="handleEntitySelected"
+              />
+              <FormSelect v-model="editPatientForm.care_type" label="Tipo de atención" :options="careTypeOptions" placeholder="Seleccione tipo" />
+            </div>
+          </div>
+
+          <!-- Sección: Observaciones -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Observaciones</span>
+              <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            <FormTextarea v-model="editPatientForm.observations" label="Observaciones" placeholder="Observaciones del paciente" :rows="4" :max-length="500" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 flex justify-end gap-2 sticky bottom-0 z-10">
+        <SaveButton text="Guardar" :loading="isEditPatientLoading" @click="saveEditPatient" />
+      </div>
+    </template>
+  </Modal>
+
+  <!-- Confirm Delete Dialog -->
+  <ConfirmDialog
+    v-model="showConfirmDelete"
+    title="Eliminar caso"
+    subtitle="Esta acción no se puede deshacer"
+    :message="`¿Está seguro de eliminar el caso ${(foundCaseInfo as any)?.case_code || (foundCaseInfo as any)?.caso_code}?`"
+    confirm-text="Eliminar"
+    cancel-text="Cancelar"
+    :loading-confirm="isDeleting"
+    :icon="TrashIcon"
+    @confirm="confirmDelete"
+    @cancel="showConfirmDelete = false"
+  />
+
+  <!-- Delete Success Card -->
+  <CaseDeleteSuccessCard
+    :visible="showDeleteSuccessCard"
+    :case-data="deletedCaseData || {}"
+    @close="closeDeleteSuccessCard"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { ComponentCard } from '@/shared/components'
-import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
+import { SaveButton, ClearButton, BaseButton } from '@/shared/components/ui/buttons'
 import { useNotifications } from '../composables/useNotifications'
 import Notification from '@/shared/components/ui/feedback/Notification.vue'
 import { CaseSuccessCard } from '@/shared/components/ui/feedback'
@@ -190,8 +355,16 @@ import { useCaseForm } from '../composables/useCaseForm'
 import { casesApiService } from '../services/casesApi.service'
 import pathologistApi from '../services/pathologistApi.service'
 import type { CaseModel } from '../types'
-import { CaseIcon } from '@/assets/icons'
+import { CaseIcon, EditPatientIcon } from '@/assets/icons'
 import { PatientInfoCard, CaseForm, CaseSearch } from './Shared'
+import { Modal } from '@/shared/components/layout'
+import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/ui/forms'
+import { MunicipalityList, EntityList } from '@/shared/components/ui/lists'
+import patientsApiService from '@/modules/patients/services/patientsApi.service'
+import type { PatientData, Gender, CareType, UpdatePatientRequest } from '@/modules/patients/types'
+import { ConfirmDialog } from '@/shared/components/ui/feedback'
+import CaseDeleteSuccessCard from '@/shared/components/ui/feedback/CaseDeleteSuccessCard.vue'
+import { TrashIcon } from '@/assets/icons'
 
 interface Props {
   caseCodeProp?: string
@@ -223,7 +396,11 @@ const searchError = ref('')
 const caseFound = ref(false)
 const foundCaseInfo = ref<CaseModel | null>(null)
 
-// Extra editable fields
+// Delete case state
+const showConfirmDelete = ref(false)
+const isDeleting = ref(false)
+const showDeleteSuccessCard = ref(false)
+const deletedCaseData = ref<any>(null)
 const state = ref('')
 const assignedPathologist = ref('')
 const selectedEntity = ref<{ codigo: string; nombre: string } | null>(null)
@@ -285,6 +462,137 @@ const patientDisplayInfo = computed(() => {
     observations: patientInfo.value.observaciones || ''
   }
 })
+
+// ===== Estado del Modal de edición de paciente =====
+const isEditPatientOpen = ref(false)
+const isEditPatientLoading = ref(false)
+const editPatientCode = ref('')
+const editPatientForm = ref({
+  first_name: '',
+  second_name: '',
+  first_lastname: '',
+  second_lastname: '',
+  birth_date: '',
+  gender: '' as Gender | '',
+  municipality_code: '',
+  municipality_name: '',
+  subregion: '',
+  address: '',
+  entity_id: '',
+  entity_name: '',
+  care_type: '' as CareType | '',
+  observations: ''
+})
+
+const genderOptions = [
+  { value: 'Masculino', label: 'Masculino' },
+  { value: 'Femenino', label: 'Femenino' }
+]
+
+const careTypeOptions = [
+  { value: 'Ambulatorio', label: 'Ambulatorio' },
+  { value: 'Hospitalizado', label: 'Hospitalizado' }
+]
+
+const openEditPatientModal = async () => {
+  if (!patientInfo.value?.pacienteCode) return
+  isEditPatientLoading.value = true
+  isEditPatientOpen.value = true
+  try {
+    const code = String(patientInfo.value.pacienteCode)
+    editPatientCode.value = code
+    const patient: PatientData = await patientsApiService.getPatientByCode(code)
+    editPatientForm.value = {
+      first_name: patient.first_name || '',
+      second_name: patient.second_name || '',
+      first_lastname: patient.first_lastname || '',
+      second_lastname: patient.second_lastname || '',
+      birth_date: patient.birth_date || '',
+      gender: patient.gender || '',
+      municipality_code: patient.location?.municipality_code || '',
+      municipality_name: patient.location?.municipality_name || '',
+      subregion: patient.location?.subregion || '',
+      address: patient.location?.address || '',
+      entity_id: patient.entity_info?.id || '',
+      entity_name: patient.entity_info?.name || '',
+      care_type: patient.care_type || '',
+      observations: patient.observations || ''
+    }
+  } catch (e) {
+    // Mantener el modal abierto para permitir reintento
+  } finally {
+    isEditPatientLoading.value = false
+  }
+}
+
+const handleMunicipalityCodeChange = (code: string) => { editPatientForm.value.municipality_code = code }
+const handleMunicipalityNameChange = (name: string) => { editPatientForm.value.municipality_name = name }
+const handleSubregionChange = (subregion: string) => { editPatientForm.value.subregion = subregion }
+const handleEntitySelected = (entity: any) => {
+  if (entity) {
+    editPatientForm.value.entity_id = entity.codigo || entity.id || ''
+    editPatientForm.value.entity_name = entity.nombre || entity.name || ''
+  } else {
+    editPatientForm.value.entity_id = ''
+    editPatientForm.value.entity_name = ''
+  }
+}
+
+const saveEditPatient = async () => {
+  if (!editPatientCode.value) return
+  isEditPatientLoading.value = true
+  try {
+    const hasLocation = !!(
+      editPatientForm.value.municipality_code?.trim() ||
+      editPatientForm.value.municipality_name?.trim() ||
+      editPatientForm.value.subregion?.trim() ||
+      editPatientForm.value.address?.trim()
+    )
+
+    const payload: UpdatePatientRequest = {
+      first_name: editPatientForm.value.first_name.trim() || undefined,
+      second_name: editPatientForm.value.second_name.trim() || undefined,
+      first_lastname: editPatientForm.value.first_lastname.trim() || undefined,
+      second_lastname: editPatientForm.value.second_lastname.trim() || undefined,
+      birth_date: editPatientForm.value.birth_date || undefined,
+      gender: (editPatientForm.value.gender || undefined) as Gender | undefined,
+      care_type: (editPatientForm.value.care_type || undefined) as CareType | undefined,
+      observations: editPatientForm.value.observations.trim() || undefined
+    }
+    if (hasLocation) {
+      payload.location = {
+        municipality_code: editPatientForm.value.municipality_code.trim(),
+        municipality_name: editPatientForm.value.municipality_name.trim(),
+        subregion: editPatientForm.value.subregion.trim(),
+        address: editPatientForm.value.address.trim()
+      }
+    }
+    if (editPatientForm.value.entity_id?.trim() && editPatientForm.value.entity_name?.trim()) {
+      payload.entity_info = {
+        id: editPatientForm.value.entity_id.trim(),
+        name: editPatientForm.value.entity_name.trim()
+      }
+    }
+
+    const updated: PatientData = await patientsApiService.updatePatient(editPatientCode.value, payload)
+
+    // Refrescar información del paciente en la UI del caso
+    patientInfo.value = {
+      ...patientInfo.value,
+      nombrePaciente: `${updated.first_name} ${updated.second_name || ''} ${updated.first_lastname} ${updated.second_lastname || ''}`.replace(/\s+/g, ' ').trim(),
+      sexo: updated.gender || patientInfo.value?.sexo || '',
+      entidad: updated.entity_info?.name || patientInfo.value?.entidad || '',
+      tipoAtencion: updated.care_type || patientInfo.value?.tipoAtencion || '',
+      observaciones: updated.observations || (patientInfo.value as any)?.observaciones || ''
+    }
+
+    isEditPatientOpen.value = false
+  } catch (e: any) {
+    // En caso de error se podría mostrar notificación reutilizando useNotifications
+  } finally {
+    isEditPatientLoading.value = false
+  }
+}
 
 const validationErrors = computed(() => {
   const errorsList: string[] = []
@@ -475,7 +783,7 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
 
     patientInfo.value = {
       pacienteCode: getField(['patient_info.patient_code', 'paciente.paciente_code', 'paciente.numeroCedula', 'cedula_paciente'], formData.patientDocument),
-      nombrePaciente: getField(['patient_info.name', 'paciente.nombre', 'paciente.nombrePaciente', 'nombre_paciente'], 'Sin nombre'),
+      nombrePaciente: getField(['patient_info.name', 'paciente.nombre', 'patient_info.nombrePaciente', 'nombre_paciente'], 'Sin nombre'),
       edad: String(getField(['patient_info.age', 'paciente.edad', 'edad_paciente'], 0)),
       sexo: getField(['patient_info.gender', 'paciente.sexo', 'sexo_paciente'], 'Sin especificar'),
       entidad: getField(['patient_info.entity_info.name', 'entidad_info.nombre', 'paciente.entidad_info.nombre'], 'Sin especificar'),
@@ -489,53 +797,53 @@ const loadCaseDataFromFound = async (caseData: CaseModel) => {
     if (patologoAsignado?.id || patologoAsignado?.pathologist_code || patologoAsignado?.codigo) {
       const codigo = patologoAsignado.id || patologoAsignado.pathologist_code || patologoAsignado.codigo
       try {
-        const pathologist = await pathologistApi.getPathologist(codigo)
-        if (pathologist) {
-          const patologoCode = (pathologist as any).patologo_code || codigo
-          const patologoData = {
-            codigo: patologoCode,
-            nombre: (pathologist as any).patologo_name || (pathologist as any).nombre || ''
-          }
-          selectedPathologist.value = patologoData
-          assignedPathologist.value = patologoCode
-          onPathologistSelected(patologoData)
-        } else {
-          const patologoData = { codigo: codigo, nombre: patologoAsignado.nombre || '' }
-          selectedPathologist.value = patologoData
-          assignedPathologist.value = codigo
-          onPathologistSelected(patologoData)
-        }
-      } catch (error) {
-        const patologoData = { codigo: codigo, nombre: patologoAsignado.nombre || '' }
-        selectedPathologist.value = patologoData
-        assignedPathologist.value = codigo
-        onPathologistSelected(patologoData)
-      }
-    } else {
-      selectedPathologist.value = null
-      assignedPathologist.value = ''
-    }
+       const pathologist = await pathologistApi.getPathologist(codigo)
+       if (pathologist) {
+         const patologoCode = (pathologist as any).patologo_code || codigo
+         const patologoData = {
+           codigo: patologoCode,
+           nombre: (pathologist as any).patologo_name || (pathologist as any).nombre || ''
+         }
+         selectedPathologist.value = patologoData
+         assignedPathologist.value = patologoCode
+         onPathologistSelected(patologoData)
+       } else {
+         const patologoData = { codigo: codigo, nombre: patologoAsignado.nombre || '' }
+         selectedPathologist.value = patologoData
+         assignedPathologist.value = codigo
+         onPathologistSelected(patologoData)
+       }
+     } catch (error) {
+       const patologoData = { codigo: codigo, nombre: patologoAsignado.nombre || '' }
+       selectedPathologist.value = patologoData
+       assignedPathologist.value = codigo
+       onPathologistSelected(patologoData)
+     }
+   } else {
+     selectedPathologist.value = null
+     assignedPathologist.value = ''
+   }
 
-    const entityPaths = [
-      'patient_info.entity_info',
-      'entidad_info',
-      'paciente.entidad_info'
-    ]
+   const entityPaths = [
+     'patient_info.entity_info',
+     'entidad_info',
+     'paciente.entidad_info'
+   ]
 
-    const entityData = entityPaths.find(path => {
-      const entity = getField([path])
-      return entity?.id || entity?.codigo
-    })
+   const entityData = entityPaths.find(path => {
+     const entity = getField([path])
+     return entity?.id || entity?.codigo
+   })
 
-    if (entityData) {
-      const entity = getField([entityData])
-      selectedEntity.value = {
-        codigo: entity.id || entity.codigo,
-        nombre: entity.name || entity.nombre
-      }
-    } else {
-      selectedEntity.value = null
-    }
+   if (entityData) {
+     const entity = getField([entityData])
+     selectedEntity.value = {
+       codigo: entity.id || entity.codigo,
+       nombre: entity.name || entity.nombre
+     }
+   } else {
+     selectedEntity.value = null
+   }
 
   } catch (error: any) {
     showError('Error al cargar datos del caso', error.message || 'Error desconocido')
@@ -798,6 +1106,53 @@ const translateCaseState = (value: any): string => {
 
 const closeCaseSuccessCard = () => {
   showCaseSuccessCard.value = false
+}
+
+// Delete case functions
+const openDeleteConfirm = () => {
+  showConfirmDelete.value = true
+}
+
+const confirmDelete = async () => {
+  if (!foundCaseInfo.value) {
+    showConfirmDelete.value = false
+    return
+  }
+  
+  isDeleting.value = true
+  try {
+    const caseCode = (foundCaseInfo.value as any)?.case_code || (foundCaseInfo.value as any)?.caso_code
+    if (!caseCode) {
+      throw new Error('Código de caso no encontrado')
+    }
+    
+    // Store case data before deletion
+    deletedCaseData.value = {
+      case_code: caseCode,
+      codigo: caseCode,
+      code: caseCode
+    }
+    
+    await casesApiService.deleteCase(caseCode)
+    showConfirmDelete.value = false
+    
+    // Show success card instead of toast notification
+    showDeleteSuccessCard.value = true
+    
+    // Reset form state
+    onReset()
+  } catch (error: any) {
+    const msg = error.response?.data?.detail || error.message || 'Error al eliminar el caso'
+    showError('Error al eliminar', msg)
+    showConfirmDelete.value = false
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+const closeDeleteSuccessCard = () => {
+  showDeleteSuccessCard.value = false
+  deletedCaseData.value = null
 }
 
 watch(
