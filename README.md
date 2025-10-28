@@ -105,8 +105,7 @@ DATABASE_NAME=lime_pathsys
 ENVIRONMENT=development | production
 DEBUG=True | False
 SECRET_KEY=...
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
+ACCESS_TOKEN_EXPIRE_MINUTES=480
 
 Frontend (`Front-End/.env`):
 ```

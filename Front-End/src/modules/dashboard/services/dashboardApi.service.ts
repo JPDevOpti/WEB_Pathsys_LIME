@@ -23,7 +23,7 @@ class DashboardApiService {
     if (existing) return existing
     const request = apiClient
       .get<any>(url, { params: { ...(params || {}), _ts: Date.now() } })
-      .then(r => (r?.data ?? r))
+      .then(r => r)
       .finally(() => this.inflight.delete(key))
     this.inflight.set(key, request)
     return request

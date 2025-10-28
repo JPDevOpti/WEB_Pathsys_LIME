@@ -6,11 +6,6 @@ import './assets/styles/main.css'
 import VueApexCharts from 'vue3-apexcharts'
 import { useAuthStore } from '@/stores/auth.store'
 
-// Inicializar funciones de prueba en desarrollo
-if (import.meta.env.DEV) {
-  import('./utils/consoleTestSetup')
-}
-
 const app = createApp(App)
 
 app.use(createPinia())

@@ -36,9 +36,9 @@ export class TokenRefreshService {
    */
   private static async performRefresh(): Promise<TokenRefreshResponse> {
     try {
-      const response = await apiClient.post('/auth/refresh')
-      
-      return response.data as TokenRefreshResponse
+      // apiClient.post ya devuelve los datos desenvueltos (no AxiosResponse)
+      const response = await apiClient.post<TokenRefreshResponse>('/auth/refresh')
+      return response
     } catch (error: any) {
       console.error('❌ [TOKEN REFRESH] Failed to refresh token:', error)
       throw error

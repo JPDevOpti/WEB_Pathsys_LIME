@@ -16,7 +16,7 @@ from .statistics.statistics_router import router as statistics_router
 from .urgent_routes import router as urgent_router
 
 
-router = APIRouter(prefix="/cases", tags=["cases"])
+router = APIRouter(tags=["cases"]) 
 
 # Incluir las rutas de resultado y firma
 router.include_router(result_router)
