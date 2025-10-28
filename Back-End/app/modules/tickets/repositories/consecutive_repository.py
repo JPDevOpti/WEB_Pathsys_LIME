@@ -1,7 +1,7 @@
 """Repository for ticket consecutive number management."""
 
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import DuplicateKeyError
 from app.modules.tickets.models.consecutive import ConsecutiveTicket
@@ -26,7 +26,7 @@ class ConsecutiveTicketRepository:
             {"year": year},
             {
                 "$inc": {"last_number": 1},
-                "$set": {"updated_at": datetime.utcnow()}
+                "$set": {"updated_at": datetime.now(timezone.utc)}
             },
             upsert=True,
             return_document=True
@@ -54,7 +54,7 @@ class ConsecutiveTicketRepository:
         consecutive_data = {
             "year": year,
             "last_number": initial_number,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.now(timezone.utc)
         }
         
         try:
@@ -76,7 +76,7 @@ class ConsecutiveTicketRepository:
         
         result = await self.collection.update_one(
             {"year": year},
-            {"$set": {"last_number": new_number, "updated_at": datetime.utcnow()}}
+            {"$set": {"last_number": new_number, "updated_at": datetime.now(timezone.utc)}}
         )
         return result.modified_count > 0
     

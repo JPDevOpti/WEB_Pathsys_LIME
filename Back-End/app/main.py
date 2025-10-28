@@ -1,88 +1,79 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi import APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
-import logging
-from app.config.settings import settings
 from fastapi.encoders import jsonable_encoder
+import os, logging
+from app.config.settings import settings
+from app.config.database import connect_to_mongo, close_mongo_connection, get_database
+from app.modules.cases.repositories.case_repository import CaseRepository
+from app.modules.cases.repositories.consecutive_repository import CaseConsecutiveRepository
+from app.modules.approvals.repositories.approval_repository import ApprovalRepository
+from app.modules.approvals.repositories.consecutive_repository import ApprovalConsecutiveRepository
+from app.modules.patients.repositories.patient_repository import PatientRepository
 
-# Crear aplicación FastAPI
 app = FastAPI(title="WEB-LIS PathSys - New Backend", version="1.0.0")
-
-# CORS para el frontend local y producción
-allowed_origins = [
-    "http://localhost:5174", 
-    "http://127.0.0.1:5174",
-    "http://localhost:5175", 
-    "http://127.0.0.1:5175",
-    # URLs de producción específicas
-    "https://pathsys-frontend.onrender.com",
-    "https://web-lis-pathsys-frontend.onrender.com",
-    # URL de Vercel (reemplaza con tu URL real)
-    "https://tu-proyecto.vercel.app"
-]
-
-# Agregar dominios de producción si están configurados
-if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL:
-    allowed_origins.append(settings.FRONTEND_URL)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Crear directorio de uploads si no existe
 os.makedirs("uploads/signatures", exist_ok=True)
-
-# Montar archivos estáticos para servir firmas
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# Incluir router principal v1 si existe; si falla, montar al menos auth
 try:
     from .api.v1.router import api_router as api_v1_router  # type: ignore
     app.include_router(api_v1_router, prefix="/api/v1")
 except Exception:
     try:
         from app.modules.auth.routes.auth_routes import auth_router  # type: ignore
-        fallback_router = APIRouter()
-        fallback_router.include_router(auth_router, prefix="/auth")
-        app.include_router(fallback_router, prefix="/api/v1")
+        r = APIRouter(); r.include_router(auth_router, prefix="/auth"); app.include_router(r, prefix="/api/v1")
     except Exception:
         pass
 
+@app.on_event("startup")
+async def on_startup():
+    # Conectar a Mongo y preparar índices críticos del módulo de casos
+    await connect_to_mongo()
+    db = await get_database()
+    # Casos
+    await CaseRepository(db).ensure_indexes()
+    await CaseConsecutiveRepository(db).ensure_indexes()
+    # Aprobaciones
+    await ApprovalRepository(db).ensure_indexes()
+    await ApprovalConsecutiveRepository(db).ensure_indexes()
+    # Pacientes
+    await PatientRepository(db).ensure_indexes()
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    # Cerrar conexión a Mongo limpiamente
+    await close_mongo_connection()
 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
-# Global exception handlers with normalized messages
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # Asegurar que los errores sean JSON-serializables
-    errors = jsonable_encoder(exc.errors())
-    return JSONResponse(status_code=422, content={"detail": "Validation error", "errors": errors})
+    return JSONResponse(status_code=422, content={"detail": "Error de validación", "errors": jsonable_encoder(exc.errors())})
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    # Preserve status_code, unify message format
-    message = exc.detail if isinstance(exc.detail, str) else "HTTP error"
-    return JSONResponse(status_code=exc.status_code, content={"detail": message})
+    m = exc.detail if isinstance(exc.detail, str) else "Error HTTP"; return JSONResponse(status_code=exc.status_code, content={"detail": m})
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    logger = logging.getLogger("app.main")
-    logger.exception("[global] Unhandled exception en %s %s", request.method, request.url.path)
-    detail = "Internal server error"
+    logging.getLogger("app.main").exception("[global] Excepción no controlada en %s %s", request.method, request.url.path)
+    d = "Error interno del servidor"
     if getattr(settings, "DEBUG", False):
-        # En modo desarrollo, exponer el mensaje para facilitar el diagnóstico
-        detail = f"Internal server error: {str(exc)}"
-    return JSONResponse(status_code=500, content={"detail": detail})
+        d = f"Error interno del servidor: {str(exc)}"
+    return JSONResponse(status_code=500, content={"detail": d})
 
 

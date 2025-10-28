@@ -7,7 +7,7 @@ from app.modules.cases.schemas.case import CaseResponse
 from app.modules.cases.services.result_service import ResultService
 from app.core.exceptions import NotFoundError, BadRequestError
 
-router = APIRouter()
+router = APIRouter(tags=["results"])
 
 
 def get_result_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> ResultService:

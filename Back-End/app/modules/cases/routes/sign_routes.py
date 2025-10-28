@@ -7,7 +7,7 @@ from app.modules.cases.schemas.case import CaseResponse
 from app.modules.cases.services.sign_service import SignService
 from app.core.exceptions import NotFoundError, BadRequestError
 
-router = APIRouter()
+router = APIRouter(tags=["sign"])
 
 
 def get_sign_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> SignService:

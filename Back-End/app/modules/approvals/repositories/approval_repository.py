@@ -1,7 +1,7 @@
 """Repositorio para solicitudes de aprobación."""
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.shared.repositories.base import BaseRepository
@@ -17,10 +17,10 @@ class ApprovalRepository(BaseRepository[ApprovalRequest, dict, dict]):
 
     async def ensure_indexes(self):
         """Crear índices necesarios."""
-        await self.collection.create_index("approval_code", unique=True)
-        await self.collection.create_index("original_case_code", unique=True)
-        await self.collection.create_index("approval_state")
-        await self.collection.create_index("created_at", -1)
+        await self.collection.create_index([("approval_code", 1)], unique=True)
+        await self.collection.create_index([("original_case_code", 1)], unique=True)
+        await self.collection.create_index([("approval_state", 1)])
+        await self.collection.create_index([("created_at", -1)])
 
     async def get_by_approval_code(self, approval_code: str) -> Optional[ApprovalRequest]:
         """Obtener solicitud por código de aprobación."""
@@ -85,7 +85,7 @@ class ApprovalRepository(BaseRepository[ApprovalRequest, dict, dict]):
         """Actualizar estado de una solicitud."""
         update_data = {
             "approval_state": new_state.value,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.now(timezone.utc)
         }
         result = await self.collection.update_one(
             {"approval_code": approval_code}, 
@@ -97,7 +97,7 @@ class ApprovalRepository(BaseRepository[ApprovalRequest, dict, dict]):
         """Actualizar pruebas complementarias de una solicitud."""
         update_data = {
             "complementary_tests": complementary_tests,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.now(timezone.utc)
         }
         result = await self.collection.update_one(
             {"approval_code": approval_code}, 
@@ -143,7 +143,7 @@ class ApprovalRepository(BaseRepository[ApprovalRequest, dict, dict]):
 
     async def update_by_approval_code(self, approval_code: str, update_data: dict) -> Optional[ApprovalRequest]:
         """Actualizar solicitud por código."""
-        update_data["updated_at"] = datetime.utcnow()
+        update_data["updated_at"] = datetime.now(timezone.utc)
         result = await self.collection.find_one_and_update(
             {"approval_code": approval_code},
             {"$set": update_data},

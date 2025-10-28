@@ -78,7 +78,7 @@ class AuxiliarService:
                 raise ConflictError("Email already exists")
         
         # Actualizar el auxiliar
-        update_data = payload.dict(exclude_unset=True)
+        update_data = payload.model_dump(exclude_unset=True)
         updated = await self.repo.update_by_auxiliar_code(auxiliar_code, update_data)
         if not updated:
             raise BadRequestError("Failed to update auxiliar")

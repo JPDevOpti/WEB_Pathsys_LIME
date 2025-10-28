@@ -12,7 +12,7 @@ from app.modules.cases.schemas.statistics.dashboard_statistics_schemas import (
 from app.modules.cases.services.statistics.dashboard_statistics_service import DashboardStatisticsService
 from app.core.exceptions import BadRequestError
 
-router = APIRouter()
+router = APIRouter(tags=["statistics-dashboard"])
 
 
 def get_dashboard_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> DashboardStatisticsService:

@@ -1,6 +1,7 @@
 from datetime import datetime, date
 from typing import Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic.config import ConfigDict
 from enum import Enum
 
 class EntityInfo(BaseModel):
@@ -32,9 +33,8 @@ class Location(BaseModel):
     municipality_name: str = Field(..., min_length=2, max_length=100, description="Nombre del municipio")
     subregion: str = Field(..., min_length=2, max_length=100, description="Subregión")
     address: str = Field(..., min_length=5, max_length=200, description="Dirección de residencia")
-
-    class Config:
-        populate_by_name = True
+    
+    model_config = ConfigDict(populate_by_name=True)
 
 class PatientBase(BaseModel):
     patient_code: str = Field(..., description="Código único del paciente")
@@ -51,7 +51,7 @@ class PatientBase(BaseModel):
     care_type: CareType = Field(...)
     observations: Optional[str] = Field(None, max_length=500)
 
-    @validator('identification_number', pre=True)
+    @field_validator('identification_number', mode='before')
     def validate_identification_number(cls, v):
         if not v or not v.strip():
             raise ValueError('El número de identificación no puede estar vacío')
@@ -63,7 +63,7 @@ class PatientBase(BaseModel):
             raise ValueError('El número de identificación debe tener entre 5 y 12 dígitos')
         return clean_number
 
-    @validator('first_name', 'second_name', 'first_lastname', 'second_lastname', pre=True)
+    @field_validator('first_name', 'second_name', 'first_lastname', 'second_lastname', mode='before')
     def validate_name_fields(cls, v):
         if v is not None:
             if not v.strip():
@@ -74,10 +74,8 @@ class PatientBase(BaseModel):
                 raise ValueError('El campo de nombre solo puede contener letras, espacios, apóstrofes, guiones y puntos')
             return clean_name.title()
         return v
-
-    class Config:
-        populate_by_name = True
-        use_enum_values = True
+    
+    model_config = ConfigDict(populate_by_name=True, use_enum_values=True)
 
 class PatientCreate(PatientBase):
     patient_code: Optional[str] = Field(None, description="Código único del paciente (se genera automáticamente si no se proporciona)")
@@ -97,7 +95,7 @@ class PatientUpdate(BaseModel):
     care_type: Optional[CareType] = None
     observations: Optional[str] = Field(None, max_length=500)
 
-    @validator('identification_number', pre=True)
+    @field_validator('identification_number', mode='before')
     def validate_identification_number(cls, v):
         if v is not None:
             if not v.strip():
@@ -110,7 +108,7 @@ class PatientUpdate(BaseModel):
             return clean_number
         return v
 
-    @validator('first_name', 'second_name', 'first_lastname', 'second_lastname', pre=True)
+    @field_validator('first_name', 'second_name', 'first_lastname', 'second_lastname', mode='before')
     def validate_name_fields(cls, v):
         if v is not None:
             if not v.strip():
@@ -120,18 +118,15 @@ class PatientUpdate(BaseModel):
                 raise ValueError('El campo de nombre solo puede contener letras, espacios, apóstrofes, guiones y puntos')
             return clean_name.title()
         return v
-
-    class Config:
-        use_enum_values = True
+    
+    model_config = ConfigDict(use_enum_values=True)
 
 class PatientResponse(PatientBase):
     id: str = Field(...)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-        use_enum_values = True
+    
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 class PatientSearch(BaseModel):
     identification_type: Optional[IdentificationType] = None
@@ -153,16 +148,13 @@ class PatientSearch(BaseModel):
     skip: int = Field(0, ge=0)
     limit: int = Field(100, ge=1, le=1000)
 
-    @validator('age_min', 'age_max')
-    def validate_age_range(cls, v, values):
-        if 'age_min' in values and 'age_max' in values:
-            age_min = values.get('age_min')
-            age_max = v if v is not None else values.get('age_max')
-            if age_min is not None and age_max is not None and age_min > age_max:
-                raise ValueError('La edad mínima no puede ser mayor que la edad máxima')
-        return v
+    @model_validator(mode='after')
+    def validate_age_range(self):
+        if self.age_min is not None and self.age_max is not None and self.age_min > self.age_max:
+            raise ValueError('La edad mínima no puede ser mayor que la edad máxima')
+        return self
 
-    @validator('birth_date_from', 'birth_date_to', pre=True)
+    @field_validator('birth_date_from', 'birth_date_to', mode='before')
     def validate_search_dates(cls, v):
         if v is not None:
             if isinstance(v, str):
@@ -172,7 +164,7 @@ class PatientSearch(BaseModel):
                     raise ValueError('La fecha debe estar en formato YYYY-MM-DD')
         return v
 
-    @validator('date_from', 'date_to', pre=True)
+    @field_validator('date_from', 'date_to', mode='before')
     def validate_date_strings(cls, v):
         if v is not None and v.strip():
             try:
@@ -181,6 +173,5 @@ class PatientSearch(BaseModel):
             except ValueError:
                 raise ValueError('La fecha debe estar en formato YYYY-MM-DD')
         return None
-
-    class Config:
-        use_enum_values = True
+    
+    model_config = ConfigDict(use_enum_values=True)

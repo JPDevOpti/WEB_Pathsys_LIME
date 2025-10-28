@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
+from pydantic.config import ConfigDict
 
 
 class EntityInfo(BaseModel):
@@ -18,7 +19,7 @@ class LocationInfo(BaseModel):
 class PatientInfo(BaseModel):
     patient_code: str = Field(..., max_length=50)
     identification_type: Optional[int] = Field(None, ge=1, le=9, description="Tipo de identificación (1..9)")
-    identification_number: Optional[str] = Field(None, min_length=1, max_length=12, description="Número de identificación")
+    identification_number: Optional[str] = Field(None, min_length=5, max_length=12, description="Número de identificación (5 a 12 dígitos)")
     name: str = Field(..., max_length=200)
     age: int = Field(..., ge=0, le=150)
     birth_date: Optional[datetime] = Field(None, description="Fecha de nacimiento del paciente")
@@ -61,8 +62,7 @@ class AdditionalNote(BaseModel):
     date: datetime = Field(..., description="Fecha de la nota")
     note: str = Field(..., max_length=1000, description="Contenido de la nota")
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CaseCreate(BaseModel):
@@ -86,7 +86,7 @@ class CaseUpdate(BaseModel):
     assigned_pathologist: Optional[AssignedPathologist] = None
     delivered_to: Optional[str] = Field(None, max_length=200)
     delivered_at: Optional[datetime] = None
-    business_days: Optional[int] = Field(None, ge=0, description="Business days elapsed")
+    business_days: Optional[int] = Field(None, ge=0, description="Días hábiles transcurridos")
     additional_notes: Optional[List[AdditionalNote]] = None
     complementary_tests: Optional[List[Dict[str, Any]]] = None
 
@@ -101,8 +101,7 @@ class CaseResult(BaseModel):
     cieo_diagnosis: Optional[Dict[str, str]] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CaseResponse(BaseModel):
@@ -126,7 +125,6 @@ class CaseResponse(BaseModel):
     additional_notes: Optional[List[AdditionalNote]] = None
     complementary_tests: Optional[List[Dict[str, Any]]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 

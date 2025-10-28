@@ -28,7 +28,7 @@ class AuxiliarRepository:
         """Crear un nuevo auxiliar"""
         try:
             from datetime import datetime, timezone
-            auxiliar_data = auxiliar.dict()
+            auxiliar_data = auxiliar.model_dump()
             auxiliar_data["created_at"] = datetime.now(timezone.utc)
             auxiliar_data["updated_at"] = datetime.now(timezone.utc)
             result = await self.collection.insert_one(auxiliar_data)

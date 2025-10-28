@@ -1,4 +1,3 @@
-import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -6,8 +5,6 @@ from ..schemas import TestCreate, TestUpdate, TestResponse, TestSearch
 from ..services import get_test_service, TestService
 from app.config.database import get_database
 from app.core.exceptions import NotFoundError, ConflictError
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["tests"])
 
@@ -21,7 +18,7 @@ async def create_test(test: TestCreate, service: TestService = Depends(get_servi
     except ConflictError as e:
         raise HTTPException(status_code=409, detail=str(e))
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.get("/", response_model=List[TestResponse])
 async def list_active_tests(
@@ -33,7 +30,7 @@ async def list_active_tests(
     try:
         return await service.list_active(TestSearch(query=query, skip=skip, limit=limit))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 @router.get("/inactive", response_model=List[TestResponse])
 async def list_all_tests(
@@ -45,7 +42,7 @@ async def list_all_tests(
     try:
         return await service.list_all(TestSearch(query=query, skip=skip, limit=limit))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 @router.get("/{test_code}", response_model=TestResponse)
 async def get_test(test_code: str, service: TestService = Depends(get_service)):
@@ -54,7 +51,7 @@ async def get_test(test_code: str, service: TestService = Depends(get_service)):
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 @router.put("/{test_code}", response_model=TestResponse)
 async def update_test(test_code: str, test_update: TestUpdate, service: TestService = Depends(get_service)):
@@ -65,16 +62,16 @@ async def update_test(test_code: str, test_update: TestUpdate, service: TestServ
     except ConflictError as e:
         raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 @router.delete("/{test_code}", response_model=dict)
 async def delete_test(test_code: str, service: TestService = Depends(get_service)):
     try:
         success = await service.delete_by_code(test_code)
         if success:
-            return {"message": f"Test {test_code} deleted successfully"}
-        raise HTTPException(status_code=404, detail="Test not found")
+            return {"message": f"Prueba {test_code} eliminada exitosamente"}
+        raise HTTPException(status_code=404, detail="Prueba no encontrada")
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")

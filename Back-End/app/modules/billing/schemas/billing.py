@@ -1,7 +1,7 @@
 """Esquemas para el modelo Billing"""
 
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from datetime import datetime
 
 class BillingBase(BaseModel):
@@ -12,8 +12,7 @@ class BillingBase(BaseModel):
     is_active: bool = Field(default=True, description="Estado activo/inactivo del usuario de facturación")
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class BillingCreate(BillingBase):
     """Esquema para crear un nuevo usuario de facturación"""
@@ -27,8 +26,7 @@ class BillingUpdate(BaseModel):
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
     password: Optional[str] = Field(None, min_length=6, max_length=128, description="Nueva contraseña del usuario de facturación")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class BillingResponse(BillingBase):
     """Esquema para respuesta de usuario de facturación"""
@@ -36,9 +34,7 @@ class BillingResponse(BillingBase):
     created_at: datetime = Field(..., description="Fecha de creación")
     updated_at: datetime = Field(..., description="Fecha de última actualización")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class BillingSearch(BaseModel):
     """Esquema para búsqueda de usuarios de facturación"""
@@ -48,5 +44,4 @@ class BillingSearch(BaseModel):
     billing_email: Optional[str] = Field(None, description="Filtrar por email")
     is_active: Optional[bool] = Field(None, description="Filtrar por estado activo")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

@@ -1,5 +1,5 @@
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 from app.modules.cases.schemas.case import CaseCreate, CaseUpdate, CaseResponse
@@ -14,13 +14,10 @@ class CaseService:
         self.repo = CaseRepository(db)
         self.seq = CaseConsecutiveRepository(db)
 
-    async def init_indexes(self):
-        await self.repo.ensure_indexes()
-        await self.seq.ensure_indexes()
+    # La inicialización de índices se moverá al arranque de la app
 
     async def create_case(self, payload: CaseCreate) -> CaseResponse:
-        await self.init_indexes()
-        year = datetime.utcnow().year
+        year = datetime.now(timezone.utc).year
         for _ in range(3):
             case_code = await self.seq.generate_case_code(year)
             data = payload.model_dump()
@@ -43,12 +40,12 @@ class CaseService:
                 if "duplicate key error" in str(e).lower():
                     continue
                 raise
-        raise ConflictError("Failed to generate unique case_code after retries")
+        raise ConflictError("No se pudo generar un código único de caso después de varios intentos")
 
     async def update_case(self, case_code: str, payload: CaseUpdate) -> CaseResponse:
         doc = await self.repo.get_by_case_code(case_code)
         if not doc:
-            raise NotFoundError(f"Case with code {case_code} not found")
+            raise NotFoundError(f"Caso con código {case_code} no encontrado")
         
         # Validate only cases in 'Por entregar' can be marked as completed
         if payload.state == "Completado":
@@ -62,14 +59,14 @@ class CaseService:
     async def delete_case(self, case_code: str) -> Dict[str, Any]:
         doc = await self.repo.get_by_case_code(case_code)
         if not doc:
-            raise NotFoundError(f"Case with code {case_code} not found")
+            raise NotFoundError(f"Caso con código {case_code} no encontrado")
         ok = await self.repo.delete_by_case_code(case_code)
         return {"deleted": ok, "case_code": case_code}
 
     async def get_case(self, case_code: str) -> CaseResponse:
         doc = await self.repo.get_by_case_code(case_code)
         if not doc:
-            raise NotFoundError(f"Case with code {case_code} not found")
+            raise NotFoundError(f"Caso con código {case_code} no encontrado")
         return self._to_response(doc)
 
     async def list_cases(
@@ -86,7 +83,7 @@ class CaseService:
         current_user_id: Optional[str] = None
     ) -> List[CaseResponse]:
         """Listar casos con filtros opcionales"""
-        await self.init_indexes()
+        # Índices inicializados en el arranque; no repetir aquí
         
         # Construir filtros de MongoDB
         filters = {}

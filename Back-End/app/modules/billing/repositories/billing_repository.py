@@ -28,7 +28,7 @@ class BillingRepository:
         """Crear un nuevo usuario de facturación"""
         try:
             from datetime import datetime, timezone
-            billing_data = billing.dict()
+            billing_data = billing.model_dump()
             billing_data["created_at"] = datetime.now(timezone.utc)
             billing_data["updated_at"] = datetime.now(timezone.utc)
             result = await self.collection.insert_one(billing_data)

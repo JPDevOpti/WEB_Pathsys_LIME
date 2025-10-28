@@ -1,13 +1,14 @@
-from datetime import datetime
+# Repositorio de casos: acceso CRUD y creación de índices.
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
 class CaseRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
-        self.db = db
         self.collection = db.cases
 
+    # Crea índices clave para mejorar búsquedas y ordenamientos.
     async def ensure_indexes(self):
         await self.collection.create_index("case_code", unique=True)
         await self.collection.create_index("patient_info.patient_code")
@@ -20,28 +21,31 @@ class CaseRepository:
         await self.collection.create_index("patient_info.entity_info.name")
         await self.collection.create_index("samples.tests.id")
         await self.collection.create_index("additional_notes.date")
-        # Índice compuesto para búsquedas comunes
         await self.collection.create_index([
             ("created_at", -1),
             ("state", 1),
             ("assigned_pathologist.name", 1)
         ])
 
+    # Obtiene un caso por su código único.
     async def get_by_case_code(self, case_code: str) -> Optional[Dict[str, Any]]:
         return await self.collection.find_one({"case_code": case_code})
 
+    # Crea un caso y gestiona marcas de tiempo.
     async def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         data.setdefault("created_at", now)
         data["updated_at"] = now
         res = await self.collection.insert_one(data)
         return await self.collection.find_one({"_id": res.inserted_id})
 
+    # Actualiza campos del caso por código y marca actualización.
     async def update_by_case_code(self, case_code: str, update: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        update["updated_at"] = datetime.utcnow()
+        update["updated_at"] = datetime.now(timezone.utc)
         await self.collection.update_one({"case_code": case_code}, {"$set": update})
         return await self.get_by_case_code(case_code)
 
+    # Elimina un caso por su código.
     async def delete_by_case_code(self, case_code: str) -> bool:
         res = await self.collection.delete_one({"case_code": case_code})
         return res.deleted_count > 0

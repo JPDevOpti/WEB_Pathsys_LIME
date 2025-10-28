@@ -1,29 +1,29 @@
-# Opportunity Statistics Repository
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Union
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
 class OpportunityStatisticsRepository:
+    # Repositorio para métricas de oportunidad (cumplimiento en días hábiles)
     def __init__(self, db: AsyncIOMotorDatabase):
-        self.db = db
         self.collection = db.cases
 
     def _month_range(self, ref: Optional[datetime] = None) -> Dict[str, datetime]:
-        now = ref or datetime.utcnow()
-        current_month_start = datetime(now.year, now.month, 1)
-        if now.month == 1:
-            previous_month_start = datetime(now.year - 1, 12, 1)
-        else:
-            previous_month_start = datetime(now.year, now.month - 1, 1)
-
-        # Start of the month before the previous
-        if previous_month_start.month == 1:
-            pre_previous_month_start = datetime(previous_month_start.year - 1, 12, 1)
-        else:
-            pre_previous_month_start = datetime(previous_month_start.year, previous_month_start.month - 1, 1)
+        # Calcula inicios de mes: actual, anterior y pre-anterior
+        now = ref or datetime.now(timezone.utc)
+        current_month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+        previous_month_start = (
+            datetime(now.year - 1, 12, 1, tzinfo=timezone.utc)
+            if now.month == 1
+            else datetime(now.year, now.month - 1, 1, tzinfo=timezone.utc)
+        )
+        pre_previous_month_start = (
+            datetime(previous_month_start.year - 1, 12, 1, tzinfo=timezone.utc)
+            if previous_month_start.month == 1
+            else datetime(previous_month_start.year, previous_month_start.month - 1, 1, tzinfo=timezone.utc)
+        )
 
         return {
             "current_month_start": current_month_start,
@@ -38,13 +38,13 @@ class OpportunityStatisticsRepository:
         pathologist_code: Optional[str] = None,
         opportunity_days_threshold: int = 7,
     ) -> Dict[str, Any]:
+        # Calcula porcentaje y tiempos dentro/fuera de oportunidad en un rango
         match_stage: Dict[str, Any] = {
             "signed_at": {"$gte": start_date, "$lt": end_date},
         }
         if pathologist_code:
             match_stage["assigned_pathologist.id"] = pathologist_code
 
-        # Traer solo los campos necesarios para minimizar payload
         projection = {
             "signed_at": 1,
             "state": 1,
@@ -56,7 +56,6 @@ class OpportunityStatisticsRepository:
         cursor = self.collection.find(match_stage, projection=projection)
         docs = await cursor.to_list(length=None)
 
-        # Filtrar a sólo los completados dentro de los firmados el mes consultado
         filtered = [d for d in docs if str(d.get("state")) == "Completado" and d.get("signed_at") and d.get("business_days") is not None]
 
         total_considerados = len(filtered)
@@ -92,11 +91,11 @@ class OpportunityStatisticsRepository:
         }
 
     async def get_opportunity_general(self, opportunity_days_threshold: int = 7) -> Dict[str, Any]:
+        # Métricas de oportunidad generales del mes anterior y variación vs. mes previo
         rng = self._month_range()
         prev_start = rng["previous_month_start"]
         curr_start = rng["current_month_start"]
 
-        # Mes previo al anterior para calcular cambio porcentual
         pre_prev_start = rng["pre_previous_month_start"]
 
         current_metrics = await self._compute_opportunity_for_range(
@@ -138,6 +137,7 @@ class OpportunityStatisticsRepository:
         }
 
     async def get_opportunity_pathologist(self, pathologist_code: str, opportunity_days_threshold: int = 7) -> Dict[str, Any]:
+        # Métricas de oportunidad para un patólogo específico y su variación
         if not pathologist_code:
             raise ValueError("pathologist_code requerido")
 
@@ -188,11 +188,12 @@ class OpportunityStatisticsRepository:
     # New English-facing helpers
     # ---------------------------
     def _month_bounds(self, year: int, month: int) -> tuple[datetime, datetime]:
-        start = datetime(year, month, 1)
+        # Delimita el inicio y fin de un mes específico
+        start = datetime(year, month, 1, tzinfo=timezone.utc)
         if month == 12:
-            end = datetime(year + 1, 1, 1)
+            end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
         else:
-            end = datetime(year, month + 1, 1)
+            end = datetime(year, month + 1, 1, tzinfo=timezone.utc)
         return start, end
 
     async def get_monthly_opportunity(
@@ -203,12 +204,7 @@ class OpportunityStatisticsRepository:
         entity: Union[str, None] = None,
         pathologist: Union[str, None] = None,
     ) -> dict:
-        """Monthly opportunity breakdown for tests and pathologists (English shape).
-
-        - Universe: cases with state == "Completado" and signed_at within month.
-        - Time in days = (signed_at - created_at) / 86400.0
-        - within if days <= threshold_days
-        """
+        # Desglose mensual de oportunidad por pruebas y patólogos
         start, end = self._month_bounds(year, month)
 
         match_stage: Dict[str, Any] = {
@@ -216,12 +212,10 @@ class OpportunityStatisticsRepository:
             "signed_at": {"$gte": start, "$lt": end},
         }
 
-        # Optional filters
         if entity:
             match_stage["patient_info.entity_info.name"] = {"$regex": entity, "$options": "i"}
 
         if pathologist:
-            # Match either by id exact or name regex (case-insensitive)
             match_stage["$or"] = [
                 {"assigned_pathologist.id": pathologist},
                 {"assigned_pathologist.name": {"$regex": pathologist, "$options": "i"}},
@@ -349,7 +343,7 @@ class OpportunityStatisticsRepository:
         }
 
     async def get_yearly_opportunity(self, year: int, threshold_days: int = 7) -> list[float]:
-        """Return 12-month opportunity percentages for a year (English shape)."""
+        # Serie de 12 meses con porcentajes de oportunidad para un año
         out: list[float] = []
         for m in range(1, 13):
             monthly = await self.get_monthly_opportunity(m, year, threshold_days)

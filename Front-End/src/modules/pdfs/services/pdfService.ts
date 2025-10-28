@@ -1,15 +1,13 @@
 import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+import { API_CONFIG, buildApiUrl } from '@/core/config/api.config'
 
 export class PdfService {
   static async getCasePdf(caseCode: string): Promise<Blob> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/casos/caso-code/${caseCode}/pdf`, {
+      const url = buildApiUrl(`${API_CONFIG.ENDPOINTS.CASES}/${encodeURIComponent(caseCode)}/pdf`)
+      const response = await axios.get(url, {
         responseType: 'blob',
-        headers: {
-          'Accept': 'application/pdf'
-        }
+        headers: { 'Accept': 'application/pdf' }
       })
       return response.data
     } catch (error) {

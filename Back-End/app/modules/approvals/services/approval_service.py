@@ -1,7 +1,7 @@
 """Servicio para solicitudes de aprobación."""
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from app.modules.approvals.models.approval_request import ApprovalRequest, ApprovalStateEnum, ApprovalInfo, AssignedPathologistInfo
@@ -149,7 +149,7 @@ class ApprovalService:
                 return {"approval": await self.get_approval_by_code(approval_code), "new_case": None}
 
             # Generar nuevo código de caso
-            year = datetime.utcnow().year
+            year = datetime.now(timezone.utc).year
             new_case_code = await self.case_consecutive_repo.generate_case_code(year)
 
             # Preparar muestras con pruebas complementarias

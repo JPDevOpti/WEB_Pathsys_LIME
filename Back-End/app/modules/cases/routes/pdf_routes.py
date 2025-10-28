@@ -5,7 +5,7 @@ from app.config.database import get_database
 from app.modules.cases.services.pdf_service import CasePdfService
 from app.core.exceptions import NotFoundError, BadRequestError
 
-router = APIRouter()
+router = APIRouter(tags=["pdf"])
 
 
 def get_pdf_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> CasePdfService:

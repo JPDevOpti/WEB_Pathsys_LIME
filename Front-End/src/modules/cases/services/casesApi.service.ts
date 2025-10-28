@@ -51,7 +51,11 @@ export class CasesApiService {
   }
 
   async getCases(params: CaseListParams = {}): Promise<CaseListResponse> {
-    return this.getClean<CaseListResponse>(this.endpoint, { params })
+    const mapped: Record<string, any> = {}
+    if (params.skip !== undefined) mapped.skip = params.skip
+    if (params.limit !== undefined) mapped.limit = params.limit
+    if ((params as any).estado) mapped.state = (params as any).estado
+    return this.getClean<CaseListResponse>(this.endpoint, { params: mapped })
   }
 
   async getCaseByCode(caseCode: string): Promise<CaseModel> {
@@ -63,11 +67,13 @@ export class CasesApiService {
   }
 
   async getCasesByPathologist(codigo: string): Promise<CaseListResponse> {
-    return this.getClean<CaseListResponse>(`${this.endpoint}/patologo/${codigo}`)
+    // Usar listado con filtros del nuevo backend
+    return this.getClean<CaseListResponse>(this.endpoint, { params: { pathologist: codigo, limit: 1000 } })
   }
 
   async getCasesByState(estado: string): Promise<CaseListResponse> {
-    return this.getClean<CaseListResponse>(`${this.endpoint}/estado/${estado}`)
+    // Usar listado con filtros del nuevo backend
+    return this.getClean<CaseListResponse>(this.endpoint, { params: { state: estado, limit: 1000 } })
   }
 
   async getCaseStatistics(): Promise<CaseStatisticsResponse> {
@@ -75,11 +81,26 @@ export class CasesApiService {
   }
 
   async searchCases(searchParams: CaseSearchParams): Promise<CaseSearchResponse> {
-    return this.postClean<CaseSearchResponse>(`${this.endpoint}/buscar`, searchParams)
+    // Mapear parámetros legacy al nuevo esquema de filtros
+    const params: Record<string, any> = {}
+    if (searchParams.skip !== undefined) params.skip = searchParams.skip
+    if (searchParams.limit !== undefined) params.limit = searchParams.limit
+    if (searchParams.query) params.search = searchParams.query
+    if ((searchParams as any).estado) params.state = (searchParams as any).estado
+    if ((searchParams as any).patologo_codigo) params.pathologist = (searchParams as any).patologo_codigo
+    if ((searchParams as any).entidad_codigo) params.entity = (searchParams as any).entidad_codigo
+    if ((searchParams as any).fecha_ingreso_desde) params.date_from = (searchParams as any).fecha_ingreso_desde
+    if ((searchParams as any).fecha_ingreso_hasta) params.date_to = (searchParams as any).fecha_ingreso_hasta
+    if ((searchParams as any).paciente_cedula) params.search = (searchParams as any).paciente_cedula
+    if ((searchParams as any).paciente_nombre) params.search = (searchParams as any).paciente_nombre
+    if ((searchParams as any).medico_nombre) params.search = (searchParams as any).medico_nombre
+    // Otros filtros legacy como tiene_resultado/firmado no están soportados aún
+    return this.getClean<CaseSearchResponse>(this.endpoint, { params })
   }
 
   async searchCasesAdvanced(searchParams: CaseSearchParams): Promise<CaseSearchResponse> {
-    return this.getClean<CaseSearchResponse>(`${this.endpoint}/search`, { params: searchParams })
+    // Unificar con el listado con filtros
+    return this.searchCases(searchParams)
   }
 
   async createCase(caseData: any): Promise<any> {

@@ -6,7 +6,7 @@ from app.modules.cases.schemas.statistics.dashboard_statistics_schemas import Op
 from app.modules.cases.services.statistics.opportunity_statistics_service import OpportunityStatisticsService
 
 
-router = APIRouter(prefix="/opportunity", tags=["opportunity"])
+router = APIRouter(prefix="/opportunity", tags=["statistics-opportunity"])
 
 
 def get_opportunity_service(db: AsyncIOMotorDatabase = Depends(get_database)) -> OpportunityStatisticsService:
@@ -45,62 +45,62 @@ async def opportunity_by_pathologist(
 async def opportunity_monthly(
     month: int = Query(..., ge=1, le=12),
     year: int = Query(...),
-    thresholdDays: int = Query(7, ge=1, le=60),
-    entity: str = Query(None),
-    pathologist: str = Query(None),
+    threshold_days: int = Query(7, ge=1, le=60, alias="thresholdDays"),
+    entity_code: str = Query(None, alias="entity"),
+    pathologist_code: str = Query(None, alias="pathologist"),
     service: OpportunityStatisticsService = Depends(get_opportunity_service)
 ):
     try:
-        return await service.get_monthly(month, year, thresholdDays, entity, pathologist)
+        return await service.get_monthly(month, year, threshold_days, entity_code, pathologist_code)
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/yearly/{year}")
 async def opportunity_yearly(
     year: int,
-    thresholdDays: int = Query(7, ge=1, le=60),
+    threshold_days: int = Query(7, ge=1, le=60, alias="thresholdDays"),
     service: OpportunityStatisticsService = Depends(get_opportunity_service)
 ):
     try:
-        return await service.get_yearly(year, thresholdDays)
+        return await service.get_yearly(year, threshold_days)
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/pathologists")
 async def opportunity_pathologists(
     month: int = Query(..., ge=1, le=12),
     year: int = Query(...),
-    thresholdDays: int = Query(7, ge=1, le=60),
-    entity: str = Query(None),
+    threshold_days: int = Query(7, ge=1, le=60, alias="thresholdDays"),
+    entity_code: str = Query(None, alias="entity"),
     service: OpportunityStatisticsService = Depends(get_opportunity_service)
 ):
     try:
-        return await service.get_pathologists(month, year, thresholdDays, entity)
+        return await service.get_pathologists(month, year, threshold_days, entity_code)
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/tests")
 async def opportunity_tests(
     month: int = Query(..., ge=1, le=12),
     year: int = Query(...),
-    thresholdDays: int = Query(7, ge=1, le=60),
-    entity: str = Query(None),
+    threshold_days: int = Query(7, ge=1, le=60, alias="thresholdDays"),
+    entity_code: str = Query(None, alias="entity"),
     service: OpportunityStatisticsService = Depends(get_opportunity_service)
 ):
     try:
-        return await service.get_tests(month, year, thresholdDays, entity)
+        return await service.get_tests(month, year, threshold_days, entity_code)
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 

@@ -89,7 +89,7 @@ class ResidentService:
                 raise ConflictError("Medical license already exists")
         
         # Actualizar el residente
-        update_data = payload.dict(exclude_unset=True)
+        update_data = payload.model_dump(exclude_unset=True)
         updated = await self.repo.update_by_resident_code(resident_code, update_data)
         if not updated:
             raise BadRequestError("Failed to update resident")

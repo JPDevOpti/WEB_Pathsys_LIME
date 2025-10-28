@@ -1,6 +1,7 @@
 """Repositorio para operaciones CRUD de Residents"""
 
 from typing import List, Optional, Dict, Any
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import DuplicateKeyError
 from ..schemas import ResidentCreate, ResidentUpdate, ResidentSearch
@@ -27,8 +28,7 @@ class ResidentRepository:
     async def create(self, resident: ResidentCreate) -> dict:
         """Crear un nuevo residente"""
         try:
-            from datetime import datetime, timezone
-            resident_data = resident.dict()
+            resident_data = resident.model_dump()
             resident_data["created_at"] = datetime.now(timezone.utc)
             resident_data["updated_at"] = datetime.now(timezone.utc)
             result = await self.collection.insert_one(resident_data)
@@ -98,7 +98,6 @@ class ResidentRepository:
 
     async def update_by_resident_code(self, resident_code: str, update_data: Dict[str, Any]) -> Optional[dict]:
         """Actualizar residente por código"""
-        from datetime import datetime, timezone
         update_data["updated_at"] = datetime.now(timezone.utc)
         result = await self.collection.update_one(
             {"resident_code": resident_code},

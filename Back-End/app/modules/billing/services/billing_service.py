@@ -78,7 +78,7 @@ class BillingService:
                 raise ConflictError("Email already exists")
         
         # Actualizar el usuario de facturación
-        update_data = payload.dict(exclude_unset=True)
+        update_data = payload.model_dump(exclude_unset=True)
         updated = await self.repo.update_by_billing_code(billing_code, update_data)
         if not updated:
             raise BadRequestError("Failed to update billing user")

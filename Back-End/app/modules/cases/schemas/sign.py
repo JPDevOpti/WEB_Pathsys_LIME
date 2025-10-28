@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict
 from datetime import datetime
 from pydantic import BaseModel, Field
+from pydantic.config import ConfigDict
 
 
 class CaseSignRequest(BaseModel):
@@ -24,8 +25,7 @@ class CaseSignResponse(BaseModel):
     signed_at: datetime
     message: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CaseSignValidation(BaseModel):
@@ -35,5 +35,4 @@ class CaseSignValidation(BaseModel):
     message: str
     current_state: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -14,13 +14,12 @@ from app.modules.cases.schemas.statistics.test_statistics_schemas import (
 )
 from app.core.exceptions import BadRequestError
 
-router = APIRouter()
+router = APIRouter(tags=["statistics-test"])
 
 
-async def get_test_statistics_service():
-    """Dependency to get test statistics service"""
-    database = await get_database()
-    repository = TestStatisticsRepository(database)
+def get_test_statistics_service(db: AsyncIOMotorDatabase = Depends(get_database)):
+    """Servicio de estadísticas de pruebas con dependencia de base de datos"""
+    repository = TestStatisticsRepository(db)
     return TestStatisticsService(repository)
 
 
@@ -38,7 +37,7 @@ async def get_monthly_test_performance(
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/details/{test_code}", response_model=TestDetailsResponse)
@@ -56,7 +55,7 @@ async def get_test_details(
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/pathologists/{test_code}", response_model=TestPathologistsResponse)
@@ -74,20 +73,20 @@ async def get_test_pathologists(
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/opportunity-summary", response_model=TestOpportunityResponse)
 async def get_test_opportunity_summary(
     month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
     year: int = Query(..., ge=2020, le=2030, description="Year"),
-    thresholdDays: int = Query(7, ge=1, le=60, description="Opportunity threshold in days"),
+    threshold_days: int = Query(7, ge=1, le=60, alias="thresholdDays", description="Opportunity threshold in days"),
     entity: Optional[str] = Query(None, description="Optional entity name filter"),
     service: TestStatisticsService = Depends(get_test_statistics_service)
 ):
     """Get opportunity summary for tests"""
     try:
-        result = await service.get_test_opportunity_summary(month, year, thresholdDays, entity)
+        result = await service.get_test_opportunity_summary(month, year, threshold_days, entity)
         return TestOpportunityResponse(**result)
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -108,4 +107,4 @@ async def get_test_monthly_trends(
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")

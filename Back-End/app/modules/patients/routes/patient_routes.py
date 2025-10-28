@@ -1,13 +1,10 @@
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-import logging
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.modules.patients.schemas import PatientCreate, PatientUpdate, PatientResponse, PatientSearch, Gender, CareType, IdentificationType
 from ..services import get_patient_service, PatientService
 from app.config.database import get_database
 from app.core.exceptions import NotFoundError, BadRequestError, ConflictError
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["patients"])
 
@@ -24,8 +21,7 @@ async def create_patient(patient: PatientCreate, service: PatientService = Depen
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
-        logger.exception("[patients:create] Error interno al crear paciente")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.get("/", response_model=List[PatientResponse])
 async def list_patients(
@@ -40,8 +36,7 @@ async def list_patients(
     try:
         return await service.list_patients(skip=skip, limit=limit, search=search, entity=entity, gender=gender, care_type=care_type)
     except Exception:
-        logger.exception("[patients:list] Error interno al listar pacientes")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.get("/search/advanced", response_model=Dict[str, Any])
 async def advanced_search(
@@ -90,8 +85,7 @@ async def advanced_search(
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
-        logger.exception("[patients:search] Error interno en búsqueda avanzada")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.get("/count", response_model=Dict[str, int])
 async def get_total_count(service: PatientService = Depends(get_service)):
@@ -99,8 +93,7 @@ async def get_total_count(service: PatientService = Depends(get_service)):
         total = await service.get_total_count()
         return {"total": total}
     except Exception:
-        logger.exception("[patients:count] Error obteniendo total de pacientes")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.get("/{patient_code}", response_model=PatientResponse)
 async def get_patient(patient_code: str, service: PatientService = Depends(get_service)):
@@ -109,8 +102,7 @@ async def get_patient(patient_code: str, service: PatientService = Depends(get_s
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception:
-        logger.exception("[patients:get] Error interno al obtener paciente")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.put("/{patient_code}", response_model=PatientResponse)
 async def update_patient(patient_code: str, patient_update: PatientUpdate, service: PatientService = Depends(get_service)):
@@ -121,8 +113,7 @@ async def update_patient(patient_code: str, patient_update: PatientUpdate, servi
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
-        logger.exception("[patients:update] Error interno al actualizar paciente")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.put("/{patient_code}/change-identification", response_model=PatientResponse)
 async def change_patient_identification(
@@ -140,20 +131,18 @@ async def change_patient_identification(
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
-        logger.exception("[patients:change-id] Error interno al cambiar identificación")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.delete("/{patient_code}", response_model=Dict[str, str])
 async def delete_patient(patient_code: str, service: PatientService = Depends(get_service)):
     try:
         success = await service.delete_patient(patient_code)
         if success:
-            return {"message": f"Patient {patient_code} deleted successfully"}
-        raise HTTPException(status_code=500, detail="Error deleting patient")
+            return {"message": f"Paciente {patient_code} eliminado exitosamente"}
+        raise HTTPException(status_code=500, detail="Error al eliminar paciente")
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
-        logger.exception("[patients:delete] Error interno al eliminar paciente")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")

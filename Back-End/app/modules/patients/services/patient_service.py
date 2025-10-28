@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from ..schemas import PatientCreate, PatientUpdate, PatientResponse, PatientSearch
+from ..schemas import PatientCreate, PatientUpdate, PatientResponse, PatientSearch, IdentificationType
 from ..repositories import PatientRepository
 from app.core.exceptions import NotFoundError, BadRequestError, ConflictError
 import logging
@@ -32,7 +32,7 @@ class PatientService:
         patient_data = await self.repository.update(patient_code, patient_update)
         return PatientResponse(**patient_data)
 
-    async def change_patient_identification(self, patient_code: str, new_identification_type: str, new_identification_number: str) -> PatientResponse:
+    async def change_patient_identification(self, patient_code: str, new_identification_type: IdentificationType | int | str, new_identification_number: str) -> PatientResponse:
         if not new_identification_number or len(new_identification_number.strip()) == 0:
             raise BadRequestError("El número de identificación no puede estar vacío")
         

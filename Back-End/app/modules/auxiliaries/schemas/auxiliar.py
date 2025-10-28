@@ -1,7 +1,7 @@
 """Esquemas para el modelo Auxiliar"""
 
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from datetime import datetime
 
 class AuxiliarBase(BaseModel):
@@ -12,8 +12,7 @@ class AuxiliarBase(BaseModel):
     is_active: bool = Field(default=True, description="Estado activo/inactivo del auxiliar")
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class AuxiliarCreate(AuxiliarBase):
     """Esquema para crear un nuevo auxiliar"""
@@ -27,8 +26,7 @@ class AuxiliarUpdate(BaseModel):
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
     password: Optional[str] = Field(None, min_length=6, max_length=128, description="Nueva contraseña del auxiliar")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class AuxiliarResponse(AuxiliarBase):
     """Esquema para respuesta de auxiliar"""
@@ -36,9 +34,7 @@ class AuxiliarResponse(AuxiliarBase):
     created_at: datetime = Field(..., description="Fecha de creación")
     updated_at: datetime = Field(..., description="Fecha de última actualización")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class AuxiliarSearch(BaseModel):
     """Esquema para búsqueda de auxiliares"""
@@ -48,5 +44,4 @@ class AuxiliarSearch(BaseModel):
     auxiliar_email: Optional[str] = Field(None, description="Filtrar por email")
     is_active: Optional[bool] = Field(None, description="Filtrar por estado activo")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

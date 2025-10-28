@@ -2,6 +2,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone, date
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import DuplicateKeyError
+from pymongo import TEXT
 from ..schemas import PatientCreate, PatientUpdate, PatientSearch
 from app.core.exceptions import ConflictError, NotFoundError
 import logging
@@ -19,7 +20,11 @@ class PatientRepository:
         except RuntimeError:
             # If there's no running loop (e.g., during app startup tests), skip silently
             pass
-    
+
+    async def ensure_indexes(self):
+        """Public wrapper to initialize indexes at application startup."""
+        await self._ensure_indexes()
+
     async def _ensure_indexes(self):
         """Create indexes for better query performance"""
         try:
@@ -34,11 +39,16 @@ class PatientRepository:
             
             # Text index for search functionality
             await self.collection.create_index([
-                ("first_name", "text"),
-                ("first_lastname", "text"),
-                ("second_name", "text"),
-                ("second_lastname", "text")
-            ])
+                ("first_name", TEXT),
+                ("first_lastname", TEXT),
+                ("second_name", TEXT),
+                ("second_lastname", TEXT)
+            ], name="patient_text_search", default_language="spanish", weights={
+                "first_name": 10,
+                "first_lastname": 10,
+                "second_name": 5,
+                "second_lastname": 5
+            })
             
             # Indexes for common filters
             await self.collection.create_index("gender")
@@ -85,7 +95,7 @@ class PatientRepository:
             if existing_patient:
                 raise ConflictError(f"Ya existe un paciente con el código {patient.patient_code}")
             
-            patient_data = patient.dict()
+            patient_data = patient.model_dump()
             logger.debug("[repo:create] Datos del paciente a insertar: %s", {k: patient_data.get(k) for k in ["patient_code","identification_type","identification_number","first_name","first_lastname","birth_date","gender","entity_info","location"]})
             patient_data["created_at"] = datetime.now(timezone.utc)
             patient_data["updated_at"] = datetime.now(timezone.utc)
@@ -113,7 +123,7 @@ class PatientRepository:
         if not existing_patient:
             raise NotFoundError("Paciente no encontrado")
             
-        update_data = {k: v for k, v in patient_update.dict().items() if v is not None}
+        update_data = patient_update.model_dump(exclude_none=True)
         if update_data:
             update_data["updated_at"] = datetime.now(timezone.utc)
             mongo_data = self._prepare_data_for_mongo(update_data)
@@ -148,8 +158,8 @@ class PatientRepository:
         
         if cases_collection is not None:
             await cases_collection.update_many(
-                {"patient.patient_code": old_code},
-                {"$set": {"patient.patient_code": new_code}}
+                {"patient_info.patient_code": old_code},
+                {"$set": {"patient_info.patient_code": new_code}}
             )
             
         updated_patient = await self.collection.find_one({"patient_code": new_code})
@@ -257,9 +267,9 @@ class PatientRepository:
         if hasattr(search_params, 'entity') and search_params.entity:
             filter_dict["entity_info.name"] = {"$regex": f"^{search_params.entity}", "$options": "i"}
         if search_params.gender:
-            filter_dict["gender"] = search_params.gender.value
+            filter_dict["gender"] = search_params.gender
         if search_params.care_type:
-            filter_dict["care_type"] = search_params.care_type.value
+            filter_dict["care_type"] = search_params.care_type
             
         if search_params.date_from or search_params.date_to:
             date_filter = {}

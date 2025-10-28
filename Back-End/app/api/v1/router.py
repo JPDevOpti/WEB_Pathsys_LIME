@@ -44,6 +44,19 @@ async def api_info():
         "name": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "description": settings.DESCRIPTION,
-        "modules_implementados": ["auth", "patients", "entities", "tests", "cases", "pathologists", "residents", "auxiliaries", "billing", "diseases", "tickets", "approvals"],
-        "modules_pendientes": []
+        "modules_implemented": [
+            "auth",
+            "patients",
+            "entities",
+            "tests",
+            "cases",
+            "pathologists",
+            "residents",
+            "auxiliaries",
+            "billing",
+            "diseases",
+            "tickets",
+            "approvals",
+        ],
+        "modules_pending": []
     }

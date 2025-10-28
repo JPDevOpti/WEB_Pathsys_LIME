@@ -1,5 +1,3 @@
-"""Rutas de la API para el módulo de Pathologists"""
-
 from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException, status, UploadFile, File
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -18,9 +16,7 @@ from app.core.exceptions import NotFoundError, ConflictError, BadRequestError
 
 router = APIRouter(tags=["pathologists"])
 
-# Dependency para obtener el servicio de pathologists
 async def get_pathologist_service(database: AsyncIOMotorDatabase = Depends(get_database)) -> PathologistService:
-    """Obtener instancia del servicio de pathologists"""
     return PathologistService(database)
 
 @router.post("/", response_model=PathologistResponse, status_code=status.HTTP_201_CREATED)
@@ -28,7 +24,6 @@ async def create_pathologist(
     pathologist: PathologistCreate,
     pathologist_service: PathologistService = Depends(get_pathologist_service)
 ):
-    """Crear un nuevo patólogo"""
     try:
         return await pathologist_service.create_pathologist(pathologist)
     except ConflictError as e:
@@ -36,7 +31,7 @@ async def create_pathologist(
     except BadRequestError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.get("/", response_model=List[PathologistResponse])
 async def list_pathologists(
@@ -44,11 +39,10 @@ async def list_pathologists(
     limit: int = Query(10, ge=1, le=100, description="Número máximo de registros a devolver"),
     pathologist_service: PathologistService = Depends(get_pathologist_service)
 ):
-    """Listar patólogos activos"""
     try:
         return await pathologist_service.list_pathologists(skip=skip, limit=limit)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.get("/search", response_model=List[PathologistResponse])
 async def search_pathologists(
@@ -62,7 +56,6 @@ async def search_pathologists(
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a devolver"),
     pathologist_service: PathologistService = Depends(get_pathologist_service)
 ):
-    """Buscar patólogos"""
     try:
         search_params = PathologistSearch(
             q=q,
@@ -74,20 +67,19 @@ async def search_pathologists(
         )
         return await pathologist_service.search_pathologists(search_params, skip=skip, limit=limit)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.get("/{pathologist_code}", response_model=PathologistResponse)
 async def get_pathologist(
     pathologist_code: str,
     pathologist_service: PathologistService = Depends(get_pathologist_service)
 ):
-    """Obtener patólogo por código"""
     try:
         return await pathologist_service.get_pathologist(pathologist_code)
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.put("/{pathologist_code}", response_model=PathologistResponse)
 async def update_pathologist(
@@ -95,7 +87,6 @@ async def update_pathologist(
     pathologist: PathologistUpdate,
     pathologist_service: PathologistService = Depends(get_pathologist_service)
 ):
-    """Actualizar patólogo por código"""
     try:
         return await pathologist_service.update_pathologist(pathologist_code, pathologist)
     except NotFoundError as e:
@@ -105,21 +96,20 @@ async def update_pathologist(
     except BadRequestError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.delete("/{pathologist_code}", status_code=status.HTTP_200_OK)
 async def delete_pathologist(
     pathologist_code: str,
     pathologist_service: PathologistService = Depends(get_pathologist_service)
 ):
-    """Eliminar patólogo por código"""
     try:
         result = await pathologist_service.delete_pathologist(pathologist_code)
-        return {"message": f"Pathologist with code {pathologist_code} deleted successfully", **result}
+        return {"message": f"Patólogo con código {pathologist_code} eliminado exitosamente", **result}
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.put("/{pathologist_code}/signature", response_model=PathologistResponse)
 async def update_signature(
@@ -127,7 +117,6 @@ async def update_signature(
     signature_data: SignatureUpdate,
     pathologist_service: PathologistService = Depends(get_pathologist_service)
 ):
-    """Actualizar solo la firma digital de un patólogo"""
     try:
         return await pathologist_service.update_signature(pathologist_code, signature_data.signature)
     except NotFoundError as e:
@@ -135,20 +124,19 @@ async def update_signature(
     except BadRequestError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.get("/{pathologist_code}/signature", response_model=SignatureResponse)
 async def get_signature(
     pathologist_code: str,
     pathologist_service: PathologistService = Depends(get_pathologist_service)
 ):
-    """Obtener solo la firma digital de un patólogo"""
     try:
         return await pathologist_service.get_signature(pathologist_code)
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")
 
 @router.put("/{pathologist_code}/upload-signature", response_model=PathologistResponse)
 async def upload_signature_file(
@@ -156,14 +144,10 @@ async def upload_signature_file(
     file: UploadFile = File(...),
     pathologist_service: PathologistService = Depends(get_pathologist_service)
 ):
-    """Subir archivo de firma digital para un patólogo"""
     try:
-        # Leer contenido del archivo
         file_content = await file.read()
-        
-        # Validar que el archivo no esté vacío
         if len(file_content) == 0:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is empty")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Archivo vacío")
         
         return await pathologist_service.upload_signature_file(
             pathologist_code, 
@@ -175,4 +159,4 @@ async def upload_signature_file(
     except BadRequestError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno del servidor")

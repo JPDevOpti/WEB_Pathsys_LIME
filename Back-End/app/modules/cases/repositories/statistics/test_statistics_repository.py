@@ -4,20 +4,16 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
 class TestStatisticsRepository:
-    """Repository for test statistics data access using MongoDB aggregation"""
-    
+    # Repositorio para estadísticas de pruebas (rendimiento y oportunidad)
     def __init__(self, database: AsyncIOMotorDatabase):
-        self.database = database
         self.collection = database.cases
     
     def _get_entity_filter_pattern(self, entity_name: str) -> str:
-        """Convert entity abbreviation to regex pattern that matches full entity names"""
+        # Devuelve patrón regex para filtrar entidades (soporta abreviaturas)
         if not entity_name or not entity_name.strip():
             return ""
         
         entity_name = entity_name.strip()
-        
-        # Common entity abbreviation mappings
         abbreviation_mappings = {
             'HAMA': r'Hospital Alma Máter de Antioquia',
             'HGM': r'Hospital General de Medellín Luz Castro G\.',
@@ -43,11 +39,8 @@ class TestStatisticsRepository:
             'CLINICA': r'Clínica'
         }
         
-        # Check if it's a known abbreviation
         if entity_name.upper() in abbreviation_mappings:
             return abbreviation_mappings[entity_name.upper()]
-        
-        # For other cases, create a pattern that matches the entity name as a substring
         return f".*{entity_name}.*"
     
     async def get_monthly_test_performance(
@@ -56,28 +49,17 @@ class TestStatisticsRepository:
         year: int, 
         entity_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Get monthly performance statistics for all tests"""
-        
-        # Calculate date range
+        # Rendimiento mensual de pruebas: solicitadas, completadas y tiempos promedio
         start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
-        
-        # Base match conditions - Include all cases, not just completed ones
+        end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         match_conditions = {
             "created_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests": {"$exists": True, "$ne": []}
         }
-        
-        # Add entity filter if specified - support partial matching for abbreviated names
         if entity_name:
             entity_pattern = self._get_entity_filter_pattern(entity_name)
             if entity_pattern:
                 match_conditions["patient_info.entity_info.name"] = {"$regex": entity_pattern, "$options": "i"}
-        
-        # Much simpler pipeline - just handle new format first
         pipeline = [
             {"$match": match_conditions},
             {"$unwind": "$samples"},
@@ -127,12 +109,8 @@ class TestStatisticsRepository:
         ]
         
         results = await self.collection.aggregate(pipeline).to_list(length=1000)
-        
-        # Calculate summary
         total_solicitadas = sum(test["solicitadas"] for test in results)
         total_completadas = sum(test["completadas"] for test in results)
-        
-        # Calculate weighted average correctly
         if total_solicitadas > 0:
             weighted_avg_days = sum(test["solicitadas"] * test["tiempoPromedio"] for test in results) / total_solicitadas
         else:
@@ -154,28 +132,16 @@ class TestStatisticsRepository:
         year: int, 
         entity_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Get detailed statistics for a specific test"""
-        
-        # Calculate date range
         start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
-        
-        # Base match conditions - Include all cases, not just completed ones
+        end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         match_conditions = {
             "created_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests.id": test_code
         }
-        
-        # Add entity filter if specified - support partial matching for abbreviated names
         if entity_name:
             entity_pattern = self._get_entity_filter_pattern(entity_name)
             if entity_pattern:
                 match_conditions["patient_info.entity_info.name"] = {"$regex": entity_pattern, "$options": "i"}
-        
-        # Get basic statistics
         basic_stats_pipeline = [
             {"$match": match_conditions},
             {"$unwind": "$samples"},
@@ -217,8 +183,6 @@ class TestStatisticsRepository:
             "porcentaje_completado": 0,
             "promedio_dias": 0
         }
-        
-        # Get opportunity statistics (assuming 7 days threshold)
         opportunity_pipeline = [
             {"$match": match_conditions},
             {"$unwind": "$samples"},
@@ -301,7 +265,7 @@ class TestStatisticsRepository:
         year: int, 
         entity_name: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """Get pathologists who worked on a specific test"""
+        # Lista de patólogos que procesaron una prueba específica
         
         # Calculate date range
         start_date = datetime(year, month, 1)
@@ -359,7 +323,7 @@ class TestStatisticsRepository:
         threshold_days: int = 7,
         entity_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Get opportunity summary for tests"""
+        # Resumen de oportunidad para pruebas (dentro/fuera y porcentaje)
         
         # Calculate date range
         start_date = datetime(year, month, 1)
@@ -447,7 +411,7 @@ class TestStatisticsRepository:
         year: int, 
         entity_name: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """Get monthly trends for tests"""
+        # Tendencias mensuales de pruebas por mes (volumen y tiempos)
         
         pipeline = [
             {

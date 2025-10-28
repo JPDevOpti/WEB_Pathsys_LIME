@@ -1,7 +1,7 @@
 """Esquemas para el modelo Resident"""
 
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from datetime import datetime
 
 class ResidentBase(BaseModel):
@@ -14,8 +14,7 @@ class ResidentBase(BaseModel):
     is_active: bool = Field(default=True, description="Estado activo/inactivo del residente")
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class ResidentCreate(ResidentBase):
     """Esquema para crear un nuevo residente"""
@@ -31,8 +30,7 @@ class ResidentUpdate(BaseModel):
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
     password: Optional[str] = Field(None, min_length=6, max_length=128, description="Nueva contraseña del residente")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class ResidentResponse(ResidentBase):
     """Esquema para respuesta de residente"""
@@ -40,9 +38,7 @@ class ResidentResponse(ResidentBase):
     created_at: datetime = Field(..., description="Fecha de creación")
     updated_at: datetime = Field(..., description="Fecha de última actualización")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class ResidentSearch(BaseModel):
     """Esquema para búsqueda de residentes"""
@@ -53,5 +49,4 @@ class ResidentSearch(BaseModel):
     medical_license: Optional[str] = Field(None, description="Filtrar por licencia médica")
     is_active: Optional[bool] = Field(None, description="Filtrar por estado activo")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

@@ -1,7 +1,7 @@
 """Esquemas para el modelo Pathologist"""
 
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from datetime import datetime
 
 class PathologistBase(BaseModel):
@@ -15,8 +15,7 @@ class PathologistBase(BaseModel):
     signature: str = Field(default="", description="URL de firma digital")
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class PathologistCreate(PathologistBase):
     """Esquema para crear un nuevo patólogo"""
@@ -33,8 +32,7 @@ class PathologistUpdate(BaseModel):
     observations: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
     password: Optional[str] = Field(None, min_length=6, max_length=128, description="Nueva contraseña del patólogo")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class PathologistResponse(PathologistBase):
     """Esquema para respuesta de patólogo"""
@@ -42,9 +40,7 @@ class PathologistResponse(PathologistBase):
     created_at: datetime = Field(..., description="Fecha de creación")
     updated_at: datetime = Field(..., description="Fecha de última actualización")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class PathologistSearch(BaseModel):
     """Esquema para búsqueda de patólogos"""
@@ -55,20 +51,17 @@ class PathologistSearch(BaseModel):
     medical_license: Optional[str] = Field(None, description="Filtrar por licencia médica")
     is_active: Optional[bool] = Field(None, description="Filtrar por estado activo")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class SignatureUpdate(BaseModel):
     """Esquema para actualizar la firma digital de un patólogo"""
     signature: str = Field(..., description="URL de la firma digital del patólogo")
     
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class SignatureResponse(BaseModel):
     """Esquema para respuesta de firma digital"""
     pathologist_code: str = Field(..., description="Código del patólogo")
     signature: str = Field(..., description="URL de la firma digital")
     
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

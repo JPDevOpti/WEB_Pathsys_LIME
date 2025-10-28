@@ -1,12 +1,15 @@
+"""
+Repositorio de casos urgentes: agrega métricas y lista casos según días en sistema.
+"""
 from typing import List, Dict, Any, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
 class UrgentCasesRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
-        self.db = db
         self.collection = db.cases
 
+    # Retorna casos en estados críticos con días en sistema >= min_days.
     async def find_urgent_cases(
         self,
         limit: int = 50,
@@ -19,6 +22,7 @@ class UrgentCasesRepository:
         if pathologist_code:
             match_stage["assigned_pathologist.id"] = pathologist_code
 
+        # Pipeline: calcula días en sistema, agrupa y proyecta campos clave.
         pipeline: List[Dict[str, Any]] = [
             {"$match": match_stage},
             {

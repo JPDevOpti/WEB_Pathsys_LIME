@@ -104,6 +104,20 @@ async def count_tickets(
     return {"total": count}
 
 
+@router.get("/next-consecutive", response_model=dict)
+@handle_exceptions
+async def get_next_consecutive(
+    ticket_service: TicketService = Depends(get_ticket_service),
+    current_user_id: str = Depends(get_current_user_id)
+):
+    """Get the next available consecutive code (does not consume it)."""
+    code = await ticket_service.get_next_consecutive()
+    return {
+        "consecutive_code": code,
+        "message": "This is the next available code. It has not been consumed."
+    }
+
+
 @router.get("/{ticket_code}", response_model=TicketResponse)
 @handle_exceptions
 async def get_ticket(
@@ -194,17 +208,3 @@ async def delete_ticket_image(
         current_user_id,
         is_admin=True  # For now, allow all authenticated users
     )
-
-
-@router.get("/next-consecutive", response_model=dict)
-@handle_exceptions
-async def get_next_consecutive(
-    ticket_service: TicketService = Depends(get_ticket_service),
-    current_user_id: str = Depends(get_current_user_id)
-):
-    """Get the next available consecutive code (does not consume it)."""
-    code = await ticket_service.get_next_consecutive()
-    return {
-        "consecutive_code": code,
-        "message": "This is the next available code. It has not been consumed."
-    }

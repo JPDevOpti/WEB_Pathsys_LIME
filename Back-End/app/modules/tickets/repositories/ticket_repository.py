@@ -1,7 +1,7 @@
 """Repository for ticket CRUD operations."""
 
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -29,9 +29,9 @@ class TicketRepository(BaseRepository[Ticket, TicketCreate, TicketUpdate]):
         else:
             obj_data = obj_in.dict(by_alias=False)
         
-        obj_data.setdefault("created_at", datetime.utcnow())
-        obj_data["updated_at"] = datetime.utcnow()
-        obj_data.setdefault("ticket_date", datetime.utcnow())
+        obj_data.setdefault("created_at", datetime.now(timezone.utc))
+        obj_data["updated_at"] = datetime.now(timezone.utc)
+        obj_data.setdefault("ticket_date", datetime.now(timezone.utc))
         
         # NO add is_active/isActive fields for tickets
         obj_data.pop("is_active", None)
@@ -59,7 +59,7 @@ class TicketRepository(BaseRepository[Ticket, TicketCreate, TicketUpdate]):
         if not update_data:
             return await self.get(id)
         
-        update_data["updated_at"] = datetime.utcnow()
+        update_data["updated_at"] = datetime.now(timezone.utc)
         update_data.pop("is_active", None)
         update_data.pop("isActive", None)
         
@@ -101,7 +101,7 @@ class TicketRepository(BaseRepository[Ticket, TicketCreate, TicketUpdate]):
         if not update_data:
             return await self.get_by_ticket_code(ticket_code)
         
-        update_data["updated_at"] = datetime.utcnow()
+        update_data["updated_at"] = datetime.now(timezone.utc)
         update_data.pop("is_active", None)
         update_data.pop("isActive", None)
         

@@ -15,7 +15,7 @@ class Patient(BaseDocument):
     second_lastname: Optional[str] = Field(None, min_length=2, max_length=50)
     birth_date: date = Field(...)
     gender: Gender = Field(...)
-    location: Location = Field(...)
+    location: Optional[Location] = Field(None)
     entity_info: EntityInfo = Field(...)
     care_type: CareType = Field(...)
     observations: Optional[str] = Field(None, max_length=500)

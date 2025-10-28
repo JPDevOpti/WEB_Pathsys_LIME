@@ -28,7 +28,7 @@ class PathologistRepository:
         """Crear un nuevo patólogo"""
         try:
             from datetime import datetime, timezone
-            pathologist_data = pathologist.dict()
+            pathologist_data = pathologist.model_dump()
             pathologist_data["created_at"] = datetime.now(timezone.utc)
             pathologist_data["updated_at"] = datetime.now(timezone.utc)
             result = await self.collection.insert_one(pathologist_data)

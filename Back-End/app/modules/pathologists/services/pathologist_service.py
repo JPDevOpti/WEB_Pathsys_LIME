@@ -89,7 +89,7 @@ class PathologistService:
                 raise ConflictError("Medical license already exists")
         
         # Actualizar el patólogo
-        update_data = payload.dict(exclude_unset=True)
+        update_data = payload.model_dump(exclude_unset=True)
         updated = await self.repo.update_by_pathologist_code(pathologist_code, update_data)
         if not updated:
             raise BadRequestError("Failed to update pathologist")

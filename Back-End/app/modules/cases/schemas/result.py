@@ -1,6 +1,7 @@
 from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
+from pydantic.config import ConfigDict
 
 
 class ResultUpdate(BaseModel):
@@ -29,8 +30,7 @@ class ResultResponse(BaseModel):
     state: str
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResultInfo(BaseModel):
@@ -41,5 +41,4 @@ class ResultInfo(BaseModel):
     observations: Optional[str] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

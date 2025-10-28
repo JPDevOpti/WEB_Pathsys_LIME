@@ -6,13 +6,12 @@ from app.modules.cases.services.statistics.entity_statistics_service import Enti
 from app.core.exceptions import BadRequestError
 
 
-router = APIRouter()
+router = APIRouter(tags=["statistics-entity"])
 
 
-async def get_entity_statistics_service():
-    """Dependency to get entity statistics service"""
-    database = await get_database()
-    repository = EntityStatisticsRepository(database)
+def get_entity_statistics_service(db = Depends(get_database)):
+    """Servicio de estadísticas de entidades con dependencia de base de datos"""
+    repository = EntityStatisticsRepository(db)
     return EntityStatisticsService(repository)
 
 
@@ -34,20 +33,20 @@ async def get_monthly_entity_performance(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/details")
 async def get_entity_details(
-    entidad: str = Query(..., description="Entity name"),
+    entity_name: str = Query(..., alias="entidad", description="Nombre de la entidad"),
     month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
     year: int = Query(..., ge=2020, le=2030, description="Year"),
     service: EntityStatisticsService = Depends(get_entity_statistics_service)
 ):
-    """Get detailed statistics for a specific entity"""
+    """Obtener estadísticas detalladas para una entidad específica"""
     try:
         result = await service.get_entity_details(
-            entity_name=entidad,
+            entity_name=entity_name,
             month=month,
             year=year
         )
@@ -55,20 +54,20 @@ async def get_entity_details(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/pathologists")
 async def get_entity_pathologists(
-    entidad: str = Query(..., description="Entity name"),
+    entity_name: str = Query(..., alias="entidad", description="Nombre de la entidad"),
     month: int = Query(..., ge=1, le=12, description="Month (1-12)"),
     year: int = Query(..., ge=2020, le=2030, description="Year"),
     service: EntityStatisticsService = Depends(get_entity_statistics_service)
 ):
-    """Get pathologists who work with a specific entity"""
+    """Obtener patólogos que trabajan con una entidad específica"""
     try:
         result = await service.get_entity_pathologists(
-            entity_name=entidad,
+            entity_name=entity_name,
             month=month,
             year=year
         )
@@ -76,7 +75,7 @@ async def get_entity_pathologists(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/debug/unique-entities")
@@ -90,7 +89,7 @@ async def debug_unique_entities(
         result = await service.debug_unique_entities(month=month, year=year)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/debug/all-entities-in-cases")
@@ -104,4 +103,4 @@ async def debug_all_entities_in_cases(
         result = await service.debug_all_entities_in_cases(month=month, year=year)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")

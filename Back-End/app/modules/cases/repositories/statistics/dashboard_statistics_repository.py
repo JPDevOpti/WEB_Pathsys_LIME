@@ -1,18 +1,16 @@
-# Dashboard Statistics Repository
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
 class DashboardStatisticsRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
-        self.db = db
         self.collection = db.cases
 
+    # Cantidad de casos por mes del año indicado.
     async def get_cases_by_month(self, year: int) -> Dict[str, Any]:
-        """Obtener estadísticas de casos por mes para un año específico"""
-        start_date = datetime(year, 1, 1)
-        end_date = datetime(year + 1, 1, 1)
+        start_date = datetime(year, 1, 1, tzinfo=timezone.utc)
+        end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
         
         pipeline = [
             {
@@ -35,28 +33,20 @@ class DashboardStatisticsRepository:
         ]
         
         results = await self.collection.aggregate(pipeline).to_list(length=12)
-        
-        # Inicializar array de 12 meses con 0
         monthly_data = [0] * 12
-        
-        # Llenar con datos reales
         for result in results:
-            month_index = result["_id"] - 1  # MongoDB month is 1-12, array is 0-11
+            month_index = result["_id"] - 1
             if 0 <= month_index < 12:
                 monthly_data[month_index] = result["count"]
         
         total = sum(monthly_data)
         
-        return {
-            "datos": monthly_data,
-            "total": total,
-            "año": year
-        }
+        return {"datos": monthly_data, "total": total, "año": year}
 
+    # Casos por mes filtrados por patólogo (id).
     async def get_cases_by_month_pathologist(self, year: int, pathologist_code: str) -> Dict[str, Any]:
-        """Obtener estadísticas de casos por mes para un patólogo específico"""
-        start_date = datetime(year, 1, 1)
-        end_date = datetime(year + 1, 1, 1)
+        start_date = datetime(year, 1, 1, tzinfo=timezone.utc)
+        end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
         
         pipeline = [
             {
@@ -80,43 +70,31 @@ class DashboardStatisticsRepository:
         ]
         
         results = await self.collection.aggregate(pipeline).to_list(length=12)
-        
-        # Inicializar array de 12 meses con 0
         monthly_data = [0] * 12
-        
-        # Llenar con datos reales
         for result in results:
-            month_index = result["_id"] - 1  # MongoDB month is 1-12, array is 0-11
+            month_index = result["_id"] - 1
             if 0 <= month_index < 12:
                 monthly_data[month_index] = result["count"]
         
         total = sum(monthly_data)
         
-        return {
-            "datos": monthly_data,
-            "total": total,
-            "año": year,
-            "pathologist_code": pathologist_code
-        }
+        return {"datos": monthly_data, "total": total, "año": year, "pathologist_code": pathologist_code}
 
+    # Resumen del dashboard actual y mes anterior.
     async def get_dashboard_overview(self) -> Dict[str, Any]:
-        """Obtener resumen general del dashboard"""
-        now = datetime.utcnow()
-        current_month_start = datetime(now.year, now.month, 1)
+        now = datetime.now(timezone.utc)
+        current_month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+        previous_month_start = (
+            datetime(now.year - 1, 12, 1, tzinfo=timezone.utc)
+            if now.month == 1
+            else datetime(now.year, now.month - 1, 1, tzinfo=timezone.utc)
+        )
+        next_month_start = (
+            datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)
+            if now.month == 12
+            else datetime(now.year, now.month + 1, 1, tzinfo=timezone.utc)
+        )
         
-        # Si estamos en enero, el mes anterior es diciembre del año anterior
-        if now.month == 1:
-            previous_month_start = datetime(now.year - 1, 12, 1)
-        else:
-            previous_month_start = datetime(now.year, now.month - 1, 1)
-        
-        # Próximo mes para el rango
-        if now.month == 12:
-            next_month_start = datetime(now.year + 1, 1, 1)
-        else:
-            next_month_start = datetime(now.year, now.month + 1, 1)
-        
-        # Casos del mes actual
         current_month_pipeline = [
             {
                 "$match": {
@@ -130,8 +108,6 @@ class DashboardStatisticsRepository:
                 "$count": "total"
             }
         ]
-        
-        # Casos del mes anterior
         previous_month_pipeline = [
             {
                 "$match": {
@@ -145,15 +121,11 @@ class DashboardStatisticsRepository:
                 "$count": "total"
             }
         ]
-        
-        # Total de casos
         total_pipeline = [
             {
                 "$count": "total"
             }
         ]
-        
-        # Casos por estado
         cases_by_state_pipeline = [
             {
                 "$group": {
@@ -162,53 +134,44 @@ class DashboardStatisticsRepository:
                 }
             }
         ]
-        
-        # Ejecutar agregaciones
         current_month_result = await self.collection.aggregate(current_month_pipeline).to_list(1)
         previous_month_result = await self.collection.aggregate(previous_month_pipeline).to_list(1)
         total_result = await self.collection.aggregate(total_pipeline).to_list(1)
         cases_by_state_result = await self.collection.aggregate(cases_by_state_pipeline).to_list(length=None)
-        
-        # Procesar resultados
         casos_mes_actual = current_month_result[0]["total"] if current_month_result else 0
         casos_mes_anterior = previous_month_result[0]["total"] if previous_month_result else 0
         total_casos = total_result[0]["total"] if total_result else 0
-        
-        # Calcular cambio porcentual
         if casos_mes_anterior > 0:
             cambio_porcentual = ((casos_mes_actual - casos_mes_anterior) / casos_mes_anterior) * 100
         else:
             cambio_porcentual = 100.0 if casos_mes_actual > 0 else 0.0
-        
-        # Procesar casos por estado
         casos_por_estado = {}
         for result in cases_by_state_result:
             casos_por_estado[result["_id"]] = result["count"]
-        
         return {
             "total_casos": total_casos,
             "casos_mes_actual": casos_mes_actual,
             "casos_mes_anterior": casos_mes_anterior,
             "cambio_porcentual": round(cambio_porcentual, 2),
-            "casos_por_estado": casos_por_estado
+            "casos_por_estado": casos_por_estado,
         }
 
     async def get_metrics_general(self) -> Dict[str, Any]:
         """Obtener métricas generales del laboratorio"""
-        now = datetime.utcnow()
-        current_month_start = datetime(now.year, now.month, 1)
+        now = datetime.now(timezone.utc)
+        current_month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
         
         # Mes anterior
         if now.month == 1:
-            previous_month_start = datetime(now.year - 1, 12, 1)
+            previous_month_start = datetime(now.year - 1, 12, 1, tzinfo=timezone.utc)
         else:
-            previous_month_start = datetime(now.year, now.month - 1, 1)
+            previous_month_start = datetime(now.year, now.month - 1, 1, tzinfo=timezone.utc)
         
         # Próximo mes para el rango
         if now.month == 12:
-            next_month_start = datetime(now.year + 1, 1, 1)
+            next_month_start = datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)
         else:
-            next_month_start = datetime(now.year, now.month + 1, 1)
+            next_month_start = datetime(now.year, now.month + 1, 1, tzinfo=timezone.utc)
         
         # Pipeline para pacientes del mes actual
         current_month_patients_pipeline = [
@@ -584,6 +547,3 @@ class DashboardStatisticsRepository:
                 "cambio_porcentual": round(casos_cambio, 2)
             }
         }
-    # Eliminado: get_opportunity_general (se va a rehacer)
-
-    # Eliminado: get_opportunity_pathologist (se va a rehacer)

@@ -2,7 +2,7 @@
 
 from typing import TypeVar, Generic, Optional, List, Dict, Any
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from datetime import datetime
+from datetime import datetime, timezone
 
 T = TypeVar('T')
 CreateSchema = TypeVar('CreateSchema')
@@ -30,8 +30,8 @@ class BaseRepository(Generic[T, CreateSchema, UpdateSchema]):
         else:
             obj_data = obj_in.dict(by_alias=False)
         
-        obj_data.setdefault("created_at", datetime.utcnow())
-        obj_data["updated_at"] = datetime.utcnow()
+        obj_data.setdefault("created_at", datetime.now(timezone.utc))
+        obj_data["updated_at"] = datetime.now(timezone.utc)
         
         # Normalizar campos booleanos
         obj_data = self._normalize_boolean_fields_for_write(obj_data)
@@ -69,7 +69,7 @@ class BaseRepository(Generic[T, CreateSchema, UpdateSchema]):
         if not update_data:
             return await self.get(id)
         
-        update_data["updated_at"] = datetime.utcnow()
+        update_data["updated_at"] = datetime.now(timezone.utc)
         update_data = self._normalize_boolean_fields_for_write(update_data)
         
         try:

@@ -4,35 +4,23 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
 class EntityStatisticsRepository:
-    """Repository for entity statistics operations"""
-    
     def __init__(self, database: AsyncIOMotorDatabase):
-        self.database = database
         self.collection = database.cases
-    
+
+    # Rendimiento mensual por entidad (solo casos completados).
     async def get_monthly_entity_performance(
         self,
         month: int,
         year: int,
         entity_name: str = None
     ) -> Dict[str, Any]:
-        """Get monthly performance data for entities"""
-        
-        # Create date range for the month
         start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
-        
-        # Base match conditions
+        end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         match_conditions = {
             "state": "Completado",
             "signed_at": {"$gte": start_date, "$lt": end_date},
             "patient_info.entity_info.name": {"$exists": True, "$ne": None, "$ne": ""}
         }
-        
-        # Add entity filter if specified
         if entity_name:
             match_conditions["patient_info.entity_info.name"] = {"$regex": entity_name.strip(), "$options": "i"}
         
@@ -82,13 +70,9 @@ class EntityStatisticsRepository:
         ]
         
         results = await self.collection.aggregate(pipeline).to_list(length=1000)
-        
-        # Calculate summary
         total_ambulatorios = sum(entity["ambulatorios"] for entity in results)
         total_hospitalizados = sum(entity["hospitalizados"] for entity in results)
         total_cases = sum(entity["total"] for entity in results)
-        
-        # Calculate weighted average of business days
         weighted_days = sum(entity["avg_business_days"] * entity["total"] for entity in results)
         tiempo_promedio = weighted_days / total_cases if total_cases > 0 else 0
         
@@ -100,29 +84,21 @@ class EntityStatisticsRepository:
         }
         
         return {"entities": results, "summary": summary}
-    
+
+    # Detalle estadístico de una entidad en el mes.
     async def get_entity_details(
         self,
         entity_name: str,
         month: int,
         year: int
     ) -> Dict[str, Any]:
-        """Get detailed statistics for a specific entity"""
-        
         start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
-        
-        # Match conditions for the entity
+        end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         match_conditions = {
             "patient_info.entity_info.name": {"$regex": entity_name.strip(), "$options": "i"},
             "state": "Completado",
             "signed_at": {"$gte": start_date, "$lt": end_date}
         }
-        
-        # Get basic statistics
         basic_stats_pipeline = [
             {"$match": match_conditions},
             {
@@ -177,8 +153,6 @@ class EntityStatisticsRepository:
             "hospitalizados": 0,
             "promedio_muestras_por_paciente": 0
         }
-        
-        # Get business days statistics
         business_days_pipeline = [
             {"$match": match_conditions},
             {
@@ -208,8 +182,6 @@ class EntityStatisticsRepository:
             "promedio_dias": 0,
             "muestras_completadas": 0
         }
-        
-        # Get most requested tests
         tests_pipeline = [
             {"$match": match_conditions},
             {"$unwind": "$samples"},
@@ -236,7 +208,6 @@ class EntityStatisticsRepository:
         ]
         
         tests_results = await self.collection.aggregate(tests_pipeline).to_list(length=None)
-        
         return {
             "detalles": {
                 "estadisticas_basicas": basic_stats,

@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from datetime import datetime
+from datetime import datetime, timezone
 from app.modules.diseases.models.disease import DiseaseCreate, DiseaseResponse
 
 
@@ -21,8 +21,8 @@ class DiseaseRepository:
     async def create(self, disease: DiseaseCreate) -> DiseaseResponse:
         """Create a new disease"""
         disease_dict = disease.model_dump()
-        disease_dict["created_at"] = datetime.utcnow()
-        disease_dict["updated_at"] = datetime.utcnow()
+        disease_dict["created_at"] = datetime.now(timezone.utc)
+        disease_dict["updated_at"] = datetime.now(timezone.utc)
         
         result = await self.collection.insert_one(disease_dict)
         disease_dict["_id"] = str(result.inserted_id)

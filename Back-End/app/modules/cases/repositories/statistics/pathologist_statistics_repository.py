@@ -4,12 +4,10 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
 class PathologistStatisticsRepository:
-    """Repository for pathologist-specific statistics and analytics"""
-    
     def __init__(self, database: AsyncIOMotorDatabase):
-        self.database = database
         self.collection = database["cases"]
-    
+
+    # Rendimiento mensual por patólogo (casos completados).
     async def get_pathologist_monthly_performance(
         self,
         month: int,
@@ -17,22 +15,12 @@ class PathologistStatisticsRepository:
         threshold_days: int = 7,
         pathologist_name: str = None
     ) -> Dict[str, Any]:
-        """Get monthly performance data for pathologists"""
-        
-        # Create date range for the month
         start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
-        
-        # Base match conditions
+        end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         match_conditions = {
             "state": "Completado",
             "signed_at": {"$gte": start_date, "$lt": end_date}
         }
-        
-        # Add pathologist filter if specified
         if pathologist_name:
             match_conditions["assigned_pathologist.name"] = {"$regex": pathologist_name.strip(), "$options": "i"}
         
@@ -83,19 +71,15 @@ class PathologistStatisticsRepository:
         results = await self.collection.aggregate(pipeline).to_list(length=None)
         return {"pathologists": results}
     
+    # Entidades en las que trabaja un patólogo.
     async def get_pathologist_entities(
         self,
         pathologist_name: str,
         month: int,
         year: int
     ) -> Dict[str, Any]:
-        """Get entities where a pathologist works"""
-        
         start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
+        end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         
         pipeline = [
             {
@@ -129,19 +113,15 @@ class PathologistStatisticsRepository:
         results = await self.collection.aggregate(pipeline).to_list(length=None)
         return {"entidades": results}
     
+    # Pruebas asociadas a un patólogo.
     async def get_pathologist_tests(
         self,
         pathologist_name: str,
         month: int,
         year: int
     ) -> Dict[str, Any]:
-        """Get tests performed by a pathologist"""
-        
         start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
+        end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         
         pipeline = [
             {
@@ -177,13 +157,12 @@ class PathologistStatisticsRepository:
         results = await self.collection.aggregate(pipeline).to_list(length=None)
         return {"pruebas": results}
     
+    # Resumen de oportunidad (dentro/fuera) para un patólogo.
     async def get_pathologist_opportunity_summary(
         self,
         pathologist_name: str,
         threshold_days: int = 7
     ) -> Dict[str, Any]:
-        """Get opportunity summary for a specific pathologist"""
-        
         pipeline = [
             {
                 "$match": {
@@ -232,14 +211,13 @@ class PathologistStatisticsRepository:
         results = await self.collection.aggregate(pipeline).to_list(length=None)
         return results[0] if results else {"total": 0, "within": 0, "out": 0, "averageDays": 0}
     
+    # Tendencias mensuales en el año para un patólogo.
     async def get_pathologist_monthly_trends(
         self,
         pathologist_name: str,
         year: int,
         threshold_days: int = 7
     ) -> Dict[str, Any]:
-        """Get monthly trends for a pathologist throughout the year"""
-        
         start_date = datetime(year, 1, 1)
         end_date = datetime(year + 1, 1, 1)
         

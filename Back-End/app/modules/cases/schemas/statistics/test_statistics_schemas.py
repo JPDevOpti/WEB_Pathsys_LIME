@@ -3,97 +3,97 @@ from typing import List, Optional
 
 
 class TestStats(BaseModel):
-    """Schema for individual test statistics"""
-    codigo: str = Field(..., description="Test code")
-    nombre: str = Field(..., description="Test name")
-    solicitadas: int = Field(..., description="Total requested")
-    completadas: int = Field(..., description="Total completed")
-    tiempoPromedio: float = Field(..., description="Average processing time in days")
-    porcentajeCompletado: float = Field(..., description="Completion percentage")
+    """Estadísticas individuales de pruebas"""
+    codigo: str = Field(..., description="Código de la prueba")
+    nombre: str = Field(..., description="Nombre de la prueba")
+    solicitadas: int = Field(..., description="Total solicitadas")
+    completadas: int = Field(..., description="Total completadas")
+    tiempoPromedio: float = Field(..., description="Tiempo promedio de procesamiento en días")
+    porcentajeCompletado: float = Field(..., description="Porcentaje de completadas")
 
 
 class TestSummary(BaseModel):
-    """Schema for test summary statistics"""
-    totalSolicitadas: int = Field(..., description="Total tests requested")
-    totalCompletadas: int = Field(..., description="Total tests completed")
-    tiempoPromedio: float = Field(..., description="Average processing time in days")
+    """Resumen de estadísticas de pruebas"""
+    totalSolicitadas: int = Field(..., description="Total de pruebas solicitadas")
+    totalCompletadas: int = Field(..., description="Total de pruebas completadas")
+    tiempoPromedio: float = Field(..., description="Tiempo promedio de procesamiento en días")
 
 
 class MonthlyTestPerformanceResponse(BaseModel):
-    """Response schema for monthly test performance"""
-    tests: List[TestStats] = Field(..., description="List of test statistics")
-    summary: TestSummary = Field(..., description="Summary statistics")
+    """Respuesta de rendimiento mensual de pruebas"""
+    tests: List[TestStats] = Field(..., description="Listado de estadísticas de pruebas")
+    summary: TestSummary = Field(..., description="Resumen de estadísticas")
 
 
 class TestMainStats(BaseModel):
-    """Schema for main test statistics"""
-    total_solicitadas: int = Field(..., description="Total requested")
-    total_completadas: int = Field(..., description="Total completed")
-    porcentaje_completado: float = Field(..., description="Completion percentage")
+    """Estadísticas principales de pruebas"""
+    total_solicitadas: int = Field(..., description="Total solicitadas")
+    total_completadas: int = Field(..., description="Total completadas")
+    porcentaje_completado: float = Field(..., description="Porcentaje de completadas")
 
 
 class TestProcessingTimes(BaseModel):
-    """Schema for test processing times"""
-    promedio_dias: float = Field(..., description="Average days")
-    dentro_oportunidad: int = Field(..., description="Within opportunity")
-    fuera_oportunidad: int = Field(..., description="Out of opportunity")
-    total_casos: int = Field(..., description="Total cases")
+    """Tiempos de procesamiento de pruebas"""
+    promedio_dias: float = Field(..., description="Promedio de días")
+    dentro_oportunidad: int = Field(..., description="Dentro de oportunidad")
+    fuera_oportunidad: int = Field(..., description="Fuera de oportunidad")
+    total_casos: int = Field(..., description="Total de casos")
 
 
 class TestPathologist(BaseModel):
-    """Schema for pathologist working on a test"""
-    nombre: str = Field(..., description="Pathologist name")
-    codigo: str = Field(..., description="Pathologist code")
-    total_procesadas: int = Field(..., description="Total processed")
-    tiempo_promedio: float = Field(..., description="Average processing time")
+    """Patólogo trabajando en una prueba"""
+    nombre: str = Field(..., description="Nombre del patólogo")
+    codigo: str = Field(..., description="Código del patólogo")
+    total_procesadas: int = Field(..., description="Total procesadas")
+    tiempo_promedio: float = Field(..., description="Tiempo promedio de procesamiento")
 
 
 class TestDetailsResponse(BaseModel):
-    """Response schema for test details"""
-    estadisticas_principales: TestMainStats = Field(..., description="Main statistics")
-    tiempos_procesamiento: TestProcessingTimes = Field(..., description="Processing times")
-    patologos: List[TestPathologist] = Field(..., description="Pathologists list")
+    """Respuesta de detalles de una prueba"""
+    estadisticas_principales: TestMainStats = Field(..., description="Estadísticas principales")
+    tiempos_procesamiento: TestProcessingTimes = Field(..., description="Tiempos de procesamiento")
+    patologos: List[TestPathologist] = Field(..., description="Listado de patólogos")
 
 
 class TestPathologistsResponse(BaseModel):
-    """Response schema for test pathologists"""
-    pathologists: List[TestPathologist] = Field(..., description="Pathologists list")
+    """Respuesta de patólogos por prueba"""
+    pathologists: List[TestPathologist] = Field(..., description="Listado de patólogos")
 
 
 class TestOpportunityStats(BaseModel):
-    """Schema for test opportunity statistics"""
-    codigo: str = Field(..., description="Test code")
-    nombre: str = Field(..., description="Test name")
-    total_casos: int = Field(..., description="Total cases")
-    dentro_oportunidad: int = Field(..., description="Within opportunity")
-    fuera_oportunidad: int = Field(..., description="Out of opportunity")
-    tiempo_promedio: float = Field(..., description="Average processing time")
-    porcentaje_oportunidad: float = Field(..., description="Opportunity percentage")
+    """Estadísticas de oportunidad de pruebas"""
+    codigo: str = Field(..., description="Código de la prueba")
+    nombre: str = Field(..., description="Nombre de la prueba")
+    total_casos: int = Field(..., description="Total de casos")
+    dentro_oportunidad: int = Field(..., description="Dentro de oportunidad")
+    fuera_oportunidad: int = Field(..., description="Fuera de oportunidad")
+    tiempo_promedio: float = Field(..., description="Tiempo promedio de procesamiento")
+    porcentaje_oportunidad: float = Field(..., description="Porcentaje de oportunidad")
 
 
 class TestOpportunitySummary(BaseModel):
-    """Schema for test opportunity summary"""
-    total_casos: int = Field(..., description="Total cases")
-    dentro_oportunidad: int = Field(..., description="Within opportunity")
-    fuera_oportunidad: int = Field(..., description="Out of opportunity")
-    porcentaje_oportunidad: float = Field(..., description="Opportunity percentage")
+    """Resumen de oportunidad de pruebas"""
+    total_casos: int = Field(..., description="Total de casos")
+    dentro_oportunidad: int = Field(..., description="Dentro de oportunidad")
+    fuera_oportunidad: int = Field(..., description="Fuera de oportunidad")
+    porcentaje_oportunidad: float = Field(..., description="Porcentaje de oportunidad")
 
 
 class TestOpportunityResponse(BaseModel):
-    """Response schema for test opportunity summary"""
-    tests: List[TestOpportunityStats] = Field(..., description="Test opportunity statistics")
-    summary: TestOpportunitySummary = Field(..., description="Summary statistics")
+    """Respuesta de resumen de oportunidad de pruebas"""
+    tests: List[TestOpportunityStats] = Field(..., description="Estadísticas de oportunidad por prueba")
+    summary: TestOpportunitySummary = Field(..., description="Resumen de estadísticas")
 
 
 class TestMonthlyTrend(BaseModel):
-    """Schema for monthly test trends"""
-    mes: int = Field(..., description="Month")
-    codigo: str = Field(..., description="Test code")
-    nombre: str = Field(..., description="Test name")
-    total_casos: int = Field(..., description="Total cases")
-    tiempo_promedio: float = Field(..., description="Average processing time")
+    """Tendencias mensuales de pruebas"""
+    mes: int = Field(..., description="Mes")
+    codigo: str = Field(..., description="Código de la prueba")
+    nombre: str = Field(..., description="Nombre de la prueba")
+    total_casos: int = Field(..., description="Total de casos")
+    tiempo_promedio: float = Field(..., description="Tiempo promedio de procesamiento")
 
 
 class TestMonthlyTrendsResponse(BaseModel):
-    """Response schema for monthly test trends"""
-    trends: List[TestMonthlyTrend] = Field(..., description="Monthly trends")
+    """Respuesta de tendencias mensuales de pruebas"""
+    trends: List[TestMonthlyTrend] = Field(..., description="Tendencias mensuales")

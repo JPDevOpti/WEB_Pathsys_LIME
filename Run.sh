@@ -7,6 +7,14 @@ set -e
 # Usar el docker-compose disponible en Back-End
 DOCKER_COMPOSE_FILE="Back-End/docker-compose.dev.yml"
 
+# Utilidades de formato
+hr() { echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; }
+section() { echo "\n$1"; hr; }
+info() { echo "ℹ️  $1"; }
+ok() { echo "✅ $1"; }
+warn() { echo "⚠️  $1"; }
+err() { echo "❌ $1"; }
+
 function setup() {
   echo "🔧 Verificando dependencias del sistema..."
   
@@ -47,12 +55,6 @@ function setup() {
   
   echo "🐍 Configurando entorno virtual para Back-End con Python 3.12..."
   if cd Back-End; then
-    # Respaldar entorno virtual anterior si existe
-    if [ -d "venv" ] && [ ! -d "venv_backup" ]; then
-      echo "  • Respaldando entorno virtual anterior..."
-      mv venv venv_backup_$(date +%Y%m%d_%H%M%S)
-    fi
-    
     if [ ! -d "venv" ]; then
       echo "  • Creando entorno virtual con Python 3.12..."
       /opt/homebrew/bin/python3.12 -m venv venv
@@ -111,6 +113,90 @@ function update_venv() {
   echo "✅ ¡Entorno virtual actualizado exitosamente!"
   echo "🚀 Para iniciar el servidor:"
   echo "   ./Run.sh local"
+}
+
+# Ejecutar tests directamente con pytest (sin script externo)
+function run_tests() {
+  section "🧪 Ejecutando suite de tests"
+
+  # Activar venv de Back-End si existe (o .venv en raíz como alternativa)
+  local ACTIVATED=0
+  if [ -d "Back-End/venv" ]; then
+    info "Usando entorno virtual: Back-End/venv"
+    source Back-End/venv/bin/activate || true
+    ACTIVATED=1
+  elif [ -d ".venv" ]; then
+    info "Usando entorno virtual: .venv"
+    source .venv/bin/activate || true
+    ACTIVATED=1
+  else
+    warn "No se encontró entorno virtual. Se usará el Python del sistema."
+  fi
+
+  # Construir argumentos de pytest replicando el runner previo
+  local EXTRA_ARGS=()
+  for arg in "$@"; do
+    if [[ "$arg" != "--full" ]]; then
+      EXTRA_ARGS+=("$arg")
+    fi
+  done
+
+  # Por defecto: salida concisa con top de lentos y filtros de warnings
+  local PYTEST_ARGS=(
+    -q
+    --color=yes
+    --durations=10
+    -rfE
+    --import-mode=importlib
+    -W "ignore:.*Pydantic.*Migration Guide.*:DeprecationWarning"
+    -W "ignore:.*'crypt' is deprecated.*:DeprecationWarning"
+    -W "ignore:.*datetime\.datetime\.utcnow\(\).*:DeprecationWarning"
+    -W "ignore:.*argon2\.__version__ is deprecated.*:DeprecationWarning"
+    Back-End/app/modules
+  )
+
+  # Modo detallado opcional: --full
+  if [[ ${1:-} == "--full" ]]; then
+    PYTEST_ARGS=(
+      -vv
+      --color=yes
+      --durations=10
+      -rA
+      --import-mode=importlib
+      -W "ignore:.*Pydantic.*Migration Guide.*:DeprecationWarning"
+      -W "ignore:.*'crypt' is deprecated.*:DeprecationWarning"
+      -W "ignore:.*datetime\.datetime\.utcnow\(\).*:DeprecationWarning"
+      -W "ignore:.*argon2\.__version__ is deprecated.*:DeprecationWarning"
+      Back-End/app/modules
+    )
+  fi
+
+  echo "Running tests with pytest…"
+  echo "Repo: $(basename "$PWD")  | Python: $(python -V 2>&1)"
+
+  set +e
+  if (( ${#EXTRA_ARGS[@]:-0} )); then
+    pytest "${PYTEST_ARGS[@]}" "${EXTRA_ARGS[@]}"
+  else
+    pytest "${PYTEST_ARGS[@]}"
+  fi
+  local STATUS=$?
+  set -e
+
+  echo
+  if [ $STATUS -eq 0 ]; then
+    echo "✔ Tests OK (todo pasó)"
+    ok "Tests completados sin errores"
+  else
+    echo "✖ Tests con fallos (exit=$STATUS)"
+    err "Tests finalizados con código $STATUS"
+  fi
+
+  if [ $ACTIVATED -eq 1 ] && command -v deactivate >/dev/null 2>&1; then
+    deactivate || true
+  fi
+
+  return $STATUS
 }
 
 function setup_atlas() {
@@ -823,6 +909,7 @@ function help() {
   echo "  clean        - Limpia archivos de configuración"
   echo "  restart-fe   - Reinicia solo el frontend"
   echo "  debug        - Muestra configuración de archivos .env"
+  echo "  tests [ops]  - Ejecuta la suite de tests (pasa flags a pytest)"
   echo "  help         - Muestra esta ayuda"
   echo ""
   echo " URLs del sistema:"
@@ -844,6 +931,9 @@ function help() {
   echo "  ./Run.sh clean        # Limpiar configuración"
   echo "  ./Run.sh restart-fe   # Reiniciar solo frontend"
   echo "  ./Run.sh debug        # Debuggear configuración"
+  echo "  ./Run.sh tests        # Ejecutar suite de tests"
+  echo "  ./Run.sh tests -v     # Ejecutar en modo detallado"
+  echo "  ./Run.sh tests --full # Forzar ejecución completa del runner"
   echo ""
   echo " Sistema de configuración:"
   echo "  • LOCAL: MongoDB local (puerto 27017) + Frontend Development"
@@ -971,6 +1061,10 @@ EOF
     else
       echo "❌ Error al reiniciar frontend"
     fi
+    ;;
+  tests)
+    # Pasar todos los argumentos desde la posición 2 en adelante al runner
+    run_tests "${@:2}"
     ;;
   help|*)
     help

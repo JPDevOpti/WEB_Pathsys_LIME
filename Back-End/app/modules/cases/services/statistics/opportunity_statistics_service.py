@@ -1,4 +1,5 @@
 from typing import Any, Dict
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.exceptions import BadRequestError
 from app.modules.cases.repositories.statistics.opportunity_statistics_repository import OpportunityStatisticsRepository
@@ -39,8 +40,7 @@ class OpportunityStatisticsService:
     ) -> Dict[str, Any]:
         if month < 1 or month > 12:
             raise BadRequestError("month must be between 1 and 12")
-        from datetime import datetime
-        current_year = datetime.utcnow().year
+        current_year = datetime.now(timezone.utc).year
         if year < 2020 or year > current_year + 1:
             raise BadRequestError(f"year must be between 2020 and {current_year + 1}")
         if threshold_days < 1 or threshold_days > 60:
@@ -51,8 +51,7 @@ class OpportunityStatisticsService:
             raise BadRequestError(f"Error computing monthly opportunity: {str(e)}")
 
     async def get_yearly(self, year: int, threshold_days: int = 7) -> Dict[str, Any]:
-        from datetime import datetime
-        current_year = datetime.utcnow().year
+        current_year = datetime.now(timezone.utc).year
         if year < 2020 or year > current_year + 1:
             raise BadRequestError(f"year must be between 2020 and {current_year + 1}")
         if threshold_days < 1 or threshold_days > 60:
