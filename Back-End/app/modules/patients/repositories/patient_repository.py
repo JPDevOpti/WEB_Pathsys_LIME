@@ -136,16 +136,24 @@ class PatientRepository:
 
     async def change_identification(self, old_code: str, new_identification_type: str, new_identification_number: str, cases_collection) -> dict:
         old_query = {"patient_code": old_code}
-            
-        existing_patient = await self.collection.find_one(old_query, {"_id": 1})
+
+        # Obtener el paciente actual (doc completo para poder comparar y potencialmente devolverlo)
+        existing_patient = await self.collection.find_one(old_query)
         if not existing_patient:
             raise NotFoundError("Paciente no encontrado")
-            
+
         new_code = f"{new_identification_type}-{new_identification_number}"
+
+        # Si el nuevo código es igual al actual, no hacer cambios y devolver el paciente tal cual
+        if new_code == old_code:
+            return self._convert_doc_to_response(dict(existing_patient))
+
+        # Verificar duplicados excluyendo al mismo paciente
         duplicated = await self.collection.find_one({"patient_code": new_code}, {"_id": 1})
-        if duplicated:
+        if duplicated and duplicated.get("_id") != existing_patient.get("_id"):
             raise ConflictError(f"Ya existe un paciente con {new_identification_type}: {new_identification_number}")
-            
+
+        # Actualizar identificación y patient_code
         await self.collection.update_one(
             old_query,
             {"$set": {
@@ -155,13 +163,14 @@ class PatientRepository:
                 "updated_at": datetime.now(timezone.utc)
             }}
         )
-        
+
+        # Propagar el nuevo código a casos asociados, si corresponde
         if cases_collection is not None:
             await cases_collection.update_many(
                 {"patient_info.patient_code": old_code},
                 {"$set": {"patient_info.patient_code": new_code}}
             )
-            
+
         updated_patient = await self.collection.find_one({"patient_code": new_code})
         if not updated_patient:
             raise NotFoundError("Paciente no encontrado después del cambio de identificación")
@@ -218,7 +227,12 @@ class PatientRepository:
         if search_params.identification_type:
             filter_dict["identification_type"] = search_params.identification_type
         if search_params.identification_number:
-            filter_dict["identification_number"] = {"$regex": f"^{search_params.identification_number}", "$options": "i"}
+            # Cuando se filtra por tipo y número de identificación juntos, usar coincidencia EXACTA
+            if search_params.identification_type is not None:
+                filter_dict["identification_number"] = search_params.identification_number
+            else:
+                # Para búsquedas por número sin tipo, permitir coincidencia por prefijo (parcial)
+                filter_dict["identification_number"] = {"$regex": f"^{search_params.identification_number}", "$options": "i"}
             
         if search_params.first_name:
             filter_dict["first_name"] = {"$regex": f"^{search_params.first_name}", "$options": "i"}
