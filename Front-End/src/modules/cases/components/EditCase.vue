@@ -251,6 +251,26 @@
 
         <!-- Contenido del formulario -->
         <div class="px-6 py-5 space-y-6">
+          <!-- Sección: Identificación -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Identificación</span>
+              <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <FormSelect 
+                v-model="editPatientForm.identification_type" 
+                label="Tipo de identificación" 
+                :options="identificationTypeOptions" 
+                placeholder="Seleccione tipo" 
+              />
+              <FormInputField 
+                v-model="editPatientForm.identification_number" 
+                label="Número de identificación" 
+                placeholder="Ingrese número de identificación" 
+              />
+            </div>
+          </div>
           <!-- Sección: Datos Personales -->
           <div class="space-y-4">
             <div class="flex items-center gap-2">
@@ -361,6 +381,7 @@ import { Modal } from '@/shared/components/layout'
 import { FormInputField, FormSelect, FormTextarea } from '@/shared/components/ui/forms'
 import { MunicipalityList, EntityList } from '@/shared/components/ui/lists'
 import patientsApiService from '@/modules/patients/services/patientsApi.service'
+import { IdentificationType } from '@/modules/patients/types'
 import type { PatientData, Gender, CareType, UpdatePatientRequest } from '@/modules/patients/types'
 import { ConfirmDialog } from '@/shared/components/ui/feedback'
 import CaseDeleteSuccessCard from '@/shared/components/ui/feedback/CaseDeleteSuccessCard.vue'
@@ -467,7 +488,11 @@ const patientDisplayInfo = computed(() => {
 const isEditPatientOpen = ref(false)
 const isEditPatientLoading = ref(false)
 const editPatientCode = ref('')
+const originalEditPatientData = ref<PatientData | null>(null)
 const editPatientForm = ref({
+  patient_code: '',
+  identification_type: '' as IdentificationType | '',
+  identification_number: '',
   first_name: '',
   second_name: '',
   first_lastname: '',
@@ -494,6 +519,16 @@ const careTypeOptions = [
   { value: 'Hospitalizado', label: 'Hospitalizado' }
 ]
 
+const identificationTypeOptions = [
+  { value: IdentificationType.CEDULA_CIUDADANIA, label: 'Cédula de Ciudadanía' },
+  { value: IdentificationType.TARJETA_IDENTIDAD, label: 'Tarjeta de Identidad' },
+  { value: IdentificationType.CEDULA_EXTRANJERIA, label: 'Cédula de Extranjería' },
+  { value: IdentificationType.PASAPORTE, label: 'Pasaporte' },
+  { value: IdentificationType.REGISTRO_CIVIL, label: 'Registro Civil' },
+  { value: IdentificationType.DOCUMENTO_EXTRANJERO, label: 'Documento Extranjero' },
+  { value: IdentificationType.NIT, label: 'NIT' }
+]
+
 const openEditPatientModal = async () => {
   if (!patientInfo.value?.pacienteCode) return
   isEditPatientLoading.value = true
@@ -503,6 +538,9 @@ const openEditPatientModal = async () => {
     editPatientCode.value = code
     const patient: PatientData = await patientsApiService.getPatientByCode(code)
     editPatientForm.value = {
+      patient_code: patient.patient_code || '',
+      identification_type: (patient.identification_type as IdentificationType) || '',
+      identification_number: patient.identification_number || '',
       first_name: patient.first_name || '',
       second_name: patient.second_name || '',
       first_lastname: patient.first_lastname || '',
@@ -518,6 +556,7 @@ const openEditPatientModal = async () => {
       care_type: patient.care_type || '',
       observations: patient.observations || ''
     }
+    originalEditPatientData.value = patient
   } catch (e) {
     // Mantener el modal abierto para permitir reintento
   } finally {
@@ -542,6 +581,29 @@ const saveEditPatient = async () => {
   if (!editPatientCode.value) return
   isEditPatientLoading.value = true
   try {
+    // Si cambia identificación, validar duplicados y actualizar primero
+    if (originalEditPatientData.value && (
+      editPatientForm.value.identification_type !== originalEditPatientData.value.identification_type ||
+      editPatientForm.value.identification_number !== originalEditPatientData.value.identification_number
+    )) {
+      const exists = await patientsApiService.checkPatientExists(
+        editPatientForm.value.identification_type as IdentificationType,
+        String(editPatientForm.value.identification_number || '').trim()
+      )
+      if (exists) {
+        showError('Identificación duplicada', 'Ya existe un paciente con el tipo y número de identificación proporcionados')
+        return
+      }
+      const changed = await patientsApiService.changeIdentification(
+        editPatientForm.value.patient_code || editPatientCode.value,
+        editPatientForm.value.identification_type as IdentificationType,
+        String(editPatientForm.value.identification_number || '').trim()
+      )
+      editPatientCode.value = changed.patient_code
+      editPatientForm.value.patient_code = changed.patient_code
+      originalEditPatientData.value = changed
+    }
+
     const hasLocation = !!(
       editPatientForm.value.municipality_code?.trim() ||
       editPatientForm.value.municipality_name?.trim() ||
@@ -579,6 +641,7 @@ const saveEditPatient = async () => {
     // Refrescar información del paciente en la UI del caso
     patientInfo.value = {
       ...patientInfo.value,
+      pacienteCode: updated.patient_code || patientInfo.value?.pacienteCode || '',
       nombrePaciente: `${updated.first_name} ${updated.second_name || ''} ${updated.first_lastname} ${updated.second_lastname || ''}`.replace(/\s+/g, ' ').trim(),
       sexo: updated.gender || patientInfo.value?.sexo || '',
       entidad: updated.entity_info?.name || patientInfo.value?.entidad || '',
