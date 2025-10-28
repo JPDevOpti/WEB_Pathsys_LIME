@@ -137,12 +137,18 @@ class CaseService:
             if date_from:
                 try:
                     date_from_dt = datetime.fromisoformat(date_from)
+                    # Asegurar coherencia con UTC si la fecha es naive
+                    if date_from_dt.tzinfo is None:
+                        date_from_dt = date_from_dt.replace(tzinfo=timezone.utc)
                     date_filter["$gte"] = date_from_dt
                 except ValueError:
                     raise BadRequestError("Formato de fecha inválido para date_from. Use YYYY-MM-DD")
             if date_to:
                 try:
                     date_to_dt = datetime.fromisoformat(date_to)
+                    # Asegurar coherencia con UTC si la fecha es naive
+                    if date_to_dt.tzinfo is None:
+                        date_to_dt = date_to_dt.replace(tzinfo=timezone.utc)
                     # Incluir todo el día
                     date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
                     date_filter["$lte"] = date_to_dt

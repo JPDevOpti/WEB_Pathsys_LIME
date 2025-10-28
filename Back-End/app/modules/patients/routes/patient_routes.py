@@ -23,23 +23,9 @@ async def create_patient(patient: PatientCreate, service: PatientService = Depen
     except Exception:
         raise HTTPException(status_code=500, detail="Error interno del servidor")
 
-@router.get("/", response_model=List[PatientResponse])
-async def list_patients(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+@router.get("/search", response_model=Dict[str, Any])
+async def search_patients(
     search: Optional[str] = Query(None),
-    entity: Optional[str] = Query(None),
-    gender: Optional[Gender] = Query(None),
-    care_type: Optional[CareType] = Query(None),
-    service: PatientService = Depends(get_service)
-):
-    try:
-        return await service.list_patients(skip=skip, limit=limit, search=search, entity=entity, gender=gender, care_type=care_type)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error interno del servidor")
-
-@router.get("/search/advanced", response_model=Dict[str, Any])
-async def advanced_search(
     identification_type: Optional[IdentificationType] = Query(None),
     identification_number: Optional[str] = Query(None),
     first_name: Optional[str] = Query(None),
@@ -62,6 +48,7 @@ async def advanced_search(
 ):
     try:
         search_params = PatientSearch(
+            search=search,
             identification_type=identification_type,
             identification_number=identification_number,
             first_name=first_name,
@@ -81,11 +68,14 @@ async def advanced_search(
             skip=skip,
             limit=limit
         )
-        return await service.advanced_search(search_params)
+        return await service.search_patients(search_params)
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error interno del servidor")
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Error en búsqueda de pacientes: %s", str(e))
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 @router.get("/count", response_model=Dict[str, int])
 async def get_total_count(service: PatientService = Depends(get_service)):

@@ -451,14 +451,7 @@ onMounted(async () => {
   }
 })
 
-// Sync display text
-watch([displayText, isFocused], () => {
-  if (!isFocused.value) {
-    nextTick(() => {
-      searchQuery.value = displayText.value
-    })
-  }
-})
+// Eliminado el sync reactivo para evitar limpiar el input al buscar
 
 
 </script>

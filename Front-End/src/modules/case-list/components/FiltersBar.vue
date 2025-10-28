@@ -15,8 +15,8 @@
         <FormInputField v-model="local.searchQuery" placeholder="Ejemplo 2025-00001, 123456789, Juan Pérez" @keydown.enter.prevent />
       </div>
       <div class="flex gap-3 items-end">
-        <div class="w-44 md:w-56"><DateInputField v-model="local.dateFrom" label="Fecha desde" placeholder="DD/MM/AAAA" /></div>
-        <div class="w-44 md:w-56"><DateInputField v-model="local.dateTo" label="Fecha hasta" placeholder="DD/MM/AAAA" /></div>
+        <div class="w-44 md:w-56"><DateInputField v-model="local.dateFrom" label="Fecha desde" placeholder="DD/MM/AAAA" min="01/01/2000" :minYear="2000" :notAfter="local.dateTo" /></div>
+        <div class="w-44 md:w-56"><DateInputField v-model="local.dateTo" label="Fecha hasta" placeholder="DD/MM/AAAA" min="01/01/2000" :minYear="2000" :notBefore="local.dateFrom" /></div>
       </div>
     </div>
 
@@ -188,22 +188,12 @@ watch(() => local.dateFrom, (v) => {
   if (!v) return
   const norm = clampToToday(normalizeToDDMMYYYY(v))
   if (norm !== v) local.dateFrom = norm
-  if (local.dateTo) {
-    const a = parseDDMMYYYY(local.dateFrom)
-    const b = parseDDMMYYYY(local.dateTo)
-    if (a && b && a > b) local.dateTo = local.dateFrom
-  }
 })
 
 watch(() => local.dateTo, (v) => {
   if (!v) return
   const norm = clampToToday(normalizeToDDMMYYYY(v))
   if (norm !== v) local.dateTo = norm
-  if (local.dateFrom) {
-    const a = parseDDMMYYYY(local.dateFrom)
-    const b = parseDDMMYYYY(local.dateTo)
-    if (a && b && b < a) local.dateFrom = local.dateTo
-  }
 })
 </script>
 

@@ -12,7 +12,7 @@
       <div class="relative">
         <input
           ref="inputRef"
-          v-model="searchQuery"
+          :value="displayText"
           type="text"
           :placeholder="placeholder"
           :disabled="disabled"
@@ -24,6 +24,7 @@
           @focus="handleFocus"
           @blur="handleBlur"
           @keydown="handleKeyDown"
+          @input="handleInput"
           autocomplete="off"
         />
         
@@ -95,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 // Types
 interface MunicipalityInfo {
@@ -263,6 +264,11 @@ const displayText = computed(() => {
 })
 
 // Funciones del combobox
+const handleInput = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  searchQuery.value = target.value
+}
+
 const handleFocus = () => {
   isFocused.value = true
   searchQuery.value = ''
@@ -352,13 +358,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
 // Watchers
 watch(() => props.modelValue, (newValue) => {
   selectedMunicipality.value = newValue || ''
-  // Cuando el valor viene del padre (p.ej. carga de paciente), sincronizar el texto mostrado
-  const externalName = currentSelectedMunicipality.value?.nombre || props.selectedName || ''
-  // Actualizar el texto mostrado aunque el input esté enfocado para reflejar la selección externa
-  searchQuery.value = externalName
-  // Cerrar el dropdown si estaba abierto
-  isOpen.value = false
-  highlightedIndex.value = -1
 }, { immediate: true })
 
 watch(selectedMunicipality, (newValue) => {
@@ -372,15 +371,6 @@ watch(searchQuery, () => {
   if (isFocused.value && searchQuery.value.trim()) {
     isOpen.value = true
     highlightedIndex.value = -1
-  }
-})
-
-// Sync display text
-watch([displayText, isFocused], () => {
-  if (!isFocused.value) {
-    nextTick(() => {
-      searchQuery.value = displayText.value
-    })
   }
 })
 </script>

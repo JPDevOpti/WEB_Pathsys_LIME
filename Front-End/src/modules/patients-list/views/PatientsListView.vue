@@ -2,6 +2,17 @@
   <AdminLayout>
     <PageBreadcrumb :pageTitle="pageTitle" />
     <div class="space-y-4">
+      <!-- Mantener filtros siempre montados para conservar selección de municipio/entidad -->
+      <FiltersBar 
+        v-model="filters" 
+        :totalFiltered="sortedPatients.length" 
+        :totalAll="totalCount"
+        :isLoading="isLoading" 
+        :canExport="sortedPatients.length > 0" 
+        @refresh="reload" 
+        @export="exportExcel" 
+        @search="handleSearch" 
+      />
       <Card v-if="isLoading">
         <div class="p-8 text-center">
           <LoadingSpinner />
@@ -16,17 +27,6 @@
       </Card>
 
       <template v-else>
-        <FiltersBar 
-          v-model="filters" 
-          :totalFiltered="sortedPatients.length" 
-          :totalAll="totalCount"
-          :isLoading="isLoading" 
-          :canExport="sortedPatients.length > 0" 
-          @refresh="reload" 
-          @export="exportExcel" 
-          @search="searchAdvanced" 
-        />
-
         <div class="bg-white rounded-xl border border-gray-200">
           <PatientsTable 
             :patients="paginatedPatients" 
@@ -82,7 +82,6 @@ import { usePatientExcelExport } from '../composables/usePatientExcelExport'
 const pageTitle = 'Lista de Pacientes'
 
 const {
-  // state
   isLoading,
   error,
   totalCount,
@@ -93,12 +92,10 @@ const {
   itemsPerPage,
   selectedPatientIds,
   selectedPatient,
-  // derived
   sortedPatients,
   paginatedPatients,
   totalPages,
   isAllSelected,
-  // actions
   loadPatients,
   toggleSelectAll,
   toggleSelect,
@@ -135,12 +132,12 @@ const hasActiveFilters = computed(() => {
 })
 
 function reload() { 
-  loadPatients(false) 
+  loadPatients() 
 }
 
-function searchAdvanced() { 
+function handleSearch() {
   currentPage.value = 1
-  loadPatients(true) 
+  loadPatients()
 }
 
 function exportExcel() { 
@@ -151,7 +148,6 @@ function editPatient(patient: any) {
   const patientCode = patient?.patient_code || ''
   if (!patientCode) return
   
-  // Navegar a la vista de edición del paciente
   router.push({ 
     name: 'patients-edit', 
     params: { code: patientCode }, 
@@ -159,7 +155,6 @@ function editPatient(patient: any) {
   })
 }
 
-// Listener para detectar cuando se crea un nuevo paciente
 const handlePatientCreated = (_event: CustomEvent) => {
   loadPatients()
 }
@@ -169,16 +164,12 @@ const handlePatientUpdated = (_event: CustomEvent) => {
 }
 
 onMounted(() => {
-  // Agregar listeners para eventos de pacientes
   window.addEventListener('patient-created', handlePatientCreated as EventListener)
   window.addEventListener('patient-updated', handlePatientUpdated as EventListener)
-  
-  // Cargar pacientes al montar el componente
   loadPatients()
 })
 
 onUnmounted(() => {
-  // Limpiar listeners al desmontar el componente
   window.removeEventListener('patient-created', handlePatientCreated as EventListener)
   window.removeEventListener('patient-updated', handlePatientUpdated as EventListener)
 })

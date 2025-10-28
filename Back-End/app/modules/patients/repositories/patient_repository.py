@@ -219,57 +219,26 @@ class PatientRepository:
         result = await self.collection.delete_one(query)
         return result.deleted_count > 0
 
-    async def list_with_filters(
-        self,
-        skip: int = 0,
-        limit: int = 100,
-        search: Optional[str] = None,
-        entity: Optional[str] = None,
-        gender: Optional[str] = None,
-        care_type: Optional[str] = None
-    ) -> List[dict]:
-        filter_dict = {}
+    async def search(self, search_params: PatientSearch) -> Dict[str, Any]:
+        filter_dict = {
+            "patient_code": {"$exists": True, "$ne": None},
+            "identification_type": {"$exists": True, "$ne": None},
+            "identification_number": {"$exists": True, "$ne": None},
+            "first_name": {"$exists": True, "$ne": None},
+            "first_lastname": {"$exists": True, "$ne": None},
+            "birth_date": {"$exists": True, "$ne": None},
+            "gender": {"$exists": True, "$ne": None},
+            "entity_info": {"$exists": True, "$ne": None},
+            "care_type": {"$exists": True, "$ne": None}
+        }
         
-        if search:
-            # Check if search term is numeric (identification number)
-            if search.isdigit():
-                # Search by identification number
-                filter_dict["identification_number"] = {"$regex": f"^{search}", "$options": "i"}
-            else:
-                # Use multiple field search for text
-                filter_dict["$or"] = [
-                    {"first_name": {"$regex": search, "$options": "i"}},
-                    {"first_lastname": {"$regex": search, "$options": "i"}},
-                    {"second_name": {"$regex": search, "$options": "i"}},
-                    {"second_lastname": {"$regex": search, "$options": "i"}},
-                    {"identification_number": {"$regex": search, "$options": "i"}},
-                    {"patient_code": {"$regex": search, "$options": "i"}}
-                ]
-        
-        if entity:
-            filter_dict["entity_info.name"] = {"$regex": entity, "$options": "i"}
-        if gender:
-            filter_dict["gender"] = gender
-        if care_type:
-            filter_dict["care_type"] = care_type
-            
-        # Use projection to limit returned fields if needed
-        cursor = self.collection.find(filter_dict).skip(skip).limit(limit).sort("created_at", -1)
-        patients = await cursor.to_list(length=limit)
-        return [self._convert_doc_to_response(p) for p in patients]
-
-    async def advanced_search(self, search_params: PatientSearch) -> Dict[str, Any]:
-        filter_dict = {}
-        
-        # Use exact match for indexed fields
         if search_params.identification_type:
             filter_dict["identification_type"] = search_params.identification_type
+        
         if search_params.identification_number:
-            # Cuando se filtra por tipo y número de identificación juntos, usar coincidencia EXACTA
             if search_params.identification_type is not None:
                 filter_dict["identification_number"] = search_params.identification_number
             else:
-                # Para búsquedas por número sin tipo, permitir coincidencia por prefijo (parcial)
                 filter_dict["identification_number"] = {"$regex": f"^{search_params.identification_number}", "$options": "i"}
             
         if search_params.first_name:
@@ -277,7 +246,6 @@ class PatientRepository:
         if search_params.first_lastname:
             filter_dict["first_lastname"] = {"$regex": f"^{search_params.first_lastname}", "$options": "i"}
             
-        # Optimize date range queries
         if search_params.birth_date_from or search_params.birth_date_to:
             birth_date_filter = {}
             if search_params.birth_date_from:
@@ -293,7 +261,6 @@ class PatientRepository:
         if search_params.subregion:
             filter_dict["location.subregion"] = {"$regex": f"^{search_params.subregion}", "$options": "i"}
             
-        # Optimize age-based queries
         if search_params.age_min is not None or search_params.age_max is not None:
             today = date.today()
             age_filter = {}
@@ -311,13 +278,13 @@ class PatientRepository:
                 age_filter["$lte"] = max_birth_date
             
             if "birth_date" in filter_dict:
-                # Merge with existing birth_date filter
                 filter_dict["birth_date"].update(age_filter)
             else:
                 filter_dict["birth_date"] = age_filter
                 
-        if hasattr(search_params, 'entity') and search_params.entity:
+        if search_params.entity:
             filter_dict["entity_info.name"] = {"$regex": f"^{search_params.entity}", "$options": "i"}
+        
         if search_params.gender:
             filter_dict["gender"] = search_params.gender
         if search_params.care_type:
@@ -331,7 +298,20 @@ class PatientRepository:
                 date_filter["$lte"] = datetime.fromisoformat(search_params.date_to + "T23:59:59")
             filter_dict["created_at"] = date_filter
             
-        # Use aggregation for better performance with large datasets
+        if hasattr(search_params, 'search') and search_params.search:
+            search_term = search_params.search.strip()
+            if search_term.isdigit():
+                filter_dict["identification_number"] = {"$regex": f"^{search_term}", "$options": "i"}
+            else:
+                filter_dict["$or"] = [
+                    {"first_name": {"$regex": search_term, "$options": "i"}},
+                    {"first_lastname": {"$regex": search_term, "$options": "i"}},
+                    {"second_name": {"$regex": search_term, "$options": "i"}},
+                    {"second_lastname": {"$regex": search_term, "$options": "i"}},
+                    {"identification_number": {"$regex": search_term, "$options": "i"}},
+                    {"patient_code": {"$regex": search_term, "$options": "i"}}
+                ]
+            
         pipeline = [
             {"$match": filter_dict},
             {"$facet": {

@@ -5,7 +5,6 @@ import { casesApiService } from '../../cases/services/casesApi.service'
 
 const PATIENTS_BASE = '/patients'
 
-// Interfaz del backend (PatientResponse según documentación)
 export interface BackendPatient {
   id?: string
   _id?: string | { $oid: string }
@@ -41,137 +40,48 @@ export interface BackendEntity {
   isActive?: boolean
 }
 
-/**
- * Listar pacientes con filtros básicos
- * GET /api/v1/patients/
- */
-export async function listPatients(params: Partial<PatientFilters> = {}): Promise<BackendPatient[]> {
+export async function searchPatients(params: Partial<PatientFilters> = {}): Promise<{ patients: BackendPatient[], total: number }> {
   try {
+    const toISO = (v?: string) => {
+      if (!v) return v
+      const m = /^([0-3]\d)\/(0\d|1[0-2])\/(\d{4})$/.exec(v)
+      return m ? `${m[3]}-${m[2]}-${m[1]}` : v
+    }
     const queryParams: Record<string, any> = {
       skip: params.skip || 0,
       limit: params.limit || 100
     }
-    
+
     if (params.search) queryParams.search = params.search
+    if (params.identification_type) queryParams.identification_type = params.identification_type
+    if (params.identification_number) queryParams.identification_number = params.identification_number
+    if (params.first_name) queryParams.first_name = params.first_name
+    if (params.first_lastname) queryParams.first_lastname = params.first_lastname
+    if (params.birth_date_from) queryParams.birth_date_from = toISO(params.birth_date_from)
+    if (params.birth_date_to) queryParams.birth_date_to = toISO(params.birth_date_to)
+    if (params.municipality_code) queryParams.municipality_code = params.municipality_code
+    if (params.municipality_name) queryParams.municipality_name = params.municipality_name
+    if (params.subregion) queryParams.subregion = params.subregion
+    if (params.age_min) queryParams.age_min = params.age_min
+    if (params.age_max) queryParams.age_max = params.age_max
     if (params.entity) queryParams.entity = params.entity
     if (params.gender) queryParams.gender = params.gender
     if (params.care_type) queryParams.care_type = params.care_type
-    
-    const url = PATIENTS_BASE
-    console.log('🌐 [API] GET', url)
-    console.log('📝 [API] Query params:', queryParams)
-    
-    const response = await apiClient.get(PATIENTS_BASE, { params: queryParams })
-    
-    console.log('✅ [API] Respuesta completa recibida:', response)
-    console.log('📦 [API] response.data:', response.data)
-    console.log('� [API] typeof response:', typeof response)
-    console.log('🔍 [API] Array.isArray(response):', Array.isArray(response))
-    console.log('🔍 [API] Array.isArray(response.data):', Array.isArray(response.data))
-    
-    // Si response es directamente un array (sin .data), usarlo directamente
-    let patients: BackendPatient[] = []
-    
-    if (Array.isArray(response)) {
-      console.log('⚠️ [API] response es directamente un array!')
-      patients = response
-    } else if (Array.isArray(response.data)) {
-      console.log('✅ [API] response.data es un array')
-      patients = response.data
-    } else if (response.data?.patients) {
-      console.log('✅ [API] response.data.patients existe')
-      patients = response.data.patients
-    } else {
-      console.log('⚠️ [API] No se pudo extraer pacientes de la respuesta')
-    }
-    
-    console.log('👥 [API] Pacientes extraídos:', patients.length, 'items')
-    if (patients.length > 0) {
-      console.log('👤 [API] Primer paciente:', patients[0])
-    }
-    
-    return patients
+    if (params.date_from) queryParams.date_from = toISO(params.date_from)
+    if (params.date_to) queryParams.date_to = toISO(params.date_to)
+
+    const data = await apiClient.get(`${PATIENTS_BASE}/search`, { params: queryParams }) as any
+
+    const patients: BackendPatient[] = Array.isArray(data?.patients) ? data.patients : []
+    const total: number = typeof data?.total === 'number' ? data.total : 0
+
+    return { patients, total }
   } catch (error: any) {
-    console.error('Error al listar pacientes:', error)
+    console.error('Error al buscar pacientes:', error)
     throw error
   }
 }
 
-/**
- * Búsqueda avanzada de pacientes
- * GET /api/v1/patients/search/advanced
- */
-export async function searchPatientsAdvanced(params: Partial<PatientFilters> = {}): Promise<{ patients: BackendPatient[], total: number }> {
-  try {
-    const queryParams: Record<string, any> = {
-      skip: params.skip || 0,
-      limit: params.limit || 100
-    }
-    
-    // Búsqueda general (nombre o identificación)
-    if (params.search) queryParams.search = params.search
-    
-    // Filtros de ubicación
-    if (params.municipality_code) queryParams.municipality_code = params.municipality_code
-    if (params.municipality_name) queryParams.municipality_name = params.municipality_name
-    if (params.subregion) queryParams.subregion = params.subregion
-    
-    // Filtros de entidad y atención
-    if (params.entity) queryParams.entity = params.entity
-    if (params.gender) queryParams.gender = params.gender
-    if (params.care_type) queryParams.care_type = params.care_type
-    
-    // Filtros de fecha de creación
-    if (params.date_from) queryParams.date_from = params.date_from
-    if (params.date_to) queryParams.date_to = params.date_to
-    
-    const url = `${PATIENTS_BASE}/search/advanced`
-    console.log('🌐 [API] GET', url)
-    console.log('📝 [API] Query params:', queryParams)
-    
-    const response = await apiClient.get(url, { params: queryParams })
-    
-    console.log('✅ [API] Respuesta búsqueda avanzada completa:', response)
-    console.log('📦 [API] response.data:', response.data)
-    console.log('� [API] typeof response:', typeof response)
-    console.log('🔍 [API] Array.isArray(response):', Array.isArray(response))
-    
-    let result: { patients: BackendPatient[], total: number }
-    
-    if (Array.isArray(response)) {
-      console.log('⚠️ [API] response es directamente un array en búsqueda avanzada')
-      result = {
-        patients: response,
-        total: response.length
-      }
-    } else if (response.data) {
-      console.log('✅ [API] response.data existe')
-      result = {
-        patients: response.data?.patients || response.data || [],
-        total: response.data?.total || (Array.isArray(response.data) ? response.data.length : 0)
-      }
-    } else {
-      console.log('⚠️ [API] No se pudo extraer datos de búsqueda avanzada')
-      result = { patients: [], total: 0 }
-    }
-    
-    console.log('👥 [API] Pacientes encontrados:', result.patients.length)
-    console.log('📊 [API] Total:', result.total)
-    if (result.patients.length > 0) {
-      console.log('👤 [API] Primer paciente búsqueda avanzada:', result.patients[0])
-    }
-    
-    return result
-  } catch (error: any) {
-    console.error('Error en búsqueda avanzada:', error)
-    return { patients: [], total: 0 }
-  }
-}
-
-/**
- * Obtener total de pacientes
- * GET /api/v1/patients/count
- */
 export async function getTotalPatients(): Promise<number> {
   try {
     const response = await apiClient.get(`${PATIENTS_BASE}/count`)
@@ -182,10 +92,6 @@ export async function getTotalPatients(): Promise<number> {
   }
 }
 
-/**
- * Obtener un paciente por código
- * GET /api/v1/patients/{patient_code}
- */
 export async function getPatientByCode(patientCode: string): Promise<BackendPatient | null> {
   try {
     const response = await apiClient.get(`${PATIENTS_BASE}/${patientCode}`)
@@ -196,10 +102,6 @@ export async function getPatientByCode(patientCode: string): Promise<BackendPati
   }
 }
 
-/**
- * Obtener casos de un paciente
- * Uses the cases module API service to get cases by patient identification
- */
 export async function getPatientCases(patientCode: string): Promise<any[]> {
   try {
     const cases = await casesApiService.getCasesByPatient(patientCode)
@@ -210,10 +112,6 @@ export async function getPatientCases(patientCode: string): Promise<any[]> {
   }
 }
 
-/**
- * Crear un nuevo paciente
- * POST /api/v1/patients/
- */
 export async function createPatient(patientData: Partial<BackendPatient>): Promise<BackendPatient | null> {
   try {
     const response = await apiClient.post(PATIENTS_BASE, patientData)
@@ -224,10 +122,6 @@ export async function createPatient(patientData: Partial<BackendPatient>): Promi
   }
 }
 
-/**
- * Actualizar un paciente
- * PUT /api/v1/patients/{patient_code}
- */
 export async function updatePatient(patientCode: string, patientData: Partial<BackendPatient>): Promise<BackendPatient | null> {
   try {
     const response = await apiClient.put(`${PATIENTS_BASE}/${patientCode}`, patientData)
@@ -238,10 +132,6 @@ export async function updatePatient(patientCode: string, patientData: Partial<Ba
   }
 }
 
-/**
- * Cambiar identificación de un paciente
- * PUT /api/v1/patients/{patient_code}/change-identification
- */
 export async function changePatientIdentification(
   patientCode: string,
   newIdentificationType: IdentificationType,
@@ -265,10 +155,6 @@ export async function changePatientIdentification(
   }
 }
 
-/**
- * Eliminar un paciente
- * DELETE /api/v1/patients/{patient_code}
- */
 export async function deletePatient(patientCode: string): Promise<boolean> {
   try {
     await apiClient.delete(`${PATIENTS_BASE}/${patientCode}`)
@@ -279,9 +165,6 @@ export async function deletePatient(patientCode: string): Promise<boolean> {
   }
 }
 
-/**
- * Listar entidades (endpoint auxiliar)
- */
 export async function listEntities(): Promise<BackendEntity[]> {
   try {
     const response = await apiClient.get(`${API_CONFIG.VERSION}/entities`)

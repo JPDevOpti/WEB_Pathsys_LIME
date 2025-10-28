@@ -5,11 +5,12 @@
       :placeholder="placeholder || 'Seleccione fecha'"
       :type="'date'"
       :required="required"
-      :errors="errors"
+      :errors="combinedErrors"
       :warnings="warnings"
       :help-text="helpText"
       :min="minIso"
       :max="maxIso"
+      rightAdornmentWidth="1.5rem"
       v-model="innerValue"
       ref="container"
       class="date-input-field"
@@ -42,6 +43,9 @@ interface Props {
   helpText?: string
   min?: string
   max?: string
+  minYear?: number
+  notBefore?: string
+  notAfter?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -53,7 +57,10 @@ const props = withDefaults(defineProps<Props>(), {
   warnings: () => [],
   helpText: '',
   min: '',
-  max: ''
+  max: '',
+  minYear: undefined,
+  notBefore: '',
+  notAfter: ''
 })
 
 const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
@@ -100,6 +107,42 @@ const innerValue = computed({
   }
 })
 
+// Errores combinados: añade validación opcional por año mínimo
+const combinedErrors = computed(() => {
+  const list = Array.isArray(props.errors) ? [...props.errors] : []
+  if (props.minYear && innerValue.value) {
+    const iso = innerValue.value
+    const year = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? Number(iso.slice(0, 4)) : NaN
+    if (!Number.isNaN(year) && year < (props.minYear as number)) {
+      list.push(`La fecha no puede ser anterior al año ${props.minYear}`)
+    }
+  }
+  // Comparaciones relativas (aceptan DD/MM/AAAA o ISO)
+  const norm = (v: string): string => {
+    if (!v) return ''
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
+      const [dd, mm, yyyy] = v.split('/')
+      return `${yyyy}-${mm}-${dd}`
+    }
+    return ''
+  }
+  if (innerValue.value) {
+    const current = innerValue.value
+    const nb = norm(props.notBefore || '')
+    const na = norm(props.notAfter || '')
+    if (nb && current < nb) {
+      const disp = convertISOToDisplay(nb)
+      list.push(`La fecha debe ser mayor o igual a ${disp}`)
+    }
+    if (na && current > na) {
+      const disp = convertISOToDisplay(na)
+      list.push(`La fecha debe ser menor o igual a ${disp}`)
+    }
+  }
+  return list
+})
+
 // min/max: aceptar DD/MM/AAAA y convertir a ISO
 const minIso = computed(() => {
   if (!props.min) return ''
@@ -118,19 +161,15 @@ const container = ref<any>(null)
 
 // Calculate button position to align with input field
 const buttonStyle = computed(() => {
-  // Position the button to align with the input field area only
-  // The button will span the full height of the input area and center the icon
-  const labelHeight = props.label ? '1.5rem' : '0rem' // text-sm line height
-  const labelSpacing = props.label ? '0.25rem' : '0rem' // space-y-1 spacing after label
-  const inputHeight = '2.5rem' // h-10 input field height (40px)
-  
-  // Start position: after label and its spacing
-  const topOffset = `calc(${labelHeight} + ${labelSpacing})`
-  
-  return {
-    top: topOffset,
-    height: inputHeight
-  }
+  // Ajustar alineación vertical del botón del calendario
+  const labelHeight = props.label ? '1.5rem' : '0rem'
+  const labelSpacing = props.label ? '0.25rem' : '0rem'
+  const inputHeight = '2.5rem'
+  const nudgePx = -2 // levantar 2px para alinear con adornos derechos
+
+  const topOffset = `calc(${labelHeight} + ${labelSpacing} + ${nudgePx}px)`
+
+  return { top: topOffset, height: inputHeight }
 })
 
 function openCalendar() {

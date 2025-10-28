@@ -59,37 +59,24 @@ class PatientService:
         result = await self.repository.delete(patient_code)
         return result
 
-    async def list_patients(
-        self,
-        skip: int = 0,
-        limit: int = 100,
-        search: Optional[str] = None,
-        entity: Optional[str] = None,
-        gender: Optional[str] = None,
-        care_type: Optional[str] = None
-    ) -> List[PatientResponse]:
-        patients_data = await self.repository.list_with_filters(
-            skip=skip, limit=limit, search=search, entity=entity, gender=gender, care_type=care_type
-        )
-        # Robustez: evitar que un registro malformado provoque 500 en todo el listado
-        valid_patients: List[PatientResponse] = []
-        for p in patients_data:
-            try:
-                valid_patients.append(PatientResponse(**p))
-            except Exception:
-                # Registrar y continuar con el resto
-                logger.warning(
-                    "[service:list] Registro de paciente inválido omitido: %s",
-                    p.get("patient_code", p.get("_id"))
-                )
-                continue
-        return valid_patients
-
-    async def advanced_search(self, search_params: PatientSearch) -> Dict[str, Any]:
+    async def search_patients(self, search_params: PatientSearch) -> Dict[str, Any]:
         if search_params.date_from or search_params.date_to:
             await self._validate_date_range(search_params.date_from, search_params.date_to)
-        result = await self.repository.advanced_search(search_params)
-        result["patients"] = [PatientResponse(**p) for p in result["patients"]]
+        result = await self.repository.search(search_params)
+        
+        valid_patients: List[PatientResponse] = []
+        for p in result["patients"]:
+            try:
+                valid_patients.append(PatientResponse(**p))
+            except Exception as e:
+                logger.warning(
+                    "[service:search] Registro de paciente inválido omitido: %s - Error: %s",
+                    p.get("patient_code", p.get("_id")),
+                    str(e)
+                )
+                continue
+        
+        result["patients"] = valid_patients
         return result
 
     async def get_total_count(self) -> int:

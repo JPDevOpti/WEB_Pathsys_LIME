@@ -2,6 +2,16 @@
   <AdminLayout>
     <PageBreadcrumb :pageTitle="pageTitle" />
     <div class="space-y-4">
+      <!-- Mantener los filtros SIEMPRE montados para no perder selección -->
+      <FiltersBar
+        v-model="filters"
+        :totalFiltered="filteredCases.length"
+        :totalAll="cases.length"
+        :isLoading="isLoading"
+        :canExport="filteredCases.length > 0"
+        @refresh="reload"
+        @export="exportExcel"
+      />
       <Card v-if="isLoading">
         <div class="p-8 text-center">
           <LoadingSpinner />
@@ -17,16 +27,6 @@
       </Card>
 
       <template v-else>
-        <FiltersBar
-          v-model="filters"
-          :totalFiltered="filteredCases.length"
-          :totalAll="cases.length"
-          :isLoading="isLoading"
-          :canExport="filteredCases.length > 0"
-          @refresh="reload"
-          @export="exportExcel"
-        />
-
         <div class="bg-white rounded-xl border border-gray-200">
           <CasesTable
             :cases="paginatedCases"

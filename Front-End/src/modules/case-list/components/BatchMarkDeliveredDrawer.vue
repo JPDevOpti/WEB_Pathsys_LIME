@@ -258,7 +258,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { Case } from '../../types/case.types'
+import type { Case } from '../types/case.types'
 import { BaseButton } from '@/shared/components'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import { casesApiService } from '@/modules/cases/services'
@@ -428,45 +428,40 @@ const clearExpandedTestsCache = (caseId: string) => {
 }
 
 const calculateBusinessDays = (startDate: string, endDate?: string): number => {
-  const start = new Date(startDate)
-  const end = endDate ? new Date(endDate) : new Date()
-  
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-    return 0
-  }
-  
-  const fromDate = start <= end ? start : end
-  const toDate = start <= end ? end : start
-  
-  let businessDays = 0
-  const currentDate = new Date(fromDate)
-  
-  while (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
-    currentDate.setDate(currentDate.getDate() + 1)
-    if (currentDate > toDate) {
-      return 0
+  const parseDate = (s?: string): Date | null => {
+    if (!s) return null
+    const v = String(s).trim()
+    if (/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(v)) {
+      const sep = v.includes('/') ? '/' : '-'
+      const [dd, mm, yyyy] = v.split(sep)
+      return new Date(Number(yyyy), Number(mm) - 1, Number(dd))
     }
-  }
-  
-  const firstBusinessDay = new Date(currentDate)
-  
-  if (firstBusinessDay.toDateString() === toDate.toDateString()) {
-    return 0
-  }
-  
-  currentDate.setDate(currentDate.getDate() + 1)
-  
-  while (currentDate <= toDate) {
-    const dayOfWeek = currentDate.getDay()
-    
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      businessDays++
+    const digits = v.replace(/\D/g, '')
+    if (digits.length === 8) {
+      const dd = digits.slice(0, 2), mm = digits.slice(2, 4), yyyy = digits.slice(4)
+      return new Date(Number(yyyy), Number(mm) - 1, Number(dd))
     }
-    
-    currentDate.setDate(currentDate.getDate() + 1)
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return new Date(v)
+    const d = new Date(v)
+    return isNaN(d.getTime()) ? null : d
   }
-  
-  return Math.max(0, businessDays)
+  const start = parseDate(startDate)
+  const end = endDate ? parseDate(endDate) : new Date()
+  if (!start || !end || isNaN((end as Date).getTime())) return 0
+  const fromDate = start <= (end as Date) ? start : (end as Date)
+  const toDate = start <= (end as Date) ? (end as Date) : start
+  const normalize = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return x }
+  let cur = normalize(fromDate)
+  const endDay = normalize(toDate)
+  let days = 0
+  while (cur <= endDay) {
+    const dow = cur.getDay()
+    if (dow >= 1 && dow <= 5) days++
+    cur.setDate(cur.getDate() + 1)
+  }
+  const startDow = normalize(fromDate).getDay()
+  if (startDow >= 1 && startDow <= 5) days = Math.max(0, days - 1)
+  return days
 }
 
 const isEditingSamples = (caseId: string): boolean => {

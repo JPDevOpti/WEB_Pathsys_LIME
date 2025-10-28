@@ -12,7 +12,7 @@
       <div class="relative">
         <input
           ref="inputRef"
-          v-model="searchQuery"
+          :value="displayText"
           type="text"
           :placeholder="placeholder"
           :disabled="disabled"
@@ -24,6 +24,7 @@
           @focus="handleFocus"
           @blur="handleBlur"
           @keydown="handleKeyDown"
+          @input="handleInput"
           autocomplete="off"
         />
         
@@ -126,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, nextTick } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import type { EntityInfo, SelectOption } from '@/modules/cases/types'
 import { useEntityAPI } from '@/modules/cases/composables'
 
@@ -232,6 +233,11 @@ const displayText = computed(() => {
 })
 
 // Funciones del combobox
+const handleInput = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  searchQuery.value = target.value
+}
+
 const handleFocus = () => {
   isFocused.value = true
   searchQuery.value = ''
@@ -358,15 +364,6 @@ watch(searchQuery, () => {
 onMounted(async () => {
   if (props.autoLoad && entities.value.length === 0) {
     await reloadEntities()
-  }
-})
-
-// Sync display text
-watch([displayText, isFocused], () => {
-  if (!isFocused.value) {
-    nextTick(() => {
-      searchQuery.value = displayText.value
-    })
   }
 })
 </script>

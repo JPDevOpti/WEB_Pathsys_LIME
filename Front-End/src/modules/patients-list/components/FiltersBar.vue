@@ -10,9 +10,7 @@
     </template>
 
     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
-      <!-- Primera fila: Búsqueda general y fechas -->
-      <!-- Búsqueda por texto general -->
-      <div class="col-span-1 md:col-span-3 lg:col-span-3">
+      <div class="col-span-1 md:col-span-2 lg:col-span-4">
         <FormInputField
           v-model="local.search"
           label="Búsqueda general"
@@ -21,36 +19,26 @@
         />
       </div>
 
-      <!-- Fecha de creación desde -->
-      <div class="col-span-1">
+      <div class="col-span-1 md:col-span-1 lg:col-span-1">
         <DateInputField
-          v-model="local.date_from"
+          v-model="local.created"
           label="Creado desde"
           placeholder="Seleccionar fecha"
+          min="01/01/2000"
+          :minYear="2000"
         />
       </div>
 
-      <!-- Fecha de creación hasta -->
-      <div class="col-span-1">
-        <DateInputField
-          v-model="local.date_to"
-          label="Creado hasta"
-          placeholder="Seleccionar fecha"
-        />
-      </div>
-
-      <!-- Segunda fila: Los 5 filtros restantes -->
-      <!-- Entidad -->
       <div class="col-span-1">
         <EntityList
           v-model="entityCode"
           label="Entidad"
           placeholder="Todas las entidades"
           @update:model-value="handleEntityChange"
+          @entity-selected="handleEntitySelected"
         />
       </div>
 
-      <!-- Tipo de atención -->
       <div class="col-span-1">
         <FormSelect
           v-model="local.care_type"
@@ -60,7 +48,6 @@
         />
       </div>
 
-      <!-- Género -->
       <div class="col-span-1">
         <FormSelect
           v-model="local.gender"
@@ -70,7 +57,6 @@
         />
       </div>
 
-      <!-- Municipio -->
       <div class="col-span-1">
         <MunicipalityList
           v-model="municipalityCode"
@@ -82,7 +68,6 @@
         />
       </div>
 
-      <!-- Subregión -->
       <div class="col-span-1">
         <FormSelect
           v-model="local.subregion"
@@ -138,7 +123,6 @@ const emit = defineEmits<{
   'search': []
 }>()
 
-// Local state with default empty strings to avoid undefined warnings
 const local = reactive({
   search: props.modelValue.search || '',
   municipality_code: props.modelValue.municipality_code || '',
@@ -147,15 +131,18 @@ const local = reactive({
   entity: props.modelValue.entity || '',
   gender: props.modelValue.gender || '',
   care_type: props.modelValue.care_type || '',
+  created: props.modelValue.date_from && props.modelValue.date_to && props.modelValue.date_from === props.modelValue.date_to 
+    ? props.modelValue.date_from 
+    : '',
   date_from: props.modelValue.date_from || '',
   date_to: props.modelValue.date_to || '',
   skip: props.modelValue.skip || 0,
   limit: props.modelValue.limit || 100
 })
+
 const entityCode = ref<string>('')
 const municipalityCode = ref<string>('')
 
-// Opciones para los selects
 const subregionOptions = [
   { value: '', label: 'Todas' },
   { value: 'Valle de Aburrá', label: 'Valle de Aburrá' },
@@ -180,46 +167,60 @@ const careTypeOptions = [
   { value: 'Hospitalizado', label: 'Hospitalizado' }
 ]
 
-// Watchers para sincronizar con el padre
 watch(() => props.modelValue, (newValue) => {
-  local.search = newValue.search || ''
-  local.municipality_code = newValue.municipality_code || ''
-  local.municipality_name = newValue.municipality_name || ''
-  local.subregion = newValue.subregion || ''
-  local.entity = newValue.entity || ''
-  local.gender = newValue.gender || ''
-  local.care_type = newValue.care_type || ''
-  local.date_from = newValue.date_from || ''
-  local.date_to = newValue.date_to || ''
-  local.skip = newValue.skip || 0
-  local.limit = newValue.limit || 100
-  
-  if (newValue.municipality_code) {
-    municipalityCode.value = newValue.municipality_code
-  }
-}, { deep: true })
+  Object.assign(local, {
+    search: newValue.search || '',
+    municipality_code: newValue.municipality_code || '',
+    municipality_name: newValue.municipality_name || '',
+    subregion: newValue.subregion || '',
+    entity: newValue.entity || '',
+    gender: newValue.gender || '',
+    care_type: newValue.care_type || '',
+    created: (newValue.date_from && newValue.date_to && newValue.date_from === newValue.date_to) 
+      ? newValue.date_from 
+      : '',
+    date_from: newValue.date_from || '',
+    date_to: newValue.date_to || '',
+    skip: newValue.skip || 0,
+    limit: newValue.limit || 100
+  })
+})
 
-watch(local, (newValue) => {
-  // Convert empty strings back to undefined for optional fields
-  const filters: PatientFilters = {
-    search: newValue.search || undefined,
-    municipality_code: newValue.municipality_code || undefined,
-    municipality_name: newValue.municipality_name || undefined,
-    subregion: newValue.subregion || undefined,
-    entity: newValue.entity || undefined,
-    gender: (newValue.gender || undefined) as Gender | undefined,
-    care_type: (newValue.care_type || undefined) as CareType | undefined,
-    date_from: newValue.date_from || undefined,
-    date_to: newValue.date_to || undefined,
-    skip: newValue.skip,
-    limit: newValue.limit
+const buildFilters = (): PatientFilters => {
+  if (local.created) {
+    local.date_from = local.created
+    local.date_to = local.created
+  } else if (!local.date_from && !local.date_to) {
+    local.date_from = ''
+    local.date_to = ''
   }
-  emit('update:modelValue', filters)
-}, { deep: true })
 
-// Handlers
+  return {
+    search: local.search || undefined,
+    municipality_code: local.municipality_code || undefined,
+    municipality_name: local.municipality_name || undefined,
+    subregion: local.subregion || undefined,
+    entity: local.entity || undefined,
+    gender: (local.gender || undefined) as Gender | undefined,
+    care_type: (local.care_type || undefined) as CareType | undefined,
+    date_from: local.date_from || undefined,
+    date_to: local.date_to || undefined,
+    skip: local.skip,
+    limit: local.limit
+  }
+}
+
 const handleEntityChange = (value: string) => {
   local.entity = value
+}
+
+const handleEntitySelected = (entity: any | null) => {
+  if (!entity) {
+    local.entity = ''
+    return
+  }
+  const nombre = (entity as any).nombre || (entity as any).name || ''
+  local.entity = nombre
 }
 
 const handleMunicipalityCodeChange = (code: string) => {
@@ -231,7 +232,6 @@ const handleMunicipalityNameChange = (name: string) => {
 }
 
 const handleSubregionChange = (subregion: string) => {
-  // Actualizar siempre la subregión cuando cambia el municipio
   local.subregion = subregion
 }
 
@@ -244,6 +244,8 @@ const handleExport = () => {
 }
 
 const handleSearch = () => {
+  const filters = buildFilters()
+  emit('update:modelValue', filters)
   emit('search')
 }
 
@@ -256,16 +258,18 @@ const handleClear = () => {
     entity: '',
     gender: '',
     care_type: '',
+    created: '',
     date_from: '',
     date_to: '',
     skip: 0,
     limit: 100
   })
-  
+
   entityCode.value = ''
   municipalityCode.value = ''
-  
-  // Emitir búsqueda con filtros limpios
-  handleSearch()
+
+  const cleanedFilters = buildFilters()
+  emit('update:modelValue', cleanedFilters)
+  emit('search')
 }
 </script>

@@ -22,6 +22,19 @@
         :autocomplete="autocomplete"
         :inputmode="inputmode"
       />
+
+      <!-- Icono de error como tooltip (no desposiciona el layout) -->
+      <div v-if="errors.length > 0" class="absolute inset-y-0 flex items-center pr-3" :style="{ right: rightAdornmentWidth }">
+        <svg
+          class="h-4 w-4 text-red-500"
+          :title="errors.join('\n')"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.72-1.36 3.485 0l6.518 11.593c.75 1.334-.213 2.983-1.742 2.983H3.48c-1.53 0-2.492-1.649-1.742-2.983L8.257 3.1zM11 14a1 1 0 10-2 0 1 1 0 002 0zm-1-2a1 1 0 01-1-1V7a1 1 0 112 0v4a1 1 0 01-1 1z" clip-rule="evenodd" />
+        </svg>
+      </div>
       
       <!-- Contador de caracteres -->
       <span
@@ -41,22 +54,8 @@
       </div>
     </div>
     
-    <!-- Mensajes de error -->
-    <div v-if="errors.length > 0" class="space-y-1">
-      <p v-for="error in errors" :key="error" class="text-sm text-red-600">
-        {{ error }}
-      </p>
-    </div>
-    
-    <!-- Mensajes de advertencia -->
-    <div v-if="warnings.length > 0" class="space-y-1">
-      <p v-for="warning in warnings" :key="warning" class="text-sm text-yellow-600">
-        {{ warning }}
-      </p>
-    </div>
-    
-    <!-- Texto de ayuda -->
-    <p v-if="helpText" class="text-xs text-gray-500">
+    <!-- Texto de ayuda (opcional). Errores se muestran en tooltip para no mover layout -->
+    <p v-if="helpText" class="text-xs text-gray-500 min-h-[0]">
       {{ helpText }}
     </p>
   </div>
@@ -87,6 +86,7 @@ interface Props {
   dense?: boolean
   onlyNumbers?: boolean
   onlyLetters?: boolean
+  rightAdornmentWidth?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -103,6 +103,7 @@ const props = withDefaults(defineProps<Props>(), {
   dense: false,
   onlyNumbers: false,
   onlyLetters: false
+  , rightAdornmentWidth: '0rem'
 })
 
 const emit = defineEmits<{

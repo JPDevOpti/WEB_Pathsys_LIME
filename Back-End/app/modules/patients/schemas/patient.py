@@ -136,6 +136,7 @@ class PatientResponse(PatientBase):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 class PatientSearch(BaseModel):
+    search: Optional[str] = Field(None, max_length=100, description="Búsqueda general por nombre o identificación")
     identification_type: Optional[IdentificationType] = None
     identification_number: Optional[str] = Field(None, min_length=1, max_length=12)
     first_name: Optional[str] = Field(None, min_length=1, max_length=50)
@@ -154,6 +155,12 @@ class PatientSearch(BaseModel):
     date_to: Optional[str] = Field(None, description="Fecha hasta en formato YYYY-MM-DD")
     skip: int = Field(0, ge=0)
     limit: int = Field(100, ge=1, le=1000)
+
+    @field_validator('search', 'identification_number', 'first_name', 'first_lastname', 'municipality_code', 'municipality_name', 'subregion', 'entity', mode='before')
+    def empty_to_none(cls, v):
+        if isinstance(v, str) and v.strip() == '':
+            return None
+        return v
 
     @model_validator(mode='after')
     def validate_age_range(self):
