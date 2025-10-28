@@ -93,7 +93,18 @@ export function useCaseList() {
     const id = (typeof bk._id === 'string' ? bk._id : (bk._id as any)?.$oid) || bk.case_code || bk.caso_code || `case-${Math.random().toString(36).substr(2, 9)}`
     const receivedAt = getDate(bk.created_at || bk.fecha_creacion)
     const deliveredAt = getDate(bk.updated_at || bk.fecha_entrega)
-    const signedAt = getDate(bk.fecha_firma)
+    const signedAt = getDate(bk.signed_at || bk.fecha_firma)
+    
+    if (bk.case_code === 'T-2025-001' || (bk.state === 'Por entregar' && signedAt)) {
+      console.log('🔍 DEBUG Case Transform:', {
+        case_code: bk.case_code,
+        state: bk.state,
+        signed_at_raw: bk.signed_at,
+        fecha_firma_raw: bk.fecha_firma,
+        signedAt_transformed: signedAt,
+        receivedAt_transformed: receivedAt
+      })
+    }
 
     const flatTests: string[] = []
     const subsamples: Case['subsamples'] = []
@@ -256,7 +267,18 @@ export function useCaseList() {
   const paginatedCases = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage.value
     const end = start + itemsPerPage.value
-    return filteredCases.value.slice(start, end)
+    const paginated = filteredCases.value.slice(start, end)
+    
+    const porEntregar = paginated.filter(c => c.status === 'Por entregar')
+    if (porEntregar.length > 0) {
+      console.log('🔍 Paginated Cases (Por entregar):', porEntregar.map(c => ({
+        caseCode: c.caseCode,
+        signedAt: c.signedAt,
+        length: c.signedAt?.length
+      })))
+    }
+    
+    return paginated
   })
 
   const isAllSelected = computed(() => {

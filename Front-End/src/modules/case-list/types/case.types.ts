@@ -22,6 +22,7 @@ export interface Case {
   receivedAt: string
   deliveredAt: string
   signedAt?: string
+  updatedAt?: string
   tests: string[]
   pathologist?: string
   patologo_asignado?: {

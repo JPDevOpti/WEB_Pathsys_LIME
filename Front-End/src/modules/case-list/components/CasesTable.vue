@@ -140,7 +140,9 @@
             <td class="px-2 py-3 text-center">
               <div class="flex flex-col items-center gap-1">
                 <p class="text-gray-800 text-xs">{{ formatDate(c.receivedAt) }}</p>
-                <p v-if="c.signedAt" class="text-gray-600 text-xs">{{ formatDate(c.signedAt) }}</p>
+                <p v-if="checkSignedDate(c)" :class="isDateFallback(c) ? 'text-orange-600 text-xs' : 'text-gray-600 text-xs'" :title="isDateFallback(c) ? 'Fecha estimada - caso sin firma registrada' : ''">
+                  {{ formatDate(getSignedDate(c)) }}{{ isDateFallback(c) ? ' *' : '' }}
+                </p>
                 <p v-else class="text-gray-400 text-xs">Pendiente</p>
               </div>
             </td>
@@ -251,9 +253,11 @@
                 {{ elapsedDays(c) }} días
               </p>
             </div>
-            <div v-if="c.signedAt">
+            <div v-if="checkSignedDate(c)">
               <p class="text-gray-500">Fecha firma</p>
-              <p class="text-gray-800 font-medium">{{ formatDate(c.signedAt) }}</p>
+              <p :class="isDateFallback(c) ? 'text-orange-600 font-medium' : 'text-gray-800 font-medium'" :title="isDateFallback(c) ? 'Fecha estimada - caso sin firma registrada' : ''">
+                {{ formatDate(getSignedDate(c)) }}{{ isDateFallback(c) ? ' *' : '' }}
+              </p>
             </div>
           </div>
 
@@ -485,6 +489,24 @@ const formatDate = (dateString: string) => {
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+const checkSignedDate = (c: Case) => {
+  const validStatuses = ['Por entregar', 'Completado']
+  if (!validStatuses.includes(c.status)) return false
+  return !!(c.signedAt || c.deliveredAt || c.updatedAt)
+}
+
+const getSignedDate = (c: Case): string => {
+  const validStatuses = ['Por entregar', 'Completado']
+  if (!validStatuses.includes(c.status)) return ''
+  return c.signedAt || c.deliveredAt || c.updatedAt || ''
+}
+
+const isDateFallback = (c: Case): boolean => {
+  const validStatuses = ['Por entregar', 'Completado']
+  if (!validStatuses.includes(c.status)) return false
+  return !c.signedAt && !c.deliveredAt && !!c.updatedAt
+}
+
 const groupedTestsCache = new Map<string, { code: string; count: number }[]>()
 const testsLayoutCache = new Map<string, { organized: { column1: { code: string; count: number }[]; column2: { code: string; count: number }[]; middle: { code: string; count: number } | null }; totalTests: number; hasMore: boolean; moreCount: number }>()
 
@@ -550,7 +572,8 @@ const getTestTooltip = (tests: string[], code: string, count: number): string =>
 
 const elapsedDays = (c: Case): number => {
   if (!c.receivedAt) return 0
-  const endDate = c.signedAt || undefined
+  const validStatuses = ['Por entregar', 'Completado']
+  const endDate = validStatuses.includes(c.status) ? (c.signedAt || c.deliveredAt || c.updatedAt || undefined) : undefined
   return calculateBusinessDays(c.receivedAt, endDate)
 }
 

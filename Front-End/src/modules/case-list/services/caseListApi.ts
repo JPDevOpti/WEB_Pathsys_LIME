@@ -46,6 +46,7 @@ export interface BackendCase {
   fecha_entrega?: { $date?: string } | string
   fecha_ingreso?: { $date?: string } | string // legacy
   fecha_firma?: { $date?: string } | string | null
+  signed_at?: { $date?: string } | string | null
   fecha_actualizacion?: { $date?: string } | string
   updated_at?: string
   observaciones_generales?: string

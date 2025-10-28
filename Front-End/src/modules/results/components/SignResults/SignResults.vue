@@ -716,11 +716,8 @@ async function handleSign() {
     const response = await signApiService.signCase(casoCode, requestData)
     
     if (response) {
-      // Actualizar el estado del caso
-      if (caseDetails.value) {
-        caseDetails.value.state = response.state
-        ;(caseDetails.value as any).signed_at = response.signed_at
-      }
+      // Actualizar el caso completo con la respuesta del backend
+      caseDetails.value = response
       
       setSavedFromSections()
       savedCaseCode.value = casoCode
@@ -941,11 +938,8 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
     const response = await signApiService.signCase(casoCode, requestData)
     
     if (response) {
-      // Actualizar el estado del caso
-      if (caseDetails.value) {
-        caseDetails.value.state = response.state
-        ;(caseDetails.value as any).signed_at = response.signed_at
-      }
+      // Actualizar el caso completo con la respuesta del backend
+      caseDetails.value = response
       
       // Guardar contenido para notificación
       setSavedFromSections()

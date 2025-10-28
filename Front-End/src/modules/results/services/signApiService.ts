@@ -1,4 +1,5 @@
 import { apiClient } from '@/core/config/axios.config'
+import type { CaseResponse } from '@/modules/cases/types/case'
 
 export interface CaseSignRequest {
   method?: string[]
@@ -16,12 +17,8 @@ export interface CaseSignRequest {
   }
 }
 
-export interface CaseSignResponse {
-  case_code: string
-  state: string
-  signed_at: string
-  message: string
-}
+// El backend devuelve un CaseResponse completo, no solo estos campos
+export type CaseSignResponse = CaseResponse
 
 export interface CaseSignValidation {
   case_code: string
