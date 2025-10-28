@@ -57,12 +57,11 @@
           </div>
         </div>
 
-        <!-- Footer: Delete button inside card -->
-        <div v-if="patientFound" class="mt-4 pt-4 border-t border-gray-200 flex justify-end">
+        <!-- Delete button below banner -->
+        <div v-if="patientFound" class="mt-2 flex justify-end">
           <BaseButton
             size="xs"
             variant="ghost"
-            :disabled="isDeleting"
             :custom-class="'border border-red-600 text-red-600 bg-white hover:bg-red-50 focus:ring-red-500'"
             @click="openDeleteConfirm"
           >

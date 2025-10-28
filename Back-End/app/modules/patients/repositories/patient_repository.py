@@ -123,11 +123,49 @@ class PatientRepository:
         if not existing_patient:
             raise NotFoundError("Paciente no encontrado")
             
-        update_data = patient_update.model_dump(exclude_none=True)
+        # Incluir solo campos explícitamente enviados, incluso si son None (para poder hacer unset)
+        update_data = patient_update.model_dump(exclude_unset=True)
         if update_data:
-            update_data["updated_at"] = datetime.now(timezone.utc)
-            mongo_data = self._prepare_data_for_mongo(update_data)
-            await self.collection.update_one(query, {"$set": mongo_data})
+            # Construir operaciones $set y $unset, manejando correctamente nested fields (location)
+            set_ops: Dict[str, Any] = {}
+            # Valores de $unset pueden ser "" o 1; tipamos como Any para evitar errores de tipo
+            unset_ops: Dict[str, Any] = {}
+
+            # updated_at siempre se setea
+            set_ops["updated_at"] = datetime.now(timezone.utc)
+
+            for key, value in update_data.items():
+                if key == "location":
+                    # Si location viene como None, eliminar todo el objeto
+                    if value is None:
+                        unset_ops["location"] = ""
+                    elif isinstance(value, dict):
+                        # Actualizar campos anidados individualmente
+                        for loc_key, loc_value in value.items():
+                            field_path = f"location.{loc_key}"
+                            if loc_value is None:
+                                unset_ops[field_path] = ""
+                            else:
+                                set_ops[field_path] = loc_value
+                    # Si viene en un tipo inesperado, lo ignoramos para evitar corrupción
+                else:
+                    if value is None:
+                        unset_ops[key] = ""
+                    else:
+                        set_ops[key] = value
+
+            # Preparar solo los valores de $set para Mongo (p.ej. fechas)
+            if set_ops:
+                set_ops = self._prepare_data_for_mongo(set_ops)
+
+            update_ops: Dict[str, Any] = {}
+            if set_ops:
+                update_ops["$set"] = set_ops
+            if unset_ops:
+                update_ops["$unset"] = unset_ops
+
+            if update_ops:
+                await self.collection.update_one(query, update_ops)
             
         updated_patient = await self.collection.find_one(query)
         if not updated_patient:

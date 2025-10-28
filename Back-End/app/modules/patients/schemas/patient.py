@@ -32,7 +32,14 @@ class Location(BaseModel):
     municipality_code: str = Field(..., min_length=1, max_length=10, description="Código del municipio")
     municipality_name: str = Field(..., min_length=2, max_length=100, description="Nombre del municipio")
     subregion: str = Field(..., min_length=2, max_length=100, description="Subregión")
-    address: str = Field(..., min_length=5, max_length=200, description="Dirección de residencia")
+    address: Optional[str] = Field(None, min_length=5, max_length=200, description="Dirección de residencia")
+    
+    # Permitir que una cadena vacía se interprete como "sin dirección"
+    @field_validator('address', mode='before')
+    def normalize_empty_address(cls, v):
+        if isinstance(v, str) and v.strip() == "":
+            return None
+        return v
     
     model_config = ConfigDict(populate_by_name=True)
 

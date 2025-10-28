@@ -71,7 +71,19 @@ class PatientService:
         patients_data = await self.repository.list_with_filters(
             skip=skip, limit=limit, search=search, entity=entity, gender=gender, care_type=care_type
         )
-        return [PatientResponse(**p) for p in patients_data]
+        # Robustez: evitar que un registro malformado provoque 500 en todo el listado
+        valid_patients: List[PatientResponse] = []
+        for p in patients_data:
+            try:
+                valid_patients.append(PatientResponse(**p))
+            except Exception:
+                # Registrar y continuar con el resto
+                logger.warning(
+                    "[service:list] Registro de paciente inválido omitido: %s",
+                    p.get("patient_code", p.get("_id"))
+                )
+                continue
+        return valid_patients
 
     async def advanced_search(self, search_params: PatientSearch) -> Dict[str, Any]:
         if search_params.date_from or search_params.date_to:
