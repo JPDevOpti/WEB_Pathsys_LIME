@@ -22,6 +22,8 @@
           placeholder="Número de identificación"
           :required="true"
           :max-length="20"
+          inputmode="numeric"
+          :only-numbers="true"
           @input="onUpdateIdentificationNumber"
         />
       </div>

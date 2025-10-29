@@ -139,12 +139,29 @@ class PatientsApiService {
    */
   async searchPatients(query: string, limit: number = 10): Promise<PatientData[]> {
     try {
-      const response = await axios.get(this.baseURL, {
+      const response = await axios.get(`${this.baseURL}/search`, {
         params: { search: query, limit }
       })
-      return response.data.data || response.data
+      // El backend devuelve { patients, total, skip, limit }
+      return (response.data?.patients as PatientData[]) || []
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Error al buscar pacientes')
+    }
+  }
+
+  /**
+   * Obtener paciente por documento (identification_number)
+   */
+  async getPatientByDocumento(documento: string): Promise<PatientData | null> {
+    try {
+      const response = await axios.get(`${this.baseURL}/search`, {
+        params: { identification_number: documento, limit: 1 }
+      })
+      const list = (response.data?.patients as PatientData[]) || []
+      return list.length ? list[0] : null
+    } catch (error: any) {
+      if (error.response?.status === 404) return null
+      throw new Error(error.response?.data?.detail || error.message || 'Error al buscar por documento')
     }
   }
 

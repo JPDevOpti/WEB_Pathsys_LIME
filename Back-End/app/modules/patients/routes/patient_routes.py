@@ -77,6 +77,64 @@ async def search_patients(
         logger.exception("Error en búsqueda de pacientes: %s", str(e))
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
+@router.get("/search/advanced", response_model=Dict[str, Any])
+async def search_patients_advanced(
+    search: Optional[str] = Query(None),
+    identification_type: Optional[IdentificationType] = Query(None),
+    identification_number: Optional[str] = Query(None),
+    first_name: Optional[str] = Query(None),
+    first_lastname: Optional[str] = Query(None),
+    birth_date_from: Optional[str] = Query(None),
+    birth_date_to: Optional[str] = Query(None),
+    municipality_code: Optional[str] = Query(None),
+    municipality_name: Optional[str] = Query(None),
+    subregion: Optional[str] = Query(None),
+    age_min: Optional[int] = Query(None, ge=0, le=150),
+    age_max: Optional[int] = Query(None, ge=0, le=150),
+    entity: Optional[str] = Query(None),
+    gender: Optional[Gender] = Query(None),
+    care_type: Optional[CareType] = Query(None),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    service: PatientService = Depends(get_service)
+):
+    """
+    Endpoint de búsqueda avanzada. Mapea a la misma lógica de búsqueda que /search
+    pero se expone bajo una ruta dedicada para compatibilidad con el frontend.
+    """
+    try:
+        search_params = PatientSearch(
+            search=search,
+            identification_type=identification_type,
+            identification_number=identification_number,
+            first_name=first_name,
+            first_lastname=first_lastname,
+            birth_date_from=birth_date_from,
+            birth_date_to=birth_date_to,
+            municipality_code=municipality_code,
+            municipality_name=municipality_name,
+            subregion=subregion,
+            age_min=age_min,
+            age_max=age_max,
+            entity=entity,
+            gender=gender,
+            care_type=care_type,
+            date_from=date_from,
+            date_to=date_to,
+            skip=skip,
+            limit=limit
+        )
+        return await service.search_patients(search_params)
+    except BadRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Error en búsqueda avanzada de pacientes: %s", str(e))
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
 @router.get("/count", response_model=Dict[str, int])
 async def get_total_count(service: PatientService = Depends(get_service)):
     try:

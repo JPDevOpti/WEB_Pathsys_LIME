@@ -186,7 +186,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, reactive } from 'vue'
+import { computed, ref, watch, reactive, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useNotifications } from '../composables/useNotifications'
 import patientsApiService from '../services/patientsApi.service'
 import { IdentificationType } from '../types'
@@ -203,6 +204,7 @@ const notificationContainer = ref<HTMLElement | null>(null)
 const createdPatient = ref<PatientData | null>(null)
 const showSuccessCard = ref(false)
 const isLoading = ref(false)
+const route = useRoute()
 
 // Form data
 const formData = reactive<PatientFormData>({
@@ -277,6 +279,42 @@ const careTypeOptions = [
 const maxBirthDate = computed(() => {
   const today = new Date()
   return today.toISOString().split('T')[0]
+})
+
+// Prefill from route query (identification_type, identification_number)
+const CODE_TO_IDENTIFICATION_TYPE: Record<string, number> = {
+  CC: IdentificationType.CEDULA_CIUDADANIA,
+  TI: IdentificationType.TARJETA_IDENTIDAD,
+  CE: IdentificationType.CEDULA_EXTRANJERIA,
+  PA: IdentificationType.PASAPORTE,
+  RC: IdentificationType.REGISTRO_CIVIL,
+  DE: IdentificationType.DOCUMENTO_EXTRANJERO,
+  NIT: IdentificationType.NIT
+}
+
+function normalizeIdType(val: unknown): number | '' {
+  if (val == null) return ''
+  if (typeof val === 'number' && !isNaN(val)) return val
+  const s = String(val).trim().toUpperCase()
+  if (!s) return ''
+  const asNum = Number(s)
+  if (!isNaN(asNum) && asNum > 0) return asNum
+  return CODE_TO_IDENTIFICATION_TYPE[s] ?? ''
+}
+
+onMounted(() => {
+  const q: any = route.query || {}
+  const rawType = q.identification_type ?? q.idType
+  const rawNumber = q.identification_number ?? q.idNumber
+
+  const normalizedType = normalizeIdType(rawType)
+  if (normalizedType) {
+    // v-model del select acepta número directamente
+    (formData as any).identification_type = normalizedType as any
+  }
+  if (rawNumber) {
+    formData.identification_number = String(rawNumber)
+  }
 })
 
 // Validation functions

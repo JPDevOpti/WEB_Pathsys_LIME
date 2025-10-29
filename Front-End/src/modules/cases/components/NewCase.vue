@@ -24,6 +24,23 @@
           @clear="clearPatientVerification"
         />
 
+        <!-- Botón Crear Paciente al lado derecho cuando no se encuentra -->
+        <div
+          v-if="searchError && String(searchError).includes('No se encontró un paciente')"
+          class="flex justify-end"
+        >
+          <BaseButton
+            variant="outline"
+            text="Crear Paciente"
+            :customClass="'bg-white text-red-600 border-red-600 hover:bg-red-50 focus:ring-red-500 active:bg-red-100'"
+            @click="goToCreatePatient"
+          >
+            <template #icon-left>
+              <NewPatientIcon class="w-5 h-5 mr-2" />
+            </template>
+          </BaseButton>
+        </div>
+
         <!-- Compact patient found summary -->
         <div 
           v-if="patientVerified && verifiedPatient" 
@@ -156,18 +173,19 @@
 
 <script setup lang="ts">
 import { computed, ref, nextTick, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useCaseForm } from '../composables/useCaseForm'
 import { usePatientVerification } from '../composables/usePatientVerification'
 import { useNotifications } from '../composables/useNotifications'
 import { useCaseAPI } from '../composables/useCaseAPI'
 import type { PatientData, CreatedCase } from '../types'
-import { ComponentCard } from '@/shared/components'
+import { ComponentCard, BaseButton } from '@/shared/components'
 import { ValidationAlert, Notification, CaseSuccessCard } from '@/shared/components/ui/feedback'
 import { SaveButton, ClearButton } from '@/shared/components/ui/buttons'
 import { CaseIcon } from '@/assets/icons'
 import { PatientInfoCard, CaseForm, PatientSearch } from './Shared'
 import { patientsApiService } from '@/modules/patients/services'
+import NewPatientIcon from '@/assets/icons/NewPatientIcon.vue'
 
 const notificationContainer = ref<HTMLElement | null>(null)
 const patientVerifiedSection = ref<HTMLElement | null>(null)
@@ -175,6 +193,7 @@ const createdCase = ref<CreatedCase | null>(null)
 const showCaseSuccessCard = ref(false)
 const emit = defineEmits(['case-saved', 'patient-verified'])
 const route = useRoute()
+const router = useRouter()
 
 const { formData, validationState, errors, warnings, validateForm, clearForm: clearCaseForm, handleNumberOfSamplesChange, addTestToSample, removeTestFromSample } = useCaseForm()
 const { searchError, patientVerified, verifiedPatient, useNewPatient, clearVerification, searchPatientByDocumento } = usePatientVerification()
@@ -397,6 +416,19 @@ const clearPatientVerification = () => {
   searchIdentificationType.value = ''
   searchIdentificationNumber.value = ''
   clearPatientFormData()
+}
+
+const goToCreatePatient = () => {
+  // Navegar a la ruta de crear paciente, enviando los datos buscados como query para posible prellenado
+  const idType = normalizeIdType(searchIdentificationType.value)
+  const idNumber = String(searchIdentificationNumber.value || '')
+  router.push({
+    name: 'patients-new',
+    query: {
+      identification_type: idType ? String(idType) : '',
+      identification_number: idNumber
+    }
+  })
 }
 
 const scrollToNotification = async () => { 
