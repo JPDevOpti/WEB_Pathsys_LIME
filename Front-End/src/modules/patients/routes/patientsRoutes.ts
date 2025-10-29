@@ -8,7 +8,7 @@ export const patientsRoutes: RouteRecordRaw[] = [
     meta: { title: 'Crear Paciente', requiresAuth: true }
   },
   {
-    path: '/patients/edit',
+    path: '/patients/edit/:code?',
     name: 'patients-edit',
     component: () => import('../views/EditPatientView.vue'),
     meta: { title: 'Editar Paciente', requiresAuth: true }

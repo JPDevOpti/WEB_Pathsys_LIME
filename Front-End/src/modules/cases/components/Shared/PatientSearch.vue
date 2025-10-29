@@ -12,6 +12,7 @@
           placeholder="Tipo de identificación"
           :required="true"
           :options="identificationTypeOptions"
+          :disabled="loading"
           @update:model-value="onUpdateIdentificationType"
         />
       </div>
@@ -24,6 +25,7 @@
           :max-length="20"
           inputmode="numeric"
           :only-numbers="true"
+          :disabled="loading"
           @input="onUpdateIdentificationNumber"
         />
       </div>
@@ -33,6 +35,7 @@
           v-if="!patientVerified" 
           text="Buscar" 
           loading-text="Buscando..." 
+          :loading="loading"
           @click="$emit('search')" 
           size="md" 
         />
@@ -61,6 +64,7 @@ defineProps({
   identificationNumber: { type: String, default: '' },
   errorMessage: { type: String, default: '' },
   patientVerified: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
   identificationTypeOptions: {
     type: Array as () => { value: string | number; label: string }[],
     default: () => [

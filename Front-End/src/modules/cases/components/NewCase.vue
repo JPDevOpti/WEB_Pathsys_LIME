@@ -17,6 +17,7 @@
           :identificationNumber="searchIdentificationNumber"
           :errorMessage="searchError"
           :patientVerified="patientVerified"
+          :loading="isSearching"
           :identificationTypeOptions="identificationTypeOptions"
           @update:identificationType="(v) => (searchIdentificationType = v as any)"
           @update:identificationNumber="(v) => (searchIdentificationNumber = v)"
@@ -196,7 +197,7 @@ const route = useRoute()
 const router = useRouter()
 
 const { formData, validationState, errors, warnings, validateForm, clearForm: clearCaseForm, handleNumberOfSamplesChange, addTestToSample, removeTestFromSample } = useCaseForm()
-const { searchError, patientVerified, verifiedPatient, useNewPatient, clearVerification, searchPatientByDocumento } = usePatientVerification()
+const { isSearching, searchError, patientVerified, verifiedPatient, useNewPatient, clearVerification, searchPatientByDocumento } = usePatientVerification()
 const { notification, showNotification, closeNotification } = useNotifications()
 const { createCase, error: apiError, clearState } = useCaseAPI()
 
@@ -325,6 +326,7 @@ const searchPatient = async () => {
   }
 
   try {
+    isSearching.value = true
     searchError.value = ''
     // Fetch by text and then filter exact match (as in EditPatient.vue)
     const results = await patientsApiService.searchPatients(String(searchIdentificationNumber.value), 10)
@@ -389,6 +391,8 @@ const searchPatient = async () => {
     }
   } catch (error: any) {
     searchError.value = error?.message || 'Error al buscar el paciente. Verifique los datos e intente nuevamente.'
+  } finally {
+    isSearching.value = false
   }
 }
 

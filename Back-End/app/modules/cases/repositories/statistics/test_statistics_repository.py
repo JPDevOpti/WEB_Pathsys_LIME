@@ -49,11 +49,12 @@ class TestStatisticsRepository:
         year: int, 
         entity_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        # Rendimiento mensual de pruebas: solicitadas, completadas y tiempos promedio
+        # Rendimiento mensual de pruebas basado únicamente en casos completados
         start_date = datetime(year, month, 1)
         end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         match_conditions = {
-            "created_at": {"$gte": start_date, "$lt": end_date},
+            "state": "Completado",
+            "signed_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests": {"$exists": True, "$ne": []}
         }
         if entity_name:
@@ -79,12 +80,9 @@ class TestStatisticsRepository:
                         "test_code": "$samples.tests.id"
                     },
                     "test_name": {"$first": "$test_info.name"},
+                    # Al filtrar por Completado, solicitadas = completadas = total en el período
                     "total_solicitadas": {"$sum": 1},
-                    "total_completadas": {
-                        "$sum": {
-                            "$cond": [{"$eq": ["$state", "Completado"]}, 1, 0]
-                        }
-                    },
+                    "total_completadas": {"$sum": 1},
                     "total_business_days": {"$sum": {"$ifNull": ["$business_days", 0]}},
                     "avg_business_days": {"$avg": {"$ifNull": ["$business_days", 0]}}
                 }
@@ -135,7 +133,8 @@ class TestStatisticsRepository:
         start_date = datetime(year, month, 1)
         end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         match_conditions = {
-            "created_at": {"$gte": start_date, "$lt": end_date},
+            "state": "Completado",
+            "signed_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests.id": test_code
         }
         if entity_name:
@@ -151,11 +150,7 @@ class TestStatisticsRepository:
                 "$group": {
                     "_id": None,
                     "total_solicitadas": {"$sum": 1},
-                    "total_completadas": {
-                        "$sum": {
-                            "$cond": [{"$eq": ["$state", "Completado"]}, 1, 0]
-                        }
-                    },
+                    "total_completadas": {"$sum": 1},
                     "total_business_days": {"$sum": {"$ifNull": ["$business_days", 0]}},
                     "avg_business_days": {"$avg": {"$ifNull": ["$business_days", 0]}}
                 }
@@ -269,14 +264,12 @@ class TestStatisticsRepository:
         
         # Calculate date range
         start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
+        end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         
-        # Base match conditions - Include all cases, not just completed ones
+        # Base match conditions - Only completed cases
         match_conditions = {
-            "created_at": {"$gte": start_date, "$lt": end_date},
+            "state": "Completado",
+            "signed_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests.id": test_code
         }
         
@@ -327,14 +320,12 @@ class TestStatisticsRepository:
         
         # Calculate date range
         start_date = datetime(year, month, 1)
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, month + 1, 1)
+        end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
         
-        # Base match conditions - Include all cases, not just completed ones
+        # Base match conditions - Only completed cases
         match_conditions = {
-            "created_at": {"$gte": start_date, "$lt": end_date},
+            "state": "Completado",
+            "signed_at": {"$gte": start_date, "$lt": end_date},
             "samples.tests": {"$exists": True, "$ne": []}
         }
         
@@ -416,7 +407,8 @@ class TestStatisticsRepository:
         pipeline = [
             {
                 "$match": {
-                    "created_at": {
+                    "state": "Completado",
+                    "signed_at": {
                         "$gte": datetime(year, 1, 1),
                         "$lt": datetime(year + 1, 1, 1)
                     },

@@ -244,8 +244,29 @@ const loadEntityDetails = async () => {
   try {
     isLoadingTests.value = true
     const periodString = `${props.period.year}-${props.period.month.toString().padStart(2, '0')}`
-    const response = await entitiesApiService.getEntityDetails(props.entity.codigo, periodString)
+    // Primer intento: por código de entidad
+    let response = await entitiesApiService.getEntityDetails(props.entity.codigo, periodString)
     entityDetails.value = response
+
+    // Fallback: si no hay datos pero el listado reporta casos, intentar por nombre
+    const basicas = response?.estadisticas_basicas
+    const noDataInDetails = !response || (
+      (Number(basicas?.total_pacientes) || 0) === 0 &&
+      (Number(basicas?.ambulatorios) || 0) === 0 &&
+      (Number(basicas?.hospitalizados) || 0) === 0 &&
+      (!response?.pruebas_mas_solicitadas || response.pruebas_mas_solicitadas.length === 0)
+    )
+    const hasListTotals = (Number(props.entity.total) || 0) > 0 || (Number(props.entity.ambulatorios) || 0) > 0 || (Number(props.entity.hospitalizados) || 0) > 0
+
+    if (noDataInDetails && hasListTotals) {
+      try {
+        response = await entitiesApiService.getEntityDetails(props.entity.nombre, periodString)
+        entityDetails.value = response
+      } catch (e) {
+        // Mantener el first response si el fallback falla
+        console.warn('Fallback por nombre sin éxito:', e)
+      }
+    }
   } catch (error) {
     console.error('Error al cargar detalles de la entidad:', error)
   } finally {
@@ -260,12 +281,26 @@ const loadPathologists = async () => {
   try {
     isLoadingPathologists.value = true
     const periodString = `${props.period.year}-${props.period.month.toString().padStart(2, '0')}`
-    const response = await entitiesApiService.getEntityPathologists(
+    // Primer intento: por código
+    let response = await entitiesApiService.getEntityPathologists(
       props.entity.codigo,
       periodString
     )
-    
-    pathologistsData.value = response.map((patologo: any) => ({
+
+    // Fallback: si vacío pero el listado reporta casos, intentar por nombre
+    const hasListTotals = (Number(props.entity.total) || 0) > 0
+    if ((!response || response.length === 0) && hasListTotals) {
+      try {
+        response = await entitiesApiService.getEntityPathologists(
+          props.entity.nombre,
+          periodString
+        )
+      } catch (e) {
+        console.warn('Fallback patólogos por nombre sin éxito:', e)
+      }
+    }
+
+    pathologistsData.value = (response || []).map((patologo: any) => ({
       name: patologo.nombre,
       codigo: patologo.codigo,
       casesCount: patologo.totalCasos || patologo.casesCount || 0

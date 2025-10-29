@@ -2,7 +2,7 @@
   <!-- Edit patient: search by ID, edit fields, confirm update -->
   <div class="space-y-6">
       <!-- Search block -->
-      <div v-if="!caseCodeProp" class="bg-gray-50 rounded-lg p-3 sm:p-4 lg:p-6 border border-gray-200">
+      <div class="bg-gray-50 rounded-lg p-3 sm:p-4 lg:p-6 border border-gray-200">
         <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
           <SearchPatientIcon class="w-4 h-4 mr-2 text-gray-500" />
           Buscar paciente
@@ -915,8 +915,21 @@ watch(
   () => props.caseCodeProp,
   async (newCode) => {
     if (newCode) {
-      // Load patient by case code if needed
-      // This would require additional API integration
+      try {
+        isSearching.value = true
+        searchError.value = ''
+        patientFound.value = false
+
+        const patient = await patientsApiService.getPatientByCode(newCode)
+        loadPatientData(patient)
+        patientFound.value = true
+      } catch (error: any) {
+        const msg = error?.message || `No se pudo cargar el paciente con código ${newCode}`
+        showNotification('error', 'Error al cargar paciente', msg, 0)
+        patientFound.value = false
+      } finally {
+        isSearching.value = false
+      }
     }
   },
   { immediate: true }

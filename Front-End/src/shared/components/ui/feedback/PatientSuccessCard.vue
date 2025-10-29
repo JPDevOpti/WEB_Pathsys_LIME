@@ -30,7 +30,6 @@
               </div>
               <div>
                 <h3 class="text-lg font-bold text-gray-900">Paciente Registrado Exitosamente</h3>
-                <p class="text-gray-600 text-xs mt-1">El paciente ha sido ingresado al sistema</p>
               </div>
             </div>
           </div>

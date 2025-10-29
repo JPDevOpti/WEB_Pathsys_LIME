@@ -2,7 +2,6 @@
   <div class="space-y-4 lg:space-y-6">
     <!-- Card 1: Case Search Section -->
     <ComponentCard 
-      v-if="!caseCodeProp"
       title="Buscar Caso" 
       description="Busque y verifique el caso que desea editar por código."
     >
