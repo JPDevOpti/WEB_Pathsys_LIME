@@ -164,7 +164,7 @@
                       }">
                   {{ c.priority }}
                 </span>
-                <p v-if="c.receivedAt" class="text-xs font-medium px-2 py-0.5 rounded-full" :class="daysClass(c)" :title="`${elapsedDays(c)} días hábiles transcurridos (solo lunes a viernes)`">
+                <p v-if="c.receivedAt" class="text-xs font-medium px-2 py-0.5 rounded-full" :class="daysClass(c)" :title="`${elapsedDays(c)} días hábiles transcurridos (lunes a viernes, excluye festivos de Colombia)`">
                   {{ elapsedDays(c) }} días
                 </p>
               </div>
@@ -265,7 +265,7 @@
             </div>
             <div>
               <p class="text-gray-500">Días hábiles</p>
-              <p class="text-gray-800 font-medium" :class="daysClass(c)">
+              <p class="text-xs font-medium px-2 py-0.5 rounded-full" :class="daysClass(c)" :title="`${elapsedDays(c)} días hábiles transcurridos (lunes a viernes, excluye festivos de Colombia)`">
                 {{ elapsedDays(c) }} días
               </p>
             </div>
@@ -358,6 +358,7 @@ import FormCheckbox from '@/shared/components/ui/forms/FormCheckbox.vue'
 import BatchMarkDeliveredDrawer from './BatchMarkDeliveredDrawer.vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useToasts } from '@/shared/composables/useToasts'
+import { getHolidaysForRange, formatISODate } from '../utils/holidayUtils'
 
 interface Column { 
   key: string
@@ -628,15 +629,22 @@ const calculateBusinessDays = (startDate: string, endDate?: string): number => {
   let cur = normalize(fromDate)
   const endDay = normalize(toDate)
 
+  // Festivos de Colombia en el rango
+  const holidays = getHolidaysForRange(cur, endDay)
+
   let days = 0
   while (cur <= endDay) {
     const dow = cur.getDay()
-    if (dow >= 1 && dow <= 5) days++
+    const iso = formatISODate(cur)
+    if (dow >= 1 && dow <= 5 && !holidays.has(iso)) days++
     cur.setDate(cur.getDate() + 1)
   }
-  // No contar el día inicial
-  const startDow = normalize(fromDate).getDay()
-  if (startDow >= 1 && startDow <= 5) days = Math.max(0, days - 1)
+  // No contar el día inicial si es hábil y no festivo
+  const startNorm = normalize(fromDate)
+  const startDow = startNorm.getDay()
+  const startIso = formatISODate(startNorm)
+  const startIsBusiness = (startDow >= 1 && startDow <= 5) && !holidays.has(startIso)
+  if (startIsBusiness) days = Math.max(0, days - 1)
   return days
 }
 
@@ -652,8 +660,8 @@ const statusClass = (c: Case): string => {
 
 const daysClass = (c: Case): string => {
   const days = elapsedDays(c)
-  if (days > 4 && c.status !== 'Completado') return 'bg-red-50 text-red-700'
-  if (days > 3 && c.status !== 'Completado') return 'bg-yellow-50 text-yellow-700'
+  if (days >= 6) return 'bg-red-50 text-red-700'
+  if (days >= 5) return 'bg-yellow-50 text-yellow-700'
   return 'bg-brand-50 text-brand-700'
 }
 </script>

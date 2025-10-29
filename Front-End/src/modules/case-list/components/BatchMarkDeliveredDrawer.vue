@@ -90,8 +90,8 @@
                         </div>
                         <div>
                           <p class="text-[10px] font-medium text-blue-600 uppercase tracking-wide">Oportunidad</p>
-                          <p class="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded" :title="`${calculateBusinessDays(c.receivedAt || '')} días hábiles transcurridos`">
-                            {{ calculateBusinessDays(c.receivedAt || '') }} días
+                          <p class="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded" :title="`${calculateBusinessDaysWithHolidays(c.receivedAt || '')} días hábiles transcurridos (excluye festivos de Colombia)`">
+                            {{ calculateBusinessDaysWithHolidays(c.receivedAt || '') }} días
                           </p>
                         </div>
                       </div>
@@ -262,6 +262,7 @@ import type { Case } from '../types/case.types'
 import { BaseButton } from '@/shared/components'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import { casesApiService } from '@/modules/cases/services'
+import { getHolidaysForRange, formatISODate } from '../utils/holidayUtils'
 
 interface Props {
   modelValue: boolean
@@ -379,7 +380,7 @@ const emitConfirm = () => {
         }
       })
     
-    const oportunidad = calculateBusinessDays(c.receivedAt || '')
+    const oportunidad = calculateBusinessDaysWithHolidays(c.receivedAt || '')
     
     return { 
       caseCode: c.caseCode || c.id, 
@@ -461,6 +462,51 @@ const calculateBusinessDays = (startDate: string, endDate?: string): number => {
   }
   const startDow = normalize(fromDate).getDay()
   if (startDow >= 1 && startDow <= 5) days = Math.max(0, days - 1)
+  return days
+}
+
+// Variante que excluye festivos de Colombia
+const calculateBusinessDaysWithHolidays = (startDate: string, endDate?: string): number => {
+  const parseDate = (s?: string): Date | null => {
+    if (!s) return null
+    const v = String(s).trim()
+    if (/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(v)) {
+      const sep = v.includes('/') ? '/' : '-'
+      const [dd, mm, yyyy] = v.split(sep)
+      return new Date(Number(yyyy), Number(mm) - 1, Number(dd))
+    }
+    const digits = v.replace(/\D/g, '')
+    if (digits.length === 8) {
+      const dd = digits.slice(0, 2), mm = digits.slice(2, 4), yyyy = digits.slice(4)
+      return new Date(Number(yyyy), Number(mm) - 1, Number(dd))
+    }
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return new Date(v)
+    const d = new Date(v)
+    return isNaN(d.getTime()) ? null : d
+  }
+  const start = parseDate(startDate)
+  const end = endDate ? parseDate(endDate) : new Date()
+  if (!start || !end || isNaN((end as Date).getTime())) return 0
+  const fromDate = start <= (end as Date) ? start : (end as Date)
+  const toDate = start <= (end as Date) ? (end as Date) : start
+  const normalize = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return x }
+  let cur = normalize(fromDate)
+  const endDay = normalize(toDate)
+
+  const holidays = getHolidaysForRange(cur, endDay)
+
+  let days = 0
+  while (cur <= endDay) {
+    const dow = cur.getDay()
+    const iso = formatISODate(cur)
+    if (dow >= 1 && dow <= 5 && !holidays.has(iso)) days++
+    cur.setDate(cur.getDate() + 1)
+  }
+  const startNorm = normalize(fromDate)
+  const startDow = startNorm.getDay()
+  const startIso = formatISODate(startNorm)
+  const startIsBusiness = (startDow >= 1 && startDow <= 5) && !holidays.has(startIso)
+  if (startIsBusiness) days = Math.max(0, days - 1)
   return days
 }
 
