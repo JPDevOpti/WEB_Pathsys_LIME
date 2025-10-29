@@ -33,7 +33,7 @@ export function usePermissions() {
   const canAccessResults = computed(() => isAdmin.value || isPatologo.value || isAuxiliar.value || isResidente.value) // Patólogos, auxiliares y residentes pueden acceder a resultados
   const canAccessProfile = computed(() => true) // Todos pueden acceder a perfil
   const canAccessReports = computed(() => isAdmin.value) // Solo admin puede acceder a reportes
-  const canAccessStatistics = computed(() => isAdmin.value || isFacturacion.value) // Admin y facturación pueden acceder a estadísticas
+  const canAccessStatistics = computed(() => isAdmin.value || isFacturacion.value || isAuxiliar.value) // Admin, facturación y auxiliar pueden acceder a estadísticas
 
   // Función para verificar si un usuario tiene un rol específico
   const hasRole = (role: RoleEnum): boolean => {

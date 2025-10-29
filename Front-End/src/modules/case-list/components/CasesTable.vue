@@ -97,7 +97,15 @@
             </td>
             <td class="px-2 py-3 text-center">
               <p class="text-gray-800 text-sm">{{ c.entity }}</p>
-              <p class="text-gray-500 text-xs">{{ c.pathologist || 'No asignado' }}</p>
+              <p v-if="c.pathologist" class="text-gray-500 text-xs">{{ c.pathologist }}</p>
+              <button
+                v-else
+                type="button"
+                class="text-blue-600 text-xs hover:underline"
+                @click="goToPathologistAssignment(c)"
+              >
+                No asignado
+              </button>
             </td>
             <td class="px-3 py-3 text-center">
               <div v-if="getTestsLayout(c).totalTests > 0" class="space-y-1">
@@ -241,7 +249,15 @@
             </div>
             <div>
               <p class="text-gray-500">Patólogo</p>
-              <p class="text-gray-800 font-medium">{{ c.pathologist || 'No asignado' }}</p>
+              <p v-if="c.pathologist" class="text-gray-800 font-medium">{{ c.pathologist }}</p>
+              <button
+                v-else
+                type="button"
+                class="text-blue-600 font-medium hover:underline"
+                @click="goToPathologistAssignment(c)"
+              >
+                No asignado
+              </button>
             </div>
             <div>
               <p class="text-gray-500">Fecha recepción</p>
@@ -411,6 +427,12 @@ const isCaseSelected = (caseId: string) => {
 }
 
 const exportCasesToExcel = async (_cases: Case[], _type: string) => {}
+
+const goToPathologistAssignment = (c: Case) => {
+  const code = c.caseCode || c.id
+  if (!code) return
+  router.push({ name: 'pathologist-assignment', query: { caseCode: code } })
+}
 
 const handleBatchDownloadExcel = async () => {
   if (props.selectedIds.length === 0) {

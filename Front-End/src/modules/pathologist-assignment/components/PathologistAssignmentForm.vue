@@ -123,7 +123,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, reactive, nextTick } from 'vue'
+import { ref, computed, watch, reactive, nextTick, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { usePathologistAssignment } from '../composables/usePathologistAssignment'
 import { usePathologistAPI } from '@/modules/cases/composables/usePathologistAPI'
 import { useNotifications } from '@/modules/cases/composables/useNotifications'
@@ -176,6 +177,7 @@ const {
 const { assignPathologist } = usePathologistAPI()
 const { notification, showNotification, closeNotification } = useNotifications()
 const assignmentPreview = ref<AssignmentPreviewInfo | null>(null)
+const route = useRoute()
 
 // Computed properties
 const isFormValid = computed(() => 
@@ -319,6 +321,17 @@ const limpiarFormulario = () => {
 watch([() => formData.patologoId, casoEncontrado], () => {
   if (showValidationError.value && isFormValid.value) {
     showValidationError.value = false
+  }
+})
+
+// Auto-cargar caso si viene en la URL
+onMounted(() => {
+  const q: Record<string, unknown> = route.query || {}
+  const raw = (q.caseCode || q.code || q.codigo) as string | string[] | undefined
+  const val = Array.isArray(raw) ? raw[0] : raw
+  if (val) {
+    handleCodigoChange(String(val))
+    buscarCasoComposable(codigoCaso.value)
   }
 })
 

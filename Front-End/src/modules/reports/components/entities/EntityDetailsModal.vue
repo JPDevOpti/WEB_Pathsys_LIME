@@ -288,8 +288,18 @@ function formatPeriod() {
 
 // Función para verificar si hay datos disponibles
 function hasData() {
+  // Si el listado ya reporta casos para la entidad en el período, considerar que hay datos
+  const totalsFromList = (
+    (props.entity?.total ?? 0) > 0 ||
+    (props.entity?.ambulatorios ?? 0) > 0 ||
+    (props.entity?.hospitalizados ?? 0) > 0
+  )
+  if (totalsFromList) return true
+
+  // Si no hay detalles cargados aún y el listado no muestra casos, no hay datos
   if (!entityDetails.value) return false
-  
+
+  // Evaluar datos provenientes del endpoint de detalles
   const basicas = entityDetails.value.estadisticas_basicas
   return basicas.total_pacientes > 0 || 
          basicas.ambulatorios > 0 || 

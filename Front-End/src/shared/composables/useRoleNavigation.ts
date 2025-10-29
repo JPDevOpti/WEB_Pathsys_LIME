@@ -41,6 +41,14 @@ export function useRoleNavigation() {
       return facturacionItems
     }
 
+    // Mostrar Estadísticas para Auxiliar Administrativo
+    if (isAuxiliar.value) {
+      return [
+        ...baseItems,
+        { name: 'Estadísticas', path: '/statistics', icon: 'statistics', alwaysVisible: false }
+      ]
+    }
+
     return baseItems
   })
 
