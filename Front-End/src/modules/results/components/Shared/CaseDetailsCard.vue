@@ -31,7 +31,7 @@
 
       <div v-if="details?.observations" class="text-sm text-gray-700">
         <span class="font-bold">Observaciones generales:</span>
-        <div class="mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap text-sm">{{ details?.observations }}</div>
+        <div class="mt-1 p-2 bg-gray-50 rounded whitespace-pre-wrap text-sm break-words" v-html="safeObservations"></div>
       </div>
     </div>
   </div>
@@ -39,9 +39,14 @@
 
 <script setup lang="ts">
 import type { CaseDetails } from '../../types/results.types'
+import { computed } from 'vue'
+import { sanitizeHtml } from '@/utils/sanitizeHtml'
 import { DocsIcon } from '@/assets/icons'
 
-defineProps<{ details: CaseDetails | null, loading?: boolean }>()
+const props = defineProps<{ details: CaseDetails | null, loading?: boolean }>()
+
+// Contenido HTML seguro para observaciones generales
+const safeObservations = computed(() => sanitizeHtml(props.details?.observations || ''))
 
 function formatDate(iso?: string | null) {
   if (!iso) return '-'

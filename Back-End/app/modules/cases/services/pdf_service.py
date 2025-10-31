@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any, Optional
 import asyncio
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from markupsafe import Markup
+import re
 from pathlib import Path
 
 
@@ -24,6 +26,49 @@ class CasePdfService:
             autoescape=select_autoescape(["html", "xml"]),
             enable_async=True,
         )
+
+    # Sanitizador básico de HTML para PDF
+    def _sanitize_html(self, html: Optional[str]) -> Markup:
+        """Sanitiza HTML permitiendo un subconjunto seguro de etiquetas y estilos.
+        Comentario: Mantiene alineaciones simples de texto y elimina scripts/eventos."""
+        if not html:
+            return Markup("")
+
+        # Remover bloques peligrosos (script/style)
+        clean = re.sub(r"(?is)<(script|style).*?>.*?</\\1>", "", html)
+
+        # Eliminar atributos de eventos (onload, onclick, etc.)
+        clean = re.sub(r"\son[a-zA-Z]+\s*=\s*(\".*?\"|\'.*?\'|[^\s>]+)", "", clean)
+
+        # Permitir solo ciertos estilos en style="..."
+        allowed_props = {"text-align", "font-weight", "font-style", "text-decoration"}
+
+        def _clean_style(match: re.Match) -> str:
+            style_val = match.group(1)
+            parts = [p.strip() for p in style_val.split(";") if p.strip()]
+            kept = []
+            for decl in parts:
+                if ":" not in decl:
+                    continue
+                prop, val = decl.split(":", 1)
+                prop = prop.strip().lower()
+                val = val.strip()
+                if prop in allowed_props:
+                    kept.append(f"{prop}: {val}")
+            return f' style="{"; ".join(kept)}"' if kept else ""
+
+        clean = re.sub(r"\sstyle\s*=\s*\"(.*?)\"", _clean_style, clean)
+        clean = re.sub(r"\sstyle\s*=\s*\'(.*?)\'", _clean_style, clean)
+
+        # Remover etiquetas no permitidas, conservar: div, span, br, p, b, strong, i, em, u, ul, ol, li
+        allowed_tags = {"div", "span", "br", "p", "b", "strong", "i", "em", "u", "ul", "ol", "li"}
+
+        def _filter_tag(match: re.Match) -> str:
+            tag_name = match.group(1).lower()
+            return match.group(0) if tag_name in allowed_tags else ""
+
+        clean = re.sub(r"</?([a-zA-Z0-9]+)(\b[^>]*)?>", _filter_tag, clean)
+        return Markup(clean)
 
     async def generate_case_pdf(self, case_code: str) -> bytes:
         try:
@@ -62,6 +107,17 @@ class CasePdfService:
                 format="A4",
                 margin={"top": "20mm", "right": "15mm", "bottom": "20mm", "left": "15mm"},
                 print_background=True,
+                display_header_footer=True,
+                header_template="<span></span>",
+                footer_template=(
+                    "<div style='font-family: Arial, sans-serif; font-size:10px; color:#000; width:100%; padding:0 15mm;'>"
+                    "<div style='text-align:center; font-style:italic; white-space:nowrap;'>"
+                    "Los informes de resultados, las placas y bloques de estudios anatomopatológicos se archivan por 15 años"
+                    "</div>"
+                    "<div style='border-top:1px solid #000; margin:2mm 0 0 0;'></div>"
+                    "<div style='text-align:right; font-weight:bold;'>Página <span class='pageNumber'></span> de <span class='totalPages'></span></div>"
+                    "</div>"
+                ),
             )
             await context.close()
             await browser.close()
@@ -159,13 +215,14 @@ class CasePdfService:
         """Mapear resultado del nuevo formato al formato esperado por la plantilla"""
         if not result:
             return None
-        
+
         mapped_result = {
             'metodo': result.get('method', []),
-            'resultado_macro': result.get('macro_result', ''),
-            'resultado_micro': result.get('micro_result', ''),
-            'diagnostico': result.get('diagnosis', ''),
-            'observaciones': result.get('observations', ''),
+            # Sanitizar campos con posible HTML
+            'resultado_macro': self._sanitize_html(result.get('macro_result', '')),
+            'resultado_micro': self._sanitize_html(result.get('micro_result', '')),
+            'diagnostico': self._sanitize_html(result.get('diagnosis', '')),
+            'observaciones': self._sanitize_html(result.get('observations', '')),
             'updated_at': result.get('updated_at'),
             
             # Diagnósticos CIE-10 y CIE-O

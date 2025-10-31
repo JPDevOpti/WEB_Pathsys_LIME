@@ -285,7 +285,7 @@
               </div>
               <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Resultado Macroscópico</span>
             </div>
-            <p class="text-sm text-gray-800 break-words leading-relaxed">{{ caseItem.result.macro_result }}</p>
+            <div class="text-sm text-gray-800 break-words leading-relaxed" v-html="safeMacro"></div>
           </div>
 
           <div v-if="caseItem.result.micro_result" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -295,7 +295,7 @@
               </div>
               <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Resultado Microscópico</span>
             </div>
-            <p class="text-sm text-gray-800 break-words leading-relaxed">{{ caseItem.result.micro_result }}</p>
+            <div class="text-sm text-gray-800 break-words leading-relaxed" v-html="safeMicro"></div>
           </div>
 
           <div v-if="caseItem.result.diagnosis" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -305,7 +305,7 @@
               </div>
               <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Diagnóstico</span>
             </div>
-            <p class="text-sm text-gray-800 break-words leading-relaxed font-medium">{{ caseItem.result.diagnosis }}</p>
+            <div class="text-sm text-gray-800 break-words leading-relaxed font-medium" v-html="safeDiagnosis"></div>
           </div>
 
           <div v-if="caseItem.result.observations" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -315,7 +315,7 @@
               </div>
               <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Observaciones</span>
             </div>
-            <p class="text-sm text-gray-800 break-words leading-relaxed">{{ caseItem.result.observations }}</p>
+            <div class="text-sm text-gray-800 break-words leading-relaxed" v-html="safeObservations"></div>
           </div>
         </div>
       </div>
@@ -472,6 +472,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { sanitizeHtml } from '../../../utils/sanitizeHtml'
 import type { Case } from '../types/case.types'
 import { DocsIcon } from '@/assets/icons'
 import { NotesDialog } from '@/shared/components/ui/feedback'
@@ -516,6 +517,12 @@ const patientCareType = computed(() => normalizeCareType(activePatient.value.att
 
 const entityName = computed(() => activePatient.value.entity || (props.caseItem as any)?.entity || '')
 const entityCode = computed(() => activePatient.value.entityCode || activePatient.value.entity_code || '')
+
+// Contenido HTML seguro para mostrar formato en resultados
+const safeMacro = computed(() => sanitizeHtml(props.caseItem?.result?.macro_result || ''))
+const safeMicro = computed(() => sanitizeHtml(props.caseItem?.result?.micro_result || ''))
+const safeDiagnosis = computed(() => sanitizeHtml(props.caseItem?.result?.diagnosis || ''))
+const safeObservations = computed(() => sanitizeHtml(props.caseItem?.result?.observations || ''))
 
 const priorityBadgeClasses = computed(() => {
   const base = 'border-1'

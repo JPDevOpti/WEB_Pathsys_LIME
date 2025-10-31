@@ -18,22 +18,22 @@
               <p class="text-gray-500 text-sm">{{ props.caseCode }}</p>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="grid grid-cols-1 gap-4 text-sm">
             <div>
               <h5 class="font-medium text-gray-700 mb-1">Método</h5>
               <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ (props.savedContent?.method?.length || 0) > 0 ? props.savedContent.method.join(', ') : '—' }}</div>
             </div>
             <div>
               <h5 class="font-medium text-gray-700 mb-1">Corte Macro</h5>
-              <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ props.savedContent?.macro || '—' }}</div>
+              <div class="text-gray-900 break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full" v-html="safeMacro"></div>
             </div>
             <div>
               <h5 class="font-medium text-gray-700 mb-1">Corte Micro</h5>
-              <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ props.savedContent?.micro || '—' }}</div>
+              <div class="text-gray-900 break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full" v-html="safeMicro"></div>
             </div>
             <div>
               <h5 class="font-medium text-gray-700 mb-1">Diagnóstico</h5>
-              <div class="text-gray-900 whitespace-pre-wrap break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full">{{ props.savedContent?.diagnosis || '—' }}</div>
+              <div class="text-gray-900 break-words overflow-hidden bg-gray-50 border border-gray-200 rounded p-3 min-h-[60px] max-w-full" v-html="safeDiagnosis"></div>
             </div>
           </div>
 
@@ -93,6 +93,7 @@
 <script setup lang="ts">
 import Notification from '@/shared/components/ui/feedback/Notification.vue'
 import { computed, nextTick, ref, watch, onMounted } from 'vue'
+import { sanitizeHtml } from '../../../../utils/sanitizeHtml'
 
 type NotificationType = 'success' | 'error' | 'warning' | 'info'
 type ContextType = 'sign' | 'save'
@@ -120,6 +121,11 @@ const props = withDefaults(defineProps<{
 defineEmits<{ (e: 'close'): void }>()
 
 const headerTitle = computed(() => props.title || (props.context === 'sign' ? 'Resumen de resultados firmados' : 'Resumen de resultados guardados'))
+
+// Contenido HTML seguro para renderizado
+const safeMacro = computed(() => sanitizeHtml(props.savedContent?.macro || ''))
+const safeMicro = computed(() => sanitizeHtml(props.savedContent?.micro || ''))
+const safeDiagnosis = computed(() => sanitizeHtml(props.savedContent?.diagnosis || ''))
 
 // Auto scroll into view when shown (only for inline success notifications)
 const rootEl = ref<any>(null)

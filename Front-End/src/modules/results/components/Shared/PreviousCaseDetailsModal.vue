@@ -46,7 +46,7 @@
           <div v-if="caseItem?.observations" class="bg-gray-50 rounded-xl p-4">
             <h5 class="text-sm font-medium text-gray-700 mb-3">Observaciones Generales</h5>
             <div class="border border-gray-200 rounded-lg p-3 bg-white">
-              <p class="text-sm text-gray-800 break-words">{{ caseItem.observations }}</p>
+              <div class="text-sm text-gray-800 break-words" v-html="safeGeneralObservations"></div>
             </div>
           </div>
 
@@ -104,7 +104,7 @@
           <div class="mb-2">
             <p class="text-sm text-gray-600">Resultado Macroscópico</p>
           </div>
-          <p class="text-sm text-gray-800 break-words">{{ resultado.macro_result }}</p>
+          <div class="text-sm text-gray-800 break-words" v-html="safeMacro"></div>
         </div>
 
         <!-- Resultado Microscópico -->
@@ -112,7 +112,7 @@
           <div class="mb-2">
             <p class="text-sm text-gray-600">Resultado Microscópico</p>
           </div>
-          <p class="text-sm text-gray-800 break-words">{{ resultado.micro_result }}</p>
+          <div class="text-sm text-gray-800 break-words" v-html="safeMicro"></div>
         </div>
 
         <!-- Diagnóstico -->
@@ -120,7 +120,7 @@
           <div class="mb-2">
             <p class="text-sm text-gray-600">Diagnóstico</p>
           </div>
-          <p class="text-sm text-gray-800 break-words">{{ resultado.diagnosis }}</p>
+          <div class="text-sm text-gray-800 break-words" v-html="safeDiagnosis"></div>
         </div>
       </div>
 
@@ -197,6 +197,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { sanitizeHtml } from '@/utils/sanitizeHtml'
 import type { CaseModel } from '@/modules/cases/types/case'
 import { Modal } from '@/shared/components/layout'
 import { CloseButton, PrintPdfButton } from '@/shared/components/ui/buttons'
@@ -268,6 +269,12 @@ const hasResultContent = computed(() => {
          resultado.value.micro_result || 
          resultado.value.diagnosis
 })
+
+// Contenido HTML seguro para visualizar formato en resultados y observaciones
+const safeGeneralObservations = computed(() => sanitizeHtml(props.caseItem?.observations || ''))
+const safeMacro = computed(() => sanitizeHtml(resultado.value?.macro_result || ''))
+const safeMicro = computed(() => sanitizeHtml(resultado.value?.micro_result || ''))
+const safeDiagnosis = computed(() => sanitizeHtml(resultado.value?.diagnosis || ''))
 
 function formatDate(dateString: string, includeTime: boolean = false) {
   if (!dateString) return 'N/A'

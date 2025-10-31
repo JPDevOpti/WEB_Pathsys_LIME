@@ -418,13 +418,13 @@
     <div class="content-section"><div class="section-title">MÉTODO UTILIZADO:</div><div class="content-box">{% if case.resultado and case.resultado.metodo %}{% if case.resultado.metodo is iterable and case.resultado.metodo is not string %}{{ case.resultado.metodo|join(', ') }}{% else %}{{ case.resultado.metodo }}{% endif %}{% else %}Elija un elemento.{% endif %}</div></div>
 
     <!-- Macroscopic Description -->
-    <div class="content-section"><div class="section-title">DESCRIPCIÓN MACROSCÓPICA</div><div class="content-box large">{{ case.resultado.resultado_macro if case.resultado and case.resultado.resultado_macro else '' }}</div></div>
+    <div class="content-section"><div class="section-title">DESCRIPCIÓN MACROSCÓPICA</div><div class="content-box large">{% if case.resultado and case.resultado.resultado_macro %}{{ case.resultado.resultado_macro | safe }}{% else %}{% endif %}</div></div>
 
     <!-- Microscopic Description -->
-    <div class="content-section"><div class="section-title">DESCRIPCIÓN MICROSCÓPICA</div><div class="content-box large">{{ case.resultado.resultado_micro if case.resultado and case.resultado.resultado_micro else '' }}</div></div>
+    <div class="content-section"><div class="section-title">DESCRIPCIÓN MICROSCÓPICA</div><div class="content-box large">{% if case.resultado and case.resultado.resultado_micro %}{{ case.resultado.resultado_micro | safe }}{% else %}{% endif %}</div></div>
 
     <!-- Diagnosis -->
-    <div class="content-section"><div class="section-title">DIAGNÓSTICO:</div><div class="content-box">{% if case.resultado and case.resultado.diagnostico %}{{ case.resultado.diagnostico }}{% endif %}</div></div>
+    <div class="content-section"><div class="section-title">DIAGNÓSTICO:</div><div class="content-box">{% if case.resultado and case.resultado.diagnostico %}{{ case.resultado.diagnostico | safe }}{% endif %}</div></div>
 
     <!-- CIE-10 -->
     {% if case.resultado and case.resultado.diagnostico_cie10 and case.resultado.diagnostico_cie10.codigo %}
