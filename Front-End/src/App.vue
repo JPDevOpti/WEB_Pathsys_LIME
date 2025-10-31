@@ -12,15 +12,59 @@
     <router-view v-else />
     <!-- Toasts globales -->
     <ToastContainer />
+
+    <!-- Notificación centrada para firma faltante -->
+    <Notification
+      :visible="signatureNoticeVisible && isInitialized"
+      type="warning"
+      title="Falta firma digital"
+      message="No tienes una firma digital registrada. Ve a tu perfil para subirla."
+      :auto-close="false"
+      position="center"
+      :inline="false"
+      @close="handleSignatureNoticeClose"
+    >
+      <template #content>
+        <div class="mt-4 pt-4 border-t flex justify-end">
+          <router-link to="/profile/my-profile">
+            <BaseButton variant="primary" size="md">Ir a Mi perfil</BaseButton>
+          </router-link>
+        </div>
+      </template>
+    </Notification>
   </div>
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthPersistence } from './composables/useAuthPersistence'
 import ToastContainer from '@/shared/components/ui/feedback/ToastContainer.vue'
+import { Notification } from '@/shared/components/ui/feedback'
+import { BaseButton } from '@/shared/components'
+import { useSignatureNotifier } from '@/shared/composables/useSignatureNotifier'
 
 // Inicializar persistencia de autenticación
 const { isInitialized } = useAuthPersistence()
+const route = useRoute()
+
+// Control de notificación centrada
+const { visible: signatureNoticeVisible, checkAndShowOncePerSession, close: closeSignatureNotice } = useSignatureNotifier()
+
+const handleSignatureNoticeClose = () => closeSignatureNotice()
+
+// Mostrar al finalizar inicialización
+watch(() => isInitialized, (ready) => {
+  if (ready) checkAndShowOncePerSession()
+}, { immediate: true })
+
+// Mostrar al entrar al dashboard
+// Comentario: Dispara la verificación solo cuando la ruta es '/dashboard'.
+watch(() => route.path, (path) => {
+  if (path === '/dashboard') {
+    checkAndShowOncePerSession()
+  }
+})
 </script>
 
 <style>

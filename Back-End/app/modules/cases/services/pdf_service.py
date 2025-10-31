@@ -104,7 +104,7 @@ class CasePdfService:
             page = await context.new_page()
             await page.set_content(html, wait_until="load")
             pdf_bytes = await page.pdf(
-                format="A4",
+                format="Letter",
                 margin={"top": "20mm", "right": "15mm", "bottom": "20mm", "left": "15mm"},
                 print_background=True,
                 display_header_footer=True,

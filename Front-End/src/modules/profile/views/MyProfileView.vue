@@ -387,7 +387,12 @@ const handleSignatureChange = async (payload: { file: File | null; previewUrl: s
       throw new Error('No se pudo obtener el código del patólogo')
     }
 
-    await profileApiService.updateFirma(pathologistCode, payload.previewUrl || '')
+    // Si no hay preview (se eliminó), usar endpoint de borrado; si existe, actualizar URL
+    if (!payload.previewUrl) {
+      await profileApiService.deleteFirma(pathologistCode)
+    } else {
+      await profileApiService.updateFirma(pathologistCode, payload.previewUrl)
+    }
 
     if (userProfile.value.roleSpecificData) {
       userProfile.value.roleSpecificData.firmaUrl = payload.previewUrl || undefined
@@ -400,13 +405,32 @@ const handleSignatureChange = async (payload: { file: File | null; previewUrl: s
     try {
       const auth = useAuthStore()
       if (auth.user) {
-        ;(auth.user as any).firma = payload.previewUrl || ''
-        ;(auth.user as any).firma_url = payload.previewUrl || ''
-        ;(auth.user as any).signatureUrl = payload.previewUrl || ''
-        ;(auth.user as any).firmaDigital = payload.previewUrl || ''
+        if (!payload.previewUrl) {
+          ;(auth.user as any).firma = ''
+          ;(auth.user as any).firma_url = ''
+          ;(auth.user as any).signatureUrl = ''
+          ;(auth.user as any).firmaDigital = ''
+        } else {
+          ;(auth.user as any).firma = payload.previewUrl
+          ;(auth.user as any).firma_url = payload.previewUrl
+          ;(auth.user as any).signatureUrl = payload.previewUrl
+          ;(auth.user as any).firmaDigital = payload.previewUrl
+        }
       }
-      try { localStorage.setItem('signature_url', payload.previewUrl || '') } catch {}
-      try { sessionStorage.setItem('signature_url', payload.previewUrl || '') } catch {}
+      try {
+        if (!payload.previewUrl) {
+          localStorage.removeItem('signature_url')
+        } else {
+          localStorage.setItem('signature_url', payload.previewUrl)
+        }
+      } catch {}
+      try {
+        if (!payload.previewUrl) {
+          sessionStorage.removeItem('signature_url')
+        } else {
+          sessionStorage.setItem('signature_url', payload.previewUrl)
+        }
+      } catch {}
     } catch {}
 
     showSuccessMessage()

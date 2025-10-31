@@ -103,9 +103,13 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
       localStorage.removeItem('auth_expires_at')
+      // Comentario: Limpiar claves relacionadas con firma para evitar falsos positivos en nueva sesión
+      localStorage.removeItem('signature_url')
       sessionStorage.removeItem('auth_token')
       sessionStorage.removeItem('auth_user')
       sessionStorage.removeItem('auth_expires_at')
+      sessionStorage.removeItem('signature_missing_notified')
+      sessionStorage.removeItem('signature_url')
       
       isLoading.value = false
     }

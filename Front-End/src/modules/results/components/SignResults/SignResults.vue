@@ -188,6 +188,13 @@
 
           <div class="mt-3 flex flex-wrap items-center gap-3 justify-end">
             <ClearButton :disabled="loading" @click="clearSearch" />
+            <PrintPdfButton 
+              :disabled="loading || !(caseDetails?.case_code || props.sampleId || caseCode)"
+              :case-code="caseDetails?.case_code || props.sampleId || caseCode"
+              size="md"
+              variant="secondary"
+              text="Imprimir PDF"
+            />
             <!-- Botón de previsualización temporalmente deshabilitado -->
             <button
               :disabled="loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature"
@@ -250,7 +257,7 @@ import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { ComponentCard } from '@/shared/components'
 import { ErrorMessage, ValidationAlert } from '@/shared/components/ui/feedback'
 import { FormInputField } from '@/shared/components/ui/forms'
-import { SearchButton, ClearButton } from '@/shared/components/ui/buttons'
+import { SearchButton, ClearButton, PrintPdfButton } from '@/shared/components/ui/buttons'
 import { DiseaseList } from '@/shared/components/ui/lists'
 import DocsIcon from '@/assets/icons/DocsIcon.vue'
 import WarningIcon from '@/assets/icons/WarningIcon.vue'

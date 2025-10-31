@@ -7,15 +7,15 @@ from pydantic.config import ConfigDict
 class CaseSignRequest(BaseModel):
     """Schema para firmar un caso"""
     # Resultados existentes
-    method: Optional[List[str]] = Field(None, description="Lista de métodos utilizados")
-    macro_result: Optional[str] = Field(None, max_length=5000, description="Resultado macroscópico")
-    micro_result: Optional[str] = Field(None, max_length=5000, description="Resultado microscópico")
-    diagnosis: Optional[str] = Field(None, max_length=2000, description="Diagnóstico")
-    observations: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales")
+    method: Optional[List[str]] = None
+    macro_result: Optional[str] = None
+    micro_result: Optional[str] = None
+    diagnosis: Optional[str] = None
+    observations: Optional[str] = None
     
     # Diagnósticos CIE-10 y CIE-O
-    cie10_diagnosis: Optional[Dict[str, str]] = Field(None, description="Diagnóstico CIE-10 con code y name")
-    cieo_diagnosis: Optional[Dict[str, str]] = Field(None, description="Diagnóstico CIE-O con code y name")
+    cie10_diagnosis: Optional[Dict[str, str]] = None
+    cieo_diagnosis: Optional[Dict[str, str]] = None
 
 
 class CaseSignResponse(BaseModel):

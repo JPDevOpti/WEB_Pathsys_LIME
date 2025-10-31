@@ -103,6 +103,13 @@
             <template #footer>
               <div class="flex flex-wrap items-center gap-3 justify-end">
                 <ClearButton :disabled="loading" @click="() => { showValidation = false; handleClearResults() }" />
+                <PrintPdfButton 
+                  :disabled="loading || !(caseDetails?.case_code || savedCaseCode || caseCode)"
+                  :case-code="caseDetails?.case_code || savedCaseCode || caseCode"
+                  size="md"
+                  variant="secondary"
+                  text="Imprimir PDF"
+                />
                 <SaveButton 
                   :disabled="saving || loading || !canSaveProgress || !canTranscribeByStatus" 
                   :loading="saving" 
@@ -189,7 +196,7 @@ import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { ComponentCard } from '@/shared/components'
 import { ErrorMessage, ValidationAlert } from '@/shared/components/ui/feedback'
 import { FormInputField } from '@/shared/components/ui/forms'
-import { SearchButton, ClearButton, SaveButton } from '@/shared/components/ui/buttons'
+import { SearchButton, ClearButton, SaveButton, PrintPdfButton } from '@/shared/components/ui/buttons'
 import ResultEditor from '../Shared/ResultEditor.vue'
 import PatientInfoCard from '../Shared/PatientInfoCard.vue'
 import CaseDetailsCard from '../Shared/CaseDetailsCard.vue'

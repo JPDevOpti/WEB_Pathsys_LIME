@@ -291,6 +291,11 @@ export const profileApiService = {
 
   async getFirma(patologoCode: string) {
     return PathologistApiService.getSignature(patologoCode)
+  },
+
+  async deleteFirma(patologoCode: string) {
+    // Fallback para backends sin DELETE: enviar firma vacía por PUT
+    return PathologistApiService.updateSignature(patologoCode, '')
   }
 }
 

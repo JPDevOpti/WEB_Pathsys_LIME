@@ -108,12 +108,28 @@ export class PathologistApiService {
   static async updateSignature(code: string, signatureUrl: string): Promise<PathologistResponse | null> {
     try {
       const normalized = this.trimOrEmpty(code)
-      const sig = this.trimOrEmpty(signatureUrl)
-      if (!normalized || !sig) return null
+      if (!normalized) return null
+      // Permitir cadena vacía para eliminar/limpiar la firma en backend
+      const sig = (signatureUrl ?? '').toString()
       const res: any = await apiClient.put<PathologistResponse>(`${this.BASE_URL}/${normalized}/signature`, { signature: sig })
       return res?.data ?? res ?? null
     } catch (error) {
       console.error(`${this.logPrefix} updateSignature error:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Eliminar firma digital
+   */
+  static async deleteSignature(code: string): Promise<boolean> {
+    try {
+      const normalized = this.trimOrEmpty(code)
+      if (!normalized) return false
+      await apiClient.delete(`${this.BASE_URL}/${normalized}/signature`)
+      return true
+    } catch (error) {
+      console.error(`${this.logPrefix} deleteSignature error:`, error)
       throw error
     }
   }

@@ -112,7 +112,7 @@ export function useSignatureManager(userRole?: string, pathologistCode?: string)
     
     try {
       // Remove signature from backend
-      await profileApiService.updateFirma(pathologistCode, '')
+      await profileApiService.deleteFirma(pathologistCode)
       selectedFile.value = null
       previewUrl.value = null
     } catch (error) {

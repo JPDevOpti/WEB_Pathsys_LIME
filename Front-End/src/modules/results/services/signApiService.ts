@@ -35,7 +35,9 @@ class SignApiService {
       const response = await apiClient.put(`${this.endpoint}/${caseCode}/sign`, payload)
       return response
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || `Error al firmar el caso ${caseCode}`)
+      const errs = error?.response?.data?.errors
+      const msg = Array.isArray(errs) && errs.length ? errs.map((e: any) => e?.msg || '').filter(Boolean).join('; ') : null
+      throw new Error(msg || error.response?.data?.detail || error.message || `Error al firmar el caso ${caseCode}`)
     }
   }
 

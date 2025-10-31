@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
+import re
+from urllib.parse import quote
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.config.database import get_database
 from app.modules.cases.services.pdf_service import CasePdfService
@@ -26,11 +28,26 @@ async def generate_case_pdf(
     """
     try:
         pdf_bytes = await pdf_service.generate_case_pdf(case_code)
+
+        # Intentar obtener el nombre del paciente para el filename
+        patient_name = ""
+        try:
+            case_obj = await pdf_service.case_service.get_case(case_code)
+            case_data = case_obj.model_dump() if hasattr(case_obj, "model_dump") else {}
+            patient_name = (case_data.get("patient_info") or {}).get("name", "")
+        except Exception:
+            patient_name = ""
+
+        base_name = f"{case_code}-{patient_name}".strip(" -") or f"{case_code}"
+        # Sanitizar para filename seguro (mantener letras, números, guiones, espacios, puntos y guion bajo)
+        safe_name = re.sub(r"[^\w\-. ]+", "", base_name).replace(" ", "_")
+        utf8_name = quote(f"{base_name}.pdf")
+
         return StreamingResponse(
-            iter([pdf_bytes]), 
-            media_type="application/pdf", 
+            iter([pdf_bytes]),
+            media_type="application/pdf",
             headers={
-                "Content-Disposition": f"inline; filename=caso-{case_code}.pdf"
+                "Content-Disposition": f"inline; filename=\"{safe_name}.pdf\"; filename*=UTF-8''{utf8_name}"
             }
         )
     except ValueError as e:

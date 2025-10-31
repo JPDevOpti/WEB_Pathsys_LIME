@@ -69,36 +69,10 @@ async function generatePdf() {
 
   try {
     const url = `${API_BASE_URL}/api/v1/cases/${encodeURIComponent(props.caseCode)}/pdf`
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        // Read token from either localStorage or sessionStorage to support rememberMe persistence
-        'Authorization': `Bearer ${(localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '')}`,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.detail || `Error ${response.status}: ${response.statusText}`)
-    }
-
-    const pdfBlob = await response.blob()
-    
-    if (pdfBlob.type !== 'application/pdf') {
-      throw new Error('El servidor no devolvió un archivo PDF válido')
-    }
-
-    const pdfUrl = URL.createObjectURL(pdfBlob)
+    // Abrir directamente el endpoint para preservar Content-Disposition y filename del backend
     const features = 'noopener,noreferrer,width=1000,height=800'
-    window.open(pdfUrl, '_blank', features)
-
+    window.open(url, '_blank', features)
     success('generic', 'PDF Generado', `PDF del caso ${props.caseCode} generado exitosamente`)
-    emit('pdf-generated', pdfBlob)
-
-    setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000)
-
   } catch (error: any) {
     console.error('Error generando PDF:', error)
     const errorMessage = error.message || 'Error desconocido al generar el PDF'
