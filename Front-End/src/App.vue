@@ -14,24 +14,10 @@
     <ToastContainer />
 
     <!-- Notificación centrada para firma faltante -->
-    <Notification
+    <SignatureNotice
       :visible="signatureNoticeVisible && isInitialized"
-      type="warning"
-      title="Falta firma digital"
-      message="No tienes una firma digital registrada. Ve a tu perfil para subirla."
-      :auto-close="false"
-      position="center"
-      :inline="false"
       @close="handleSignatureNoticeClose"
-    >
-      <template #content>
-        <div class="mt-4 pt-4 border-t flex justify-end">
-          <router-link to="/profile/my-profile">
-            <BaseButton variant="primary" size="md">Ir a Mi perfil</BaseButton>
-          </router-link>
-        </div>
-      </template>
-    </Notification>
+    />
   </div>
 </template>
 
@@ -40,8 +26,7 @@ import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthPersistence } from './composables/useAuthPersistence'
 import ToastContainer from '@/shared/components/ui/feedback/ToastContainer.vue'
-import { Notification } from '@/shared/components/ui/feedback'
-import { BaseButton } from '@/shared/components'
+import { SignatureNotice } from '@/shared/components/ui/feedback'
 import { useSignatureNotifier } from '@/shared/composables/useSignatureNotifier'
 
 // Inicializar persistencia de autenticación
@@ -54,16 +39,22 @@ const { visible: signatureNoticeVisible, checkAndShowOncePerSession, close: clos
 const handleSignatureNoticeClose = () => closeSignatureNotice()
 
 // Mostrar al finalizar inicialización
-watch(() => isInitialized, (ready) => {
+watch(() => isInitialized.value, (ready) => {
+  console.log('[App] isInitialized changed', ready)
   if (ready) checkAndShowOncePerSession()
 }, { immediate: true })
 
 // Mostrar al entrar al dashboard
 // Comentario: Dispara la verificación solo cuando la ruta es '/dashboard'.
 watch(() => route.path, (path) => {
+  console.log('[App] route changed', path)
   if (path === '/dashboard') {
     checkAndShowOncePerSession()
   }
+})
+
+watch(() => signatureNoticeVisible.value, (v) => {
+  console.log('[App] signatureNoticeVisible', v)
 })
 </script>
 

@@ -8,7 +8,7 @@
     /* PDF Page Rules for Footer */
     @page {
       size: Letter;
-      margin: 2mm 15mm 20mm 15mm;
+      margin: 15mm 12mm 22mm 12mm;
       @bottom-right {
         content: "Página " counter(page) " de " counter(pages);
         font-size: 8px;
@@ -49,18 +49,16 @@
       line-height: 1.3;
     }
     .page { 
-      width: 216mm; 
-      min-height: 279mm; 
-      padding: 2mm 15mm 20mm 15mm; 
+      width: 100%; 
+      min-height: 0; 
+      padding: 0; 
       margin: 0 auto; 
       background: white; 
       page-break-after: always;
     }
     
     /* Additional pages with more top padding */
-    .page.additional-page {
-      padding: 15mm 15mm 20mm 15mm;
-    }
+    .page.additional-page { padding: 0; }
     
     /* Page Break Rules */
     .no-break { 
