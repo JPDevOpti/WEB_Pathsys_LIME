@@ -1,0 +1,49 @@
+services:
+  - type: web
+    name: pathsys-backend
+    env: python
+    branch: production
+    autoDeploy: true
+    rootDir: Back-End
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "False"
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "240"
+      - key: DATABASE_NAME
+        value: lime_pathsys
+      - key: FRONTEND_URL
+        value: https://web-pathsys-lime.vercel.app
+      - key: LOG_FORMAT
+        value: json
+      - key: LOG_LEVEL
+        value: INFO
+      - key: HOST
+        value: 0.0.0.0
+      - key: SECRET_KEY
+        fromSecret: secret-key
+      - key: MONGODB_URL
+        fromSecret: mongodb-url
+      - key: BACKEND_CORS_ORIGINS
+        value: https://web-pathsys-lime.vercel.app
+  - type: static_site
+    name: pathsys-frontend
+    branch: production
+    autoDeploy: true
+    rootDir: Front-End
+    buildCommand: npm ci && npm run build
+    publishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://pathsys-backend.onrender.com
+      - key: VITE_APP_ENV
+        value: production
+      - key: VITE_APP_TITLE
+        value: WEB-LIS PathSys
+      - key: VITE_DEV_MODE
+        value: "false"
+

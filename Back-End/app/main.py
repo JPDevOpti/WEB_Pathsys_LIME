@@ -5,7 +5,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.encoders import jsonable_encoder
-import os, logging
+from pathlib import Path
+import logging
 from app.config.settings import settings
 from app.config.database import connect_to_mongo, close_mongo_connection, get_database
 from app.modules.cases.repositories.case_repository import CaseRepository
@@ -16,16 +17,22 @@ from app.modules.patients.repositories.patient_repository import PatientReposito
 
 app = FastAPI(title="WEB-LIS PathSys - New Backend", version="1.0.0")
 
+cors_origins = list(settings.BACKEND_CORS_ORIGINS)
+frontend_url = settings.FRONTEND_URL.rstrip("/") if settings.FRONTEND_URL else ""
+if frontend_url and frontend_url not in cors_origins:
+    cors_origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-os.makedirs("uploads/signatures", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+upload_dir = Path(settings.UPLOAD_DIR)
+(upload_dir / "signatures").mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
 
 try:
     from .api.v1.router import api_router as api_v1_router  # type: ignore
