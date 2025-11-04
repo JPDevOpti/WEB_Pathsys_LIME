@@ -251,8 +251,7 @@ function stop() {
   kill_port 5174 "Frontend"
   kill_port 27017 "MongoDB"
   brew services stop mongodb/brew/mongodb-community >/dev/null 2>&1 || true
-  clean_env_files
-  echo "✅ Servicios detenidos y configuración limpiada"
+  echo "✅ Servicios detenidos"
 }
 
 function help() {
