@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: ./Back-End
+      dockerfile: Dockerfile
+    environment:
+      MONGODB_URL: mongodb+srv://juanrestrepo183:whbyaZSbhn4H7PpO@cluster0.o8uta.mongodb.net/
+      DATABASE_NAME: lime_pathsys
+      ENVIRONMENT: development
+      DEBUG: "True"
+      SECRET_KEY: dev-secret-key-please-change-in-prod-32-chars-min
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      FRONTEND_URL: http://localhost:5174
+    volumes:
+      - ./Back-End/app:/app/app
+      - ./Back-End/uploads:/app/uploads
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./Front-End
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+      VITE_APP_TITLE: WEB-LIS PathSys (Docker)
+      VITE_APP_ENV: docker
+      VITE_DEV_MODE: "false"
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+

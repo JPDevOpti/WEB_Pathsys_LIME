@@ -21,7 +21,7 @@ clean_env_files() {
 write_env_files() {
   clean_env_files
   cat > Back-End/.env <<'EOF'
-MONGODB_URL=mongodb://localhost:27017
+MONGODB_URL=mongodb+srv://juanrestrepo183:whbyaZSbhn4H7PpO@cluster0.o8uta.mongodb.net/
 DATABASE_NAME=lime_pathsys
 ENVIRONMENT=development
 DEBUG=True
@@ -62,24 +62,6 @@ ensure_backend_deps() {
   fi
 }
 
-ensure_mongo_local() {
-  if ! command -v mongod >/dev/null 2>&1; then
-    echo "❌ MongoDB no está instalado. Instalando..."
-    brew tap mongodb/brew >/dev/null 2>&1 || true
-    brew install mongodb-community
-  fi
-  brew services start mongodb/brew/mongodb-community >/dev/null 2>&1 || true
-  for _ in {1..10}; do
-    if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
-      echo "✅ MongoDB listo"
-      return
-    fi
-    sleep 2
-  done
-  echo "❌ MongoDB no respondió"
-  exit 1
-}
-
 kill_port() {
   local port=$1
   local label=$2
@@ -116,6 +98,32 @@ report_port() {
   fi
 }
 
+wait_for_docker() {
+  local retries=${1:-15}
+  local delay=${2:-2}
+  local attempt=1
+  while [ $attempt -le $retries ]; do
+    if docker info >/dev/null 2>&1; then
+      return 0
+    fi
+    echo "⏳ Esperando Docker (${attempt}/${retries})..."
+    sleep "$delay"
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
+ensure_docker() {
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "❌ Docker no está instalado"
+    exit 1
+  fi
+  if ! wait_for_docker; then
+    echo "❌ Docker daemon no responde tras varios intentos. Inicia Docker Desktop y vuelve a intentarlo"
+    exit 1
+  fi
+}
+
 start_backend_service() {
   local port=$1
   ensure_backend_deps
@@ -143,16 +151,26 @@ show_summary() {
 
 start_stack() {
   local api_port=${1:-8000}
-  local use_local_mongo=${2:-true}
-  local mongo_label=${3:-"mongodb://localhost:27017"}
+  local mongo_label=${2:-"MongoDB Atlas"}
   write_env_files
-  [ "$use_local_mongo" = "true" ] && ensure_mongo_local
   start_backend_service "$api_port"
   start_frontend_service
   sleep 2
   wait_http "http://localhost:${api_port}/docs" "Backend"
   wait_http "http://localhost:5174" "Frontend"
   show_summary "$api_port" "$mongo_label"
+}
+
+start_docker_stack() {
+  ensure_docker
+  echo "🐳 Iniciando entorno DOCKER..."
+  local root_dir
+  root_dir=$(cd "$(dirname "$0")" && pwd)
+  docker compose -f "$root_dir/docker-compose.yml" up -d --build
+  echo "✅ Entorno DOCKER activo"
+  echo "🌐 Frontend:    http://localhost:5174"
+  echo "🔧 API:         http://localhost:8000"
+  echo "📦 MongoDB:     MongoDB Atlas"
 }
 
 function setup() {
@@ -221,7 +239,7 @@ function run_tests() {
 
 function start_local() {
   echo "🚀 Iniciando entorno LOCAL..."
-  start_stack 8000 true "mongodb://localhost:27017"
+  start_stack 8000 "MongoDB Atlas"
 }
 
 function status() {
@@ -229,11 +247,12 @@ function status() {
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   report_port 8000 "Backend API"
   report_port 5174 "Frontend"
-  report_port 27017 "MongoDB"
 
   if [ -f "Back-End/.env" ]; then
     echo "✅ Back-End/.env presente"
-    grep -q "mongodb://localhost" Back-End/.env && echo "   └─ Modo base de datos: Local"
+    local mongo_url
+    mongo_url=$(grep -m1 'MONGODB_URL' Back-End/.env | cut -d'=' -f2-)
+    [ -n "$mongo_url" ] && echo "   └─ Base de datos: $mongo_url"
   else
     echo "❌ Falta Back-End/.env"
   fi
@@ -255,7 +274,36 @@ function stop() {
   kill_port 5174 "Frontend"
   kill_port 27017 "MongoDB"
   brew services stop mongodb/brew/mongodb-community >/dev/null 2>&1 || true
-  echo "✅ Servicios detenidos"
+  local docker_down_status="skipped"
+  if command -v docker >/dev/null 2>&1; then
+    if wait_for_docker 10 2; then
+      local root_dir
+      root_dir=$(cd "$(dirname "$0")" && pwd)
+      if docker compose -f "$root_dir/docker-compose.yml" down --remove-orphans --volumes >/dev/null 2>&1; then
+        docker_down_status="ok"
+      else
+        docker_down_status="error"
+      fi
+    else
+      echo "⚠️  Docker no está iniciado; no se detuvieron contenedores"
+      docker_down_status="unavailable"
+    fi
+  fi
+
+  case "$docker_down_status" in
+    ok)
+      echo "✅ Servicios detenidos"
+      ;;
+    skipped)
+      echo "✅ Servicios locales detenidos"
+      ;;
+    unavailable)
+      echo "⚠️  Servicios locales detenidos; inicia Docker si necesitas bajar contenedores"
+      ;;
+    error)
+      echo "⚠️  Error al detener contenedores Docker"
+      ;;
+  esac
 }
 
 function help() {
@@ -268,6 +316,7 @@ function help() {
   echo ""
   echo " Inicio:"
   echo "  local        - Inicia servicios en LOCAL (MongoDB local)"
+  echo "  docker       - Inicia servicios en DOCKER"
   echo ""
   echo "  Utilidades:"
   echo "  status       - Muestra el estado del sistema"
@@ -306,6 +355,9 @@ case "$1" in
     ;;
   local)
     start_local
+    ;;
+  docker)
+    start_docker_stack
     ;;
   status)
     status

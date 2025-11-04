@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 import asyncio
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
@@ -26,6 +26,8 @@ class CasePdfService:
             autoescape=select_autoescape(["html", "xml"]),
             enable_async=True,
         )
+        assets_dir = self.templates_path.parent / "assets"
+        self.logos = self._load_logos(assets_dir)
 
     # Sanitizador básico de HTML para PDF
     def _sanitize_html(self, html: Optional[str]) -> Markup:
@@ -70,6 +72,22 @@ class CasePdfService:
         clean = re.sub(r"</?([a-zA-Z0-9]+)(\b[^>]*)?>", _filter_tag, clean)
         return Markup(clean)
 
+    def _load_logos(self, assets_dir: Path) -> Dict[str, str]:
+        logos: Dict[str, str] = {}
+        files = {
+            "lime": ("logo_lime.b64", "image/png"),
+            "udea": ("logo_udea.b64", "image/png"),
+            "hama": ("logo_hama.b64", "image/png"),
+        }
+        for key, (filename, mime) in files.items():
+            path = assets_dir / filename
+            if path.exists():
+                data = path.read_text(encoding="utf-8").replace("\n", "").strip()
+                logos[key] = f"data:{mime};base64,{data}" if data else ""
+            else:
+                logos[key] = ""
+        return logos
+
     async def generate_case_pdf(self, case_code: str) -> bytes:
         try:
             from playwright.async_api import async_playwright  # type: ignore
@@ -94,7 +112,8 @@ class CasePdfService:
         html: str = await template.render_async(
             case=case_data, 
             pathologist_signature=pathologist_signature,
-            pruebas_complementarias=complementary_tests
+            pruebas_complementarias=complementary_tests,
+            logos=self.logos
         )
 
         # Generar PDF
