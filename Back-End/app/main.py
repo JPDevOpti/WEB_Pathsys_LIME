@@ -16,9 +16,13 @@ from app.modules.patients.repositories.patient_repository import PatientReposito
 
 app = FastAPI(title="WEB-LIS PathSys - New Backend", version="1.0.0")
 
+cors_origins = list({origin.rstrip('/') for origin in settings.BACKEND_CORS_ORIGINS})
+if settings.FRONTEND_URL:
+    cors_origins.append(settings.FRONTEND_URL.rstrip('/'))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
