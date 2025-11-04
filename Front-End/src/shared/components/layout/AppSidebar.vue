@@ -325,7 +325,7 @@ const canAccessRoute = (path: string): boolean => {
     // Bloquear submenús específicos
     if (path.includes('/users')) return false; // Gestión de usuarios
     if (path.includes('/cases/new') || path.includes('/cases/edit')) return false; // Nuevo/Editar caso
-    // if (path.includes('/complementary-techniques')) return false; // Técnicas complementarias - PERMITIDO
+    // if (path.includes('/unread-cases')) return false; // Casos sin lectura - PERMITIDO
     if (path.includes('/cases/to-approve')) return false; // Casos por aprobar
     if (path.startsWith('/statistics/')) return false; // Todos los submenús de estadísticas
     
@@ -335,7 +335,7 @@ const canAccessRoute = (path: string): boolean => {
                    path.startsWith('/patients/list') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/sign') || 
-                   path.startsWith('/complementary-techniques') ||
+                  path.startsWith('/unread-cases') ||
                    path === '/profile' ||
                    path.startsWith('/support');
     return result;
@@ -356,7 +356,7 @@ const canAccessRoute = (path: string): boolean => {
     // Bloquear submenús específicos
     if (path.includes('/users')) return false; // Gestión de usuarios
     if (path.includes('/cases/new') || path.includes('/cases/edit')) return false; // Nuevo/Editar caso
-    // if (path.includes('/complementary-techniques')) return false; // Técnicas complementarias - PERMITIDO
+    // if (path.includes('/unread-cases')) return false; // Casos sin lectura - PERMITIDO
     if (path.includes('/cases/to-approve')) return false; // Casos por aprobar
     if (path.startsWith('/statistics/')) return false; // Todos los submenús de estadísticas
     if (path.startsWith('/results/sign')) return false; // Firmar resultados
@@ -367,7 +367,7 @@ const canAccessRoute = (path: string): boolean => {
                    path.startsWith('/patients/list') || 
                    path.startsWith('/cases/previous') || 
                    path.startsWith('/results/perform') || 
-                   path.startsWith('/complementary-techniques') ||
+                  path.startsWith('/unread-cases') ||
                    path === '/profile' ||
                    path.startsWith('/support');
     return result;
@@ -465,7 +465,7 @@ const filteredMenuItems = computed(() => {
       subItems: [
         { name: "Pacientes", path: "/patients/list", pro: false, alwaysVisible: true },
         { name: "Casos", path: "/cases/list", pro: false, alwaysVisible: true },
-        { name: "Técnicas complementarias", path: "/complementary-techniques", pro: false, alwaysVisible: true }
+        { name: "Casos sin lectura", path: "/unread-cases", pro: false, alwaysVisible: true }
 
       ],
       alwaysVisible: true

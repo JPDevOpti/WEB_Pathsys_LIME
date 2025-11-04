@@ -12,6 +12,7 @@ from app.modules.billing.routes import router as billing_router
 from app.modules.diseases.routes.disease_routes import router as diseases_router
 from app.modules.tickets.routes import router as tickets_router
 from app.modules.approvals.routes import approval_router as approvals_router
+from app.modules.unread_cases.routes import router as unread_cases_router
 
 api_router = APIRouter()
 
@@ -19,6 +20,7 @@ api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 api_router.include_router(patients_router, prefix="/patients", tags=["patients"])
 api_router.include_router(entities_router, prefix="/entities", tags=["entities"])
 api_router.include_router(tests_router, prefix="/tests", tags=["tests"])
+api_router.include_router(unread_cases_router, prefix="/unread-cases", tags=["unread-cases"])
 api_router.include_router(cases_router, prefix="/cases", tags=["cases"])
 api_router.include_router(pathologists_router, prefix="/pathologists", tags=["pathologists"])
 api_router.include_router(residents_router, prefix="/residents", tags=["residents"])
@@ -57,6 +59,7 @@ async def api_info():
             "diseases",
             "tickets",
             "approvals",
+            "unread-cases",
         ],
         "modules_pending": []
     }

@@ -17,7 +17,7 @@
             <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Marcar técnicas como completadas
+            Marcar casos sin lectura como completados
           </h3>
           <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
         </div>
@@ -25,10 +25,10 @@
         <!-- Content -->
         <div class="flex-1 overflow-y-auto p-5 space-y-6">
           <div>
-            <h4 class="text-sm font-semibold text-gray-700 mb-3">Técnicas Seleccionadas ({{ techniques.length }})</h4>
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Casos sin lectura seleccionados ({{ unreadCases.length }})</h4>
             <ul class="divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden text-sm">
               <li
-                v-for="t in techniques"
+                v-for="t in unreadCases"
                 :key="t.id"
                 class="group bg-white focus-within:bg-blue-50/50"
               >
@@ -39,7 +39,7 @@
                   :aria-expanded="isExpanded(t.id) ? 'true' : 'false'"
                 >
                   <span class="inline-flex items-center justify-center w-5 h-5 rounded border border-gray-300 text-[10px] font-medium text-gray-500 bg-white flex-shrink-0">
-                    {{ indexOfTechnique(t.id) + 1 }}
+                    {{ indexOfUnreadCase(t.id) + 1 }}
                   </span>
                   <div class="flex-1 min-w-0">
                     <p class="font-medium text-gray-800 truncate flex items-center gap-2">
@@ -80,7 +80,7 @@
                         </div>
                         <div>
                           <p class="text-[10px] font-medium text-gray-500 uppercase tracking-wide">N° Placas</p>
-                          <p class="text-[11px] font-semibold text-gray-800">{{ t.numberOfPlates || 0 }}</p>
+                      <p class="text-[11px] font-semibold text-gray-800">{{ t.numberOfPlates ?? 0 }}</p>
                         </div>
                         <div>
                           <p class="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Fecha ingreso</p>
@@ -152,7 +152,7 @@
               v-model="entregadoA"
               type="text"
               maxlength="100"
-              placeholder="Nombre de la persona que recibe las técnicas..."
+              placeholder="Nombre de la persona que recibe los casos sin lectura..."
               class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': entregadoAError }"
             />
@@ -172,10 +172,10 @@
             </button>
             <button
               @click="emitConfirm"
-              :disabled="techniques.length === 0 || !entregadoA.trim()"
+              :disabled="unreadCases.length === 0 || !entregadoA.trim()"
               class="px-4 py-2 text-sm font-medium text-green-600 bg-transparent border-2 border-green-600 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Confirmar ({{ techniques.length }})
+              Confirmar ({{ unreadCases.length }})
             </button>
           </div>
         </div>
@@ -186,23 +186,23 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { ComplementaryTechnique } from '../../types'
+import type { UnreadCase } from '../../types'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 
 interface Props {
   modelValue: boolean
-  selected: ComplementaryTechnique[]
+  selected: UnreadCase[]
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
   (e: 'close'): void
-  (e: 'completed', techniques: ComplementaryTechnique[]): void
+  (e: 'completed', payload: { caseCodes: string[]; deliveredTo: string; deliveryDate: string }): void
 }>()
 
 const visible = computed(() => props.modelValue)
-const techniques = computed(() => props.selected || [])
+const unreadCases = computed(() => props.selected || [])
 
 const expandedIds = ref<Set<string>>(new Set())
 const entregadoA = ref('')
@@ -222,8 +222,8 @@ const isExpanded = (id: string): boolean => {
   return expandedIds.value.has(id)
 }
 
-const indexOfTechnique = (id: string): number => {
-  return techniques.value.findIndex(t => t.id === id)
+const indexOfUnreadCase = (id: string): number => {
+  return unreadCases.value.findIndex(t => t.id === id)
 }
 
 const formatDate = (dateString: string) => {
@@ -250,16 +250,13 @@ const emitConfirm = () => {
     return
   }
 
-  // Actualizar técnicas con fecha y persona de entrega
-  const updatedTechniques = techniques.value.map(t => ({
-    ...t,
+  const payload = {
+    caseCodes: unreadCases.value.map(t => t.caseCode || (t as any).case_code || t.id),
     deliveredTo: entregadoA.value.trim(),
-    deliveryDate: new Date().toISOString(),
-    status: 'Completado',
-    updatedAt: new Date().toISOString()
-  }))
+    deliveryDate: new Date().toISOString()
+  }
 
-  emit('completed', updatedTechniques)
+  emit('completed', payload)
   emit('update:modelValue', false)
   entregadoA.value = ''
   entregadoAError.value = ''

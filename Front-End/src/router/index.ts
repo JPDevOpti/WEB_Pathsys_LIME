@@ -9,7 +9,7 @@ import { caseListRoutes } from '@/modules/case-list/routes/caseListRoutes'
 import { resultsRoutes } from '@/modules/results/routes/resultsRoutes'
 import { reportsRoutes } from '@/modules/reports/routes/reportsRoutes'
 import { supportRoutes } from '@/modules/support/routes/supportRoutes'
-import { complementaryTechniquesRoutes } from '@/modules/complementary-techniques/routes/complementaryTechniquesRoutes'
+import { unreadCasesRoutes } from '@/modules/unread-cases/routes/unreadCasesRoutes'
 import { casesApprovalRoutes } from '@/modules/cases-approval/routes/casesApprovalRoutes'
 import { patientsRoutes } from '@/modules/patients/routes/patientsRoutes'
 import { patientListRoutes } from '@/modules/patients-list/routes'
@@ -31,7 +31,7 @@ const router = createRouter({
     ...resultsRoutes,
     ...reportsRoutes,
     ...supportRoutes,
-    ...complementaryTechniquesRoutes,
+    ...unreadCasesRoutes,
     ...casesApprovalRoutes,
     ...patientsRoutes,
     ...patientListRoutes,

@@ -135,8 +135,17 @@ export function usePerformResults(sampleId: string) {
     errorMessage.value = null
     try {
       const beCase = await casesApiService.getCaseByCode(casoCode)
+      console.groupCollapsed('[usePerformResults] Caso cargado desde backend')
+      console.log('Código:', casoCode)
+      console.log('Resultado bruto:', beCase?.result)
+      console.log('Diagnóstico legacy:', (beCase as any)?.resultado)
+      console.groupEnd()
       patient.value = mapCaseToPatient(beCase)
       caseDetails.value = mapCaseToCaseDetails(beCase)
+      console.groupCollapsed('[usePerformResults] caseDetails mapeado')
+      console.log('Código:', casoCode)
+      console.log('caseDetails.result:', caseDetails.value?.result)
+      console.groupEnd()
       sample.value = {
         id: beCase.case_code,
         type: 'Caso',
@@ -261,17 +270,29 @@ export function usePerformResults(sampleId: string) {
       if (!sample.value?.id) throw new Error('No hay caso cargado')
       
       // Preparar datos del diagnóstico CIE-10
-      const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
+      const cie10Diagnosis = hasDisease.value && primaryDisease.value ? {
         id: primaryDisease.value.id,
-        codigo: primaryDisease.value.code,
-        nombre: primaryDisease.value.name
+        code: primaryDisease.value.code,
+        name: primaryDisease.value.name
+      } : undefined
+
+      const cie10DiagnosisLegacy = cie10Diagnosis ? {
+        id: cie10Diagnosis.id,
+        codigo: cie10Diagnosis.code,
+        nombre: cie10Diagnosis.name
       } : undefined
 
       // Preparar datos del diagnóstico CIEO
-      const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
+      const cieoDiagnosis = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
         id: primaryDiseaseCIEO.value.id,
-        codigo: primaryDiseaseCIEO.value.code,
-        nombre: primaryDiseaseCIEO.value.name
+        code: primaryDiseaseCIEO.value.code,
+        name: primaryDiseaseCIEO.value.name
+      } : undefined
+
+      const cieoDiagnosisLegacy = cieoDiagnosis ? {
+        id: cieoDiagnosis.id,
+        codigo: cieoDiagnosis.code,
+        nombre: cieoDiagnosis.name
       } : undefined
 
       // Preparar datos para el nuevo backend
@@ -281,8 +302,10 @@ export function usePerformResults(sampleId: string) {
         micro_result: sections.value?.micro || '',
         diagnosis: sections.value?.diagnosis || '',
         observations: undefined,
-        diagnostico_cie10: diagnosticoCie10,
-        diagnostico_cieo: diagnosticoCIEO
+  cie10_diagnosis: cie10Diagnosis,
+  cieo_diagnosis: cieoDiagnosis,
+  diagnostico_cie10: cie10DiagnosisLegacy,
+  diagnostico_cieo: cieoDiagnosisLegacy
       }
       
       console.log('Enviando datos al nuevo backend:', requestData)
@@ -313,17 +336,29 @@ export function usePerformResults(sampleId: string) {
       if (!sample.value?.id) throw new Error('No hay caso cargado')
       
       // Preparar datos del diagnóstico CIE-10
-      const diagnosticoCie10 = hasDisease.value && primaryDisease.value ? {
+      const cie10Diagnosis = hasDisease.value && primaryDisease.value ? {
         id: primaryDisease.value.id,
-        codigo: primaryDisease.value.code,
-        nombre: primaryDisease.value.name
+        code: primaryDisease.value.code,
+        name: primaryDisease.value.name
+      } : undefined
+
+      const cie10DiagnosisLegacy = cie10Diagnosis ? {
+        id: cie10Diagnosis.id,
+        codigo: cie10Diagnosis.code,
+        nombre: cie10Diagnosis.name
       } : undefined
 
       // Preparar datos del diagnóstico CIEO
-      const diagnosticoCIEO = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
+      const cieoDiagnosis = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
         id: primaryDiseaseCIEO.value.id,
-        codigo: primaryDiseaseCIEO.value.code,
-        nombre: primaryDiseaseCIEO.value.name
+        code: primaryDiseaseCIEO.value.code,
+        name: primaryDiseaseCIEO.value.name
+      } : undefined
+
+      const cieoDiagnosisLegacy = cieoDiagnosis ? {
+        id: cieoDiagnosis.id,
+        codigo: cieoDiagnosis.code,
+        nombre: cieoDiagnosis.name
       } : undefined
 
       // Preparar datos para el nuevo backend
@@ -333,8 +368,10 @@ export function usePerformResults(sampleId: string) {
         micro_result: sections.value?.micro || '',
         diagnosis: sections.value?.diagnosis || '',
         observations: undefined,
-        diagnostico_cie10: diagnosticoCie10,
-        diagnostico_cieo: diagnosticoCIEO
+  cie10_diagnosis: cie10Diagnosis,
+  cieo_diagnosis: cieoDiagnosis,
+  diagnostico_cie10: cie10DiagnosisLegacy,
+  diagnostico_cieo: cieoDiagnosisLegacy
       }
       
       

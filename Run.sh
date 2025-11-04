@@ -20,8 +20,15 @@ clean_env_files() {
 
 write_env_files() {
   clean_env_files
-  cat > Back-End/.env <<'EOF'
-MONGODB_URL=mongodb+srv://juanrestrepo183:whbyaZSbhn4H7PpO@cluster0.o8uta.mongodb.net/
+  local mode=${1:-local}
+  local mongo_url
+  if [ "$mode" = "atlas" ]; then
+    mongo_url="mongodb+srv://juanrestrepo183:whbyaZSbhn4H7PpO@cluster0.o8uta.mongodb.net/"
+  else
+    mongo_url="mongodb://localhost:27017/"
+  fi
+  cat > Back-End/.env <<EOF
+MONGODB_URL=${mongo_url}
 DATABASE_NAME=lime_pathsys
 ENVIRONMENT=development
 DEBUG=True
@@ -60,6 +67,47 @@ ensure_backend_deps() {
     echo "🐍 Instalando dependencias del Back-End..."
     (cd Back-End && . venv/bin/activate && pip install --upgrade pip && [ -f requirements.txt ] && pip install -r requirements.txt)
   fi
+}
+
+ensure_mongo_local() {
+  local mode=${1:-local}
+  if [ "$mode" = "atlas" ]; then
+    return
+  fi
+
+  if lsof -Pi :27017 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "✅ MongoDB local ya está activo (puerto 27017)"
+    return
+  fi
+
+  if command -v brew >/dev/null 2>&1; then
+    echo "🍃 Iniciando MongoDB local con brew services..."
+    if brew services start mongodb/brew/mongodb-community >/dev/null 2>&1 || \
+       brew services start mongodb-community >/dev/null 2>&1; then
+      sleep 2
+      if lsof -Pi :27017 -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo "✅ MongoDB local iniciado"
+        return
+      fi
+    fi
+  fi
+
+  if command -v mongod >/dev/null 2>&1; then
+    echo "🍃 Ejecutando mongod en segundo plano..."
+    local log_file="${TMPDIR:-/tmp}/mongod-pathsys.log"
+    mkdir -p "${HOME}/data/db" >/dev/null 2>&1 || true
+    if mongod --config /opt/homebrew/etc/mongod.conf --fork --logpath "$log_file" >/dev/null 2>&1 || \
+       mongod --dbpath "${HOME}/data/db" --fork --logpath "$log_file" >/dev/null 2>&1; then
+      sleep 2
+      if lsof -Pi :27017 -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo "✅ MongoDB local iniciado (log: $log_file)"
+        return
+      fi
+    fi
+  fi
+
+  echo "❌ No fue posible iniciar MongoDB automáticamente. Inicia el servicio manualmente o instala mongodb-community." >&2
+  exit 1
 }
 
 kill_port() {
@@ -101,12 +149,15 @@ report_port() {
 wait_for_docker() {
   local retries=${1:-15}
   local delay=${2:-2}
+  local silent=${3:-false}
   local attempt=1
   while [ $attempt -le $retries ]; do
     if docker info >/dev/null 2>&1; then
       return 0
     fi
-    echo "⏳ Esperando Docker (${attempt}/${retries})..."
+    if [ "$silent" != "true" ]; then
+      echo "⏳ Esperando Docker (${attempt}/${retries})..."
+    fi
     sleep "$delay"
     attempt=$((attempt + 1))
   done
@@ -151,8 +202,10 @@ show_summary() {
 
 start_stack() {
   local api_port=${1:-8000}
-  local mongo_label=${2:-"MongoDB Atlas"}
-  write_env_files
+  local mongo_label=${2:-"MongoDB"}
+  local env_mode=${3:-local}
+  write_env_files "$env_mode"
+  ensure_mongo_local "$env_mode"
   start_backend_service "$api_port"
   start_frontend_service
   sleep 2
@@ -239,7 +292,12 @@ function run_tests() {
 
 function start_local() {
   echo "🚀 Iniciando entorno LOCAL..."
-  start_stack 8000 "MongoDB Atlas"
+  start_stack 8000 "MongoDB Local" local
+}
+
+function start_atlas() {
+  echo "🚀 Iniciando entorno LOCAL con MongoDB Atlas..."
+  start_stack 8000 "MongoDB Atlas" atlas
 }
 
 function status() {
@@ -276,7 +334,7 @@ function stop() {
   brew services stop mongodb/brew/mongodb-community >/dev/null 2>&1 || true
   local docker_down_status="skipped"
   if command -v docker >/dev/null 2>&1; then
-    if wait_for_docker 10 2; then
+    if wait_for_docker 10 2 true; then
       local root_dir
       root_dir=$(cd "$(dirname "$0")" && pwd)
       if docker compose -f "$root_dir/docker-compose.yml" down --remove-orphans --volumes >/dev/null 2>&1; then
@@ -316,6 +374,7 @@ function help() {
   echo ""
   echo " Inicio:"
   echo "  local        - Inicia servicios en LOCAL (MongoDB local)"
+  echo "  atlas        - Inicia servicios en LOCAL con MongoDB Atlas"
   echo "  docker       - Inicia servicios en DOCKER"
   echo ""
   echo "  Utilidades:"
@@ -358,6 +417,9 @@ case "$1" in
     ;;
   docker)
     start_docker_stack
+    ;;
+  atlas)
+    start_atlas
     ;;
   status)
     status

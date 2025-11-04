@@ -4,6 +4,18 @@ from pydantic import BaseModel, Field, field_validator
 from pydantic.config import ConfigDict
 
 
+class DiagnosisInfo(BaseModel):
+    id: Optional[str] = Field(default=None, description="Identificador interno opcional")
+    code: str = Field(..., description="Código del diagnóstico")
+    name: str = Field(..., description="Nombre del diagnóstico")
+
+
+class DiagnosisInfoLegacy(BaseModel):
+    id: Optional[str] = Field(default=None, description="Identificador interno opcional")
+    codigo: str = Field(..., description="Código del diagnóstico (legacy)")
+    nombre: str = Field(..., description="Nombre del diagnóstico (legacy)")
+
+
 class ResultUpdate(BaseModel):
     method: Optional[List[str]] = Field(None, description="Lista de métodos utilizados")
     
@@ -21,6 +33,18 @@ class ResultUpdate(BaseModel):
     micro_result: Optional[str] = Field(None, max_length=5000, description="Resultado microscópico")
     diagnosis: Optional[str] = Field(None, max_length=2000, description="Diagnóstico")
     observations: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales")
+    cie10_diagnosis: Optional[DiagnosisInfo] = Field(
+        None, description="Diagnóstico CIE-10 en el nuevo formato"
+    )
+    cieo_diagnosis: Optional[DiagnosisInfo] = Field(
+        None, description="Diagnóstico CIE-O en el nuevo formato"
+    )
+    diagnostico_cie10: Optional[DiagnosisInfoLegacy] = Field(
+        None, description="Diagnóstico CIE-10 en formato legacy"
+    )
+    diagnostico_cieo: Optional[DiagnosisInfoLegacy] = Field(
+        None, description="Diagnóstico CIE-O en formato legacy"
+    )
 
 
 class ResultResponse(BaseModel):
@@ -39,6 +63,10 @@ class ResultInfo(BaseModel):
     micro_result: Optional[str] = None
     diagnosis: Optional[str] = None
     observations: Optional[str] = None
+    cie10_diagnosis: Optional[DiagnosisInfo] = None
+    cieo_diagnosis: Optional[DiagnosisInfo] = None
+    diagnostico_cie10: Optional[DiagnosisInfoLegacy] = None
+    diagnostico_cieo: Optional[DiagnosisInfoLegacy] = None
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)

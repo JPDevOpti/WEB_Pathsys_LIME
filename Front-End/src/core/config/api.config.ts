@@ -26,6 +26,7 @@ export const API_CONFIG = {
     AUXILIARIES: '/auxiliaries',
     FACTURACION: '/billing',
     TICKETS: '/tickets',
+    UNREAD_CASES: '/unread-cases',
     AUTH: {
       LOGIN: '/auth/login',
       LOGOUT: '/auth/logout',

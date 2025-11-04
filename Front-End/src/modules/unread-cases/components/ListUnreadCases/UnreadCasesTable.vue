@@ -5,7 +5,7 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="text-sm font-medium text-blue-800">
-            {{ selectedIds.length }} técnica{{ selectedIds.length > 1 ? 's' : '' }} seleccionada{{ selectedIds.length > 1 ? 's' : '' }}
+            {{ selectedIds.length }} caso{{ selectedIds.length !== 1 ? 's' : '' }} sin lectura seleccionado{{ selectedIds.length !== 1 ? 's' : '' }}
           </span>
           <button
             @click="clearSelection"
@@ -29,7 +29,7 @@
 
         <BatchMarkDeliveredDrawer
           v-model="showMarkDeliveredDrawer"
-          :selected="props.techniques.filter(t => props.selectedIds.includes(t.id))"
+          :selected="props.unreadCases.filter(t => props.selectedIds.includes(t.id))"
           @close="showMarkDeliveredDrawer = false"
           @completed="handleBatchCompleted"
         />
@@ -45,7 +45,7 @@
               <div class="flex items-center justify-center">
                 <FormCheckbox
                   :model-value="props.isAllSelected"
-                  :id="`select-all-${props.selectedIds.length}-${props.techniques.length}`"
+                  :id="`select-all-${props.selectedIds.length}-${props.unreadCases.length}`"
                   label=""
                   @update:model-value="toggleSelectAll"
                 />
@@ -60,7 +60,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
-          <tr v-if="props.techniques.length === 0">
+          <tr v-if="props.unreadCases.length === 0">
             <td :colspan="props.columns.length + 1" class="px-4 py-12 text-center">
               <div class="flex flex-col items-center justify-center gap-3">
                 <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,34 +70,34 @@
               </div>
             </td>
           </tr>
-          <tr v-for="(technique, index) in props.techniques" :key="`technique-${technique.id}-${index}`" class="hover:bg-gray-50 cursor-pointer" @click="$emit('show-details', technique)">
+          <tr v-for="(unreadCase, index) in props.unreadCases" :key="`unreadCase-${unreadCase.id}-${index}`" class="hover:bg-gray-50 cursor-pointer" @click="$emit('show-details', unreadCase)">
             <td class="px-2 py-3 text-center" @click.stop>
               <div class="flex items-center justify-center">
                 <FormCheckbox
-                  :model-value="isTechniqueSelected(technique.id)"
-                  :id="`technique-${technique.id}-${props.selectedIds.includes(technique.id)}`"
+                  :model-value="isUnreadCaseSelected(unreadCase.id)"
+                  :id="`unreadCase-${unreadCase.id}-${props.selectedIds.includes(unreadCase.id)}`"
                   label=""
-                  @update:model-value="() => toggleTechniqueSelection(technique.id)"
+                  @update:model-value="() => toggleUnreadCaseSelection(unreadCase.id)"
                 />
               </div>
             </td>
             <td class="px-1 py-3 text-center">
-              <span class="font-medium text-gray-800">{{ technique.caseCode || technique.id }}</span>
+              <span class="font-medium text-gray-800">{{ unreadCase.caseCode || unreadCase.id }}</span>
             </td>
             <td class="px-2 py-3 text-center">
               <div class="flex flex-col items-center gap-1">
-                <p class="text-gray-800 text-sm font-medium">{{ technique.patientName || (technique.isSpecialCase ? 'Caso Especial' : '-') }}</p>
-                <p class="text-gray-500 text-xs">{{ technique.patientDocument || (technique.isSpecialCase ? 'Lab. Externo' : 'Sin documento') }}</p>
+                <p class="text-gray-800 text-sm font-medium">{{ unreadCase.patientName || (unreadCase.isSpecialCase ? 'Caso Especial' : '-') }}</p>
+                <p class="text-gray-500 text-xs">{{ unreadCase.patientDocument || (unreadCase.isSpecialCase ? 'Lab. Externo' : 'Sin documento') }}</p>
               </div>
             </td>
             <td class="px-2 py-3 text-center">
-              <p class="text-gray-800 text-sm">{{ technique.institution }}</p>
+              <p class="text-gray-800 text-sm">{{ unreadCase.institution || '—' }}</p>
             </td>
             <td class="px-3 py-3 text-center">
-              <div v-if="hasAnyTest(technique)" class="space-y-2">
+              <div v-if="hasAnyTest(unreadCase)" class="space-y-2">
                 <!-- Mostrar testGroups si existen (nuevo formato) -->
-                <template v-if="technique.testGroups && technique.testGroups.length > 0">
-                  <div v-for="(group, idx) in technique.testGroups" :key="idx" class="space-y-1">
+                <template v-if="unreadCase.testGroups && unreadCase.testGroups.length > 0">
+                  <div v-for="(group, idx) in unreadCase.testGroups" :key="idx" class="space-y-1">
                     <!-- Tipo de prueba arriba -->
                     <div :class="['text-xs font-semibold px-2 py-1 rounded border inline-block', getTestTypeColor(group.type)]">
                       {{ getTestTypeLabel(group.type) }}
@@ -127,17 +127,17 @@
                 <!-- Formato antiguo (retrocompatibilidad) -->
                 <template v-else>
                   <div class="space-y-1">
-                    <span v-if="technique.lowComplexityIHQ" class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200 block" :title="technique.lowComplexityIHQ">
-                      IHQ Baja ({{ technique.lowComplexityPlates || 0 }})
+                    <span v-if="unreadCase.lowComplexityIHQ" class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200 block" :title="unreadCase.lowComplexityIHQ">
+                      IHQ Baja ({{ unreadCase.lowComplexityPlates || 0 }})
                     </span>
-                    <span v-if="technique.highComplexityIHQ" class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200 block" :title="technique.highComplexityIHQ">
-                      IHQ Alta ({{ technique.highComplexityPlates || 0 }})
+                    <span v-if="unreadCase.highComplexityIHQ" class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200 block" :title="unreadCase.highComplexityIHQ">
+                      IHQ Alta ({{ unreadCase.highComplexityPlates || 0 }})
                     </span>
-                    <span v-if="technique.specialIHQ" class="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-200 block" :title="technique.specialIHQ">
-                      IHQ Especial ({{ technique.specialPlates || 0 }})
+                    <span v-if="unreadCase.specialIHQ" class="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-200 block" :title="unreadCase.specialIHQ">
+                      IHQ Especial ({{ unreadCase.specialPlates || 0 }})
                     </span>
-                    <span v-if="technique.histochemistry" class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200 block" :title="technique.histochemistry">
-                      Histoquímica ({{ technique.histochemistryPlates || 0 }})
+                    <span v-if="unreadCase.histochemistry" class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200 block" :title="unreadCase.histochemistry">
+                      Histoquímica ({{ unreadCase.histochemistryPlates || 0 }})
                     </span>
                   </div>
                 </template>
@@ -147,32 +147,34 @@
               </span>
             </td>
             <td class="px-2 py-3 text-center">
-              <p class="text-gray-800 text-sm font-semibold">{{ technique.numberOfPlates }}</p>
+              <p class="text-gray-800 text-sm font-semibold">{{ unreadCase.numberOfPlates ?? 0 }}</p>
             </td>
             <td class="px-2 py-3 text-center">
               <div class="flex flex-col items-center gap-1">
-                <p class="text-gray-800 text-sm">{{ technique.deliveredTo }}</p>
-                <p class="text-gray-500 text-xs">{{ formatDate(technique.deliveryDate) }}</p>
+                <p class="text-gray-700 text-sm">{{ formatDate(unreadCase.entryDate) }}</p>
+                <p class="text-gray-700 text-sm">
+                  {{ unreadCase.deliveryDate ? formatDate(unreadCase.deliveryDate) : 'Pendiente' }}
+                </p>
               </div>
             </td>
             <td class="px-2 py-3 text-center">
-              <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusClass(technique.status)]">
-                {{ technique.status }}
+              <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusClass(unreadCase.status)]">
+                {{ unreadCase.status }}
               </span>
             </td>
             <td class="px-2 py-3 text-center">
               <div class="flex gap-1 justify-center min-w-[80px]">
                 <button
-                  @click.stop="$emit('show-details', technique)"
+                  @click.stop="$emit('show-details', unreadCase)"
                   class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
                   title="Ver detalles"
                 >
                   <InfoListIcon class="w-4 h-4" />
                 </button>
                 <button
-                  @click.stop="$emit('edit', technique)"
+                  @click.stop="$emit('edit', unreadCase)"
                   class="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                  title="Editar técnica"
+                  title="Editar caso sin lectura"
                 >
                   <SettingsIcon class="w-4 h-4" />
                 </button>
@@ -185,7 +187,7 @@
 
     <!-- Vista Mobile -->
     <div class="lg:hidden divide-y divide-gray-200">
-      <div v-if="props.techniques.length === 0" class="px-4 py-12 text-center">
+      <div v-if="props.unreadCases.length === 0" class="px-4 py-12 text-center">
         <div class="flex flex-col items-center justify-center gap-3">
           <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -193,35 +195,36 @@
           <p class="text-gray-500 text-sm">{{ props.noResultsMessage }}</p>
         </div>
       </div>
-      <div v-for="technique in props.techniques" :key="technique.id" class="p-4 hover:bg-gray-50" @click="$emit('show-details', technique)">
+      <div v-for="unreadCase in props.unreadCases" :key="unreadCase.id" class="p-4 hover:bg-gray-50" @click="$emit('show-details', unreadCase)">
         <div class="flex items-start gap-3">
           <input
             type="checkbox"
-            :checked="isTechniqueSelected(technique.id)"
-            @change.stop="() => toggleTechniqueSelection(technique.id)"
+            :checked="isUnreadCaseSelected(unreadCase.id)"
+            @change.stop="() => toggleUnreadCaseSelection(unreadCase.id)"
             class="mt-1 rounded border-gray-300"
           />
           <div class="flex-1 min-w-0">
             <div class="flex items-start justify-between gap-2 mb-2">
               <div>
                 <p class="font-semibold text-gray-900">
-                  {{ technique.patientName || (technique.isSpecialCase ? 'Caso Especial' : 'Sin nombre') }}
-                  <span v-if="technique.isSpecialCase" class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Externo</span>
+                  {{ unreadCase.patientName || (unreadCase.isSpecialCase ? 'Caso Especial' : 'Sin nombre') }}
+                  <span v-if="unreadCase.isSpecialCase" class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Externo</span>
                 </p>
-                <p class="text-sm text-gray-500">{{ technique.caseCode }} - {{ technique.patientDocument || (technique.isSpecialCase ? 'Lab. Externo' : 'Sin documento') }}</p>
+                <p class="text-sm text-gray-500">{{ unreadCase.caseCode }} - {{ unreadCase.patientDocument || (unreadCase.isSpecialCase ? 'Lab. Externo' : 'Sin documento') }}</p>
               </div>
-              <span :class="['px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap', getStatusClass(technique.status)]">
-                {{ technique.status }}
+              <span :class="['px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap', getStatusClass(unreadCase.status)]">
+                {{ unreadCase.status }}
               </span>
             </div>
             <div class="space-y-1 text-sm">
-              <p class="text-gray-600"><span class="font-medium">Institución:</span> {{ technique.institution }}</p>
-              <p class="text-gray-600"><span class="font-medium">Placas:</span> {{ technique.numberOfPlates }} | <span class="font-medium">Entrega:</span> {{ technique.deliveredTo }}</p>
-              <p class="text-gray-600"><span class="font-medium">Fecha:</span> {{ formatDate(technique.deliveryDate) }}</p>
+              <p class="text-gray-600"><span class="font-medium">Institución:</span> {{ unreadCase.institution }}</p>
+                <p class="text-gray-600"><span class="font-medium">Placas:</span> {{ unreadCase.numberOfPlates ?? 0 }} | <span class="font-medium">Entrega:</span> {{ unreadCase.deliveredTo || 'Pendiente' }}</p>
+              <p class="text-gray-600"><span class="font-medium">Ingreso:</span> <span class="text-gray-700">{{ formatDate(unreadCase.entryDate) }}</span></p>
+              <p class="text-gray-600"><span class="font-medium">Entrega:</span> <span class="text-gray-700">{{ unreadCase.deliveryDate ? formatDate(unreadCase.deliveryDate) : 'Pendiente' }}</span></p>
               
               <!-- Mostrar testGroups si existen (nuevo formato) -->
-              <div v-if="technique.testGroups && technique.testGroups.length > 0" class="space-y-2 mt-2">
-                <div v-for="(group, idx) in technique.testGroups" :key="idx" class="space-y-1">
+              <div v-if="unreadCase.testGroups && unreadCase.testGroups.length > 0" class="space-y-2 mt-2">
+                <div v-for="(group, idx) in unreadCase.testGroups" :key="idx" class="space-y-1">
                   <!-- Tipo de prueba arriba -->
                   <div :class="['text-xs font-semibold px-2 py-1 rounded border inline-block', getTestTypeColor(group.type)]">
                     {{ getTestTypeLabel(group.type) }}
@@ -249,23 +252,23 @@
               </div>
               
               <!-- Formato antiguo (retrocompatibilidad) -->
-              <div v-else-if="hasAnyTest(technique)" class="flex flex-wrap gap-1 mt-2">
-                <span v-if="technique.lowComplexityIHQ" class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">IHQ Baja</span>
-                <span v-if="technique.highComplexityIHQ" class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200">IHQ Alta</span>
-                <span v-if="technique.specialIHQ" class="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-200">IHQ Especial</span>
-                <span v-if="technique.histochemistry" class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200">Histoquímica</span>
+              <div v-else-if="hasAnyTest(unreadCase)" class="flex flex-wrap gap-1 mt-2">
+                <span v-if="unreadCase.lowComplexityIHQ" class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">IHQ Baja</span>
+                <span v-if="unreadCase.highComplexityIHQ" class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200">IHQ Alta</span>
+                <span v-if="unreadCase.specialIHQ" class="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-200">IHQ Especial</span>
+                <span v-if="unreadCase.histochemistry" class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200">Histoquímica</span>
               </div>
             </div>
             <div class="flex gap-1 pt-2 border-t border-gray-100">
               <button
-                @click.stop="$emit('show-details', technique)"
+                @click.stop="$emit('show-details', unreadCase)"
                 class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
               >
                 <InfoListIcon class="w-3 h-3" />
                 Ver detalles
               </button>
               <button
-                @click.stop="$emit('edit', technique)"
+                @click.stop="$emit('edit', unreadCase)"
                 class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
               >
                 <SettingsIcon class="w-3 h-3" />
@@ -278,7 +281,7 @@
     </div>
 
     <!-- Paginación -->
-    <div v-if="props.techniques.length > 0" class="border-t border-gray-200 px-4 py-3 bg-gray-50">
+    <div v-if="props.unreadCases.length > 0" class="border-t border-gray-200 px-4 py-3 bg-gray-50">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
         <div class="flex items-center gap-2 text-sm text-gray-600">
           <span>Mostrando</span>
@@ -320,7 +323,7 @@
 import { ref } from 'vue'
 import InfoListIcon from '@/assets/icons/InfoListIcon.vue'
 import SettingsIcon from '@/assets/icons/SettingsIcon.vue'
-import type { ComplementaryTechnique } from '../../types'
+import type { UnreadCase } from '../../types'
 import FormCheckbox from '@/shared/components/ui/forms/FormCheckbox.vue'
 import BatchMarkDeliveredDrawer from './BatchMarkDeliveredDrawer.vue'
 
@@ -331,7 +334,7 @@ interface Column {
 }
 
 interface Props {
-  techniques: ComplementaryTechnique[]
+  unreadCases: UnreadCase[]
   selectedIds: string[]
   isAllSelected: boolean
   columns: Column[]
@@ -345,7 +348,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  noResultsMessage: 'No hay técnicas complementarias disponibles'
+  noResultsMessage: 'No hay casos sin lectura disponibles'
 })
 
 const emit = defineEmits<{
@@ -353,44 +356,40 @@ const emit = defineEmits<{
   (e: 'toggle-select-all'): void
   (e: 'clear-selection'): void
   (e: 'sort', key: string): void
-  (e: 'show-details', technique: ComplementaryTechnique): void
-  (e: 'edit', technique: ComplementaryTechnique): void
+  (e: 'show-details', unreadCase: UnreadCase): void
+  (e: 'edit', unreadCase: UnreadCase): void
   (e: 'update-items-per-page', value: number): void
   (e: 'prev-page'): void
   (e: 'next-page'): void
   (e: 'refresh'): void
-  (e: 'update-technique', techniqueId: string, updatedTechnique: ComplementaryTechnique): void
+  (e: 'update-unread-case', unreadCaseId: string, updatedUnreadCase: UnreadCase): void
+  (e: 'batch-delivered', payload: { caseCodes: string[]; deliveredTo: string; deliveryDate: string }): void
 }>()
 
 const showMarkDeliveredDrawer = ref(false)
 
 const handleBatchMarkDelivered = () => {
-  const selectedTechniques = props.techniques.filter(t => props.selectedIds.includes(t.id))
-  const invalidTechniques = selectedTechniques.filter(t => t.status === 'Completado')
+  const selectedUnreadCases = props.unreadCases.filter(t => props.selectedIds.includes(t.id))
+  const invalidUnreadCases = selectedUnreadCases.filter(t => t.status === 'Completado')
   
-  if (invalidTechniques.length > 0) {
-    alert('Algunas técnicas seleccionadas ya están completadas')
+  if (invalidUnreadCases.length > 0) {
+    alert('Algunos casos sin lectura seleccionados ya están completados')
     return
   }
   
   showMarkDeliveredDrawer.value = true
 }
 
-const handleBatchCompleted = (updatedTechniques: ComplementaryTechnique[]) => {
-  // Actualizar cada técnica en la lista
-  updatedTechniques.forEach(updated => {
-    emit('update-technique', updated.id, updated)
-  })
-  
+const handleBatchCompleted = (payload: { caseCodes: string[]; deliveredTo: string; deliveryDate: string }) => {
+  emit('batch-delivered', payload)
   clearSelection()
-  emit('refresh')
 }
 
-const isTechniqueSelected = (id: string) => {
+const isUnreadCaseSelected = (id: string) => {
   return props.selectedIds.includes(id)
 }
 
-const toggleTechniqueSelection = (id: string) => {
+const toggleUnreadCaseSelection = (id: string) => {
   emit('toggle-select', id)
 }
 
@@ -423,11 +422,11 @@ const formatDate = (date: string) => {
   }
 }
 
-const hasAnyTest = (technique: ComplementaryTechnique) => {
-  if (technique.testGroups && technique.testGroups.length > 0) {
-    return technique.testGroups.some((group: any) => group.tests && group.tests.length > 0)
+const hasAnyTest = (unreadCase: UnreadCase) => {
+  if (unreadCase.testGroups && unreadCase.testGroups.length > 0) {
+    return unreadCase.testGroups.some((group: any) => group.tests && group.tests.length > 0)
   }
-  return !!(technique.lowComplexityIHQ || technique.highComplexityIHQ || technique.specialIHQ || technique.histochemistry)
+  return !!(unreadCase.lowComplexityIHQ || unreadCase.highComplexityIHQ || unreadCase.specialIHQ || unreadCase.histochemistry)
 }
 
 const getTestTypeLabel = (type: string) => {

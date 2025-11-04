@@ -1,7 +1,7 @@
 <template>
   <transition name="fade-scale">
     <div
-      v-if="isOpen && technique"
+      v-if="isOpen && unreadCase"
       :class="['fixed right-0 bottom-0 z-[100000] flex items-center justify-center p-4 bg-black/40 top-16', overlayLeftClass]"
       @click.self="handleClose"
     >
@@ -23,8 +23,8 @@
               </div>
             </div>
             <div>
-              <h3 class="text-lg font-bold text-gray-900">Editar Técnica Complementaria</h3>
-              <p class="text-gray-600 text-xs mt-1">Caso: <span class="font-mono font-semibold">{{ technique.caseCode }}</span> - Modifique los datos necesarios</p>
+              <h3 class="text-lg font-bold text-gray-900">Editar caso sin lectura</h3>
+              <p class="text-gray-600 text-xs mt-1">Caso: <span class="font-mono font-semibold">{{ unreadCase.caseCode }}</span> - Modifique los datos necesarios</p>
             </div>
           </div>
         </div>
@@ -121,11 +121,18 @@
                   />
                 </div>
 
+                <FormInputField
+                  v-model.number="formData.numberOfPlates"
+                  label="Número de Placas"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+
                 <FormTextarea
-                  v-if="formData.isSpecialCase"
                   v-model="formData.notes"
-                  label="Notas Especiales"
-                  placeholder="Ej: Caso de laboratorio externo"
+                  label="Observaciones generales"
+                  placeholder="Notas adicionales sobre el caso"
                   :rows="2"
                   :maxLength="500"
                   class="md:col-span-2"
@@ -133,18 +140,17 @@
               </div>
 
               <div class="mt-4 flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg">
-                <input
+                <FormCheckbox
                   v-model="formData.isSpecialCase"
-                  type="checkbox"
                   id="specialCase"
-                  class="rounded border-gray-300 text-gray-600 focus:ring-gray-500"
-                />
-                <label for="specialCase" class="text-sm text-gray-700 cursor-pointer flex items-center gap-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Caso especial (laboratorio externo, sin datos de paciente)
-                </label>
+                  :label="'Caso especial (laboratorio externo, sin datos de paciente)'"
+                >
+                  <template #label-prefix>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </template>
+                </FormCheckbox>
               </div>
             </div>
           </div>
@@ -161,49 +167,54 @@
                 </div>
               </div>
             </div>
-            <div class="p-6 space-y-6 overflow-visible">
-              <!-- Cada grupo de pruebas -->
+            <div class="p-6 space-y-4 overflow-visible">
+              <div class="flex items-center justify-between">
+                <h5 class="text-sm font-semibold text-gray-800">Tipos de prueba</h5>
+                <AddButton text="Agregar tipo de prueba" @click="addTestGroup" />
+              </div>
+              <p v-if="errors.tests" class="text-xs text-red-600">{{ errors.tests }}</p>
+
               <div 
                 v-for="(testGroup, groupIndex) in formData.testGroups" 
                 :key="groupIndex"
-                class="space-y-4"
+                class="bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm"
               >
-                <!-- Selector de Tipo de Prueba -->
-                <div class="overflow-visible">
-                  <FormSelect
-                    v-model="testGroup.type"
-                    label="Tipo de Prueba"
-                    placeholder="Seleccione el tipo de prueba"
-                    :options="[
-                      { value: '', label: 'Seleccione...' },
-                      { value: 'LOW_COMPLEXITY_IHQ', label: 'IHQ Baja Complejidad' },
-                      { value: 'HIGH_COMPLEXITY_IHQ', label: 'IHQ Alta Complejidad' },
-                      { value: 'SPECIAL_IHQ', label: 'IHQ Especiales' },
-                      { value: 'HISTOCHEMISTRY', label: 'Histoquímicas' }
-                    ]"
-                    :error="errors[`testGroup_${groupIndex}_type`]"
-                    required
+                <div class="flex items-start gap-3">
+                  <div class="flex-1 overflow-visible">
+                    <FormSelect
+                      v-model="testGroup.type"
+                      :label="`Tipo de prueba #${groupIndex + 1}`"
+                      placeholder="Seleccione el tipo de prueba"
+                      :options="[
+                        { value: '', label: 'Seleccione...' },
+                        { value: 'LOW_COMPLEXITY_IHQ', label: 'IHQ Baja Complejidad' },
+                        { value: 'HIGH_COMPLEXITY_IHQ', label: 'IHQ Alta Complejidad' },
+                        { value: 'SPECIAL_IHQ', label: 'IHQ Especiales' },
+                        { value: 'HISTOCHEMISTRY', label: 'Histoquímicas' }
+                      ]"
+                      :error="errors[`testGroup_${groupIndex}_type`]"
+                    />
+                  </div>
+                  <RemoveButton 
+                    v-if="formData.testGroups.length > 1"
+                    @click="removeTestGroup(groupIndex)"
+                    title="Eliminar tipo de prueba"
+                    class="mt-6 flex-shrink-0"
                   />
-                  <p class="text-xs text-gray-500 mt-1">Seleccione el tipo de prueba a realizar</p>
                 </div>
 
-                <!-- Pruebas a realizar -->
                 <div v-if="testGroup.type" class="space-y-3 overflow-visible">
                   <div class="flex items-center justify-between">
-                    <label class="block text-xs font-medium text-gray-700 uppercase tracking-wide">
-                      Pruebas a realizar
-                    </label>
-                    <AddButton text="Agregar Prueba" @click="addTestToGroup(groupIndex)" />
+                    <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Pruebas</span>
+                    <AddButton text="Agregar prueba" @click="addTestToGroup(groupIndex)" />
                   </div>
 
-                  <!-- Lista de pruebas -->
-                  <div class="space-y-3">
+                  <div class="space-y-2">
                     <div 
                       v-for="(test, testIndex) in testGroup.tests" 
                       :key="testIndex"
                       class="grid grid-cols-1 md:grid-cols-[1fr_120px_40px] gap-3 items-end"
                     >
-                      <!-- Prueba -->
                       <div class="overflow-visible">
                         <TestList
                           v-model="test.code"
@@ -214,8 +225,6 @@
                           @test-selected="(t: any) => onTestSelected(groupIndex, testIndex, t)"
                         />
                       </div>
-
-                      <!-- Cantidad -->
                       <div>
                         <FormInputField 
                           v-model.number="test.quantity" 
@@ -225,8 +234,6 @@
                           placeholder="1" 
                         />
                       </div>
-
-                      <!-- Botón eliminar -->
                       <div class="flex items-center justify-center md:pb-2">
                         <RemoveButton 
                           @click="removeTestFromGroup(groupIndex, testIndex)" 
@@ -236,17 +243,6 @@
                     </div>
                   </div>
 
-                  <!-- Observaciones generales para este grupo de pruebas -->
-                  <div v-if="testGroup.tests.length > 0" class="mt-4">
-                    <FormTextarea
-                      :model-value="testGroup.observations || ''"
-                      @update:model-value="(val: string) => testGroup.observations = val"
-                      label="Observaciones Generales (Opcional)"
-                      placeholder="Ej: Muestra requiere procesamiento especial, condiciones específicas, etc..."
-                      :rows="2"
-                      :maxLength="500"
-                    />
-                  </div>
                 </div>
               </div>
             </div>
@@ -260,8 +256,8 @@
                   <CalendarIcon class="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                  <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Recepción y Entrega</h4>
-                  <p class="text-xs text-gray-500 mt-0.5">Registre la fecha de ingreso y quién recibió la muestra</p>
+                  <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Información de Recepción</h4>
+                  <p class="text-xs text-gray-500 mt-0.5">Registre la fecha de ingreso y a quién se entregará</p>
                 </div>
               </div>
             </div>
@@ -275,40 +271,12 @@
                   required
                 />
 
-                <!-- Recibido Por -->
-                <FormInputField
-                  v-model="formData.receivedBy"
-                  label="Recibido Por"
-                  placeholder="Ej: WILSON, CESAR ORTIZ"
-                  :errors="errors.receivedBy ? [errors.receivedBy] : []"
-                  required
-                />
-
                 <!-- Entregado A -->
                 <FormInputField
                   v-model="formData.deliveredTo"
                   label="Entregado A"
                   placeholder="Ej: IMQ, AMPR"
                   :errors="errors.deliveredTo ? [errors.deliveredTo] : []"
-                  required
-                />
-
-                <!-- Fecha de Entrega -->
-                <DateInputField
-                  v-model="formData.deliveryDate"
-                  label="Fecha de Entrega"
-                  :errors="errors.deliveryDate ? [errors.deliveryDate] : []"
-                />
-
-                <!-- Estado -->
-                <FormSelect
-                  v-model="formData.status"
-                  label="Estado"
-                  :options="[
-                    { value: 'En proceso', label: 'En proceso' },
-                    { value: 'Completado', label: 'Completado' }
-                  ]"
-                  :errors="errors.status ? [errors.status] : []"
                   required
                 />
               </div>
@@ -343,9 +311,11 @@
 import { ref, computed, watch } from 'vue'
 import { UserCircleIcon, CalendarIcon, TestIcon, EditIcon } from '@/assets/icons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
+import { useAuthStore } from '@/stores/auth.store'
 import FormInput from '@/shared/components/ui/forms/FormInput.vue'
 import FormSelect from '@/shared/components/ui/forms/FormSelect.vue'
 import FormTextarea from '@/shared/components/ui/forms/FormTextarea.vue'
+import FormCheckbox from '@/shared/components/ui/forms/FormCheckbox.vue'
 import FormInputField from '@/shared/components/ui/forms/FormInputField.vue'
 import DateInputField from '@/shared/components/ui/forms/DateInputField.vue'
 import EntityList from '@/shared/components/ui/lists/EntityList.vue'
@@ -353,11 +323,11 @@ import TestList from '@/shared/components/ui/lists/TestList.vue'
 import { AddButton, RemoveButton } from '@/shared/components/ui/buttons'
 import SaveButton from '@/shared/components/ui/buttons/SaveButton.vue'
 import type { EntityInfo } from '@/modules/cases/types/case'
-import type { ComplementaryTechnique } from '../../types'
+import type { UnreadCase } from '../../types'
 
 interface Props {
   isOpen: boolean
-  technique: ComplementaryTechnique | null
+  unreadCase: UnreadCase | null
 }
 
 interface TestItem {
@@ -369,7 +339,6 @@ interface TestItem {
 interface TestGroup {
   type: 'LOW_COMPLEXITY_IHQ' | 'HIGH_COMPLEXITY_IHQ' | 'SPECIAL_IHQ' | 'HISTOCHEMISTRY' | ''
   tests: TestItem[]
-  observations?: string
 }
 
 interface FormData {
@@ -386,6 +355,7 @@ interface FormData {
   testGroups: TestGroup[]
   entryDate: string
   receivedBy: string
+  numberOfPlates: number
   deliveredTo: string
   deliveryDate: string
   status: string
@@ -394,17 +364,37 @@ interface FormData {
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'save', data: ComplementaryTechnique): void
+  (e: 'save', data: UnreadCase): void
 }>()
 
 const isSaving = ref(false)
 const { isExpanded, isMobileOpen, isHovered } = useSidebar()
+const authStore = useAuthStore()
 
 // Computed class for overlay positioning based on sidebar state
 const overlayLeftClass = computed(() => {
   const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
   return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
 })
+
+const normalizeTests = (tests: any[]): TestItem[] => {
+  if (!Array.isArray(tests)) return []
+  return tests.map((test: any) => ({
+    code: test?.code || '',
+    quantity: Number.isFinite(Number(test?.quantity)) ? Number(test.quantity) : 1,
+    name: test?.name || ''
+  }))
+}
+
+const normalizeTestGroups = (groups?: any[]): TestGroup[] => {
+  if (!Array.isArray(groups) || !groups.length) {
+    return [{ type: '', tests: [] }]
+  }
+  return groups.map((group: any) => ({
+    type: group?.type || '',
+    tests: normalizeTests(group?.tests)
+  }))
+}
 
 const formData = ref<FormData>({
   isSpecialCase: false,
@@ -417,9 +407,10 @@ const formData = ref<FormData>({
   entityCode: '',
   entityName: '',
   notes: '',
-  testGroups: [{ type: '', tests: [], observations: '' }],
+  testGroups: normalizeTestGroups(),
   entryDate: new Date().toISOString().split('T')[0],
   receivedBy: '',
+  numberOfPlates: 0,
   deliveredTo: '',
   deliveryDate: '',
   status: 'En proceso'
@@ -427,28 +418,39 @@ const formData = ref<FormData>({
 
 const errors = ref<Record<string, string>>({})
 
-// Poblar el formulario cuando se abre con una técnica existente
-watch(() => props.technique, (technique) => {
-  if (technique) {
+const clearTestErrorsForGroup = (groupIndex: number) => {
+  Object.keys(errors.value).forEach((key) => {
+    if (key.startsWith(`testGroup_${groupIndex}_`)) {
+      delete errors.value[key]
+    }
+  })
+}
+
+// Poblar el formulario cuando se abre con un caso sin lectura existente
+watch(() => props.unreadCase, (unreadCase) => {
+  if (unreadCase) {
     formData.value = {
-      isSpecialCase: technique.isSpecialCase || false,
-      documentType: technique.documentType || '',
-      patientDocument: technique.patientDocument || '',
-      firstName: technique.firstName || '',
-      secondName: technique.secondName || '',
-      firstLastName: technique.firstLastName || '',
-      secondLastName: technique.secondLastName || '',
-      entityCode: technique.entityCode,
-      entityName: technique.entityName,
-      notes: technique.notes || '',
-      testGroups: technique.testGroups && technique.testGroups.length > 0 
-        ? JSON.parse(JSON.stringify(technique.testGroups))
-        : [{ type: '', tests: [], observations: '' }],
-      entryDate: technique.entryDate ? new Date(technique.entryDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      receivedBy: technique.receivedBy,
-      deliveredTo: technique.deliveredTo,
-      deliveryDate: technique.deliveryDate ? new Date(technique.deliveryDate).toISOString().split('T')[0] : '',
-      status: technique.status
+      isSpecialCase: unreadCase.isSpecialCase || false,
+      documentType: unreadCase.documentType || '',
+      patientDocument: unreadCase.patientDocument || '',
+      firstName: unreadCase.firstName || '',
+      secondName: unreadCase.secondName || '',
+      firstLastName: unreadCase.firstLastName || '',
+      secondLastName: unreadCase.secondLastName || '',
+      entityCode: unreadCase.entityCode || '',
+      entityName: unreadCase.entityName || '',
+      notes: unreadCase.notes || '',
+      testGroups: normalizeTestGroups(unreadCase.testGroups),
+      entryDate: unreadCase.entryDate ? new Date(unreadCase.entryDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      receivedBy: unreadCase.receivedBy || '',
+      numberOfPlates: unreadCase.numberOfPlates || 0,
+      deliveredTo: unreadCase.deliveredTo || '',
+      deliveryDate: unreadCase.deliveryDate ? new Date(unreadCase.deliveryDate).toISOString().split('T')[0] : '',
+      status: unreadCase.status || 'En proceso'
+    }
+    // Asignar automáticamente receivedBy si está vacío
+    if (!formData.value.receivedBy && authStore.user) {
+      formData.value.receivedBy = authStore.user.name || authStore.user.email || ''
     }
   }
 }, { immediate: true })
@@ -469,12 +471,18 @@ watch(() => formData.value.isSpecialCase, (isSpecial) => {
   }
 })
 
-// Agregar automáticamente una prueba cuando se selecciona el tipo de prueba
-watch(() => formData.value.testGroups[0]?.type, (newType, oldType) => {
-  if (newType && !oldType && formData.value.testGroups[0].tests.length === 0) {
-    formData.value.testGroups[0].tests.push({ code: '', quantity: 1 })
-  }
-})
+watch(() => formData.value.testGroups.map(group => group.type), (types) => {
+  types.forEach((type, idx) => {
+    const target = formData.value.testGroups[idx]
+    if (type && target.tests.length === 0) {
+      target.tests.push({ code: '', quantity: 1, name: '' })
+    }
+    if (!type) {
+      target.tests = []
+      clearTestErrorsForGroup(idx)
+    }
+  })
+}, { deep: true })
 
 const validateForm = (): boolean => {
   errors.value = {}
@@ -512,21 +520,10 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  // Validar recibido por
-  if (!formData.value.receivedBy.trim()) {
-    errors.value.receivedBy = 'Este campo es requerido'
-    isValid = false
-  }
-
+  // Validar entregado a
   // Validar entregado a
   if (!formData.value.deliveredTo.trim()) {
     errors.value.deliveredTo = 'Este campo es requerido'
-    isValid = false
-  }
-
-  // Validar estado
-  if (!formData.value.status) {
-    errors.value.status = 'El estado es requerido'
     isValid = false
   }
 
@@ -562,7 +559,7 @@ const validateForm = (): boolean => {
 }
 
 const handleSave = async () => {
-  if (!validateForm() || !props.technique) {
+  if (!validateForm() || !props.unreadCase) {
     return
   }
 
@@ -577,8 +574,8 @@ const handleSave = async () => {
   }, 0)
 
   // Construir objeto actualizado
-  const updatedTechnique: ComplementaryTechnique = {
-    ...props.technique,
+  const updatedUnreadCase: UnreadCase = {
+    ...props.unreadCase,
     isSpecialCase: formData.value.isSpecialCase,
     documentType: formData.value.documentType,
     patientDocument: formData.value.patientDocument,
@@ -603,7 +600,7 @@ const handleSave = async () => {
     updatedAt: new Date().toISOString()
   }
   
-  emit('save', updatedTechnique)
+  emit('save', updatedUnreadCase)
   isSaving.value = false
   emit('close')
 }
@@ -617,12 +614,27 @@ const handleEntitySelected = (entity: EntityInfo | null) => {
 }
 
 // Métodos para gestión de pruebas
+const addTestGroup = () => {
+  formData.value.testGroups.push({ type: '', tests: [] })
+}
+
+const removeTestGroup = (groupIndex: number) => {
+  formData.value.testGroups.splice(groupIndex, 1)
+  if (!formData.value.testGroups.length) {
+    formData.value.testGroups.push({ type: '', tests: [] })
+  }
+  Object.keys(errors.value).forEach((key) => {
+    if (key.startsWith('testGroup_')) delete errors.value[key]
+  })
+}
+
 const addTestToGroup = (groupIndex: number) => {
-  formData.value.testGroups[groupIndex].tests.push({ code: '', quantity: 1 })
+  formData.value.testGroups[groupIndex].tests.push({ code: '', quantity: 1, name: '' })
 }
 
 const removeTestFromGroup = (groupIndex: number, testIndex: number) => {
   formData.value.testGroups[groupIndex].tests.splice(testIndex, 1)
+  clearTestErrorsForGroup(groupIndex)
 }
 
 const onTestSelected = (groupIndex: number, testIndex: number, test: any) => {

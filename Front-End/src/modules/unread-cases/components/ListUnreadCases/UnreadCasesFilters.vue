@@ -1,7 +1,7 @@
 <template>
   <ComponentCard 
-    title="Listado de Técnicas Complementarias"
-    description="Filtre las técnicas complementarias por código, nombre, tipo, estado y rango de fechas."
+    title="Casos sin lectura"
+    description="Filtre los casos sin lectura por código, nombre, tipo, estado y rango de fechas."
   >
     <template #icon>
       <TestIcon class="w-5 h-5 mr-2 text-blue-600" />
@@ -55,11 +55,11 @@
         <!-- Botón de Nuevo Caso Especial (Izquierda) -->
         <div class="flex" v-if="canCreateSpecialCase">
           <button
-            @click="$emit('new-technique')"
+            @click="$emit('new-unread-case')"
             class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-600 bg-transparent border border-green-600 rounded-lg hover:bg-green-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
             <SpecialCaseIcon class="w-4 h-4 mr-1.5" />
-            Nuevo Caso Especial
+            Nuevo Caso sin lectura
           </button>
         </div>
 
@@ -123,7 +123,7 @@ const emit = defineEmits<{
   (e: 'refresh'): void
   (e: 'export'): void
   (e: 'search', v: Filters): void
-  (e: 'new-technique'): void
+  (e: 'new-unread-case'): void
 }>()
 
 const local = reactive<Filters>({ ...props.modelValue })

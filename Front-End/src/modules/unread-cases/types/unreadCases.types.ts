@@ -8,7 +8,7 @@ export interface TestGroup {
   observations?: string
 }
 
-export interface ComplementaryTechnique {
+export interface UnreadCase {
   id: string
   caseCode: string // Formato: TC2025-00001
   isSpecialCase?: boolean // Indica si es caso especial (laboratorio externo)
@@ -21,9 +21,9 @@ export interface ComplementaryTechnique {
   secondLastName?: string
   patientName?: string // Nombre completo concatenado
   // Entidad
-  entityCode: string
-  entityName: string
-  institution: string // Nombre de la institución (derivado de entityName)
+  entityCode?: string
+  entityName?: string
+  institution?: string // Nombre de la institución (derivado de entityName)
   notes?: string // Notas especiales
   // Pruebas (nuevo formato con testGroups)
   testGroups?: TestGroup[]
@@ -37,21 +37,21 @@ export interface ComplementaryTechnique {
   histochemistry?: string
   histochemistryPlates?: number
   // Placas y entrega
-  numberOfPlates: number
-  deliveredTo: string
-  deliveryDate: string
+  numberOfPlates?: number
+  deliveredTo?: string
+  deliveryDate?: string
   // Recepción
-  entryDate: string
-  receivedBy: string
+  entryDate?: string
+  receivedBy?: string
   // Estado y metadatos
-  status: string
-  elaboratedBy: string
-  receipt: string
-  createdAt: string
+  status?: string
+  elaboratedBy?: string
+  receipt?: string
+  createdAt?: string
   updatedAt?: string
 }
 
-export interface ComplementaryTechniqueFilters {
+export interface UnreadCaseFilters {
   searchQuery: string // Búsqueda por código, documento o nombre
   dateFrom: string
   dateTo: string
@@ -94,3 +94,33 @@ export const TEST_TYPE_OPTIONS = [
   { value: 'special', label: 'IHQ Especiales' },
   { value: 'histochemistry', label: 'Histoquímicas' }
 ]
+
+export interface UnreadCaseListResponse {
+  items: UnreadCase[]
+  total: number
+  page: number
+  limit: number
+}
+
+export interface UnreadCaseListParams {
+  page?: number
+  limit?: number
+  searchQuery?: string
+  selectedInstitution?: string
+  selectedTestType?: string
+  selectedStatus?: string
+  dateFrom?: string
+  dateTo?: string
+  sortKey?: string
+  sortOrder?: 'asc' | 'desc'
+}
+
+export type UnreadCaseCreatePayload = Omit<UnreadCase, 'id' | 'createdAt' | 'updatedAt'>
+
+export type UnreadCaseUpdatePayload = Partial<UnreadCaseCreatePayload>
+
+export interface BulkMarkDeliveredPayload {
+  caseCodes: string[]
+  deliveredTo: string
+  deliveryDate?: string
+}

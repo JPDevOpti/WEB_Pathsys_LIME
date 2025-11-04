@@ -17,6 +17,36 @@ export function mapCaseToPatient(beCase: CaseModel): Patient {
 }
 
 export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
+  let mappedResult: CaseDetails['result'] | undefined
+
+  if (beCase.result) {
+    const resultData: any = beCase.result
+    mappedResult = {
+      diagnosis: resultData.diagnosis || '',
+      macro_result: resultData.macro_result || '',
+      micro_result: resultData.micro_result || '',
+      observations: resultData.observations || null
+    }
+
+    const cie10 = resultData.cie10_diagnosis || resultData.diagnostico_cie10
+    if (cie10?.code || cie10?.codigo) {
+      const code = cie10.code ?? cie10.codigo ?? ''
+      const name = cie10.name ?? cie10.nombre ?? ''
+      const id = cie10.id ?? cie10._id
+      mappedResult.cie10_diagnosis = { code, name, id }
+      mappedResult.diagnostico_cie10 = { codigo: code, nombre: name, id }
+    }
+
+    const cieo = resultData.cieo_diagnosis || resultData.diagnostico_cieo
+    if (cieo?.code || cieo?.codigo) {
+      const code = cieo.code ?? cieo.codigo ?? ''
+      const name = cieo.name ?? cieo.nombre ?? ''
+      const id = cieo.id ?? cieo._id
+      mappedResult.cieo_diagnosis = { code, name, id }
+      mappedResult.diagnostico_cieo = { codigo: code, nombre: name, id }
+    }
+  }
+
   return {
     _id: beCase.id || '',
     case_code: beCase.case_code,
@@ -51,12 +81,7 @@ export function mapCaseToCaseDetails(beCase: CaseModel): CaseDetails {
       ? { id: beCase.patient_info.entity_info.id || '', name: beCase.patient_info.entity_info.name || '' }
       : undefined,
     service: beCase.service,
-    result: beCase.result ? {
-      diagnosis: beCase.result.diagnosis || '',
-      macro_result: beCase.result.macro_result || '',
-      micro_result: beCase.result.micro_result || '',
-      observations: beCase.result.observations || null
-    } : undefined
+    result: mappedResult
   }
 }
 
