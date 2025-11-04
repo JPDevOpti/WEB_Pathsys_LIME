@@ -213,12 +213,12 @@
             <button
               :disabled="loading || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature"
               :class="[
-                'px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2',
+                'px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 border-2 transition-colors duration-150 bg-white',
                 (loading || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature) 
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  ? 'bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed' 
                   : allFieldsComplete 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'bg-green-600 text-white hover:bg-green-700'
+                    ? 'text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700' 
+                    : 'text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700'
               ]"
               @click="handleButtonClick"
             >
@@ -299,6 +299,7 @@ import { profileApiService } from '@/modules/profile/services/profileApiService'
 import type { Disease } from '@/shared/services/disease.service'
 import ResultsActionNotification from '../Shared/ResultsActionNotification.vue'
 import signApiService from '../../services/signApiService'
+import resultsApiService, { type UpdateResultRequest } from '../../services/resultsApiService'
 import approvalService from '@/shared/services/approval.service'
 import type { ComplementaryTestInfo } from '@/shared/services/approval.service'
 
@@ -640,6 +641,10 @@ const hydrateAssignedSignature = async (caseData: any) => {
 
 // Carga diagnósticos existentes del caso (CIE-10 y CIE-O) si ya están firmados
 const loadExistingDiagnosis = async (caseData: any) => {
+  console.groupCollapsed('[SignResults] Cargar diagnósticos existentes')
+  console.log('Caso:', caseData?.case_code || caseData?.id)
+  console.log('Result recibido:', caseData?.result)
+  console.groupEnd()
   if (caseData.result) {
     const resultado = caseData.result as any
     
@@ -801,37 +806,80 @@ const handleSaveProgress = async () => {
     
     // Preparar diagnósticos CIE-10 y CIE-O (si están disponibles)
     const cie10Diagnosis = hasDisease.value && primaryDisease.value ? {
+      id: primaryDisease.value.id,
       code: primaryDisease.value.code,
       name: primaryDisease.value.name
     } : undefined
+
+    const cie10DiagnosisLegacy = cie10Diagnosis ? {
+      id: cie10Diagnosis.id,
+      codigo: cie10Diagnosis.code,
+      nombre: cie10Diagnosis.name
+    } : undefined
     
     const cieoDiagnosis = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
+      id: primaryDiseaseCIEO.value.id,
       code: primaryDiseaseCIEO.value.code,
       name: primaryDiseaseCIEO.value.name
     } : undefined
+
+    const cieoDiagnosisLegacy = cieoDiagnosis ? {
+      id: cieoDiagnosis.id,
+      codigo: cieoDiagnosis.code,
+      nombre: cieoDiagnosis.name
+    } : undefined
     
-    // Preparar datos para guardar (sin firmar) - guardamos en el campo result del caso
-    const resultData: any = {
-  method: getCleanMethods(sections.value?.method),
-  macro_result: prepareRichTextForSave(sections.value?.macro),
-  micro_result: prepareRichTextForSave(sections.value?.micro),
-  diagnosis: prepareRichTextForSave(sections.value?.diagnosis),
-      observations: ''
+    // Preparar datos para guardar (sin firmar) usando el nuevo endpoint
+    const requestData: UpdateResultRequest = {
+      method: getCleanMethods(sections.value?.method),
+      macro_result: prepareRichTextForSave(sections.value?.macro),
+      micro_result: prepareRichTextForSave(sections.value?.micro),
+      diagnosis: prepareRichTextForSave(sections.value?.diagnosis),
+      observations: '',
+  cie10_diagnosis: cie10Diagnosis,
+  cieo_diagnosis: cieoDiagnosis,
+  diagnostico_cie10: cie10DiagnosisLegacy,
+  diagnostico_cieo: cieoDiagnosisLegacy
     }
+
+    console.groupCollapsed('[SignResults] Guardar progreso payload')
+    console.log('Caso:', casoCode)
+    console.log('RequestData:', JSON.parse(JSON.stringify(requestData)))
+    console.groupEnd()
     
-    // Agregar diagnósticos solo si existen
-    if (cie10Diagnosis) {
-      resultData.cie10_diagnosis = cie10Diagnosis
+    const updateResponse = await resultsApiService.updateCaseResult(casoCode, requestData)
+    console.groupCollapsed('[SignResults] Respuesta guardar progreso')
+    console.log('Caso:', casoCode)
+    console.log('Respuesta (raw):', updateResponse)
+    console.groupEnd()
+    
+    // Actualizar estado local del caso con lo guardado para reflejar cambios inmediatos
+    if (caseDetails.value) {
+      const updatedResult = {
+        method: requestData.method,
+        macro_result: requestData.macro_result,
+        micro_result: requestData.micro_result,
+        diagnosis: requestData.diagnosis,
+        observations: requestData.observations,
+        cie10_diagnosis: cie10Diagnosis
+          ? { code: cie10Diagnosis.code, name: cie10Diagnosis.name, id: cie10Diagnosis.id }
+          : undefined,
+        cieo_diagnosis: cieoDiagnosis
+          ? { code: cieoDiagnosis.code, name: cieoDiagnosis.name, id: cieoDiagnosis.id }
+          : undefined,
+        diagnostico_cie10: cie10DiagnosisLegacy
+          ? { codigo: cie10DiagnosisLegacy.codigo, nombre: cie10DiagnosisLegacy.nombre, id: cie10DiagnosisLegacy.id }
+          : undefined,
+        diagnostico_cieo: cieoDiagnosisLegacy
+          ? { codigo: cieoDiagnosisLegacy.codigo, nombre: cieoDiagnosisLegacy.nombre, id: cieoDiagnosisLegacy.id }
+          : undefined
+      }
+      ;(caseDetails.value as any).result = updatedResult
+      console.groupCollapsed('[SignResults] Estado local actualizado tras guardar')
+      console.log('Caso:', casoCode)
+      console.log('Result local:', updatedResult)
+      console.groupEnd()
     }
-    
-    if (cieoDiagnosis) {
-      resultData.cieo_diagnosis = cieoDiagnosis
-    }
-    
-    // Actualizar el caso con el progreso (sin cambiar el estado)
-    await casesApiService.updateCase(casoCode, {
-      result: resultData
-    })
     
     setSavedFromSections()
     savedCaseCode.value = casoCode
@@ -907,7 +955,7 @@ async function handleSign() {
     
     if (response) {
       // Actualizar el caso completo con la respuesta del backend
-      caseDetails.value = response
+  caseDetails.value = response as any
       
       setSavedFromSections()
       savedCaseCode.value = casoCode
@@ -1140,7 +1188,7 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
     
     if (response) {
       // Actualizar el caso completo con la respuesta del backend
-      caseDetails.value = response
+  caseDetails.value = response as any
       
       // Guardar contenido para notificación
       setSavedFromSections()

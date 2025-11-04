@@ -25,6 +25,37 @@ class ResultService:
         # Preparar datos del resultado (solo campos no nulos)
         result_data = {}
         payload_dict = payload.model_dump(exclude_unset=True)
+
+        # Sincronizar diagnósticos entre formatos nuevo y legacy
+        cie10_new = payload_dict.get("cie10_diagnosis")
+        cie10_legacy = payload_dict.get("diagnostico_cie10")
+        if cie10_new and not cie10_legacy:
+            payload_dict["diagnostico_cie10"] = {
+                "codigo": cie10_new.get("code"),
+                "nombre": cie10_new.get("name"),
+                "id": cie10_new.get("id"),
+            }
+        elif cie10_legacy and not cie10_new:
+            payload_dict["cie10_diagnosis"] = {
+                "code": cie10_legacy.get("codigo"),
+                "name": cie10_legacy.get("nombre"),
+                "id": cie10_legacy.get("id"),
+            }
+
+        cieo_new = payload_dict.get("cieo_diagnosis")
+        cieo_legacy = payload_dict.get("diagnostico_cieo")
+        if cieo_new and not cieo_legacy:
+            payload_dict["diagnostico_cieo"] = {
+                "codigo": cieo_new.get("code"),
+                "nombre": cieo_new.get("name"),
+                "id": cieo_new.get("id"),
+            }
+        elif cieo_legacy and not cieo_new:
+            payload_dict["cieo_diagnosis"] = {
+                "code": cieo_legacy.get("codigo"),
+                "name": cieo_legacy.get("nombre"),
+                "id": cieo_legacy.get("id"),
+            }
         
         for field, value in payload_dict.items():
             if value is not None:

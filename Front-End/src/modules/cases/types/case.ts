@@ -58,6 +58,26 @@ export interface CaseResult {
   micro_result?: string
   diagnosis?: string
   observations?: string
+  cie10_diagnosis?: {
+    code: string
+    name: string
+    id?: string
+  }
+  cieo_diagnosis?: {
+    code: string
+    name: string
+    id?: string
+  }
+  diagnostico_cie10?: {
+    codigo: string
+    nombre: string
+    id?: string
+  }
+  diagnostico_cieo?: {
+    codigo: string
+    nombre: string
+    id?: string
+  }
 }
 
 export interface CaseModel {

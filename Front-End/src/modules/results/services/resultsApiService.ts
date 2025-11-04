@@ -9,11 +9,23 @@ export interface UpdateResultRequest {
   micro_result?: string
   diagnosis?: string
   observations?: string
+  cie10_diagnosis?: {
+    id?: string
+    code: string
+    name: string
+  }
+  cieo_diagnosis?: {
+    id?: string
+    code: string
+    name: string
+  }
   diagnostico_cie10?: {
+    id?: string
     codigo: string
     nombre: string
   }
   diagnostico_cieo?: {
+    id?: string
     codigo: string
     nombre: string
   }
@@ -27,10 +39,12 @@ export interface UpsertResultadoRequest {
   diagnostico?: string
   observaciones?: string
   diagnostico_cie10?: {
+    id?: string
     codigo: string
     nombre: string
   }
   diagnostico_cieo?: {
+    id?: string
     codigo: string
     nombre: string
   }
