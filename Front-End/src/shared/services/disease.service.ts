@@ -1,5 +1,4 @@
 import { apiClient } from '@/core/config/axios.config'
-import { API_CONFIG } from '@/core/config/api.config'
 
 // Types
 export interface Disease {
@@ -203,15 +202,15 @@ class DiseaseService {
   }
 
   // Métodos que no se usan en el frontend por ahora
-  async createDisease(disease: Omit<Disease, 'id' | 'created_at' | 'updated_at'>): Promise<Disease> {
+  async createDisease(_disease: Omit<Disease, 'id' | 'created_at' | 'updated_at'>): Promise<Disease> {
     throw new Error('No implementado en el frontend')
   }
 
-  async updateDisease(id: string, disease: Partial<Omit<Disease, 'id' | 'created_at' | 'updated_at'>>): Promise<Disease> {
+  async updateDisease(_id: string, _disease: Partial<Omit<Disease, 'id' | 'created_at' | 'updated_at'>>): Promise<Disease> {
     throw new Error('No implementado en el frontend')
   }
 
-  async deleteDisease(id: string): Promise<boolean> {
+  async deleteDisease(_id: string): Promise<boolean> {
     throw new Error('No implementado en el frontend')
   }
 

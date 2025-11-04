@@ -1,21 +1,6 @@
-import { computed } from 'vue'
-
 export function useAuthValidation() {
-  /**
-   * Validates if the email has a valid format
-   */
   const isValidEmail = (email: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-
-  /**
-   * Validates if the password meets minimum requirements
-   */
-  const isValidPassword = (password: string): boolean => {
-    return password.length >= 6
-  }
-
-  /**
-   * Validates the complete login form
-   */
+  const isValidPassword = (password: string): boolean => password.length >= 6
   const validateLoginForm = (email: string, password: string) => {
     const errors: string[] = []
 
@@ -30,10 +15,6 @@ export function useAuthValidation() {
       errors
     }
   }
-
-  /**
-   * Gets the error message for a specific field
-   */
   const getFieldError = (field: string, value: string): string => {
     switch (field) {
       case 'email':

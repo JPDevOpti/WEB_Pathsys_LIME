@@ -11,8 +11,5 @@ export { default as SignatureUploader } from './MyProfile/SignatureUploader.vue'
 // Types
 export type * from '../types/userProfile.types'
 
-// Services
-export { MockProfileService } from '../services/mockProfileService'
-
 // Composables
 export { useProfileAccessibility } from '../composables/useProfileAccessibility'

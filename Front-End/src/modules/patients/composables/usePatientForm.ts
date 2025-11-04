@@ -1,5 +1,5 @@
-import { reactive, ref, computed } from 'vue'
-import type { PatientFormData, IdentificationType, Gender, CareType } from '../types'
+import { reactive, computed } from 'vue'
+import type { PatientFormData } from '../types'
 
 export interface PatientFormErrors {
   identification_type: string[]

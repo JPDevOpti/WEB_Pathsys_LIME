@@ -131,9 +131,7 @@ export class AuthApiService {
       }
       return { valid: true, user }
     } catch (error) {
-      // En caso de error de red o servidor, no invalidar el token automáticamente
-      console.error('Error verificando token:', error)
-      throw error // Propagar el error para que el store pueda manejarlo apropiadamente
+      throw error
     }
   }
 
@@ -141,7 +139,7 @@ export class AuthApiService {
   /**
    * Sign out
    */
-  async logout(token: string): Promise<void> {
+  async logout(): Promise<void> {
     try {
       // No hay endpoint de logout en el back nuevo; limpiar en cliente
       return

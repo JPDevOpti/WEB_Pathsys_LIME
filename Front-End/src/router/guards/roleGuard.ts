@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth.store'
  */
 export function roleGuard(
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void {
   const authStore = useAuthStore()

@@ -9,9 +9,7 @@ import type {
   NewTicketForm, 
   TicketFilters, 
   TicketStatusEnum,
-  TicketSearch,
-  TicketStatusUpdate,
-  ImageUploadResponse
+  TicketSearch
 } from '@/modules/support/types/support.types'
 
 export class TicketsService {
@@ -60,11 +58,8 @@ export class TicketsService {
     if (data.image) {
       try {
         await this.uploadImage(newTicket.ticket_code, data.image)
-        // Obtener ticket actualizado con imagen
         return await this.getTicketByCode(newTicket.ticket_code)
-      } catch (error) {
-        console.warn('Error subiendo imagen:', error)
-        // Retornar ticket sin imagen si falla el upload
+      } catch {
         return newTicket
       }
     }

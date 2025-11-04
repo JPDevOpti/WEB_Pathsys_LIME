@@ -42,7 +42,7 @@ class AuxiliaryEditService {
     return {
       auxiliar_name: formModel.auxiliarName.trim(),
       auxiliar_email: formModel.AuxiliarEmail.trim(),
-      observations: (formModel.observaciones || '').trim(),
+      observaciones: (formModel.observaciones || '').trim(),
       is_active: formModel.isActive,
       ...(formModel.password && formModel.password.trim().length >= 6 ? { password: formModel.password } : {})
     }
@@ -55,7 +55,7 @@ class AuxiliaryEditService {
       auxiliar_name: backendData.auxiliar_name,
       auxiliar_code: backendData.auxiliar_code,
       auxiliar_email: backendData.auxiliar_email,
-      observations: backendData.observations || '',
+      observaciones: backendData.observaciones || '',
       is_active: backendData.is_active,
       created_at: backendData.created_at,
       updated_at: backendData.updated_at

@@ -2,7 +2,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import type { Patient, PatientFilters, PatientSortKey, SortOrder, PatientCase, IdentificationType } from '../types/patient.types'
 import { 
   searchPatients,
-  getPatientByCode,
   getPatientCases,
   type BackendPatient
 } from '../services/patientListApi'
@@ -98,7 +97,6 @@ export function usePatientList() {
       patients.value = result.patients.map(transformBackendPatient)
       totalCount.value = result.total
     } catch (e: any) {
-      console.error('Error al cargar pacientes:', e)
       error.value = e.message || 'Error al cargar los pacientes'
       patients.value = []
       totalCount.value = 0
@@ -185,7 +183,6 @@ export function usePatientList() {
     ]
     
     if (!validKeys.includes(key as PatientSortKey)) {
-      console.warn(`Invalid sort key: ${key}`)
       return
     }
     
@@ -224,8 +221,8 @@ export function usePatientList() {
         requester: c.requester || c.medico_solicitante || '',
         entity: c.entity || c.entidad || ''
       }))
-    } catch (e) {
-      console.error('Error al cargar casos:', e)
+    } catch (e: any) {
+      error.value = e?.message || 'Error al cargar los casos del paciente'
       selectedPatientCases.value = []
     }
   }

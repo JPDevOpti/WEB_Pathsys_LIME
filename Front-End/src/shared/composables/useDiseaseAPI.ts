@@ -67,46 +67,38 @@ export function useDiseaseAPI() {
     error.value = ''
 
     try {
-      let result
-      
-      // Si se especifica una tabla específica, usar el endpoint de tabla
+      let diseasesList: Disease[] = []
+      const searchTerm = query.trim().toLowerCase()
+
       if (tabla && tabla.trim()) {
         if (tabla === 'CIEO') {
-          // Para CIEO, obtener todas las enfermedades de la tabla CIEO
-          result = await diseaseService.searchDiseasesByTabla('CIEO', limit)
-          // Luego filtrar por el término de búsqueda si se proporciona
-          if (query && query.trim()) {
-            const filteredDiseases = result.diseases.filter(disease => 
-              disease.name.toLowerCase().includes(query.toLowerCase()) ||
-              disease.code.toLowerCase().includes(query.toLowerCase())
-            )
-            result.diseases = filteredDiseases
-            result.total = filteredDiseases.length
-          }
+          const response = await diseaseService.searchDiseasesByTabla('CIEO', limit)
+          diseasesList = searchTerm
+            ? response.diseases.filter(disease =>
+                disease.name.toLowerCase().includes(searchTerm) ||
+                disease.code.toLowerCase().includes(searchTerm)
+              )
+            : response.diseases
         } else if (tabla === 'CIE10') {
-          // Para CIE-10, obtener todas las enfermedades de la tabla CIE10
-          result = await diseaseService.searchDiseasesByTabla('CIE10', limit)
-          // Luego filtrar por el término de búsqueda si se proporciona
-          if (query && query.trim()) {
-            const filteredDiseases = result.diseases.filter(disease => 
-              disease.name.toLowerCase().includes(query.toLowerCase()) ||
-              disease.code.toLowerCase().includes(query.toLowerCase())
-            )
-            result.diseases = filteredDiseases
-            result.total = filteredDiseases.length
-          }
+          const response = await diseaseService.searchDiseasesByTabla('CIE10', limit)
+          diseasesList = searchTerm
+            ? response.diseases.filter(disease =>
+                disease.name.toLowerCase().includes(searchTerm) ||
+                disease.code.toLowerCase().includes(searchTerm)
+              )
+            : response.diseases
         } else {
-          // Para otras tablas, usar búsqueda normal
-          result = await diseaseService.searchDiseases(query, limit)
+          const response = await diseaseService.searchDiseases(query, limit)
+          diseasesList = response.diseases
         }
       } else {
-        // Búsqueda normal sin filtro de tabla
-        result = await diseaseService.searchDiseases(query, limit)
+        const response = await diseaseService.searchDiseases(query, limit)
+        diseasesList = response.diseases
       }
-      
+
       return {
         success: true,
-        diseases: result.diseases,
+        diseases: diseasesList,
         message: 'Búsqueda completada'
       }
     } catch (err: any) {
@@ -140,9 +132,7 @@ export function useDiseaseAPI() {
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Error al obtener enfermedad'
       error.value = errorMessage
-      
-      console.error('Error al obtener enfermedad por ID:', err)
-      
+
       return {
         success: false,
         error: errorMessage
@@ -170,9 +160,7 @@ export function useDiseaseAPI() {
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Error al obtener enfermedad'
       error.value = errorMessage
-      
-      console.error('Error al obtener enfermedad por código:', err)
-      
+
       return {
         success: false,
         error: errorMessage

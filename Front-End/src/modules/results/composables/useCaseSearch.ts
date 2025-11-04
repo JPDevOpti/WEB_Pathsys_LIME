@@ -16,14 +16,8 @@ export function useCaseSearch() {
   // Función helper para obtener el nombre del usuario actual
   const getCurrentUserName = (): string | null => {
     if (!authStore.user) return null
-    
-    let userName = authStore.user.nombre || null
-
-    if (!userName) {
-      userName = authStore.user.email
-    }
-    
-    return userName
+    const userData = authStore.user as typeof authStore.user & { nombre?: string }
+    return userData?.name || userData?.nombre || userData.email || null
   }
 
   // Función helper para obtener el nombre del patólogo asignado

@@ -2,8 +2,7 @@ import { ref } from 'vue'
 import type { 
   PathologistAssignmentFormData, 
   CaseModel, 
-  AssignmentResult,
-  AssignmentEventData 
+  AssignmentResult
 } from '../types'
 import casesApiService from '../../cases/services/casesApi.service'
 
@@ -81,18 +80,16 @@ export function usePathologistAssignment() {
         try {
           await casesApiService.unassignPathologist(codigoCaso)
         } catch (e: any) {
-          console.warn('Error al desasignar patólogo anterior:', e.message)
+          return { success: false, message: e?.message || 'No fue posible desasignar al patólogo previo' }
         }
       }
 
       // Asignar nuevo patólogo
-      const pathologistData = {
+      const updatedCase = await casesApiService.assignPathologist(codigoCaso, {
         codigo: assignmentData.patologoId,
-        nombre: '', // Se llenará desde la respuesta
-        fecha_asignacion: assignmentData.fechaAsignacion
-      }
-
-      const result = await casesApiService.assignPathologist(codigoCaso, pathologistData)
+        nombre: assignmentData.patologoId
+      })
+      const assigned = (updatedCase as any)?.assigned_pathologist || {}
       
       return {
         success: true,
@@ -100,6 +97,7 @@ export function usePathologistAssignment() {
         assignment: {
           pathologist: {
             id: assignmentData.patologoId,
+            name: assigned.name || assignmentData.patologoId,
             patologo_code: assignmentData.patologoId
           }
         }
