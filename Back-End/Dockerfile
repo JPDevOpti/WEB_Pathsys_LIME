@@ -43,7 +43,8 @@ COPY requirements.txt ./
 RUN pip install --upgrade pip && pip install -r requirements.txt && playwright install chromium
 
 COPY app ./app
-COPY uploads ./uploads
+
+RUN mkdir -p uploads/signatures
 
 EXPOSE 8000
 
