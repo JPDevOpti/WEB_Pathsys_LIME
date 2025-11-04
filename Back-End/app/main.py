@@ -13,6 +13,7 @@ from app.modules.cases.repositories.consecutive_repository import CaseConsecutiv
 from app.modules.approvals.repositories.approval_repository import ApprovalRepository
 from app.modules.approvals.repositories.consecutive_repository import ApprovalConsecutiveRepository
 from app.modules.patients.repositories.patient_repository import PatientRepository
+from app.modules.unread_cases.repositories.unread_case_repository import UnreadCaseRepository
 
 app = FastAPI(title="WEB-LIS PathSys - New Backend", version="1.0.0")
 
@@ -50,6 +51,8 @@ async def on_startup():
     await ApprovalConsecutiveRepository(db).ensure_indexes()
     # Pacientes
     await PatientRepository(db).ensure_indexes()
+    # Casos sin lectura
+    await UnreadCaseRepository(db).ensure_indexes()
 
 @app.on_event("shutdown")
 async def on_shutdown():

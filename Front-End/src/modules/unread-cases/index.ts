@@ -1,5 +1,5 @@
 // Routes
-export * from './routes/complementaryTechniquesRoutes'
+export * from './routes/unreadCasesRoutes'
 
 // Components
 export * from './components'

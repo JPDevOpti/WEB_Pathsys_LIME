@@ -590,7 +590,7 @@ const getTestTooltip = (tests: string[], code: string, count: number): string =>
   const names = matching.map(t => t.includes(' - ') ? t.split(' - ').slice(1).join(' - ') : t).filter(Boolean)
   const uniqueNames = Array.from(new Set(names))
   const nameStr = uniqueNames.length ? uniqueNames.join(', ') : `Código ${code}`
-  return `${nameStr} • ${count} vez${count > 1 ? 'es' : ''}`
+  return `${nameStr} • ${count} ${count === 1 ? 'vez' : 'veces'}`
 }
 
 const elapsedDays = (c: Case): number => {

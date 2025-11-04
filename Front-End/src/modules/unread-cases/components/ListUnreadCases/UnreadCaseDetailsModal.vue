@@ -16,8 +16,8 @@
                 </div>
               </div>
               <div>
-                <h3 class="text-lg font-bold text-gray-900">Detalles de la Técnica Complementaria</h3>
-                <p class="text-gray-600 text-xs mt-1">Información completa de la técnica</p>
+                <h3 class="text-lg font-bold text-gray-900">Detalles del caso sin lectura</h3>
+                <p class="text-gray-600 text-xs mt-1">Información completa del caso sin lectura</p>
               </div>
             </div>
             
@@ -61,8 +61,8 @@
                       </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                      <span :class="['inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold', getStatusClass(techniqueStatus)]">
-                        {{ techniqueStatus }}
+                      <span :class="['inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold', getStatusClass(unreadCaseStatus)]">
+                        {{ unreadCaseStatus }}
                       </span>
                     </div>
                   </div>
@@ -147,8 +147,8 @@
             </div>
             <div class="p-6 space-y-4">
               <!-- Nuevo formato con testGroups -->
-              <template v-if="technique?.testGroups && technique.testGroups.length > 0">
-                <div v-for="(group, idx) in technique.testGroups" :key="idx" :class="['rounded-lg p-4 border', getTestGroupColorClass(group.type)]">
+              <template v-if="unreadCase?.testGroups && unreadCase.testGroups.length > 0">
+                <div v-for="(group, idx) in unreadCase.testGroups" :key="idx" :class="['rounded-lg p-4 border', getTestGroupColorClass(group.type)]">
                   <div class="flex flex-col gap-3">
                     <!-- Tipo de prueba -->
                     <div class="flex items-center justify-between">
@@ -230,16 +230,16 @@
                 </div>
 
                 <div v-if="!lowComplexityIHQ && !highComplexityIHQ && !specialIHQ && !histochemistry" class="text-center py-6">
-                  <p class="text-gray-500 text-sm">No se han registrado pruebas para esta técnica</p>
+                  <p class="text-gray-500 text-sm">No se han registrado pruebas para este caso sin lectura</p>
                 </div>
               </template>
 
               <!-- Sin pruebas -->
-              <div v-if="!technique?.testGroups?.length && !lowComplexityIHQ && !highComplexityIHQ && !specialIHQ && !histochemistry" class="text-center py-8">
+              <div v-if="!unreadCase?.testGroups?.length && !lowComplexityIHQ && !highComplexityIHQ && !specialIHQ && !histochemistry" class="text-center py-8">
                 <svg class="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p class="text-gray-500 text-sm">No se han registrado pruebas para esta técnica</p>
+                <p class="text-gray-500 text-sm">No se han registrado pruebas para este caso sin lectura</p>
               </div>
             </div>
           </div>
@@ -265,17 +265,17 @@
                 </div>
                 <div class="flex justify-between items-center py-2 border-b border-gray-100">
                   <span class="text-sm text-gray-600">Identificador</span>
-                  <span class="text-sm font-mono text-gray-900">{{ techniqueId }}</span>
+                  <span class="text-sm font-mono text-gray-900">{{ unreadCaseId }}</span>
                 </div>
                 <!-- Notas especiales (cuando existan) -->
-                <div v-if="technique?.notes" class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div v-if="unreadCase?.notes" class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <div class="flex items-start gap-2">
                     <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
                       <p class="text-sm font-semibold text-yellow-800">Nota Especial</p>
-                      <p class="text-sm text-yellow-700 mt-1">{{ technique.notes }}</p>
+                      <p class="text-sm text-yellow-700 mt-1">{{ unreadCase.notes }}</p>
                     </div>
                   </div>
                 </div>
@@ -294,8 +294,8 @@
               Cerrar
             </button>
             <button
-              @click="technique && $emit('edit', technique)"
-              :disabled="!technique"
+              @click="unreadCase && $emit('edit', unreadCase)"
+              :disabled="!unreadCase"
               class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Editar
@@ -309,40 +309,40 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ComplementaryTechnique } from '../../types'
+import type { UnreadCase } from '../../types'
 import SpecialCaseIcon from '@/assets/icons/SpecialCaseIcon.vue'
 
 interface Props {
-  technique: ComplementaryTechnique | null
+  unreadCase: UnreadCase | null
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'edit', technique: ComplementaryTechnique): void
+  (e: 'edit', unreadCase: UnreadCase): void
 }>()
 
-const isOpen = computed(() => props.technique !== null)
-const techniqueId = computed(() => props.technique?.id || '—')
-const caseCode = computed(() => props.technique?.caseCode || '—')
-const patientDocument = computed(() => props.technique?.patientDocument || (props.technique?.isSpecialCase ? 'Lab. Externo' : 'Sin documento'))
-const patientName = computed(() => props.technique?.patientName || (props.technique?.isSpecialCase ? 'Caso Especial' : 'Sin nombre de paciente'))
-const institution = computed(() => props.technique?.institution || '—')
-const numberOfPlates = computed(() => props.technique?.numberOfPlates || 0)
-const deliveredTo = computed(() => props.technique?.deliveredTo || '—')
-const deliveryDate = computed(() => props.technique?.deliveryDate || '')
-const entryDate = computed(() => props.technique?.entryDate || '')
-const receivedBy = computed(() => props.technique?.receivedBy || '—')
-const elaboratedBy = computed(() => props.technique?.elaboratedBy || '—')
-const techniqueStatus = computed(() => props.technique?.status || '—')
-const lowComplexityIHQ = computed(() => props.technique?.lowComplexityIHQ || null)
-const lowComplexityPlates = computed(() => props.technique?.lowComplexityPlates || 0)
-const highComplexityIHQ = computed(() => props.technique?.highComplexityIHQ || null)
-const highComplexityPlates = computed(() => props.technique?.highComplexityPlates || 0)
-const specialIHQ = computed(() => props.technique?.specialIHQ || null)
-const specialPlates = computed(() => props.technique?.specialPlates || 0)
-const histochemistry = computed(() => props.technique?.histochemistry || null)
-const histochemistryPlates = computed(() => props.technique?.histochemistryPlates || 0)
+const isOpen = computed(() => props.unreadCase !== null)
+const unreadCaseId = computed(() => props.unreadCase?.id || '—')
+const caseCode = computed(() => props.unreadCase?.caseCode || '—')
+const patientDocument = computed(() => props.unreadCase?.patientDocument || (props.unreadCase?.isSpecialCase ? 'Lab. Externo' : 'Sin documento'))
+const patientName = computed(() => props.unreadCase?.patientName || (props.unreadCase?.isSpecialCase ? 'Caso Especial' : 'Sin nombre de paciente'))
+const institution = computed(() => props.unreadCase?.institution || '—')
+const numberOfPlates = computed(() => props.unreadCase?.numberOfPlates || 0)
+const deliveredTo = computed(() => props.unreadCase?.deliveredTo || '—')
+const deliveryDate = computed(() => props.unreadCase?.deliveryDate || '')
+const entryDate = computed(() => props.unreadCase?.entryDate || '')
+const receivedBy = computed(() => props.unreadCase?.receivedBy || '—')
+const elaboratedBy = computed(() => props.unreadCase?.elaboratedBy || '—')
+const unreadCaseStatus = computed(() => props.unreadCase?.status || '—')
+const lowComplexityIHQ = computed(() => props.unreadCase?.lowComplexityIHQ || null)
+const lowComplexityPlates = computed(() => props.unreadCase?.lowComplexityPlates || 0)
+const highComplexityIHQ = computed(() => props.unreadCase?.highComplexityIHQ || null)
+const highComplexityPlates = computed(() => props.unreadCase?.highComplexityPlates || 0)
+const specialIHQ = computed(() => props.unreadCase?.specialIHQ || null)
+const specialPlates = computed(() => props.unreadCase?.specialPlates || 0)
+const histochemistry = computed(() => props.unreadCase?.histochemistry || null)
+const histochemistryPlates = computed(() => props.unreadCase?.histochemistryPlates || 0)
 
 const getStatusClass = (status: string) => {
   const classes: Record<string, string> = {

@@ -123,7 +123,7 @@
           <template #footer>
             <div class="flex flex-col sm:flex-row justify-end gap-3">
               <ClearButton @click="clearForm" />
-              <SaveButton text="Guardar Caso" @click="handleSaveClick" />
+              <SaveButton text="Guardar Caso" :loading="isSavingCase" @click="handleSaveClick" />
             </div>
           </template>
         </ComponentCard>
@@ -199,7 +199,7 @@ const router = useRouter()
 const { formData, validationState, errors, warnings, validateForm, clearForm: clearCaseForm, handleNumberOfSamplesChange, addTestToSample, removeTestFromSample } = useCaseForm()
 const { isSearching, searchError, patientVerified, verifiedPatient, useNewPatient, clearVerification, searchPatientByDocumento } = usePatientVerification()
 const { notification, showNotification, closeNotification } = useNotifications()
-const { createCase, error: apiError, clearState } = useCaseAPI()
+const { createCase, error: apiError, clearState, isLoading: isSavingCase } = useCaseAPI()
 
 const searchIdentificationType = ref<string | number>('')
 const searchIdentificationNumber = ref('')
@@ -501,6 +501,7 @@ const closeCaseSuccessCard = () => {
 }
 
 const handleSaveClick = async () => {
+  if (isSavingCase.value) return
   const isValid = validateForm()
   if (!isValid) { 
     validationState.showValidationError = true

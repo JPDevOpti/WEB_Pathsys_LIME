@@ -1,7 +1,7 @@
 <template>
   <transition name="fade-scale">
     <div
-      v-if="isOpen"
+      v-if="isOpen && unreadCase"
       :class="['fixed right-0 bottom-0 z-[100000] flex items-center justify-center p-4 bg-black/40 top-16', overlayLeftClass]"
       @click.self="handleClose"
     >
@@ -15,22 +15,23 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-
         <div class="flex-shrink-0 px-4 py-4 pr-12 border-b border-gray-200 bg-white rounded-t-2xl">
           <div class="flex items-center space-x-3">
             <div class="flex-shrink-0">
-              <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-                <SpecialCaseIcon class="w-5 h-5 text-blue-600" />
+              <div class="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center">
+                <EditIcon class="w-5 h-5 text-purple-600" />
               </div>
             </div>
             <div>
-              <h3 class="text-lg font-bold text-gray-900">Nuevo caso de Técnica Complementaria</h3>
-              <p class="text-gray-600 text-xs mt-1">Complete los datos del nuevo registro</p>
+              <h3 class="text-lg font-bold text-gray-900">Editar caso sin lectura</h3>
+              <p class="text-gray-600 text-xs mt-1">Caso: <span class="font-mono font-semibold">{{ unreadCase.caseCode }}</span> - Modifique los datos necesarios</p>
             </div>
           </div>
         </div>
 
+        <!-- Content -->
         <div class="flex-1 overflow-y-auto overflow-x-visible p-6 space-y-6">
+          <!-- Información del Paciente y Caso -->
           <div class="bg-gray-50 rounded-2xl border border-gray-200 shadow-sm">
             <div class="px-6 py-4 border-b border-gray-200 bg-white">
               <div class="flex items-start gap-2">
@@ -45,11 +46,19 @@
             </div>
             <div class="p-6 overflow-visible">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Tipo de Documento -->
                 <FormSelect
                   v-if="!formData.isSpecialCase"
                   v-model="formData.documentType"
                   label="Tipo de Documento"
-                  :options="DOCUMENT_TYPE_OPTIONS"
+                  :options="[
+                    { value: '', label: 'Seleccione...' },
+                    { value: 'CC', label: 'Cédula de Ciudadanía' },
+                    { value: 'TI', label: 'Tarjeta de Identidad' },
+                    { value: 'CE', label: 'Cédula de Extranjería' },
+                    { value: 'PA', label: 'Pasaporte' },
+                    { value: 'RC', label: 'Registro Civil' }
+                  ]"
                   :errors="errors.documentType ? [errors.documentType] : []"
                   required
                 />
@@ -113,29 +122,27 @@
                 </div>
 
                 <FormTextarea
-                  v-if="formData.isSpecialCase"
                   v-model="formData.notes"
-                  label="Notas Especiales"
-                  placeholder="Ej: Caso de laboratorio externo"
+                  label="Observaciones generales"
+                  placeholder="Notas adicionales sobre el caso"
                   :rows="2"
                   :maxLength="500"
                   class="md:col-span-2"
                 />
               </div>
 
-              <div class="mt-4 flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                <input
+              <div class="mt-4 flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg">
+                <FormCheckbox
                   v-model="formData.isSpecialCase"
-                  type="checkbox"
                   id="specialCase"
-                  class="rounded border-gray-300 text-gray-600 focus:ring-gray-500"
-                />
-                <label for="specialCase" class="text-sm text-gray-700 cursor-pointer flex items-center gap-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Caso especial (laboratorio externo, sin datos de paciente)
-                </label>
+                  :label="'Caso especial (laboratorio externo, sin datos de paciente)'"
+                >
+                  <template #label-prefix>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </template>
+                </FormCheckbox>
               </div>
             </div>
           </div>
@@ -152,33 +159,49 @@
                 </div>
               </div>
             </div>
-            <div class="p-6 space-y-6 overflow-visible">
+            <div class="p-6 space-y-4 overflow-visible">
+              <div class="flex items-center justify-between">
+                <h5 class="text-sm font-semibold text-gray-800">Tipos de prueba</h5>
+                <AddButton text="Agregar tipo de prueba" @click="addTestGroup" />
+              </div>
+              <p v-if="errors.tests" class="text-xs text-red-600">{{ errors.tests }}</p>
+
               <div 
                 v-for="(testGroup, groupIndex) in formData.testGroups" 
                 :key="groupIndex"
-                class="space-y-4"
+                class="bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-sm"
               >
-                <div class="overflow-visible">
-                  <FormSelect
-                    v-model="testGroup.type"
-                    label="Tipo de Prueba"
-                    placeholder="Seleccione el tipo de prueba"
-                    :options="TEST_TYPE_OPTIONS"
-                    :error="errors[`testGroup_${groupIndex}_type`]"
-                    required
+                <div class="flex items-start gap-3">
+                  <div class="flex-1 overflow-visible">
+                    <FormSelect
+                      v-model="testGroup.type"
+                      :label="`Tipo de prueba #${groupIndex + 1}`"
+                      placeholder="Seleccione el tipo de prueba"
+                      :options="[
+                        { value: '', label: 'Seleccione...' },
+                        { value: 'LOW_COMPLEXITY_IHQ', label: 'IHQ Baja Complejidad' },
+                        { value: 'HIGH_COMPLEXITY_IHQ', label: 'IHQ Alta Complejidad' },
+                        { value: 'SPECIAL_IHQ', label: 'IHQ Especiales' },
+                        { value: 'HISTOCHEMISTRY', label: 'Histoquímicas' }
+                      ]"
+                      :error="errors[`testGroup_${groupIndex}_type`]"
+                    />
+                  </div>
+                  <RemoveButton 
+                    v-if="formData.testGroups.length > 1"
+                    @click="removeTestGroup(groupIndex)"
+                    title="Eliminar tipo de prueba"
+                    class="mt-6 flex-shrink-0"
                   />
-                  <p class="text-xs text-gray-500 mt-1">Seleccione el tipo de prueba a realizar</p>
                 </div>
 
                 <div v-if="testGroup.type" class="space-y-3 overflow-visible">
                   <div class="flex items-center justify-between">
-                    <label class="block text-xs font-medium text-gray-700 uppercase tracking-wide">
-                      Pruebas a realizar
-                    </label>
-                    <AddButton text="Agregar Prueba" @click="addTestToGroup(groupIndex)" />
+                    <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Pruebas</span>
+                    <AddButton text="Agregar prueba" @click="addTestToGroup(groupIndex)" />
                   </div>
 
-                  <div class="space-y-3">
+                  <div class="space-y-2">
                     <div 
                       v-for="(test, testIndex) in testGroup.tests" 
                       :key="testIndex"
@@ -194,18 +217,15 @@
                           @test-selected="(t: any) => onTestSelected(groupIndex, testIndex, t)"
                         />
                       </div>
-
                       <div>
                         <FormInputField 
                           v-model.number="test.quantity" 
                           label="Cantidad" 
                           type="number" 
-                          min="1"
-                          max="999"
+                          min="1" 
                           placeholder="1" 
                         />
                       </div>
-
                       <div class="flex items-center justify-center md:pb-2">
                         <RemoveButton 
                           @click="removeTestFromGroup(groupIndex, testIndex)" 
@@ -214,11 +234,13 @@
                       </div>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- Recepción y Entrega -->
           <div class="bg-gray-50 rounded-2xl border border-gray-200 shadow-sm">
             <div class="px-6 py-4 border-b border-gray-200 bg-white">
               <div class="flex items-start gap-2">
@@ -233,6 +255,7 @@
             </div>
             <div class="p-6">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Fecha de Ingreso -->
                 <DateInputField
                   v-model="formData.entryDate"
                   label="Fecha de Ingreso"
@@ -240,6 +263,7 @@
                   required
                 />
 
+                <!-- Recibido Por -->
                 <FormInputField
                   v-model="formData.receivedBy"
                   label="Recibido Por"
@@ -247,24 +271,50 @@
                   :errors="errors.receivedBy ? [errors.receivedBy] : []"
                   required
                 />
+
+                <!-- Entregado A -->
+                <FormInputField
+                  v-model="formData.deliveredTo"
+                  label="Entregado A"
+                  placeholder="Ej: IMQ, AMPR"
+                  :errors="errors.deliveredTo ? [errors.deliveredTo] : []"
+                  required
+                />
+
+                <!-- Fecha de Entrega -->
+                <DateInputField
+                  v-model="formData.deliveryDate"
+                  label="Fecha de Entrega"
+                  :errors="errors.deliveryDate ? [errors.deliveryDate] : []"
+                />
+
+                <!-- Estado -->
+                <FormSelect
+                  v-model="formData.status"
+                  label="Estado"
+                  :options="[
+                    { value: 'En proceso', label: 'En proceso' },
+                    { value: 'Completado', label: 'Completado' }
+                  ]"
+                  :errors="errors.status ? [errors.status] : []"
+                  required
+                />
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Footer -->
         <div class="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div class="flex justify-end gap-3">
-            <ClearButton 
-              text="Limpiar" 
-              size="sm"
-              @click="handleReset"
+            <button
+              @click="handleClose"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              <template #icon>
-                <RefreshIcon class="w-4 h-4 mr-2" />
-              </template>
-            </ClearButton>
+              Cancelar
+            </button>
             <SaveButton 
-              text="Guardar"
+              text="Guardar Cambios"
               size="sm"
               :loading="isSaving"
               :fit-content="true"
@@ -279,22 +329,24 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { SpecialCaseIcon, UserCircleIcon, CalendarIcon, TestIcon, RefreshIcon } from '@/assets/icons'
+import { UserCircleIcon, CalendarIcon, TestIcon, EditIcon } from '@/assets/icons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
 import FormInput from '@/shared/components/ui/forms/FormInput.vue'
 import FormSelect from '@/shared/components/ui/forms/FormSelect.vue'
 import FormTextarea from '@/shared/components/ui/forms/FormTextarea.vue'
+import FormCheckbox from '@/shared/components/ui/forms/FormCheckbox.vue'
 import FormInputField from '@/shared/components/ui/forms/FormInputField.vue'
 import DateInputField from '@/shared/components/ui/forms/DateInputField.vue'
 import EntityList from '@/shared/components/ui/lists/EntityList.vue'
 import TestList from '@/shared/components/ui/lists/TestList.vue'
 import { AddButton, RemoveButton } from '@/shared/components/ui/buttons'
 import SaveButton from '@/shared/components/ui/buttons/SaveButton.vue'
-import ClearButton from '@/shared/components/ui/buttons/ClearButton.vue'
 import type { EntityInfo } from '@/modules/cases/types/case'
+import type { UnreadCase } from '../../types'
 
 interface Props {
   isOpen: boolean
+  unreadCase: UnreadCase | null
 }
 
 interface TestItem {
@@ -322,40 +374,46 @@ interface FormData {
   testGroups: TestGroup[]
   entryDate: string
   receivedBy: string
+  deliveredTo: string
+  deliveryDate: string
+  status: string
 }
 
-const DOCUMENT_TYPE_OPTIONS = [
-  { value: '', label: 'Seleccione...' },
-  { value: 'CC', label: 'Cédula de Ciudadanía' },
-  { value: 'TI', label: 'Tarjeta de Identidad' },
-  { value: 'CE', label: 'Cédula de Extranjería' },
-  { value: 'PA', label: 'Pasaporte' },
-  { value: 'RC', label: 'Registro Civil' }
-]
-
-const TEST_TYPE_OPTIONS = [
-  { value: '', label: 'Seleccione...' },
-  { value: 'LOW_COMPLEXITY_IHQ', label: 'IHQ Baja Complejidad' },
-  { value: 'HIGH_COMPLEXITY_IHQ', label: 'IHQ Alta Complejidad' },
-  { value: 'SPECIAL_IHQ', label: 'IHQ Especiales' },
-  { value: 'HISTOCHEMISTRY', label: 'Histoquímicas' }
-]
-
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'save', data: FormData): void
+  (e: 'save', data: UnreadCase): void
 }>()
 
 const isSaving = ref(false)
 const { isExpanded, isMobileOpen, isHovered } = useSidebar()
 
+// Computed class for overlay positioning based on sidebar state
 const overlayLeftClass = computed(() => {
   const hasWideSidebar = (isExpanded.value && !isMobileOpen.value) || (!isExpanded.value && isHovered.value)
   return hasWideSidebar ? 'left-0 lg:left-72' : 'left-0 lg:left-20'
 })
 
-const getInitialFormData = (): FormData => ({
+const normalizeTests = (tests: any[]): TestItem[] => {
+  if (!Array.isArray(tests)) return []
+  return tests.map((test: any) => ({
+    code: test?.code || '',
+    quantity: Number.isFinite(Number(test?.quantity)) ? Number(test.quantity) : 1,
+    name: test?.name || ''
+  }))
+}
+
+const normalizeTestGroups = (groups?: any[]): TestGroup[] => {
+  if (!Array.isArray(groups) || !groups.length) {
+    return [{ type: '', tests: [] }]
+  }
+  return groups.map((group: any) => ({
+    type: group?.type || '',
+    tests: normalizeTests(group?.tests)
+  }))
+}
+
+const formData = ref<FormData>({
   isSpecialCase: false,
   documentType: '',
   patientDocument: '',
@@ -366,14 +424,49 @@ const getInitialFormData = (): FormData => ({
   entityCode: '',
   entityName: '',
   notes: '',
-  testGroups: [{ type: '', tests: [] }],
+  testGroups: normalizeTestGroups(),
   entryDate: new Date().toISOString().split('T')[0],
-  receivedBy: ''
+  receivedBy: '',
+  deliveredTo: '',
+  deliveryDate: '',
+  status: 'En proceso'
 })
 
-const formData = ref<FormData>(getInitialFormData())
 const errors = ref<Record<string, string>>({})
 
+const clearTestErrorsForGroup = (groupIndex: number) => {
+  Object.keys(errors.value).forEach((key) => {
+    if (key.startsWith(`testGroup_${groupIndex}_`)) {
+      delete errors.value[key]
+    }
+  })
+}
+
+// Poblar el formulario cuando se abre con un caso sin lectura existente
+watch(() => props.unreadCase, (unreadCase) => {
+  if (unreadCase) {
+    formData.value = {
+      isSpecialCase: unreadCase.isSpecialCase || false,
+      documentType: unreadCase.documentType || '',
+      patientDocument: unreadCase.patientDocument || '',
+      firstName: unreadCase.firstName || '',
+      secondName: unreadCase.secondName || '',
+      firstLastName: unreadCase.firstLastName || '',
+      secondLastName: unreadCase.secondLastName || '',
+      entityCode: unreadCase.entityCode,
+      entityName: unreadCase.entityName,
+      notes: unreadCase.notes || '',
+      testGroups: normalizeTestGroups(unreadCase.testGroups),
+      entryDate: unreadCase.entryDate ? new Date(unreadCase.entryDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      receivedBy: unreadCase.receivedBy,
+      deliveredTo: unreadCase.deliveredTo,
+      deliveryDate: unreadCase.deliveryDate ? new Date(unreadCase.deliveryDate).toISOString().split('T')[0] : '',
+      status: unreadCase.status
+    }
+  }
+}, { immediate: true })
+
+// Limpiar campos de paciente cuando se marca como caso especial
 watch(() => formData.value.isSpecialCase, (isSpecial) => {
   if (isSpecial) {
     formData.value.documentType = ''
@@ -389,16 +482,24 @@ watch(() => formData.value.isSpecialCase, (isSpecial) => {
   }
 })
 
-watch(() => formData.value.testGroups[0]?.type, (newType, oldType) => {
-  if (newType && !oldType && formData.value.testGroups[0].tests.length === 0) {
-    formData.value.testGroups[0].tests.push({ code: '', quantity: 1 })
-  }
-})
+watch(() => formData.value.testGroups.map(group => group.type), (types) => {
+  types.forEach((type, idx) => {
+    const target = formData.value.testGroups[idx]
+    if (type && target.tests.length === 0) {
+      target.tests.push({ code: '', quantity: 1, name: '' })
+    }
+    if (!type) {
+      target.tests = []
+      clearTestErrorsForGroup(idx)
+    }
+  })
+}, { deep: true })
 
 const validateForm = (): boolean => {
   errors.value = {}
   let isValid = true
 
+  // Validar datos de paciente (solo si no es caso especial)
   if (!formData.value.isSpecialCase) {
     if (!formData.value.documentType) {
       errors.value.documentType = 'El tipo de documento es requerido'
@@ -407,43 +508,50 @@ const validateForm = (): boolean => {
     if (!formData.value.patientDocument.trim()) {
       errors.value.patientDocument = 'El documento es requerido'
       isValid = false
-    } else if (formData.value.patientDocument.length > 15) {
-      errors.value.patientDocument = 'El documento no puede exceder 15 caracteres'
-      isValid = false
     }
     if (!formData.value.firstName.trim()) {
       errors.value.firstName = 'El primer nombre es requerido'
-      isValid = false
-    } else if (formData.value.firstName.length > 50) {
-      errors.value.firstName = 'El primer nombre no puede exceder 50 caracteres'
       isValid = false
     }
     if (!formData.value.firstLastName.trim()) {
       errors.value.firstLastName = 'El primer apellido es requerido'
       isValid = false
-    } else if (formData.value.firstLastName.length > 50) {
-      errors.value.firstLastName = 'El primer apellido no puede exceder 50 caracteres'
-      isValid = false
     }
   }
 
+  // Validar entidad
   if (!formData.value.entityCode.trim()) {
     errors.value.entityCode = 'La entidad es requerida'
     isValid = false
   }
 
+  // Validar fecha de ingreso
   if (!formData.value.entryDate) {
     errors.value.entryDate = 'La fecha de ingreso es requerida'
     isValid = false
   }
 
+  // Validar recibido por
   if (!formData.value.receivedBy.trim()) {
     errors.value.receivedBy = 'Este campo es requerido'
     isValid = false
   }
 
+  // Validar entregado a
+  if (!formData.value.deliveredTo.trim()) {
+    errors.value.deliveredTo = 'Este campo es requerido'
+    isValid = false
+  }
+
+  // Validar estado
+  if (!formData.value.status) {
+    errors.value.status = 'El estado es requerido'
+    isValid = false
+  }
+
+  // Validar que al menos haya una prueba válida
   const hasValidTests = formData.value.testGroups.some(group => 
-    group.type && group.tests.length > 0 && group.tests.every(test => test.code && test.quantity > 0 && test.quantity <= 999)
+    group.type && group.tests.length > 0 && group.tests.every(test => test.code && test.quantity > 0)
   )
 
   if (!hasValidTests) {
@@ -451,6 +559,7 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
+  // Validar cada grupo de pruebas
   formData.value.testGroups.forEach((group, groupIndex) => {
     if (group.tests.length > 0 && !group.type) {
       errors.value[`testGroup_${groupIndex}_type`] = 'Debe seleccionar el tipo de prueba'
@@ -465,10 +574,6 @@ const validateForm = (): boolean => {
         errors.value[`testGroup_${groupIndex}_test_${testIndex}_quantity`] = 'La cantidad debe ser mayor a 0'
         isValid = false
       }
-      if (test.quantity > 999) {
-        errors.value[`testGroup_${groupIndex}_test_${testIndex}_quantity`] = 'La cantidad no puede exceder 999'
-        isValid = false
-      }
     })
   })
 
@@ -476,47 +581,98 @@ const validateForm = (): boolean => {
 }
 
 const handleSave = async () => {
-  if (!validateForm()) return
+  if (!validateForm() || !props.unreadCase) {
+    return
+  }
 
   isSaving.value = true
   
+  // Simular guardado
   await new Promise(resolve => setTimeout(resolve, 500))
   
-  emit('save', { ...formData.value })
+  // Calcular número de placas total
+  const totalPlates = formData.value.testGroups.reduce((sum, group) => {
+    return sum + group.tests.reduce((testSum, test) => testSum + (test.quantity || 0), 0)
+  }, 0)
+
+  // Construir objeto actualizado
+  const updatedUnreadCase: UnreadCase = {
+    ...props.unreadCase,
+    isSpecialCase: formData.value.isSpecialCase,
+    documentType: formData.value.documentType,
+    patientDocument: formData.value.patientDocument,
+    firstName: formData.value.firstName,
+    secondName: formData.value.secondName,
+    firstLastName: formData.value.firstLastName,
+    secondLastName: formData.value.secondLastName,
+    patientName: formData.value.isSpecialCase 
+      ? 'Caso Especial'
+      : `${formData.value.firstLastName} ${formData.value.secondLastName || ''} ${formData.value.firstName} ${formData.value.secondName || ''}`.trim(),
+    entityCode: formData.value.entityCode,
+    entityName: formData.value.entityName,
+    institution: formData.value.entityName,
+    notes: formData.value.notes,
+    testGroups: formData.value.testGroups.filter(g => g.type !== '') as any,
+    numberOfPlates: totalPlates,
+    entryDate: new Date(formData.value.entryDate).toISOString(),
+    receivedBy: formData.value.receivedBy,
+    deliveredTo: formData.value.deliveredTo,
+    deliveryDate: formData.value.deliveryDate ? new Date(formData.value.deliveryDate).toISOString() : '',
+    status: formData.value.status,
+    updatedAt: new Date().toISOString()
+  }
+  
+  emit('save', updatedUnreadCase)
   isSaving.value = false
-  handleReset()
   emit('close')
 }
 
 const handleEntitySelected = (entity: EntityInfo | null) => {
-  formData.value.entityName = entity?.name || ''
+  if (entity) {
+    formData.value.entityName = entity.name
+  } else {
+    formData.value.entityName = ''
+  }
+}
+
+// Métodos para gestión de pruebas
+const addTestGroup = () => {
+  formData.value.testGroups.push({ type: '', tests: [] })
+}
+
+const removeTestGroup = (groupIndex: number) => {
+  formData.value.testGroups.splice(groupIndex, 1)
+  if (!formData.value.testGroups.length) {
+    formData.value.testGroups.push({ type: '', tests: [] })
+  }
+  Object.keys(errors.value).forEach((key) => {
+    if (key.startsWith('testGroup_')) delete errors.value[key]
+  })
 }
 
 const addTestToGroup = (groupIndex: number) => {
-  formData.value.testGroups[groupIndex].tests.push({ code: '', quantity: 1 })
+  formData.value.testGroups[groupIndex].tests.push({ code: '', quantity: 1, name: '' })
 }
 
 const removeTestFromGroup = (groupIndex: number, testIndex: number) => {
   formData.value.testGroups[groupIndex].tests.splice(testIndex, 1)
+  clearTestErrorsForGroup(groupIndex)
 }
 
 const onTestSelected = (groupIndex: number, testIndex: number, test: any) => {
-  if (test?.name) {
+  if (test && test.name) {
     formData.value.testGroups[groupIndex].tests[testIndex].name = test.name
   }
 }
 
-const handleReset = () => {
-  formData.value = getInitialFormData()
-  errors.value = {}
-}
-
 const handleClose = () => {
-  if (!isSaving.value) emit('close')
+  if (isSaving.value) return
+  emit('close')
 }
 </script>
 
 <style scoped>
+/* Fade transition for overlay */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -527,6 +683,7 @@ const handleClose = () => {
   opacity: 0;
 }
 
+/* Slide transition for drawer */
 .slide-enter-active,
 .slide-leave-active {
   transition: transform 0.3s ease;
@@ -537,6 +694,7 @@ const handleClose = () => {
   transform: translateX(100%);
 }
 
+/* Hacer los campos más compactos */
 :deep(.space-y-1) {
   margin-top: 0 !important;
 }
@@ -558,8 +716,38 @@ const handleClose = () => {
   height: auto !important;
 }
 
-:deep(.relative.group label),
-:deep(.entity-combobox label),
+:deep(.relative.group label) {
+  font-size: 0.75rem !important;
+  margin-bottom: 0.25rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  font-weight: 500;
+  color: #374151;
+}
+
+:deep(.relative.group input) {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  font-size: 0.875rem !important;
+  height: auto !important;
+}
+
+:deep(.entity-combobox label) {
+  font-size: 0.75rem !important;
+  margin-bottom: 0.25rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  font-weight: 500;
+  color: #374151;
+}
+
+:deep(.entity-combobox input) {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Estilos para DateInputField */
 :deep(.date-input-field label) {
   font-size: 0.75rem !important;
   margin-bottom: 0.25rem !important;
@@ -569,8 +757,6 @@ const handleClose = () => {
   color: #374151;
 }
 
-:deep(.relative.group input),
-:deep(.entity-combobox input),
 :deep(.date-input-field input) {
   padding-top: 0.5rem !important;
   padding-bottom: 0.5rem !important;
