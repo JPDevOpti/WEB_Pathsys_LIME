@@ -11,7 +11,11 @@ ensure_python() {
 }
 
 clean_env_files() {
-  rm -f Back-End/.env Back-End/.env.* Front-End/.env Front-End/.env.* 2>/dev/null || true
+  setopt localoptions null_glob
+  local targets=(Back-End/.env Back-End/.env.* Front-End/.env Front-End/.env.*)
+  if (( ${#targets[@]} )); then
+    rm -f "${targets[@]}"
+  fi
 }
 
 write_env_files() {
