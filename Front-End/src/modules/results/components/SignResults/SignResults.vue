@@ -123,6 +123,20 @@
             :errors="validationMessage ? [validationMessage] : []" />
           <ErrorMessage v-if="errorMessage" class="mt-2" :message="errorMessage" />
 
+          <!-- Mensaje informativo cuando faltan campos por completar -->
+          <div v-if="caseFound && !allFieldsComplete"
+            class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 text-blue-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div>
+                <p class="text-sm font-medium text-blue-800">Completa todos los campos para firmar</p>
+                <p class="text-sm text-blue-700">Todos los campos (método, corte macro, corte micro, diagnóstico y CIE-10) deben estar completos para poder firmar el resultado. El CIE-O es opcional.</p>
+              </div>
+            </div>
+          </div>
+
           <div v-if="needsAssignedPathologist"
             class="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <div class="flex items-center">
@@ -197,12 +211,19 @@
             />
             <!-- Botón de previsualización temporalmente deshabilitado -->
             <button
-              :disabled="loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature"
-              :class="['px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2', (loading || !hasDisease || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700']"
-              @click="handleSign"
+              :disabled="loading || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature"
+              :class="[
+                'px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2',
+                (loading || needsAssignedPathologist || !canUserSign || (!canSignByStatus && !hasBeenSigned) || isPathologistWithoutSignature) 
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : allFieldsComplete 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-green-600 text-white hover:bg-green-700'
+              ]"
+              @click="handleButtonClick"
             >
               <EditCaseIcon class="w-4 h-4" />
-              {{ signing ? 'Firmando...' : 'Firmar' }}
+              {{ loading ? 'Procesando...' : (allFieldsComplete ? (signing ? 'Firmando...' : 'Firmar resultado') : 'Guardar progreso') }}
             </button>
           </div>
         </div>
@@ -342,10 +363,10 @@ const savedCaseCode = ref('')
 // Guarda el contenido actual del formulario para mostrar en notificaciones
 const setSavedFromSections = () => {
   savedContent.value = {
-    method: sections.value?.method || [],
-    macro: sections.value?.macro || '',
-    micro: sections.value?.micro || '',
-    diagnosis: sections.value?.diagnosis || ''
+    method: getCleanMethods(sections.value?.method),
+    macro: prepareRichTextForSave(sections.value?.macro),
+    micro: prepareRichTextForSave(sections.value?.micro),
+    diagnosis: prepareRichTextForSave(sections.value?.diagnosis)
   }
 }
 
@@ -386,6 +407,22 @@ const needsAssignedPathologist = computed(() => {
   if (authStore.user.role === 'administrator') return false
   // Todos los demás usuarios requieren que el caso tenga un patólogo asignado
   return !caseDetails.value.assigned_pathologist?.name
+})
+
+// Computed para validar que todos los campos requeridos están completos
+const allFieldsComplete = computed(() => {
+  const currentSections = sections.value
+  if (!currentSections) return false
+
+  const hasMethod = hasAtLeastOneMethod(currentSections.method)
+  const hasMacro = !isRichTextEmpty(currentSections.macro)
+  const hasMicro = !isRichTextEmpty(currentSections.micro)
+  const hasDiagnosis = !isRichTextEmpty(currentSections.diagnosis)
+
+  const disease = primaryDisease.value
+  const hasCIE10 = hasDisease.value && !!(disease?.code && disease?.name)
+
+  return hasMethod && hasMacro && hasMicro && hasDiagnosis && hasCIE10
 })
 
 // Normaliza estados a formato de BD (mayúsculas y guiones bajos)
@@ -672,11 +709,157 @@ const resetEditorAndDiagnosis = () => {
   showCIEODiagnosis.value = false
 }
 
+// Normaliza contenido HTML (RichText) para evaluar si está vacío
+const normalizeRichText = (value?: string | null): string => {
+  if (!value) return ''
+  return value
+    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<br\s*\/?>(?=\s|$)/gi, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/<div><br><\/div>/gi, ' ')
+    .replace(/<p><\/p>/gi, ' ')
+    .replace(/<p>\s*<\/p>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
+const isRichTextEmpty = (value?: string | null): boolean => normalizeRichText(value).length === 0
+
+const hasAtLeastOneMethod = (methods?: string[] | null): boolean => {
+  if (!methods || !methods.length) return false
+  return methods.some(method => !!method && method.trim().length > 0)
+}
+
+const getCleanMethods = (methods?: string[] | null): string[] => {
+  if (!methods || !methods.length) return []
+  return methods.map(method => (method || '').trim()).filter(method => method.length > 0)
+}
+
+const prepareRichTextForSave = (value?: string | null): string => {
+  if (!value) return ''
+  return isRichTextEmpty(value) ? '' : value
+}
+
+// Validación completa de todos los campos requeridos
+const validateAllFieldsComplete = (): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = []
+  
+  // Validar método
+  if (!hasAtLeastOneMethod(sections.value?.method)) {
+    errors.push('El método es obligatorio')
+  }
+  
+  // Validar corte macroscópico
+  if (isRichTextEmpty(sections.value?.macro)) {
+    errors.push('El corte macroscópico es obligatorio')
+  }
+  
+  // Validar corte microscópico
+  if (isRichTextEmpty(sections.value?.micro)) {
+    errors.push('El corte microscópico es obligatorio')
+  }
+  
+  // Validar diagnóstico
+  if (isRichTextEmpty(sections.value?.diagnosis)) {
+    errors.push('El diagnóstico es obligatorio')
+  }
+  
+  // Validar CIE-10 (OBLIGATORIO)
+  if (!hasDisease.value || !primaryDisease.value || !primaryDisease.value.code || !primaryDisease.value.name) {
+    errors.push('El diagnóstico CIE-10 es obligatorio')
+  }
+  
+  // CIE-O es opcional, no se valida
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
+}
+
+// Función que maneja el click del botón según el estado de completitud
+const handleButtonClick = () => {
+  if (allFieldsComplete.value) {
+    handleSign()
+  } else {
+    handleSaveProgress()
+  }
+}
+
+// Función para guardar progreso sin firmar
+const handleSaveProgress = async () => {
+  try {
+    loading.value = true
+    
+    const casoCode = caseDetails?.value?.case_code || props.sampleId
+    if (!casoCode) {
+      showError('Error al guardar', 'No se pudo obtener el código del caso.', 0)
+      return
+    }
+    
+    // Preparar diagnósticos CIE-10 y CIE-O (si están disponibles)
+    const cie10Diagnosis = hasDisease.value && primaryDisease.value ? {
+      code: primaryDisease.value.code,
+      name: primaryDisease.value.name
+    } : undefined
+    
+    const cieoDiagnosis = hasDiseaseCIEO.value && primaryDiseaseCIEO.value ? {
+      code: primaryDiseaseCIEO.value.code,
+      name: primaryDiseaseCIEO.value.name
+    } : undefined
+    
+    // Preparar datos para guardar (sin firmar) - guardamos en el campo result del caso
+    const resultData: any = {
+  method: getCleanMethods(sections.value?.method),
+  macro_result: prepareRichTextForSave(sections.value?.macro),
+  micro_result: prepareRichTextForSave(sections.value?.micro),
+  diagnosis: prepareRichTextForSave(sections.value?.diagnosis),
+      observations: ''
+    }
+    
+    // Agregar diagnósticos solo si existen
+    if (cie10Diagnosis) {
+      resultData.cie10_diagnosis = cie10Diagnosis
+    }
+    
+    if (cieoDiagnosis) {
+      resultData.cieo_diagnosis = cieoDiagnosis
+    }
+    
+    // Actualizar el caso con el progreso (sin cambiar el estado)
+    await casesApiService.updateCase(casoCode, {
+      result: resultData
+    })
+    
+    setSavedFromSections()
+    savedCaseCode.value = casoCode
+    
+    showSuccess('Progreso guardado', `Los cambios del caso ${casoCode} han sido guardados. Completa todos los campos para poder firmar.`, 5000)
+    validationMessage.value = ''
+    
+  } catch (error: any) {
+    showError('Error al guardar', error.message || 'No se pudo guardar el progreso.', 0)
+  } finally {
+    loading.value = false
+  }
+}
 
 async function handleSign() {
   try {
     signing.value = true
+    
+    // Validar que todos los campos estén completos
+    const completeValidation = validateAllFieldsComplete()
+    if (!completeValidation.isValid) {
+      validationMessage.value = 'Campos incompletos: ' + completeValidation.errors.join(', ')
+      showError('Campos incompletos', 'Todos los campos deben estar completos para firmar el resultado. Se guardará el progreso pero no se firmará.', 0)
+      // Aquí podrías agregar lógica para guardar el progreso sin firmar
+      return
+    }
+    
+    // Validar diagnóstico adicional
     const validation = validateDiagnosis()
     if (!validation.isValid) {
       validationMessage.value = validation.errors.join(', ')
@@ -710,10 +893,10 @@ async function handleSign() {
     
     // Preparar datos para el nuevo endpoint
     const requestData = {
-      method: sections.value?.method || [],
-      macro_result: sections.value?.macro || '',
-      micro_result: sections.value?.micro || '',
-      diagnosis: sections.value?.diagnosis || '',
+  method: getCleanMethods(sections.value?.method),
+  macro_result: prepareRichTextForSave(sections.value?.macro),
+  micro_result: prepareRichTextForSave(sections.value?.micro),
+  diagnosis: prepareRichTextForSave(sections.value?.diagnosis),
       observations: '',
       cie10_diagnosis: cie10Diagnosis,
       cieo_diagnosis: cieoDiagnosis
@@ -754,11 +937,14 @@ const handlePrimaryDiseaseCIEOChange = (disease: Disease | null) => {
 
 const updateSectionContent = (value: string | string[]) => {
   if (sections.value) {
+    // Crear una nueva referencia para que Vue detecte el cambio
+    const updatedSections = { ...sections.value }
     if (activeSection.value === 'method') {
-      sections.value[activeSection.value] = Array.isArray(value) ? value : []
+      updatedSections[activeSection.value] = Array.isArray(value) ? value : []
     } else {
-      sections.value[activeSection.value] = Array.isArray(value) ? '' : value
+      updatedSections[activeSection.value] = Array.isArray(value) ? '' : value
     }
+    sections.value = updatedSections
   }
 }
 
@@ -895,6 +1081,14 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
   try {
     signing.value = true
     
+    // Validar que todos los campos estén completos
+    const completeValidation = validateAllFieldsComplete()
+    if (!completeValidation.isValid) {
+      validationMessage.value = 'Campos incompletos: ' + completeValidation.errors.join(', ')
+      showError('Campos incompletos', 'Todos los campos deben estar completos para firmar el resultado. Se guardará el progreso pero no se firmará.', 0)
+      return
+    }
+    
     // Validar diagnósticos (igual que en handleSign normal)
     const validation = validateDiagnosis()
     if (!validation.isValid) {
@@ -932,10 +1126,10 @@ const handleSignWithChanges = async (data: { details: string; tests: Complementa
     
     // Preparar datos para el nuevo endpoint (incluyendo observaciones de pruebas complementarias)
     const requestData = {
-      method: sections.value?.method || [],
-      macro_result: sections.value?.macro || '',
-      micro_result: sections.value?.micro || '',
-      diagnosis: sections.value?.diagnosis || '',
+  method: getCleanMethods(sections.value?.method),
+  macro_result: prepareRichTextForSave(sections.value?.macro),
+  micro_result: prepareRichTextForSave(sections.value?.micro),
+  diagnosis: prepareRichTextForSave(sections.value?.diagnosis),
       observations: data.details, // Usar el motivo de las pruebas complementarias
       cie10_diagnosis: cie10Diagnosis,
       cieo_diagnosis: cieoDiagnosis

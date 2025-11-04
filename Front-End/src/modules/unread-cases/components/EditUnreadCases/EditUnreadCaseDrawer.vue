@@ -121,6 +121,14 @@
                   />
                 </div>
 
+                <FormInputField
+                  v-model.number="formData.numberOfPlates"
+                  label="Número de Placas"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+
                 <FormTextarea
                   v-model="formData.notes"
                   label="Observaciones generales"
@@ -248,8 +256,8 @@
                   <CalendarIcon class="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                  <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Recepción y Entrega</h4>
-                  <p class="text-xs text-gray-500 mt-0.5">Registre la fecha de ingreso y quién recibió la muestra</p>
+                  <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Información de Recepción</h4>
+                  <p class="text-xs text-gray-500 mt-0.5">Registre la fecha de ingreso y a quién se entregará</p>
                 </div>
               </div>
             </div>
@@ -263,40 +271,12 @@
                   required
                 />
 
-                <!-- Recibido Por -->
-                <FormInputField
-                  v-model="formData.receivedBy"
-                  label="Recibido Por"
-                  placeholder="Ej: WILSON, CESAR ORTIZ"
-                  :errors="errors.receivedBy ? [errors.receivedBy] : []"
-                  required
-                />
-
                 <!-- Entregado A -->
                 <FormInputField
                   v-model="formData.deliveredTo"
                   label="Entregado A"
                   placeholder="Ej: IMQ, AMPR"
                   :errors="errors.deliveredTo ? [errors.deliveredTo] : []"
-                  required
-                />
-
-                <!-- Fecha de Entrega -->
-                <DateInputField
-                  v-model="formData.deliveryDate"
-                  label="Fecha de Entrega"
-                  :errors="errors.deliveryDate ? [errors.deliveryDate] : []"
-                />
-
-                <!-- Estado -->
-                <FormSelect
-                  v-model="formData.status"
-                  label="Estado"
-                  :options="[
-                    { value: 'En proceso', label: 'En proceso' },
-                    { value: 'Completado', label: 'Completado' }
-                  ]"
-                  :errors="errors.status ? [errors.status] : []"
                   required
                 />
               </div>
@@ -331,6 +311,7 @@
 import { ref, computed, watch } from 'vue'
 import { UserCircleIcon, CalendarIcon, TestIcon, EditIcon } from '@/assets/icons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
+import { useAuthStore } from '@/stores/auth.store'
 import FormInput from '@/shared/components/ui/forms/FormInput.vue'
 import FormSelect from '@/shared/components/ui/forms/FormSelect.vue'
 import FormTextarea from '@/shared/components/ui/forms/FormTextarea.vue'
@@ -374,6 +355,7 @@ interface FormData {
   testGroups: TestGroup[]
   entryDate: string
   receivedBy: string
+  numberOfPlates: number
   deliveredTo: string
   deliveryDate: string
   status: string
@@ -387,6 +369,7 @@ const emit = defineEmits<{
 
 const isSaving = ref(false)
 const { isExpanded, isMobileOpen, isHovered } = useSidebar()
+const authStore = useAuthStore()
 
 // Computed class for overlay positioning based on sidebar state
 const overlayLeftClass = computed(() => {
@@ -427,6 +410,7 @@ const formData = ref<FormData>({
   testGroups: normalizeTestGroups(),
   entryDate: new Date().toISOString().split('T')[0],
   receivedBy: '',
+  numberOfPlates: 0,
   deliveredTo: '',
   deliveryDate: '',
   status: 'En proceso'
@@ -453,15 +437,20 @@ watch(() => props.unreadCase, (unreadCase) => {
       secondName: unreadCase.secondName || '',
       firstLastName: unreadCase.firstLastName || '',
       secondLastName: unreadCase.secondLastName || '',
-      entityCode: unreadCase.entityCode,
-      entityName: unreadCase.entityName,
+      entityCode: unreadCase.entityCode || '',
+      entityName: unreadCase.entityName || '',
       notes: unreadCase.notes || '',
       testGroups: normalizeTestGroups(unreadCase.testGroups),
       entryDate: unreadCase.entryDate ? new Date(unreadCase.entryDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      receivedBy: unreadCase.receivedBy,
-      deliveredTo: unreadCase.deliveredTo,
+      receivedBy: unreadCase.receivedBy || '',
+      numberOfPlates: unreadCase.numberOfPlates || 0,
+      deliveredTo: unreadCase.deliveredTo || '',
       deliveryDate: unreadCase.deliveryDate ? new Date(unreadCase.deliveryDate).toISOString().split('T')[0] : '',
-      status: unreadCase.status
+      status: unreadCase.status || 'En proceso'
+    }
+    // Asignar automáticamente receivedBy si está vacío
+    if (!formData.value.receivedBy && authStore.user) {
+      formData.value.receivedBy = authStore.user.name || authStore.user.email || ''
     }
   }
 }, { immediate: true })
@@ -531,21 +520,10 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  // Validar recibido por
-  if (!formData.value.receivedBy.trim()) {
-    errors.value.receivedBy = 'Este campo es requerido'
-    isValid = false
-  }
-
+  // Validar entregado a
   // Validar entregado a
   if (!formData.value.deliveredTo.trim()) {
     errors.value.deliveredTo = 'Este campo es requerido'
-    isValid = false
-  }
-
-  // Validar estado
-  if (!formData.value.status) {
-    errors.value.status = 'El estado es requerido'
     isValid = false
   }
 

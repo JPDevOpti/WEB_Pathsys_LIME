@@ -116,6 +116,14 @@
                   />
                 </div>
 
+                <FormInputField
+                  v-model.number="formData.numberOfPlates"
+                  label="Número de Placas"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+
                 <FormTextarea
                   v-model="formData.notes"
                   label="Observaciones generales"
@@ -244,8 +252,8 @@
                   <CalendarIcon class="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                  <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Recepción y Entrega</h4>
-                  <p class="text-xs text-gray-500 mt-0.5">Registre la fecha de ingreso y quién recibió la muestra</p>
+                  <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Información de Recepción</h4>
+                  <p class="text-xs text-gray-500 mt-0.5">Registre la fecha de ingreso y a quién se entregará</p>
                 </div>
               </div>
             </div>
@@ -259,51 +267,12 @@
                   required
                 />
 
-                <!-- Recibido Por -->
-                <FormInputField
-                  v-model="formData.receivedBy"
-                  label="Recibido Por"
-                  placeholder="Ej: WILSON, CESAR ORTIZ"
-                  :errors="errors.receivedBy ? [errors.receivedBy] : []"
-                  required
-                />
-
-                <!-- Número de Placas -->
-                <FormInputField
-                  v-model.number="formData.numberOfPlates"
-                  label="Número de Placas"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                />
-
                 <!-- Entregado A -->
                 <FormInputField
                   v-model="formData.deliveredTo"
                   label="Entregado A"
                   placeholder="Ej: IMQ, AMPR"
                   :errors="errors.deliveredTo ? [errors.deliveredTo] : []"
-                />
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Fecha de Entrega -->
-                <DateInputField
-                  v-model="formData.deliveryDate"
-                  label="Fecha de Entrega"
-                  :errors="errors.deliveryDate ? [errors.deliveryDate] : []"
-                />
-
-                <!-- Estado -->
-                <FormSelect
-                  v-model="formData.status"
-                  label="Estado"
-                  :options="[
-                    { value: 'En proceso', label: 'En proceso' },
-                    { value: 'Completado', label: 'Completado' }
-                  ]"
-                  :errors="errors.status ? [errors.status] : []"
-                  required
                 />
               </div>
             </div>
@@ -337,9 +306,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { SpecialCaseIcon, UserCircleIcon, CalendarIcon, TestIcon, RefreshIcon } from '@/assets/icons'
 import { useSidebar } from '@/shared/composables/SidebarControl'
+import { useAuthStore } from '@/stores/auth.store'
 import FormInput from '@/shared/components/ui/forms/FormInput.vue'
 import FormSelect from '@/shared/components/ui/forms/FormSelect.vue'
 import FormTextarea from '@/shared/components/ui/forms/FormTextarea.vue'
@@ -397,6 +367,7 @@ const emit = defineEmits<{
 
 const isSaving = ref(false)
 const { isExpanded, isMobileOpen, isHovered } = useSidebar()
+const authStore = useAuthStore()
 
 // Computed class for overlay positioning based on sidebar state
 const overlayLeftClass = computed(() => {
@@ -442,6 +413,19 @@ const formData = ref<FormData>({
   deliveredTo: '',
   deliveryDate: '',
   status: 'En proceso'
+})
+
+// Llenar automáticamente "Recibido Por" con el nombre del usuario autenticado
+const initializeReceivedBy = () => {
+  if (authStore.user) {
+    const user = authStore.user
+    formData.value.receivedBy = user.name || user.email || ''
+  }
+}
+
+// Inicializar al montar
+onMounted(() => {
+  initializeReceivedBy()
 })
 
 const errors = ref<Record<string, string>>({})
@@ -602,6 +586,7 @@ const handleReset = () => {
     status: 'En proceso'
   }
   errors.value = {}
+  initializeReceivedBy()
 }
 
 const handleClose = () => {
